@@ -1,28 +1,56 @@
-2027年  8月 17日 火曜日 10:26:04 JST
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define FSHIFT pow(2.0,(double)NEXAD)
+2027年  8月 18日 水曜日 09:34:11 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-04 15:57:17 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-/JPSET xj[3],  x[][],  float, NFLO, NMAN;
-/JPSET mj,     m[],    float, NFLO, NMAN;
-/IPSET xi[3],  x[][],  float, NFLO, NMAN;
-/IPSET ieps2,  eps2,   float, NFLO, NMAN;
-/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
-/NVMP 1;
-/NPIPE 1;
+class State(object):
+    def __init__(self):
+        self.is_record = False
 
-pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
-pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
-pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
-pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
-pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
-pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
-pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
-pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
-pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
-pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
-pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
-pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
+if (__name__ == '__main__'):
+    state = State()
+
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('camera: %d'%(devid), frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            basedir = '../log.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, frame)
+            print(ofname, "devid = %d"%devid)
+            tnow0 = tnow
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord(' '): state.is_record = not (state.is_record)
+
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
