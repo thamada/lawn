@@ -1,3 +1,9 @@
-2027年  9月 10日 金曜日 11:02:17 JST
-# XST flow : Creating project file
-top.prj
+2027年  9月 20日 月曜日 11:01:40 JST
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
