@@ -1,41 +1,12 @@
-2027年  1月  3日 日曜日 09:46:08 JST
-// Time-stamp: <2006-09-04 13:41:34 hamada>
-// by T.Hamada
-//
-// <2006-09-04 13:33:47 hamada>
+2027年  1月  6日 水曜日 11:50:55 JST
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+all:
+	cp top.ucf.ISE6.3i_Synplify top.ucf
+	rm -rf proj
+	tar xvf proj.synplify.tar
+	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
+	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
+	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
+	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
+	cd proj;bitgen -intstyle ise -f top.ut top.ncd
 
-#include "pg4.h"
-
-void rst(int devid, int d, int msec)
-{
-  d = 0xff & d;
-  WriteBase0(devid, 0x4, d);
-  usleep(msec*1000);
-}
-
-int main(int argc, char* argv[])
-{
-  int devid=0;
-  int i;
-
-  pg4_open(devid);
-  
-  for(i=0;i<16;i++){
-    int x;
-    x = 0xff&(1<<(i%8));
-    rst(devid, x, 100);
-    rst(devid, 0, 1);
-  }
-
-  rst(devid, 0xff, 1000);
-  rst(devid, 0x0, 0);
-
-  pg4_close(devid);
-
-  return 0;
-}
