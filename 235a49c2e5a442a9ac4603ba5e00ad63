@@ -1,86 +1,85 @@
-2027年  3月 13日 土曜日 11:57:56 JST
-# CUDA
-###  Modify this part as your environment   ##################
-export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
-export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
-export PATH=$PATH:$CUDA_INSTALL_PATH/bin
+2027年  3月 14日 日曜日 10:10:06 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-05-30 09:51:10 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-# for profiling
-export CUDA_PROFILE=0
-export CUDA_PROFILE_LOG=./cuda_profile.log
-export CUDA_PROFILE_CSV=1
-alias cudaprofon='export CUDA_PROFILE=1'
-alias cudaprofoff='export CUDA_PROFILE=0'
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xdf, 0xf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
 
-# OpenCL
-#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
+    log_base = '../log/'
+    cap = []
+    for i in range(3):
+        cap.append(cv2.VideoCapture(i))
 
-
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
-
-# for MPICH
-#export PATH=/export/opt/mpi/local/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
-
-#------------ GbEd --------------------
-#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
-
-#------------ InfiniBand (OFED 1.4) --------------------
-export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
-
-#------------ InfiniBand (OFED 1.5.1) --------------------
-#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+    # -- swap cap --
+    if True:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
 
 
-export LANG=C
-export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
-# for ICC
-# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
 
-# for Mplayer
-export PATH=/export/opt/mplayer/bin:$PATH
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
-#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
+        frame = [0,0,0]
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
 
-#for Cray-XT5
-alias ssc='ssh hawk.cray.com -l p01130'
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
 
-#for AMD/ATI GPU
-#export CALROOT=/export/opt/amdstream/atical
-#export PATH=$CALROOT/bin/lnx64:$PATH
-#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
-#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
-#alias aon='export DISPLAY=:0.0'
-export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
-#xmodmap ~/.Xmodmap 2> /dev/null
-#nodeid=`uname -n`
-#echo "node $nodeid"
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * i
+            sy = 0
+            ex = frame_width * (i+1)
+            ey = frame_height
+            image[sy:ey,sx:ex] = fm
 
+        cv2.imshow('pycam', image)
 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
 
-export OMP_NUM_THREADS=1
-#export OMP_NUM_THREADS=2
-#export OMP_NUM_THREADS=4
-#export OMP_NUM_THREADS=8
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
 
-export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
+    cv2.destroyAllWindows()
 
+    print("Done.")
