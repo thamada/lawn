@@ -1,12 +1,42 @@
-2027å¹´  1æœˆ  6æ—¥ æ°´æ›œæ—¥ 11:50:55 JST
+2027å¹´  1æœˆ  7æ—¥ æœ¨æ›œæ—¥ 10:51:33 JST
+/**
+   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
+   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
+   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
+*/
 
-all:
-	cp top.ucf.ISE6.3i_Synplify top.ucf
-	rm -rf proj
-	tar xvf proj.synplify.tar
-	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
+{
+  int i,j,d;
+  double dx[3];
+
+  /* a[][]‚Ì‰Šú‰» */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+
+  /* ‘ŠŒİì—p‚ÌŒvZ  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
+    }
+  }
+
+
+}
