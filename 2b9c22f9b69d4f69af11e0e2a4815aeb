@@ -1,68 +1,117 @@
-2027å¹´ 10æœˆ 28æ—¥ æœ¨æ›œæ—¥ 10:34:52 JST
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+2027å¹´ 10æœˆ 30æ—¥ åœŸæ›œæ—¥ 11:34:41 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-16 23:48:16 hamada>
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
-{
-  int i,j,d;
-  double v2,r2;
-  double dx[3];
-  double Ep;        /* Še—±q‚ÌˆÊ’uƒGƒlƒ‹ƒM[ */
-  double Em;        /* Še—±q‚Ì‰^“®ƒGƒlƒ‹ƒM[ */
-  double Ea;        /* Še—±q‚Ì‘S—ÍŠw“IƒGƒlƒ‹ƒM[ */
-  static double Ea_init;
-  static int flag=0;
-  //  double a[NMAX][DIM];
+class Queue:
+    def __init__(self, queue = None):
+        self.index = 0
+        self.index_max = 50
+        self.image0 = np.zeros((120, 160, 3), np.uint8)
+        if type(queue) is type([]):
+            self.queue = queue
+        elif queue is None:
+            self.queue = []
+        else:
+            print ('Error Message:')
+            print ('    Your input is not type of list!')
+            print ('    Please enter list type!')
+
+    def enqueue(self, e):
+        if self.index < self.index_max :
+            self.queue.append(e)
+            self.index += 1
+            print ("queue index: ", self.index)
+        else:
+            self.dequeue()
+            self.queue.append(e)
+
+        return self.queue
+
+    def dequeue(self):
+        try:
+            qEl = self.queue[0]
+            del self.queue[0]
+            return (qEl, self.queue)
+        except IndexError:
+            print ('Error Message:')
+            print ('    There is no element in the queue!')
+
+    def look_first(self):
+        ret = self.image0
+        if self.index > 1:
+            ret = self.queue[0]
+        return (ret)
+            
+
+class WebCam(object):
+    def __init__(self):
+        self.devid = 2
+        self.tnow  = ''
+        self.fifo = Queue()
+        self.window_title = 'camera: %d' % (self.devid)
+        self.cap = cv2.VideoCapture(self.devid) 
+        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
+        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
+
+        self.display(True)
+
+    def put_text(self, image, text):
+        font_size = 1.0
+        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
+        # font_type = cv2.FONT_HERSHEY_PLAIN
+        # font_type = cv2.FONT_HERSHEY_DUPLEX
+        font_type = cv2.FONT_HERSHEY_TRIPLEX
+        font_color = (0x0, 0x77, 0x0)
+        px = int(image.shape[1]*0.15 )
+        py = int(image.shape[0]*0.9 )
+
+        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
 
 
-  /******************************************************  FORCE
-  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] =  m[j]*dx[d]/r3;
-	a[j][d] = -m[i]*dx[d]/r3;
-      }
-    }
-  }
-  ***********************************************************/
+    def display(self, is_clear=False):
+        wx = 320
+        wy = 240
+        step = 5
+        if is_clear :
+            for i in range (0, self.fifo.index_max, step):
+                image = self.fifo.image0
+                wname = self.window_title + ": %d" %(i)
+                cv2.resizeWindow(wname, wx, wy)
+                cv2.moveWindow(wname, int(i*wx/step), 0)
+                cv2.imshow(wname, image)
 
-  Ea = 0.0;
-  for(i=0;i<n;i++){
-    Ep=0.0;     // Potential Energy
-    for(j=0;j<n;j++){
-      r2 = eps2;           /* ‘Š‘Î‹——£‰Šú‰» */
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
-    }
+        for i in range (0, self.fifo.index, step):
+            image = self.fifo.queue[i].copy()
+            wname = self.window_title + ": %d" %(i)
+            image2 = cv2.resize(image, (wx, wy))
+            cv2.imshow(wname, image2)
 
-    v2=0.0;    /* â‘Î‘¬“x2æ’l‰Šú‰» */
-    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
-    Em = 0.5 * m[i] * v2;
+    def save_photo(self):
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
+            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+            if(tnow != self.tnow):
+                self.put_text(frame, tnow)
+                basedir = './log.%d/'% (self.devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, frame)
+                print(ofname, "devid = %d" % self.devid)
+                self.tnow = tnow
+                print("%s: Take photo" % self.tnow )
+                self.fifo.enqueue(frame)
+                self.display()
 
-    Ea += Em + Ep;
-    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
-    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
-    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
-  }
+    def clear_cache(self):
+        self.display()
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
 
-  if(flag==0){
-    Ea_init = Ea;
-    flag = 1;
-  }
-  printf("Eall = %e\t",Ea);
-  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
-  printf("\n");
-  return;
-}
+        # self.cap.release()
+        # cv2.destroyAllWindows()
+
