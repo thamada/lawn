@@ -1,82 +1,147 @@
-2027年  9月 10日 金曜日 10:41:48 JST
------------------------------------------------
---  pgpg-b3 dual port RAM module (for IMEM)
---      32 bits
---   16384 entries
---  Copyright(c) 2004- by Tsuyoshi Hamada
---  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
---  2004/10/29 : for Jmem by Tsuyoshi Hamada
------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
+2027年  9月 25日 土曜日 09:41:57 JST
+Release 6.2.03i - Bitgen G.31a
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-entity dp32b8192w is
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
+Loading device database for application Bitgen from file "top.ncd".
+   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
+Loading device for application Bitgen from file '2vp70.nph' in environment
+/export/home/opt/xilinx.
+Opened constraints file top.pcf.
 
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0));
+Mon Jun 13 23:42:26 2005
 
-end dp32b8192w;
+bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
 
-architecture rtl of dp32b8192w is
+Summary of Bitgen Options:
++----------------------+----------------------+
+| Option Name          | Current Setting      |
++----------------------+----------------------+
+| Compress             | (Not Specified)*     |
++----------------------+----------------------+
+| Readback             | (Not Specified)*     |
++----------------------+----------------------+
+| CRC                  | Enable**             |
++----------------------+----------------------+
+| DebugBitstream       | No**                 |
++----------------------+----------------------+
+| ConfigRate           | 4**                  |
++----------------------+----------------------+
+| StartupClk           | Cclk**               |
++----------------------+----------------------+
+| DCMShutdown          | Disable**            |
++----------------------+----------------------+
+| DisableBandgap       | No**                 |
++----------------------+----------------------+
+| CclkPin              | Pullup**             |
++----------------------+----------------------+
+| DonePin              | Pullup**             |
++----------------------+----------------------+
+| HswapenPin           | Pullup*              |
++----------------------+----------------------+
+| M0Pin                | Pullup**             |
++----------------------+----------------------+
+| M1Pin                | Pullup**             |
++----------------------+----------------------+
+| M2Pin                | Pullup**             |
++----------------------+----------------------+
+| PowerdownPin         | Pullup**             |
++----------------------+----------------------+
+| ProgPin              | Pullup**             |
++----------------------+----------------------+
+| TckPin               | Pullup**             |
++----------------------+----------------------+
+| TdiPin               | Pullup**             |
++----------------------+----------------------+
+| TdoPin               | Pullup**             |
++----------------------+----------------------+
+| TmsPin               | Pullup**             |
++----------------------+----------------------+
+| UnusedPin            | Pulldown**           |
++----------------------+----------------------+
+| GWE_cycle            | 6**                  |
++----------------------+----------------------+
+| GTS_cycle            | 5**                  |
++----------------------+----------------------+
+| LCK_cycle            | NoWait**             |
++----------------------+----------------------+
+| Match_cycle          | Auto**               |
++----------------------+----------------------+
+| DONE_cycle           | 4**                  |
++----------------------+----------------------+
+| Persist              | No*                  |
++----------------------+----------------------+
+| DriveDone            | No**                 |
++----------------------+----------------------+
+| DonePipe             | No**                 |
++----------------------+----------------------+
+| Security             | None**               |
++----------------------+----------------------+
+| UserID               | 0xFFFFFFFF**         |
++----------------------+----------------------+
+| ActivateGclk         | No*                  |
++----------------------+----------------------+
+| ActiveReconfig       | No*                  |
++----------------------+----------------------+
+| PartialMask0         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask1         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask2         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialGclk          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialLeft          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialRight         | (Not Specified)*     |
++----------------------+----------------------+
+| Encrypt              | No**                 |
++----------------------+----------------------+
+| Key0                 | pick*                |
++----------------------+----------------------+
+| Key1                 | pick*                |
++----------------------+----------------------+
+| Key2                 | pick*                |
++----------------------+----------------------+
+| Key3                 | pick*                |
++----------------------+----------------------+
+| Key4                 | pick*                |
++----------------------+----------------------+
+| Key5                 | pick*                |
++----------------------+----------------------+
+| Keyseq0              | M*                   |
++----------------------+----------------------+
+| Keyseq1              | M*                   |
++----------------------+----------------------+
+| Keyseq2              | M*                   |
++----------------------+----------------------+
+| Keyseq3              | M*                   |
++----------------------+----------------------+
+| Keyseq4              | M*                   |
++----------------------+----------------------+
+| Keyseq5              | M*                   |
++----------------------+----------------------+
+| KeyFile              | (Not Specified)*     |
++----------------------+----------------------+
+| StartKey             | 0*                   |
++----------------------+----------------------+
+| StartCBC             | pick*                |
++----------------------+----------------------+
+| FreezeDCI            | No*                  |
++----------------------+----------------------+
+| DCIUpdateMode        | AsRequired**         |
++----------------------+----------------------+
+| IEEE1532             | No*                  |
++----------------------+----------------------+
+| Binary               | No**                 |
++----------------------+----------------------+
+ *  Default setting.
+ ** The specified setting matches the default setting.
 
-component RAMB16_S2_S2
-  generic (
-         INIT_A : bit_vector := X"0";
-         INIT_B : bit_vector := X"0";
-         SRVAL_A : bit_vector := X"0";
-         SRVAL_B : bit_vector := X"0";
-         WRITE_MODE_A : string :="WRITE_FIRST";
-         WRITE_MODE_B : string :="WRITE_FIRST");
-  port ( doa   : out std_logic_vector(1 downto 0);
-         addra : in std_logic_vector(12 downto 0);
-         clka  : in std_logic;
-         dia   : in std_logic_vector(1 downto 0);
-         ena   : in std_logic;
-         ssra  : in std_logic;
-         wea   : in std_logic;
-
-         dob   : out std_logic_vector(1 downto 0);
-         addrb : in std_logic_vector(12 downto 0);
-         clkb  : in std_logic;
-         dib   : in std_logic_vector(1 downto 0);
-         enb   : in std_logic;
-         ssrb  : in std_logic;
-         web   : in std_logic);
-end component;
-
-begin
-
-  forgen1: for i in 0 to 15 generate
-    uraml: RAMB16_S2_S2 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
-	      PORT MAP(-- FIFO SIDE --
-                       clka=>clka,
-                       addra=>addra,
-                       dia=>dina(((2*i)+1) downto 2*i),
-                       doa=>douta(((2*i)+1) downto 2*i),
-                       ena=>'1',
-                       ssra=>'0',
-                       wea=>wea,
-                       -- LOCAL SIDE --
-                       clkb=>clkb,
-                       addrb=>addrb,
-                       dib=>dinb(((2*i)+1) downto 2*i),
-                       dob=>doutb(((2*i)+1) downto 2*i),
-                       enb=>'1',
-                       ssrb=>'0',
-                       web=>web);
-  end generate forgen1;
-
-
-end rtl;
-
+Running DRC.
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
+Creating bit map...
+Saving bit stream in "top.bit".
+Bitstream generation is complete.
