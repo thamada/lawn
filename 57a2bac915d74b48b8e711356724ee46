@@ -1,2 +1,30 @@
-2027年  8月 25日 水曜日 09:08:41 JST
-work
+2027年  8月 29日 日曜日 10:56:49 JST
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
+
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
+
+print $nbuf ." buffers exists\n";
+
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
+
+1;
