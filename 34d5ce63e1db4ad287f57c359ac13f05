@@ -1,121 +1,168 @@
-2027年  9月 23日 木曜日 11:51:39 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:59:29 hamada>
-import Message
-import WebCam
-import numpy as np
-import cv2
-from datetime import datetime
+2027年 10月  2日 土曜日 09:41:28 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Wed Dec 29 19:47:04 2004
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
+ENTITY sim_writecomb_check IS
+END sim_writecomb_check;
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
+ARCHITECTURE testbench_arch OF sim_writecomb_check IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_writecomb_check.ano";
+	COMPONENT writecomb_check
+		PORT (
+			MEM_WEHA : In  std_logic;
+			MEM_WELA : In  std_logic;
+			IS_ERR : Out  std_logic_vector (1 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
+	SIGNAL MEM_WEHA : std_logic;
+	SIGNAL MEM_WELA : std_logic;
+	SIGNAL IS_ERR : std_logic_vector (1 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+BEGIN
+	UUT : writecomb_check
+	PORT MAP (
+		MEM_WEHA => MEM_WEHA,
+		MEM_WELA => MEM_WELA,
+		IS_ERR => IS_ERR,
+		RST => RST,
+		CLK => CLK
+	);
 
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+		PROCEDURE ANNOTATE_IS_ERR(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",IS_ERR,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, IS_ERR);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		TX_TIME := TX_TIME + 5;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		TX_TIME := TX_TIME + 50;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		TX_TIME := TX_TIME + 35;
+		ANNOTATE_IS_ERR(TX_TIME);
+		WAIT FOR 10 ns;
+		TX_TIME := TX_TIME + 10;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
+		BEGIN
+		-- --------------------
+		RST <= transport '0';
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=900 ns
+		RST <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1000 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 1900 ns; -- Time=2900 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=3400 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1100 ns; -- Time=4500 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=4700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=6000 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6100 ns
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6200 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 300 ns; -- Time=6500 ns
+		MEM_WEHA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6600 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=7900 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8000 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8100 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8200 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8300 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 2005 ns; -- Time=10305 ns
+		-- --------------------
 
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-def draw_text_time(msg, image):
-    font = cv2.FONT_HERSHEY_PLAIN 
-    font_size = 3.0
-    color = (0x0f, 0xff, 0x1f)
-    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    cv2.putText(image, text, (30, 65), font, font_size, color)
-    cv2.putText(image, text, (31, 65), font, font_size, color)
-
-
-def draw_text(msg, image, text):
-    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
-    font_size = 2.5
-    color = (int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)))
-
-    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
-    py = int(image.shape[0]/2. + np.random.normal(25, 3))
-    cv2.putText(image, text, (px, py), font, font_size, color)
-
-
-if __name__ == '__main__':
-    webcam = WebCam.WebCam()
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 300)
-    image  = image0.copy()
-
-    window_title = "AI sensor by T. Hamada 2017/07/04"
-    x = 0
-    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
-
-    i_found = 0
-    while(True):
-        is_detect = msg.scan_object("person")
-        draw_text_time(msg, image)
-
-        if is_detect != True:
-            webcam.clear_cache()
-        else:
-            webcam.save_photo()
-            for i in range(8):
-                draw_text(msg, image, "I found you")
-
-            i_found += 1
-            if(i_found > 5):
-                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                with open("./log.person.txt", 'a') as fh:
-                    fh.write(tnow + " - detects 'Person'\n")
-                i_found = 0
-
-
-
-
-        x = 0
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
+CONFIGURATION writecomb_check_cfg OF sim_writecomb_check IS
+	FOR testbench_arch
+	END FOR;
+END writecomb_check_cfg;
