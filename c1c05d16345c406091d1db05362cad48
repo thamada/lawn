@@ -1,68 +1,28 @@
-2027年  8月  1日 日曜日 10:23:19 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "flops.h"
-//#include "pg_util.h" // double e_time(void)
+2027年  8月  5日 木曜日 11:17:59 JST
+#define NFLO 26
+#define NMAN 16
+#define NFIX 57
+#define NACC 64
+#define NEXAD 31
+#define FSHIFT pow(2.0,(double)NEXAD)
 
-extern double e_time(void);
+/JPSET xj[3],  x[][],  float, NFLO, NMAN;
+/JPSET mj,     m[],    float, NFLO, NMAN;
+/IPSET xi[3],  x[][],  float, NFLO, NMAN;
+/IPSET ieps2,  eps2,   float, NFLO, NMAN;
+/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
+/NVMP 1;
+/NPIPE 1;
 
-void flops_initialize(struct flops_member* fm, int n, int nskip)
-{
-  (*fm).nbody = n;
-  (*fm).nskip = nskip;
-  (*fm).times = 0;
-  (*fm).nstep = 0;
-  (*fm).force_time = 0.0;
-  (*fm).start_time = e_time();
-}
-
-void flops_check(struct flops_member* fm)
-{
-  int n = (*fm).nbody;
-  int nskip = (*fm).nskip;
-  int nstep = (*fm).nstep;
-  int times = (*fm).times;
-  double t_start = (*fm).start_time;
-  double tmisc,tall;
-  double nope,Gflops;
-  double t_end;
-  nstep++;
-
-  if((times % nskip) != (nskip-1)){
-    times++;
-  } else {
-    double tforce = (*fm).force_time;
-    t_end = e_time();
-    tall = t_end - t_start;
-    tmisc = tall - tforce;
-    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
-    //       GRAVITY,  LEAPFLOG
-    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
-    fprintf(stderr,"[%d steps]\t",nstep);
-    fprintf(stderr,"LapTime %2.2f sec\t",tall);
-    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
-
-    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
-    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
-
-    times = 0;
-    t_start = e_time();
-  }
-  (*fm).times = times;
-  (*fm).nstep = nstep;
-  (*fm).start_time = t_start;
-}
-
-
-
-void flops_ftime_init(struct flops_member *fm){
-  (*fm).force_time = e_time();
-}
-
-void flops_ftime_save(struct flops_member *fm){
-  double dum = (*fm).force_time;
-  (*fm).force_time = e_time() - dum;
-}
-
-
+pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
+pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
+pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
+pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
+pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
+pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
+pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
+pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
+pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
+pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
+pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
+pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
