@@ -1,34 +1,47 @@
-2027年  4月 23日 金曜日 11:03:52 JST
-// Time-stamp: "2006-12-07 19:19:07 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-
+2027年  5月 15日 土曜日 10:58:42 JST
 #include <stdio.h>
 #include <stdlib.h>
-#include "pg4.h"
+#include <string.h>
 
-unsigned int* ptr;
-unsigned int* bar1;
+void b3_init(int devid);
+void b3_init_config(int devid, char* fpga_conf_file);
 
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int i;
 
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-  puts("clear DMA_CTRL register(0x2C).");
-  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+void b3_set_idata(unsigned int devid,      // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int ireg_index, // iregister index
+                  unsigned int data);      // data
 
-  puts("clear INT_STAT register(0x10).");
-  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+void b3_reset_jmem_adr();
+void b3_reset_jmem_adr_n(int nchip);
 
-  puts("clear INT_MASK register(0x14).");
-  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+void b3_set_jdata(unsigned int devid,      // device id
+                  unsigned int nword,      // number of jdata
+                  unsigned int jdata[] );  // 
 
-  pg4_DMAcheck(devid);
+void b3_set_jdata_n_chip(unsigned int devid,    // device id
+			 unsigned int nchip,    // 0, 1, 2, 3
+			 unsigned int nword,    // number of jdata
+			 unsigned int jdata[]);
 
-  return 0;
-}
+
+void b3_get_jdata(unsigned int devid,      // device id
+                  unsigned int chip_sel,   // chip_sel
+		  unsigned int jmem_adr,   // mem adr
+                  unsigned int* data );    // data 
+
+void b3_start_calc(unsigned int n,
+		   unsigned int chip_sel);
+
+void b3_start_calc_sepa4jM(unsigned int nrun[]);
+
+unsigned int b3_get_calcsts(unsigned int chip_sel);
+
+
+void b3_get_fodata(unsigned int devid,     // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int fo_index,   // iregister index
+                  unsigned int* data);     // data
