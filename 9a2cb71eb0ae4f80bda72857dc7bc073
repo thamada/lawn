@@ -1,28 +1,50 @@
-2027年  4月  7日 水曜日 11:09:34 JST
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define FSHIFT pow(2.0,(double)NEXAD)
+2027年  4月 18日 日曜日 10:45:08 JST
+#!/usr/bin/env python3
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import sys
 
-/JPSET xj[3],  x[][],  float, NFLO, NMAN;
-/JPSET mj,     m[],    float, NFLO, NMAN;
-/IPSET xi[3],  x[][],  float, NFLO, NMAN;
-/IPSET ieps2,  eps2,   float, NFLO, NMAN;
-/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
-/NVMP 1;
-/NPIPE 1;
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xf, 0xf, 0xff)
+    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    
 
-pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
-pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
-pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
-pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
-pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
-pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
-pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
-pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
-pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
-pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
-pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
-pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
+
+if (__name__ == '__main__'):
+    argv = sys.argv
+    devid = int(argv[1])
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('frame', frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(frame, tnow)
+            ofname = mkdir.get_filename_frame('../log/', tnow)
+#            cv2.imwrite(ofname, frame)
+            print(ofname, ": TEST on devid=%d"%devid)
+            tnow0 = tnow
+ 
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
