@@ -1,344 +1,160 @@
-2027年  9月 24日 金曜日 11:48:55 JST
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- ***************************************************/
+2027年  9月 26日 日曜日 09:51:44 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-11 19:19:34 hamada>
+import cv2
+import urllib.request
+import numpy as np
+import argparse
+from datetime import datetime
+import mkdir
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/ioctl.h> // ioctl()
-#include <sys/mman.h>  // mmap()
-#include <sys/types.h> // open()
-#include <sys/stat.h>  // open()
-#include <sys/fcntl.h> // open()
+class DroidCam(object):
+    def __init__(self):
+        self.droidapp = 'IP Webcam'
+        self.ipadr  = '192.168.43.1'
+#        self.ipadr  = '192.168.42.129'
+#        self.ipadr  = '133.45.9.162'
+        self.port  = '3389'
+        self.stream = -1
+        self.URL = -1
+        self.image = -1
+    def get_stream(self):
+        stub = ''
+        if (self.droidapp == 'DroidCam'):
+            stub = '/mjpegfeed?960x720'
+        elif (self.droidapp == 'IP Webcam'):
+            stub = '/video?dummy=param.mjpg'
+        else:
+            stub = '/mjpegfeed?640x480'
 
-#undef CERR
-#define CERR(fmt, args...) fprintf(stderr, fmt, ## args)
+        url = 'http://'+self.ipadr+':'+self.port + stub
 
-#undef _CERR
-#define _CERR(fmt, args...) 
+        print ('URL: ', url)
+        self.URL = url
+        self.stream = urllib.request.urlopen(self.URL)
+        return (self.stream)
 
-#define MAX_NBOARD 8
-unsigned int* bar0[MAX_NBOARD];
-unsigned int* bar1[MAX_NBOARD];
+    def get_stream_jpg(self):
+        stub = '/shot.jpg'
+        url = 'http://'+self.ipadr+':'+self.port + stub
+        print ('URL: ', url)
+        self.URL = url
+        self.stream = urllib.request.urlopen(self.URL)
+        return (self.stream)
 
-//---------------------------------------
-#include "progrape.h"
+    def get_jpg(self):
+        stub = '/shot.jpg'
+        url = 'http://'+self.ipadr+':'+self.port + stub
+        urlObj = urllib.request.urlopen(url)
+        print ('URL: ', url, urlObj.getcode())
+        ofname = '/dev/shm/now.jpg'
+        with open(ofname, "wb") as file:
+            file.write(urlObj.read())
+        self.image = cv2.imread(ofname)
+        return (self.image)
+        
+    def set_focus(self):
+        stub = '/focus'
+        url = 'http://'+self.ipadr+':'+self.port + stub
+        print ('focus: ', url)
+        urlObj = urllib.request.urlopen(url)
+        
 
-static char *devname[] = {
-  "/dev/progrape0",
-  "/dev/progrape1",
-  "/dev/progrape2",
-  "/dev/progrape3",
-  "/dev/progrape4",
-  "/dev/progrape5",
-  "/dev/progrape6",
-  "/dev/progrape7",
-  "/dev/progrape8",
-};
+class State(object):
+    def __init__(self):
+        self.is_record = False
+        self.drawing = False
+        self.posi0 = [-1,-1]
+        self.posi1 = [-1,-1]
+        self.image = -1
+        self.image_size = [-1, -1] # [height, width]
+        self.image_orig = -1
+        self.class_num = 777
+        self.image_num = 1
 
-static int pg4_dev[] = {
-  -1,-1,-1,-1,-1,-1,-1,-1,
-};
+    def draw_rect(self):
+        # print ("posi0, posi1: ", self.posi0, self.posi1)
+        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
 
-unsigned int *dmar_buf[MAX_NBOARD];
-unsigned int *dmaw_buf[MAX_NBOARD];
+    def draw_text(self):
+        if(self.is_record):
+            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
+            font_size = 0.8
+            text = "<<%d>>"% (self.image_num)
+            color = (0x0, 0x0, 0xBF)
+            px = int(self.image_size[1]/2)
+            py = 30
+            cv2.putText(self.image, text,(px, py), font, font_size, color)
 
-unsigned int* pg4_get_bar0ptr(int devid){ return bar0[devid]; }
-unsigned int* pg4_get_bar1ptr(int devid){ return bar1[devid]; }
+state = State()
 
-#define DMA_BSIZE (0x1<<10) // 4KB
+def mouse_event(event,x,y,flags,param):
+    global state
 
-static void * __mmap_bar     (int devid, int bar);
-//    static int __pg4_DMA         (int devid, unsigned int size, unsigned int offset, unsigned int dir);
-//    static int __pg4_DMA_noInterrupt(int devid, unsigned int size, unsigned int offset, unsigned int dir);
-//    static int __pg4_DMA_with_retry(int devid, unsigned int size, unsigned int offset, unsigned int dir);
-int           pg4_DMAget     (int devid, unsigned int size);
-int           pg4_DMAput     (int devid, unsigned int size);
-int           pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int           pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void          pg4_wait       (int devid, int n);
-void          pg4_DMAcheck   (int devid);
-int           pg4_DMAretry   (int devid);
-unsigned long pg4_getbaseaddr(int devid, int j);
-unsigned long pg4_getbaseaddr_size(int devid, int bar);
-unsigned long pg4_read_pciconfig_dword(int devid, int adr);
-void pg4_get_pfpga_info(int devid, char *info);
-void pg4_set_pfpga_info(int devid, char *info);
-
-
-static void * __mmap_dmabuf(int id, int is_wbuf)
-{
-  unsigned long size;
-  void *mapped_ptr;
-
-  switch (is_wbuf) {
-  case 0:
-    {
-      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_BUF_DMAR)) {
-	CERR("mmap dmar buf failed | %s:%d\n", __FILE__, __LINE__);
-	exit (-1);
-      }
-      size = ioctl(pg4_dev[id], IOC_GV_DMA_SIZE);
-
-    }
-    break;
-  case 1:
-    {
-      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_BUF_DMAW)) {
-	CERR("mmap dmaw buf failed | %s:%d\n", __FILE__, __LINE__);
-	exit (-1);
-      }
-      size = ioctl(pg4_dev[id], IOC_GV_DMA_SIZE);
-    }
-    break;
-  default :
-    CERR("mmap dmabuf %d invalid | %s:%d\n", is_wbuf, __FILE__, __LINE__);
-    exit (-1);
-  }
-
-  mapped_ptr = mmap(NULL,
-		    size,
-		    (PROT_READ| PROT_WRITE),
-		    MAP_SHARED,
-		    pg4_dev[id],
-		    0);
-  _CERR("mmap_ptr called\n");
-
-  return (mapped_ptr);
-}
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
 
 
-static void * __mmap_bar(int id, int bar)
-{
-  unsigned long size;
-  unsigned long pagesize = getpagesize();
-  void *mapped_ptr;
-
-  switch (bar) {
-  case 0:
-    {
-      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_REG_PIORW)) {
-	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
-	exit (-1);
-      }
-      size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
-    }
-    break;
-  case 1:
-    {
-      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_MEM_PIORW)) {
-	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
-	exit (-1);
-      }
-      size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
-    }
-    break;
-  default :
-    CERR("mmap bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
-    exit (-1);
-  }
-
-  mapped_ptr = mmap(NULL,
-		    (size/pagesize+1)*pagesize,
-		    (PROT_READ| PROT_WRITE),
-		    MAP_SHARED,
-		    pg4_dev[id],
-		    0);
-
-  return (mapped_ptr);
-}
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
 
-int pg4_open(int id)
-{
-  pg4_dev[id] = open(devname[id], O_RDWR);
-  if(pg4_dev[id] == -1) {
-    CERR("open failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
-    return -1;
-  }
-
-  bar0[id] = (unsigned int *) __mmap_bar(id, 0); // mmap BAR0
-  bar1[id] = (unsigned int *) __mmap_bar(id, 1); // mmap BAR1
-
-  dmaw_buf[id] = (unsigned int *) __mmap_dmabuf(id, 1); // mmap DMAW buf
-  dmar_buf[id] = (unsigned int *) __mmap_dmabuf(id, 0); // mmap DMAR buf
-
-  if(dmaw_buf[id] == NULL){
-    CERR("mmap dmaw_buf failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
-    return (-1);
-  }
-
-  if(dmar_buf[id] == NULL){
-    CERR("mmap dmar_buf failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
-    return (-1);
-  }
-
-  _CERR("DMAW Buff at 0x%x\n",(unsigned int)dmaw_buf[id]);
-  _CERR("DMAR Buff at 0x%x\n",(unsigned int)dmar_buf[id]);
-
-  return 1;
-}
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xf, 0xf, 0xff)
+    cv2.putText(image, text, (5, 15), font_type, font_size, font_color)
 
 
-void pg4_close(int id){
-  close(pg4_dev[id]);
-  pg4_dev[id] = -1;
-}
+if (__name__ == '__main__'):
+
+    droidcam = DroidCam()
+#    stream = droidcam.get_stream()
+
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+    while True:
+        frame = droidcam.get_jpg()
+        state.image_orig = frame.copy()
+        state.image      = frame.copy()
+        state.image_size[0], state.image_size[1] = frame.shape[:2]
+        state.draw_rect()
+        state.draw_text()
+        cv2.imshow('droidcam',state.image)
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if True:
+            basedir = '../log.ipcam.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            put_text(state.image, tnow)
+            cv2.imwrite(ofname, state.image)
+            print(ofname)
+            tnow0 = tnow
+            state.image_num += 1
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if ( (key == ord(' ')) or 
+             (key == 34) or # Muhenkan
+             (key == 35) or # Henkan
+             (key == 39) or # katakana
+             (key == 10)    # Enter
+        ):
+            state.is_record = not (state.is_record)
+        if key == ord('f'): droidcam.set_focus()
 
 
-void pg4_close_and_exit(int id){
-  //  pg4_DMAcheck(id);
-  pg4_close(id);
-  exit(1);
-}
+    cv2.destroyAllWindows()
+    print("Done.")
 
-
-inline unsigned int pg4_readbase0(int id, unsigned int index){ return *(bar0[id] + index); }
-inline void         pg4_writebase0(int id, unsigned int index, unsigned int val){ *(bar0[id] + index) = val; }
-inline unsigned int pg4_readbase1(int id, unsigned int index){ return *(bar1[id] + index); }
-inline void         pg4_writebase1(int id, unsigned int index, unsigned int val){ *(bar1[id] + index) = val; }
-inline unsigned int ReadBase0(int id, unsigned int addr){return pg4_readbase0(id, addr>>2);}
-inline unsigned int ReadBase1(int id, unsigned int addr){return pg4_readbase1(id, addr>>2);}
-inline void         WriteBase0(int id, unsigned int addr, unsigned int val){pg4_writebase0(id, addr>>2, val);}
-inline void         WriteBase1(int id, unsigned int addr, unsigned int val){pg4_writebase1(id, addr>>2, val);}
-
-
-unsigned int pg4_get_dma_size(int id) {
-  return ( (unsigned int)ioctl(pg4_dev[id], IOC_GV_DMA_SIZE) );
-}
-
-
-unsigned int* pg4_get_dmawptr(int id) {
-  return ( (unsigned int*)dmaw_buf[id] );
-}
-
-
-unsigned int* pg4_get_dmarptr(int id) {
-  return ( (unsigned int*)dmar_buf[id] );
-}
-
-
-int pg4_DMAput(int id, unsigned int size)
-{
-  int ret = ioctl(pg4_dev[id], IOC_SV_DMAW, size);
-  if(ret){
-    CERR("DMAW failed %d| %s:%d\n",ret ,__FILE__, __LINE__);
-    exit (-1);
-  }
-  return (0);
-}
-
-
-int pg4_DMAget(int id, unsigned int size)
-{
-  int ret = ioctl(pg4_dev[id], IOC_SV_DMAR, size);
-  if(ret){
-    CERR("DMAR failed %d| %s:%d\n",ret ,__FILE__, __LINE__);
-    exit (-1);
-  }
-  return (0);
-}
-
-
-void pg4_DMAcheck(int devid)
-{
-  unsigned int flag, retry;
-  fprintf(stderr,"\t INT_STAT       (0x%X) : %x\n", REG_INT_STAT,       ReadBase0(devid, REG_INT_STAT));
-  fprintf(stderr,"\t INT_MASK       (0x%X) : %x\n", REG_INT_MASK,       ReadBase0(devid, REG_INT_MASK));
-  fprintf(stderr,"\t DMA_PCI_ADRS   (0x%X) : %x\n", REG_DMA_PCI_ADRS,   ReadBase0(devid, REG_DMA_PCI_ADRS));
-  fprintf(stderr,"\t DMA_LOCAL_ADRS (0x%X) : %x\n", REG_DMA_LOCAL_ADRS, ReadBase0(devid, REG_DMA_LOCAL_ADRS));
-  fprintf(stderr,"\t DMA_COUNT      (0x%X) : %x\n", REG_DMA_COUNT,      ReadBase0(devid, REG_DMA_COUNT));
-  fprintf(stderr,"\t DMA_CTRL       (0x%X) : %x\n", REG_DMA_CTRL,       ReadBase0(devid, REG_DMA_CTRL));
-  fprintf(stderr,"\t DMA_INTERVAL   (0x%X) : %x\n", REG_DMA_INTERVAL,   ReadBase0(devid, REG_DMA_INTERVAL));
-  fprintf(stderr,"\t DMA_STAT       (0x%X) : %x\n", REG_DMA_STAT,       ReadBase0(devid, REG_DMA_STAT));
-
-  flag = ReadBase0(devid, REG_DMA_STAT);
-
-  retry = ((0x1<<16)-1)&flag;
-  fprintf(stderr,"\t DMA dissconnect count %i\n", (flag>>16));
-  fprintf(stderr,"\t DMA retry count       %i\n", retry);
-  fprintf(stderr,"\n");
-  fflush(NULL);
-}
-
-int pg4_DMAretry(int devid)
-{
-  unsigned int flag, retry;
-  flag = ReadBase0(devid, REG_DMA_STAT);
-  retry = ((0x1<<16)-1)&flag;
-  return retry;
-}
-
-int pg4_DMAput_offset(int devid, unsigned int size, unsigned offset)
-{
-  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
-  return -1;
-}
-
-int pg4_DMAget_offset(int devid, unsigned int size, unsigned offset)
-{
-  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
-  return -1;
-}
-
-void pg4_wait(int devid, int n)
-{
-  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
-}
-
-unsigned long pg4_getbaseaddr(int id, int bar)
-{
-  unsigned long ret;
-  if( (bar==0) || (bar==1)){
-    int bar0_dword_adr = 0x4;
-    ret = pg4_read_pciconfig_dword(id, bar0_dword_adr + bar);
-  }else{
-    CERR("bar %d invalid | %s:%d\n",bar ,__FILE__ ,__LINE__);
-    exit(-1);
-  }
-  return ret;
-}
-
-unsigned long pg4_getbaseaddr_size(int id, int bar)
-{
-  unsigned long size;
-  switch (bar) {
-  case 0:
-    size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
-    break;
-  case 1:
-    size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
-    break;
-  default :
-    CERR("bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
-    exit (-1);
-  }
-
-  return (size); // [Bytes]
-}
-
-unsigned long pg4_read_pciconfig_dword(int id, int adr)
-{
-  // note : 'adr' uses dword address (not byte address).
-  return (unsigned long) ioctl(pg4_dev[id], IOC_GV_PCICFG, adr);
-}
-
-void pg4_get_pfpga_info(int id, char* ret){
-  char info[NB_FPGA_INFO];
-  ioctl(pg4_dev[id], IOC_GP_FPGA_INFO, info);
-  strcpy(ret, info);
-}
-
-void pg4_set_pfpga_info(int id, char* info){
-  ioctl(pg4_dev[id], IOC_SP_FPGA_INFO, info);
-}
