@@ -1,42 +1,40 @@
-2027å¹´  8æœˆ  3æ—¥ ç«æ›œæ—¥ 09:48:33 JST
-/**
-   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
-   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
-   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
-*/
-
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
-
-void force_on_host(double x[][DIM],
-	   double m[],
-	   double eps2,
-	   double a[][DIM],
-	   int n)
-{
-  int i,j,d;
-  double dx[3];
-
-  /* a[][]‚Ì‰Šú‰» */
-  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
-
-  /* ‘ŠŒİì—p‚ÌŒvZ  */
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] +=  m[j]*dx[d]/r3;
-	a[j][d] += -m[i]*dx[d]/r3;
-      }
-    }
-  }
+2027å¹´  8æœˆ  3æ—¥ ç«æ›œæ—¥ 11:09:48 JST
+ 
+-w
+-g DebugBitstream:No
+-g Binary:no
+-g CRC:Enable
+-g ConfigRate:4
+-g CclkPin:PullUp
+-g M0Pin:PullUp
+-g M1Pin:PullUp
+-g M2Pin:PullUp
+-g ProgPin:PullUp
+-g DonePin:PullUp
+-g PowerdownPin:PullUp
+-g TckPin:PullUp
+-g TdiPin:PullUp
+-g TdoPin:PullUp
+-g TmsPin:PullUp
+-g UnusedPin:PullDown
+-g UserID:0xFFFFFFFF
+-g DCMShutDown:Disable
+-g DisableBandgap:No
+-g DCIUpdateMode:AsRequired
+-g StartUpClk:CClk
+-g DONE_cycle:4
+-g GTS_cycle:5
+-g GWE_cycle:6
+-g LCK_cycle:NoWait
+-g Match_cycle:Auto
+-g Security:None
+-g DonePipe:No
+-g DriveDone:No
+-g Encrypt:No
 
 
-}
+
+
+
+
+
