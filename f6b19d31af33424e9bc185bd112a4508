@@ -1,50 +1,82 @@
-2027年 12月  1日 水曜日 11:03:56 JST
-/EQNINJ
-/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
-/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
-/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/NPIPE 1
-/NVMP 1
-void force(double x[][3], double m[], double eps2, double a[][3], int n){
-  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
-  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
-  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
-  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
-  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
-  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
-  pg_log_shift(1,dx_0,x2_0,17)
-  pg_log_shift(1,dx_1,x2_1,17)
-  pg_log_shift(1,dx_2,x2_2,17)
-  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
-  pg_log_shift(-1,r2,r1,17)
-  pg_log_muldiv(MUL,r2,r1,r3,17,2)
-  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
-  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
-  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
-  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
-  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
-  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
-  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
-  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
-  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
-  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
-  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
-  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
-  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
-  pg_pdelay(ieps2,ieps2r,17,7)
-  pg_pdelay(mj,mjr,17,27)
-  pg_pdelay(dx_0,dx_0r,17,22)
-  pg_pdelay(dx_1,dx_1r,17,22)
-  pg_pdelay(dx_2,dx_2r,17,22)
-  pg_rundelay(41)
-}
+2027年 12月  5日 日曜日 11:00:42 JST
+-----------------------------------------------
+--  pgpg-b3 dual port RAM module (for IMEM)
+--      32 bits
+--   16384 entries
+--  Copyright(c) 2004- by Tsuyoshi Hamada
+--  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
+--  2004/10/29 : for Jmem by Tsuyoshi Hamada
+-----------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+
+entity dp32b8192w is
+  port (
+    clka  : in std_logic;
+    wea   : in std_logic;
+    addra : in std_logic_vector(12 downto 0);
+    dina  : in std_logic_vector(31 downto 0);
+    douta : out std_logic_vector(31 downto 0);
+
+    clkb  : in std_logic;
+    web   : in std_logic;
+    addrb : in std_logic_vector(12 downto 0);
+    dinb  : in std_logic_vector(31 downto 0);
+    doutb : out std_logic_vector(31 downto 0));
+
+end dp32b8192w;
+
+architecture rtl of dp32b8192w is
+
+component RAMB16_S2_S2
+  generic (
+         INIT_A : bit_vector := X"0";
+         INIT_B : bit_vector := X"0";
+         SRVAL_A : bit_vector := X"0";
+         SRVAL_B : bit_vector := X"0";
+         WRITE_MODE_A : string :="WRITE_FIRST";
+         WRITE_MODE_B : string :="WRITE_FIRST");
+  port ( doa   : out std_logic_vector(1 downto 0);
+         addra : in std_logic_vector(12 downto 0);
+         clka  : in std_logic;
+         dia   : in std_logic_vector(1 downto 0);
+         ena   : in std_logic;
+         ssra  : in std_logic;
+         wea   : in std_logic;
+
+         dob   : out std_logic_vector(1 downto 0);
+         addrb : in std_logic_vector(12 downto 0);
+         clkb  : in std_logic;
+         dib   : in std_logic_vector(1 downto 0);
+         enb   : in std_logic;
+         ssrb  : in std_logic;
+         web   : in std_logic);
+end component;
+
+begin
+
+  forgen1: for i in 0 to 15 generate
+    uraml: RAMB16_S2_S2 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
+	      PORT MAP(-- FIFO SIDE --
+                       clka=>clka,
+                       addra=>addra,
+                       dia=>dina(((2*i)+1) downto 2*i),
+                       doa=>douta(((2*i)+1) downto 2*i),
+                       ena=>'1',
+                       ssra=>'0',
+                       wea=>wea,
+                       -- LOCAL SIDE --
+                       clkb=>clkb,
+                       addrb=>addrb,
+                       dib=>dinb(((2*i)+1) downto 2*i),
+                       dob=>doutb(((2*i)+1) downto 2*i),
+                       enb=>'1',
+                       ssrb=>'0',
+                       web=>web);
+  end generate forgen1;
+
+
+end rtl;
+
