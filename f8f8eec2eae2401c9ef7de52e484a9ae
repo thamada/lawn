@@ -1,50 +1,30 @@
-2027年 10月 10日 日曜日 11:37:16 JST
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import sys
-
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
+2027年 10月 13日 水曜日 10:14:08 JST
+#!/usr/bin/perl
 
 
-if (__name__ == '__main__'):
-    argv = sys.argv
-    devid = int(argv[1])
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
+my $is_stop = 0;
+my $nboard = 0;
 
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('frame', frame)
+print $nbuf ." buffers exists\n";
 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            ofname = mkdir.get_filename_frame('../log/', tnow)
-#            cv2.imwrite(ofname, frame)
-            print(ofname, ": TEST on devid=%d"%devid)
-            tnow0 = tnow
- 
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
+1;
