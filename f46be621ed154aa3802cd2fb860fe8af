@@ -1,96 +1,129 @@
-2027年  1月 18日 月曜日 09:25:37 JST
-//-----------------------------------------------------------------------------
-// hermite.C
-// Code: Standard 4th order Hermite integrator with constant time step
-// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
-// Author: Andreas Ernst Jan, 2006
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2027年  1月 18日 月曜日 09:42:22 JST
+#!/bin/sh
+#
+# An example hook script to blocks unannotated tags from entering.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# To enable this hook, rename this file to "update".
+#
+# Config
+# ------
+# hooks.allowunannotated
+#   This boolean sets whether unannotated tags will be allowed into the
+#   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
+#
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
 
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
+	exit 1
+fi
 
-// Calculate energy
+# --- Config
+allowunannotated=$(git config --bool hooks.allowunannotated)
+allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --bool hooks.denycreatebranch)
+allowdeletetag=$(git config --bool hooks.allowdeletetag)
+allowmodifytag=$(git config --bool hooks.allowmodifytag)
 
-double energy(double m[], double r[][3], double v[][3], double p[], int n) {
-  double ekin = 0, epot = 0;
-  for (int i = 0; i < n; i++) {
-    epot -= 0.5 * m[i] * p[i];
-    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
-  }
-  return ekin + epot;
-}
+# check for no description
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+case "$projectdesc" in
+"Unnamed repository"* | "")
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+	;;
+esac
 
-int main(int argc, char *argv[]) {
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
+	newrev_type=delete
+else
+	newrev_type=$(git cat-file -t $newrev)
+fi
 
-// Read initial conditions from stdin, declaration of variables
+case "$refname","$newrev_type" in
+	refs/tags/*,commit)
+		# un-annotated tag
+		short_refname=${refname##refs/tags/}
+		if [ "$allowunannotated" != "true" ]; then
+			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
+			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,tag)
+		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,commit)
+		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/remotes/*,commit)
+		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	*)
+		# Anything else (is there anything else?)
+		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
+		exit 1
+		;;
+esac
 
-  if (argc < 3 ) {
-    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
-    return 0;
-  }
-
-  double dt = atof(argv[1]); // time step
-  double dt2 = dt*dt;
-  double dt3 = dt2*dt;
-  double dt4 = dt2*dt2;
-  double dt5 = dt4*dt;
-  double t_end = atof(argv[2]);
-  double dt_opt = atof(argv[3]);
-  double t_opt = 0.0;
-
-  int n;
-  cin >> n;
-
-  double t;
-  cin >> t;
-
-  double * m = new double[n];
-  double (* r)[3] = new double[n][3];
-  double (* v)[3] = new double[n][3];
-
-  double * p = new double[n];
-  double (* a)[3] = new double[n][3];
-  double (* jk)[3] = new double[n][3];
-
-  double * _p = new double[n];
-  double (* _a)[3] = new double[n][3];
-  double (* _jk)[3] = new double[n][3];
-
-
-  for (int i = 0; i < n ; i++){
-    cin >> m[i];
-    for (int k = 0; k < 3; k++) cin >> r[i][k];
-    for (int k = 0; k < 3; k++) cin >> v[i][k];
-  }
-  
-  _force(r, v, m, _p, _a, _jk, n);
-   force(r, v, m,  p,  a,  jk, n);
-
-
-  for (int i = 0; i < n ; i++){
-    double err_p, err_a[3], err_jk[3];
-    double rad;
-    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
-
-    err_p = fabs(p[i]-_p[i])/_p[i];
-
-    for (int k = 0; k < 3; k++){
-      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
-      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
-    }
-    
-    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
-
-  }
-  
-  return 0;
-}
+# --- Finished
+exit 0
