@@ -1,2 +1,18 @@
-2027年  8月 19日 木曜日 10:20:41 JST
-set AD {../rtl/ifpga.ucf}
+2027年  9月  6日 月曜日 09:56:34 JST
+FILES
+{
+	VHDL_FILE = pgfpga.vhd;
+}
+COMPILER_SETTINGS_LIST
+{
+	COMPILER_SETTINGS = pgfpga;
+}
+SIMULATOR_SETTINGS_LIST
+{
+	SIMULATOR_SETTINGS = pgfpga;
+}
+SOFTWARE_SETTINGS_LIST
+{
+	SOFTWARE_SETTINGS = Debug;
+	SOFTWARE_SETTINGS = Release;
+}
