@@ -1,51 +1,71 @@
-2027年  3月 20日 土曜日 10:49:42 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2027年  4月 18日 日曜日 09:33:21 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:28:33 hamada>
+import numpy as np
+import cv2
+
+class Message(object):
+    def __init__(self):
+        self.class_num = 80
+        self.last = [0 for i in range(8)]
+        self.log_previous = ''
+        self.is_update = False
+#        self.filename = '/dev/shm/log.txt'
+        self.filename = '/tmp/log.draw_detections.txt'
+        self.class_count = []
+
+    def reset(self):
+        self.is_update = False
+        self.class_count = [0 for i in range(self.class_num)]
+        self.get_classId()
+        self.class_count = [0 for i in range(self.class_num)]
+
+    def get_message(self):
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            l = lines[-2]
+            l = l.rstrip()
+            cols = l.split(' ')
+            if cols[0] != self.last[0]:
+                self.last = cols
+                self.is_update = True
+            else:
+                self.is_update = False
+        
+
+    def check_log_update(self):
+        self.is_update = False
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            current = lines[-2]
+            if current != self.log_previous:
+                self.is_update = True
+                self.log_previous = current
+        return (self.is_update)
+
+    def scan_object(self, cl_name):
+        is_detect = False
+
+        if self.check_log_update():
+            with open(self.filename, 'r') as fh:
+                lines = fh.readlines()
+                for i in range(2, 20):
+                    l = lines[-i]
+                    l = l.rstrip()
+                    cols = l.split(' ')
+                    if cols[-1] == cl_name:
+                        is_detect = True
+
+        return (is_detect)
+
+    def get_classId(self):
+        self.get_message()
+
+        if True == self.is_update:
+            z = int(self.last[1])
+            self.class_count[z] += 1
+        else:
+            z = -1
+
+        return (z)
+
