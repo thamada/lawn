@@ -1,71 +1,50 @@
-2027å¹´  5æœˆ 15æ—¥ åœŸæ›œæ—¥ 11:05:05 JST
-#Time-stamp: <2017-06-23 16:16:23 hamada>
+2027å¹´  6æœˆ 30æ—¥ æ°´æ›œæ—¥ 09:43:32 JST
+#include <math.h>
+#define DIM (3)              /* ŸŒ³” */
+#define NMAX (65536)         /* Å‘å—±q” */
+//#define NTOTAL 1000      /* —±q” (NTOTAL <= NMAX) */
 
-CONFIG=./etc/config.txt
-MODEL=./etc/model.txt
-WEIGHTS=./backup/m10_150000.weights
-LOGFILE=./log.2gpu
-GPUID= -gpus 0,1
+//b3_force_sepaj4.c
+void b3_force_sepaj4(double x[][3],
+		     double m[],
+		     double eps2,
+		     double a[][3],
+		     int n);
 
-all:
-	@echo 'make run'
+//pg_pipe.c
+void force_gravity_on_emulator(double x[][3],
+			       double m[],
+			       double eps2,
+			       double a[][3],
+			       int n);
 
-r: run
-
-run:
-	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
-
-run.1gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
-
-run.2gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
-
-run.4gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
-
-
-
-demo:
-	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
-#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+//force_gravity_on_b3.c
+void force(double x[][3],
+	   double m[],
+	   double eps2,
+	   double a[][3],
+	   int n);
 
 
-photo:
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+//check_pg2emu.c
+void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
 
 
-clean:
-	rm -rf bad.list .*~ *~ ./predictions.jpg
-	rm -rf backup/model*
+//
+void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
 
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
 
-c: clean
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
+void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
 
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
+void debug_position(double x[][DIM], double dt, int n);
 
-0.check:
-	cd backup/;md5sum --check md5sum.txt
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
 
-check:
-	grep ID.000[0-3] etc/all.txt |wc -l
-	grep ID.0004 etc/all.txt |wc -l
-	grep ID.0005 etc/all.txt |wc -l
-	grep ID.0006 etc/all.txt |wc -l
-	grep ID.000[7-9] etc/all.txt |wc -l
-	grep ID.0004 etc/list.train.txt |wc -l
-	grep ID.0005 etc/list.train.txt |wc -l
-	grep ID.0006 etc/list.train.txt |wc -l
-	grep ID.0004 etc/list.valid.txt |wc -l
-	grep ID.0005 etc/list.valid.txt |wc -l
-	grep ID.0006 etc/list.valid.txt |wc -l
-
-check.iou:
-	\rm -f IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
-	\grep IOU IOU.txt
+void init_particles(char* fname,
+		    int* npar,
+		    double mass[],
+		    double posi[][DIM],
+		    double veloc[][DIM]);
