@@ -1,50 +1,29 @@
-2027Âπ¥  1Êúà  6Êó• Ê∞¥ÊõúÊó• 09:51:58 JST
-#include <math.h>
-#define DIM (3)              /* éüå≥êî */
-#define NMAX (65536)         /* ç≈ëÂó±éqêî */
-//#define NTOTAL 1000      /* ó±éqêî (NTOTAL <= NMAX) */
+2027Âπ¥  1Êúà  8Êó• ÈáëÊõúÊó• 11:43:15 JST
+#!/usr/bin/env python3
+#Time-stamp: <>
+import fnmatch
+import functools
+import os
+import re
 
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
+def find(path, pattern):
 
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
+    if isinstance(pattern, str): 
+        match = functools.partial(fnmatch.fnmatch, pat=pattern)
+    elif isinstance(pattern, re._pattern_type):
+        match = pattern.match
+    elif callable(pattern):
+        match = pattern
+    else:
+        raise TypeError
 
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+    for root, dirs, files in os.walk(path):
+        for file_ in files:
+            if match(file_):
+                yield os.path.join(root, file_)
 
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+if __name__ == '__main__':
+    for i in find('../log/', '*.jpg'):
+        print (i)
 
-
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
-
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
-
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
-
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
