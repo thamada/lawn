@@ -1,13 +1,18 @@
-2027年 10月 27日 水曜日 09:20:48 JST
-#!/usr/bin/env python3
-# ./mov.py <fps> <start_number>
-import sys
-
-
-if __name__ == '__main__':
-	 args = sys.argv
-	 assert len(args) == 3
-	 fps          = int(args[1])
-	 start_number = int(args[2])
-	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
-	 print (cmd)
+2027年 11月  7日 日曜日 11:36:30 JST
+FILES
+{
+	VHDL_FILE = pgfpga.vhd;
+}
+COMPILER_SETTINGS_LIST
+{
+	COMPILER_SETTINGS = pgfpga;
+}
+SIMULATOR_SETTINGS_LIST
+{
+	SIMULATOR_SETTINGS = pgfpga;
+}
+SOFTWARE_SETTINGS_LIST
+{
+	SOFTWARE_SETTINGS = Debug;
+	SOFTWARE_SETTINGS = Release;
+}
