@@ -1,85 +1,90 @@
-2027年 11月 30日 火曜日 10:15:22 JST
+2027年 12月  2日 木曜日 09:58:14 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-05-30 09:51:10 hamada>
-import argparse
+#Time-stamp: <2017-07-05 00:18:35 hamada>
+import Message
 import numpy as np
 import cv2
 from datetime import datetime
-import mkdir
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xaf, 0xdf, 0xf)
-    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
-
-if (__name__ == '__main__'):
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-    log_base = '../log/'
-    cap = []
-    for i in range(3):
-        cap.append(cv2.VideoCapture(i))
-
-    # -- swap cap --
-    if True:
-        cap_tmp = cap[0]
-        cap[0] = cap[2]
-        cap[2] = cap_tmp
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
 
-    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
-    size = (int(cap_width/2), int(cap_height/2))
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
 
-    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
-        frame = [0,0,0]
-        for (i, fm) in enumerate(frame):
-            ret, fm = cap[i].read()
-            smallimg = cv2.resize(fm, size)
-            if False: cv2.imshow('camera: %d'%(i), smallimg)
-            frame[i] = smallimg
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-        # ----------------------------------------------------------------
-        frame_height, frame_width = frame[0].shape[:2]
-        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-        for (i, fm) in enumerate(frame):
-            sx = frame_width * i
-            sy = 0
-            ex = frame_width * (i+1)
-            ey = frame_height
-            image[sy:ey,sx:ex] = fm
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
 
-        cv2.imshow('pycam', image)
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(image, tnow)
-            basedir = '../log/'
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, image)
-            print(ofname)
-            tnow0 = tnow
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+def get_bar_length(msg, x):
+    class_id = msg.get_classId()
+    dx = 25
+    z = 0
+    # if class_id == 5: z = x + dx/2; x = int(z)
+    # if class_id == 6: z = x + dx*2; x = int(z)
+    # if class_id == 4: z = x - dx*2; x = int(z)
 
-    for (i, fm) in enumerate(frame):
-        cap[i].release()
+    if class_id == 0: z = x + dx*2; x = int(z)
+    if class_id in {0,4,5,6,7,8}: 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        print (tnow,': ', msg.class_count)
+    return (x)
+
+if __name__ == '__main__':
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 120)
+    image  = image0.copy()
+
+    window_title = "AI sensor"
+    x = 0
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
+
+    while(True):
+        x = get_bar_length(msg, x)
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
 
     cv2.destroyAllWindows()
-
-    print("Done.")
