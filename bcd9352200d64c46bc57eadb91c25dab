@@ -1,117 +1,186 @@
-2027年  6月 29日 火曜日 11:19:33 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-16 23:48:16 hamada>
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2027年  7月  1日 木曜日 11:15:40 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Test Bench created by
+-- HDL Bencher 6.1i
+-- Sun Jan 02 23:14:58 2005
+-- 
+-- Notes:
+-- 1) This testbench has been automatically generated from
+--   your Test Bench Waveform
+-- 2) To use this as a user modifiable testbench do the following:
+--   - Save it as a file with a .vhd extension (i.e. File->Save As...)
+--   - Add it to your project as a testbench source (i.e. Project->Add Source...)
+-- 
 
-class Queue:
-    def __init__(self, queue = None):
-        self.index = 0
-        self.index_max = 50
-        self.image0 = np.zeros((120, 160, 3), np.uint8)
-        if type(queue) is type([]):
-            self.queue = queue
-        elif queue is None:
-            self.queue = []
-        else:
-            print ('Error Message:')
-            print ('    Your input is not type of list!')
-            print ('    Please enter list type!')
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-    def enqueue(self, e):
-        if self.index < self.index_max :
-            self.queue.append(e)
-            self.index += 1
-            print ("queue index: ", self.index)
-        else:
-            self.dequeue()
-            self.queue.append(e)
+ENTITY sim_local_write IS
+END sim_local_write;
 
-        return self.queue
+ARCHITECTURE testbench_arch OF sim_local_write IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "results.txt";
+	COMPONENT local_write
+		PORT (
+			MEM_AD : In  std_logic_vector (16 DOWNTO 0);
+			MEM_WE : In  std_logic;
+			MEM_DTI : In  std_logic_vector (63 DOWNTO 0);
+			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-    def dequeue(self):
-        try:
-            qEl = self.queue[0]
-            del self.queue[0]
-            return (qEl, self.queue)
-        except IndexError:
-            print ('Error Message:')
-            print ('    There is no element in the queue!')
+	SIGNAL MEM_AD : std_logic_vector (16 DOWNTO 0);
+	SIGNAL MEM_WE : std_logic;
+	SIGNAL MEM_DTI : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-    def look_first(self):
-        ret = self.image0
-        if self.index > 1:
-            ret = self.queue[0]
-        return (ret)
-            
+BEGIN
+	UUT : local_write
+	PORT MAP (
+		MEM_AD => MEM_AD,
+		MEM_WE => MEM_WE,
+		MEM_DTI => MEM_DTI,
+		DMAW_ENABLE => DMAW_ENABLE,
+		DBUS_Port => DBUS_Port,
+		RST => RST,
+		CLK => CLK
+	);
 
-class WebCam(object):
-    def __init__(self):
-        self.devid = 2
-        self.tnow  = ''
-        self.fifo = Queue()
-        self.window_title = 'camera: %d' % (self.devid)
-        self.cap = cv2.VideoCapture(self.devid) 
-        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
-        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
+	PROCESS -- clock process for CLK,
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		WAIT FOR 10 ns;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-        self.display(True)
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
+		VARIABLE TX_ERROR : INTEGER := 0;
 
-    def put_text(self, image, text):
-        font_size = 1.0
-        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
-        # font_type = cv2.FONT_HERSHEY_PLAIN
-        # font_type = cv2.FONT_HERSHEY_DUPLEX
-        font_type = cv2.FONT_HERSHEY_TRIPLEX
-        font_color = (0x0, 0x77, 0x0)
-        px = int(image.shape[1]*0.15 )
-        py = int(image.shape[0]*0.9 )
+		PROCEDURE CHECK_DMAW_ENABLE(
+			next_DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DMAW_ENABLE /= next_DMAW_ENABLE) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DMAW_ENABLE="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DMAW_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+		PROCEDURE CHECK_DBUS_Port(
+			next_DBUS_Port : std_logic_vector (63 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DBUS_Port /= next_DBUS_Port) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DBUS_Port="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DBUS_Port);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
+		BEGIN
+		-- --------------------
+		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
+		MEM_WE <= transport '0';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=500 ns
+		MEM_AD <= transport std_logic_vector'("01100000000000000"); --C000
+		MEM_WE <= transport '1';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000001000100010001"); --1111
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=600 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000010001000100010"); --2222
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=700 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000011001100110011"); --3333
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=800 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000100010001000100"); --4444
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=900 ns
+		MEM_WE <= transport '0';
+		-- --------------------
+		WAIT FOR 800 ns; -- Time=1700 ns
+		MEM_AD <= transport std_logic_vector'("01000000000000000"); --8000
+		MEM_WE <= transport '1';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000101010111100110111101111"); --ABCDEF
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1800 ns
+		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
+		MEM_WE <= transport '0';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		-- --------------------
+		WAIT FOR 1205 ns; -- Time=3005 ns
+		-- --------------------
 
-    def display(self, is_clear=False):
-        wx = 320
-        wy = 240
-        step = 5
-        if is_clear :
-            for i in range (0, self.fifo.index_max, step):
-                image = self.fifo.image0
-                wname = self.window_title + ": %d" %(i)
-                cv2.resizeWindow(wname, wx, wy)
-                cv2.moveWindow(wname, int(i*wx/step), 0)
-                cv2.imshow(wname, image)
+		IF (TX_ERROR = 0) THEN 
+			STD.TEXTIO.write(TX_OUT,string'("No errors or warnings"));
+			STD.TEXTIO.writeline(results, TX_OUT);
+			ASSERT (FALSE) REPORT
+				"Simulation successful (not a failure).  No problems detected. "
+				SEVERITY FAILURE;
+		ELSE
+			STD.TEXTIO.write(TX_OUT, TX_ERROR);
+			STD.TEXTIO.write(TX_OUT, string'(
+				" errors found in simulation"));
+			STD.TEXTIO.writeline(results, TX_OUT);
+			ASSERT (FALSE) REPORT
+				"Errors found during simulation"
+				SEVERITY FAILURE;
+		END IF;
+	END PROCESS;
+END testbench_arch;
 
-        for i in range (0, self.fifo.index, step):
-            image = self.fifo.queue[i].copy()
-            wname = self.window_title + ": %d" %(i)
-            image2 = cv2.resize(image, (wx, wy))
-            cv2.imshow(wname, image2)
-
-    def save_photo(self):
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-            if(tnow != self.tnow):
-                self.put_text(frame, tnow)
-                basedir = './log.%d/'% (self.devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, frame)
-                print(ofname, "devid = %d" % self.devid)
-                self.tnow = tnow
-                print("%s: Take photo" % self.tnow )
-                self.fifo.enqueue(frame)
-                self.display()
-
-    def clear_cache(self):
-        self.display()
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-
-        # self.cap.release()
-        # cv2.destroyAllWindows()
-
+CONFIGURATION local_write_cfg OF sim_local_write IS
+	FOR testbench_arch
+	END FOR;
+END local_write_cfg;
