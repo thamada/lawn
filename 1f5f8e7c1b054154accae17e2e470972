@@ -1,16 +1,5 @@
-2027年  7月 12日 月曜日 10:46:00 JST
-#!/usr/bin/env python3
-
-import glob
-import sys
-import random
-
-fname = sys.argv[1]
-random.seed()
-
-with open(fname, "r") as fd:
-    lines = fd.readlines()
-    random.shuffle(lines)
-    for l in lines:
-        l = l.replace("\n",'')
-        print (l)
+2027年  7月 28日 水曜日 10:15:28 JST
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
