@@ -1,10 +1,2 @@
-2027年  1月 24日 日曜日 10:18:42 JST
-# ProjNav -> New Source -> TBW
-c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
-# ProjNav -> New Source -> TBW
-C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
-# Bencher Waveform : PDCL (jhdparse)
-# ModelSim : Simulate Behavioral VHDL Model
-sim.fdo
-# ModelSim : Simulate Behavioral VHDL Model
-vsim.wlf
+2027年  1月 31日 日曜日 09:54:55 JST
+set AD {../rtl/ifpga.ucf}
