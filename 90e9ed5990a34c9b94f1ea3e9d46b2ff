@@ -1,57 +1,138 @@
-2028Âπ¥  1Êúà  2Êó• Êó•ÊõúÊó• 09:48:56 JST
-1
-0.0	0.0
--100.0	0.0
--100.0	0.0
--100.0	0.0
--100.0	0.0
--2.746715e-01	4.191831e-01
--2.931587e-01	2.247797e-01
-2.321991e-01	4.064824e-01
--1.520429e-01	3.578809e-01
--8.481506e-02	-3.058323e-01
-1.856104e-01	2.437552e-02
--3.403643e-01	4.547575e-01
--3.730157e-01	-4.956605e-01
--1.173085e-01	-2.492071e-01
-1.552879e-01	3.449078e-02
-1.099664e-01	-2.121421e-01
-4.092620e-01	2.361288e-01
--3.788992e-01	1.148062e-01
--2.340848e-01	4.453564e-01
--7.531051e-02	-2.516460e-01
-1.772955e-01	-4.287967e-01
--4.426001e-02	-3.237644e-04
--4.797312e-01	3.861750e-01
-1.545830e-01	5.970007e-02
-4.850480e-01	-1.605443e-01
--4.632017e-01	-2.009751e-01
-4.881687e-01	-5.634217e-02
--3.708808e-01	4.150378e-01
--1.135756e-01	-4.695678e-01
--3.155564e-01	4.356883e-01
--1.920876e-02	9.783734e-02
--6.385236e-02	-3.949834e-01
-2.275205e-01	-3.768423e-01
-1.721155e-01	-4.660092e-01
-4.644338e-01	-4.804784e-01
--4.553355e-01	-7.876486e-02
-2.642185e-01	4.444889e-01
-5.434882e-02	1.171663e-01
-1.465040e-01	-1.143288e-01
-4.021194e-01	-1.771178e-01
--7.684997e-02	-4.504972e-02
-7.223762e-02	-4.515364e-01
--2.392842e-02	-3.878574e-01
-3.425949e-01	-1.136164e-01
--4.632521e-01	2.447992e-01
-2.661087e-03	-2.676771e-01
--2.328564e-01	-3.223420e-01
--4.466751e-01	-1.286633e-01
--4.479510e-01	-6.189542e-02
--4.433532e-01	1.711145e-01
--2.251056e-01	-4.814771e-01
-1.644014e-01	3.307433e-01
--4.618902e-01	1.489123e-01
-7.775744e-02	3.332788e-01
-3.334003e-01	-1.894713e-01
+2028Âπ¥  1Êúà  2Êó• Êó•ÊõúÊó• 10:09:07 JST
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
+
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
+
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- ÉäÉZÉbÉg
+    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
+    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
+    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
+  );
+end dcm_ps_f;
+
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
+end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
+
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
+
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
+signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
+
+begin
+
+-- *********************************************************************
+-- å≈íËêMçÜ
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0å≈íËêMçÜ
+
+
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ÉäÉZÉbÉg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
+    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
+
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
+    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
+  );
+
+end rtl;
