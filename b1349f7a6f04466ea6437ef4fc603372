@@ -1,150 +1,50 @@
-Sun Mar 19 19:52:10 JST 2006
---###############################
---# by T.Hamada for B3 Board    #
---###############################
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-
-entity DPRAM is
-  port (
-    RST         : in  std_logic;                        -- PCI Bus Reset
-    CLK         : in  std_logic;                        -- PCI bus Clock
-    CLKB        : in   std_logic;                       -- Port B Clock
-    -- PCI R/W ports
-    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
-    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
-    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
-    -- USER Application R/W ports
-    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
-    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
-    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
-    );
-end DPRAM;
-
-
-architecture DPRAM_rtl of DPRAM is
-
---------------------------------------------------
--- Components
---------------------------------------------------
---component dp32b512w
---  port (
---    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
---    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
---    clka       : in  std_logic;                        -- Port A Clock
---    clkb       : in  std_logic;                        -- Port A Clock
---    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
---    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
---    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
---    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
---    wea        : in  std_logic;                        -- Port A Write Enable
---    web        : in  std_logic                         -- Port A Write Enable
---    );
---end component;
-
-component dp32b8192w
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
-
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0)
-  );
-end component;
-
-  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
-  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
-begin
-
-
---***************************************************************
---* instantiate sub-blocks
---***************************************************************
-
--- Low Word (32 bit)
-
-  dp0 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port B Clock
-    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
-    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
-    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
-    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
-    wea        => MEM_WELA,                       -- Port A Write Enable
-    web        => MEM_WELB                        -- Port A Write Enable
-  );
-
--- High Word (32 bit)
-
-  dp1 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port A Clock
-    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
-    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
-    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
-    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
-    wea        => MEM_WEHA,                       -- Port A Write Enable
-    web        => MEM_WEHB                        -- Port A Write Enable
-  );
-
-
---***************************************************************
---*
---*  PORT A Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- Port A Read Data Select Flag Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_RDTFLG <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Port A Read Data Output Control Process
---------------------------------------------------------------------------------
-
-  process (MEM_RDTFLG,MEM_RDDT) begin
-    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
-      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
-    else
-      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Port A Read Data Enable Signal Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_DTOEN <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
-    end if;
-  end process;
-
-end DPRAM_rtl;
+Tue Apr 18 19:51:16 JST 2006
+/EQNINJ
+/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
+/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
+/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/NPIPE 1
+/NVMP 1
+void force(double x[][3], double m[], double eps2, double a[][3], int n){
+  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
+  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
+  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
+  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
+  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
+  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
+  pg_log_shift(1,dx_0,x2_0,17)
+  pg_log_shift(1,dx_1,x2_1,17)
+  pg_log_shift(1,dx_2,x2_2,17)
+  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
+  pg_log_shift(-1,r2,r1,17)
+  pg_log_muldiv(MUL,r2,r1,r3,17,2)
+  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
+  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
+  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
+  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
+  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
+  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
+  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
+  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
+  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
+  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
+  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
+  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
+  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
+  pg_pdelay(ieps2,ieps2r,17,7)
+  pg_pdelay(mj,mjr,17,27)
+  pg_pdelay(dx_0,dx_0r,17,22)
+  pg_pdelay(dx_1,dx_1r,17,22)
+  pg_pdelay(dx_2,dx_2r,17,22)
+  pg_rundelay(41)
+}
