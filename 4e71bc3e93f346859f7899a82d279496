@@ -1,25 +1,16 @@
-Sat Jun 24 20:05:51 JST 2006
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT tmp2
-DESIGN tmp2
-DEVFAM virtex2
-DEVFAMTIME 0
-DEVICE xc2v1000
-DEVICETIME 0
-DEVPKG fg456
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE pfpga_config.vhd
-STIMULUS sim.tbw
-[STRATEGY-LIST]
-Normal=True
+Sun Jun 25 19:29:55 JST 2006
+/** 
+# vを1/2ステップ進める
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
+
+#include <stdio.h>
+#include "nbodysim.h"
+
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
+}
