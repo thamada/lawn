@@ -1,15 +1,16 @@
-Thu Jul 20 19:51:08 JST 2006
-#!/usr/bin/perl
+Sun Jul 23 19:53:33 JST 2006
+#!/bin/sh
+#
+# An example hook script to check the commit log message taken by
+# applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.  The hook is
+# allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "applypatch-msg".
 
-my $nloop = 16;
-my $logbase = "log.GTX";
-
-for(my $ni=2; $ni<131073; $ni = $ni*2){
-    my $bin = "\$\(BIN\)";
-    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
-    my $log = "\$LOG";
-    my $cmd = "$bin $ifile $nloop >> $log";
-    print "\t".$cmd ."\n";
-}
-
-1;
+. git-sh-setup
+test -x "$GIT_DIR/hooks/commit-msg" &&
+	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
+:
