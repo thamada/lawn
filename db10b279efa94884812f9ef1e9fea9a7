@@ -1,80 +1,129 @@
-Thu Jun 29 19:44:40 JST 2006
--- Last Modifiled at 2004/12/27
+Wed Aug  2 19:57:49 JST 2006
+#!/bin/sh
+#
+# An example hook script to blocks unannotated tags from entering.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# To enable this hook, rename this file to "update".
+#
+# Config
+# ------
+# hooks.allowunannotated
+#   This boolean sets whether unannotated tags will be allowed into the
+#   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
+#
 
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
 
-entity adr_dec is
-  port (
-    clk        : in std_logic;
-    adr        : in std_logic_vector(18 downto 0);
-    is_jpw     : out std_logic;
-    is_ipw     : out std_logic;
-    is_fo      : out std_logic;
-    is_setn    : out std_logic;
-    is_run     : out std_logic;
-    FPGA_NO    : in std_logic_vector(1 downto 0));
-end adr_dec;
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
 
-architecture rtl of adr_dec is
-signal cmd_h : std_logic_vector(6 downto 0);
-signal cmd_l : std_logic_vector(11 downto 0);
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
+	exit 1
+fi
 
-begin
+# --- Config
+allowunannotated=$(git config --bool hooks.allowunannotated)
+allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --bool hooks.denycreatebranch)
+allowdeletetag=$(git config --bool hooks.allowdeletetag)
+allowmodifytag=$(git config --bool hooks.allowmodifytag)
 
-cmd_h <= adr(18 downto 12);
-cmd_l <= adr(11 downto 0);
+# check for no description
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+case "$projectdesc" in
+"Unnamed repository"* | "")
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+	;;
+esac
 
--- is_jpw ----------------------
-process(cmd_h,cmd_l) begin -- BroadCast Only
---if (cmd_h(3) = '1') then -- 4096w * 512bit = 256KByte
---if (cmd_h(4) = '1') then -- 8192w * 512bit = 512KByte
---if (cmd_h(5) = '1') then --16384w * 512bit =   1MByte
-  if (cmd_h(6) = '1') then --32768w * 512bit =   2MByte
-     is_jpw <= '1';
-  else
-     is_jpw <= '0';
-  end if;
-end process;
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
+	newrev_type=delete
+else
+	newrev_type=$(git cat-file -t $newrev)
+fi
 
--- is_ipw ----------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0000101") AND (cmd_l(11 downto 10)=FPGA_NO)) then
-     is_ipw <= '1';
-  else
-     is_ipw <= '0';
-  end if;
-end process;
+case "$refname","$newrev_type" in
+	refs/tags/*,commit)
+		# un-annotated tag
+		short_refname=${refname##refs/tags/}
+		if [ "$allowunannotated" != "true" ]; then
+			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
+			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,tag)
+		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,commit)
+		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/remotes/*,commit)
+		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	*)
+		# Anything else (is there anything else?)
+		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
+		exit 1
+		;;
+esac
 
--- is_fo -----------------------
-process(cmd_h,cmd_l) begin
---  if((cmd_h = "0000110") AND (cmd_l(9 downto 8) = FPGA_NO)) then
-  if((cmd_h = "0000110") AND (cmd_l(10 downto 9) = FPGA_NO)) then
-     is_fo <= '1';
-  else
-     is_fo <= '0';
-  end if;
-end process;
-
--- is_setn ---------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0111") AND (cmd_l(11 downto 0) = "000000000000")) then
-     is_setn <= '1';
-  else
-     is_setn <= '0';
-  end if;
-end process;
-
--- is_run ----------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0000111") AND (cmd_l(11 downto 0) = "000000000011")) then
-     is_run <= '1';
-  else
-     is_run <= '0';
-  end if;
-end process;
-
-
-end rtl;
+# --- Finished
+exit 0
