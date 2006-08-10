@@ -1,59 +1,68 @@
-Thu Aug  3 20:13:19 JST 2006
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+Thu Aug 10 19:26:27 JST 2006
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "flops.h"
+//#include "pg_util.h" // double e_time(void)
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+extern double e_time(void);
 
-int main()
+void flops_initialize(struct flops_member* fm, int n, int nskip)
 {
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
-
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
-
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
-
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
-
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
-
-    cout.precision(16);
-
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
-    }
+  (*fm).nbody = n;
+  (*fm).nskip = nskip;
+  (*fm).times = 0;
+  (*fm).nstep = 0;
+  (*fm).force_time = 0.0;
+  (*fm).start_time = e_time();
 }
-//-----------------------------------------------------------------------------
+
+void flops_check(struct flops_member* fm)
+{
+  int n = (*fm).nbody;
+  int nskip = (*fm).nskip;
+  int nstep = (*fm).nstep;
+  int times = (*fm).times;
+  double t_start = (*fm).start_time;
+  double tmisc,tall;
+  double nope,Gflops;
+  double t_end;
+  nstep++;
+
+  if((times % nskip) != (nskip-1)){
+    times++;
+  } else {
+    double tforce = (*fm).force_time;
+    t_end = e_time();
+    tall = t_end - t_start;
+    tmisc = tall - tforce;
+    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
+    //       GRAVITY,  LEAPFLOG
+    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
+    fprintf(stderr,"[%d steps]\t",nstep);
+    fprintf(stderr,"LapTime %2.2f sec\t",tall);
+    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+
+    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
+    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
+
+    times = 0;
+    t_start = e_time();
+  }
+  (*fm).times = times;
+  (*fm).nstep = nstep;
+  (*fm).start_time = t_start;
+}
+
+
+
+void flops_ftime_init(struct flops_member *fm){
+  (*fm).force_time = e_time();
+}
+
+void flops_ftime_save(struct flops_member *fm){
+  double dum = (*fm).force_time;
+  (*fm).force_time = e_time() - dum;
+}
+
+
