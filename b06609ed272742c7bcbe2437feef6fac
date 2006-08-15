@@ -1,4 +1,4 @@
-Sat Jul  8 19:26:58 JST 2006
+Tue Aug 15 20:21:06 JST 2006
 -- 2004/05/13 16:30
 -- for matsubayashi simulation
 
@@ -9,22 +9,22 @@ Sat Jul  8 19:26:58 JST 2006
 #define NFOR 57
 #define NACC 64
 
-#define DELAY_SUB 1  /* A */
-#define DELAY_FL  1  /* B */
-#define DELAY_X2Y2 1    /* C */
-#define DELAY_R2   1    /* D */
+#define DELAY_SUB 2     /* A */
+#define DELAY_FL  4     /* B */
+#define DELAY_X2Y2 5    /* C */
+#define DELAY_R2   5    /* D */
 #define DELAY_R3   1    /* E */
 #define DELAY_MR3  1    /* F */
 #define DELAY_F    1    /* G */
 #define DELAY_OF   1    /* H */
-#define DELAY_LF   1    /* I */
-#define DELAY_AC   1    /* J */
+#define DELAY_LF   2    /* I */
+#define DELAY_AC   3    /* J */
 
-#define DELAY_EPS  2    /* A+B */
-#define DELAY_DX   4    /* C+D+E+F */
-#define DELAY_M    5    /* A+B+C+D+E */
-#define DELAY_CLE  9    /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  10   /* DELAY_CLE + DELAY_AC */
+#define DELAY_EPS  6    /* A+B */
+#define DELAY_DX   12   /* C+D+E+F */
+#define DELAY_M    17   /* A+B+C+D+E */
+#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
+#define DELAY_TOT  25   /* (DELAY_CLE) + J */
 
 
 
@@ -67,45 +67,5 @@ void force_gravity_on_emulator(x,m,eps2,a,n)
 	double a[][3];
 	int n;
 {
-  pg_rundelay(10);
-  pg_fix_addsub(SUB,xi,xj,xij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,yi,yj,yij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,zi,zj,zij,NPOS,DELAY_SUB);
   pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(yij,dy,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(zij,dz,NPOS,NLOG,NMAN,DELAY_FL);
-
-  pg_pdelay(dx,dxr,NLOG,DELAY_DX);
-  pg_pdelay(dy,dyr,NLOG,DELAY_DX);
-  pg_pdelay(dz,dzr,NLOG,DELAY_DX);
-
-  pg_log_shift(1,dx,x2,NLOG);
-  pg_log_shift(1,dy,y2,NLOG);
-  pg_log_shift(1,dz,z2,NLOG);
-
-  pg_pdelay(ieps2,ieps2r,NLOG,DELAY_EPS);
-  pg_log_unsigned_add_itp(    x2,y2,x2y2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(z2,ieps2r,z2e2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(  x2y2,z2e2,r2,NLOG,NMAN,DELAY_R2,NCUT);
-
-  pg_log_shift(-1,r2,r1,NLOG);
-  pg_log_muldiv(MUL,r2,r1,r3,NLOG,DELAY_R3);
-
-  pg_pdelay(mj,mjr,17,DELAY_M);
-  pg_log_muldiv(DIV,mjr,r3,mf,NLOG,DELAY_MR3);
-
-  pg_log_muldiv(MUL,mf,dxr,fx,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dyr,fy,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dzr,fz,NLOG,DELAY_F);
-
-  pg_log_muldiv(SDIV,fx,fx_ofst,fxo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fy,fy_ofst,fyo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fz,fz_ofst,fzo,NLOG,DELAY_OF);
-
-  pg_conv_ltof(fxo,ffx,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fyo,ffy,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fzo,ffz,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_fix_accum(ffx,sx,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffy,sy,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffz,sz,NFOR,NACC,DELAY_AC,DELAY_CLE);
 }
