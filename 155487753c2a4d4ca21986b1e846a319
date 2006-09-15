@@ -1,153 +1,227 @@
-Fri Aug 25 19:27:00 JST 2006
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
--- LOCAL IO (READ & WRITE)
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+Fri Sep 15 19:57:51 JST 2006
+//Time-stamp: "2007-01-24 01:31:34 hamada"
+//
+// API for the PGR system for PROGRAPE-4
+//
+// by T.Hamada
+//
 
-entity LOCAL_IO is
-  generic (NBIT_L_ADRO : integer := 3);
-  port (
-    
-    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
-    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
-    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "pg4.h"
+#include "pg4reg.h"
+#include "pgrapi.h"
 
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
+unsigned int *bar1[8];
 
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+static unsigned int *ptr[] = {
+  NULL, NULL, NULL, NULL
+};
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
+static int npipe_per_chip[] = {1,1,1,1};
+static int jwidth[] = {JDIM, JDIM, JDIM, JDIM};
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_IO;
-architecture rtl of LOCAL_IO is
+static int NCHIP = 4;                               // NCHIP variable
+void pgr_set_nchip(int n){   NCHIP = n; }           // NCHIP variable
 
-component LOCAL_WRITE
-  port (
-    -- pcicnt input
-    MEM_AD  : in std_logic_vector(19 downto 0);
-    MEM_WE  : in std_logic;
-    MEM_DTI : in std_logic_vector(63 downto 0);
+void pgr_reset(int devid)
+{
+  // allocate DMA buffer
+  if (ptr[devid] == NULL) {
+    ptr[devid] = pg4_get_dmarptr(devid);
 
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+    if (ptr[devid] == NULL) {
+      fprintf(stderr, "mmap error!!!!!\n fatal error, now exiting....\n");
+      exit(-1);
+    }
+  }
 
-component LOCAL_READ
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='0'; -- to GPREG0
+  WriteBase0(devid, PIPE_RST, 0xf);   // send RST<="1111" ( 4 chips )
+  WriteBase0(devid, PIPE_RST, 0x0);   // send RST<="0000" ( 4 chips )
+}
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+int pgr_get_writecomb_err(int devid)
+{
+  int rtn;
+  rtn = pg4_readbase0(devid, 0);
+  rtn >>= 6;
+  return (rtn);
+}
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM])
+{
+  unsigned int offset = (ADR_JPSET<<1) + ((j*JDIM*sizeof(unsigned int))>>2);
+  memcpy(bar1[devid]+offset, jdata, jwidth[devid]*sizeof(unsigned int));
+}
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
--- DMAW
-  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
--- DMAR
-  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
-  signal busy_dmar    : std_logic;
+void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj)
+{
+  unsigned int offset = (ADR_JPSET<<1);     // BroadCast
+  // nj <= 8192 !!
+  memcpy(bar1[devid]+offset, jdata, JDIM*sizeof(unsigned int)*nj);
+}
 
-begin
+void pgr_setipset(int devid, unsigned int *idata, int ni)
+{
+  unsigned int offset = (ADR_IPSET<<1);
+  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*ni);
+}
 
-  -- DMA BUSY or IDLE
-  process (CLK,busy_dmar,CALC_STS) begin
-    if(CLK'event and CLK='1') then
-      if   (CALC_STS='1' AND busy_dmar='0') then
-        BUSY_LOCAL_READ <= '0';
-      elsif(CALC_STS='1' AND busy_dmar='1') then
-        BUSY_LOCAL_READ <= '1';
-      elsif(CALC_STS='1' AND busy_dmar='0') then
-        BUSY_LOCAL_READ <= '1';
-      elsif(CALC_STS='0') then
-        BUSY_LOCAL_READ <= '1';
-      end if;
-    end if;
-  end process;
+void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
+{
+  int i;
+  int num = number_of_pipelines << XI_AWIDTH;
+  //  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11);
+  //  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*num);
+
+  for(i = 0; i < num; i++) {
+    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
+  }
+}
+
+/*
+void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
+{
+  int i;
+  int num = number_of_pipelines << XI_AWIDTH;
+  for(i = 0; i < num; i++) {
+    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
+  }
+}
+*/
+
+void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim)
+{
+  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11) | (ipipe<<XI_AWIDTH);
+  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*idim);
+}
+
+void pgr_start_calc(int devid, unsigned int n)
+{
+  unsigned int offset = ADR_SETN<<1;
+  int i;
+  volatile int j;
+  // SETN
+  pg4_writebase1(devid, offset, n);
+  pg4_writebase1(devid, offset+1, 0xffffffff);
+  j = pg4_readbase1(devid, offset+1); // flash cache
+  
+  // RUN
+  pg4_writebase1(devid, offset+6, 0xffffffff);
+  pg4_writebase1(devid, offset+7, 0xffffffff);
+  j = pg4_readbase1(devid, offset+1); // flash cache
 
 
+  // -------------------------- change 2005/01/04 by T.H
+  //                            wait until runret return
+  //                                 and prepare all foset(for 4chips) to ifpga RAM.
+  //  i=0;
+  while( (0x1 & pg4_readbase0(devid,0)) == 1){
+    //    i++;
+    //    fprintf(stderr,"%d ",i);
+    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
+  }
+  //  fprintf(stderr,"%d\n",i);
+}
 
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      DBUS_Port <= dbus_port0;
-    end if;
-  end process;
+void pgr_calc_start(int devid, unsigned int n)
+{
+  unsigned int offset = ADR_SETN<<1;
+  int i;
+  // -------------------------- SETN(i==0) & RUN(i==2)
+  for(i = 0; i < 16; i++){
+    pg4_writebase1(devid, offset+i, n);
+  }
+}
 
-  with busy_dmar select
-    dbus_port0 <= dmar_dbus_o when '1',
-                  dmaw_dbus_o when others;
+void pgr_calc_finish(int devid)
+{
+  while( (0x1 & pg4_readbase0(devid,0)) == 1){
+    //    i++;
+    //    fprintf(stderr,"%d ",i);
+    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
+  }
+}
 
--------------------------------------------------------------------------------
--- Write : IFPGA --> PFPGAs
--------------------------------------------------------------------------------
-u0 : LOCAL_WRITE
-  port map (MEM_AD      => MEM_ADA,
-            MEM_WE      => MEM_WELA,
-            MEM_DTI     => MEM_DTIA,
-            DMAW_ENABLE => DMAW_ENABLE,
-            DBUS_Port   => dmaw_dbus_o,
-            RST         => RST,
-            CLK         => CLK);
+void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM])
+{
+  int ret;
+  int npc = npipe_per_chip[devid];
+  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
 
--------------------------------------------------------------------------------
--- Read : IFPGA <-- PFPGAs
--------------------------------------------------------------------------------
-u1 : LOCAL_READ
-  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
-  port map (NPIPE       => NPIPE,
-            CALC_STS    => CALC_STS,
-            BUSY        => busy_dmar,
-            DMAR_ENABLE => DMAR_ENABLE,
-            DBUS_Port   => dmar_dbus_o,
-            DBUS_idata  => DBUS_idata,
-            DBUS_HiZ    => DBUS_HiZ,
-            MEM_ADB     => MEM_ADB,
-            MEM_WEHB    => MEM_WEHB,
-            MEM_WELB    => MEM_WELB,
-            MEM_DTIB    => MEM_DTIB,
-            RST         => RST,
-            CLK         => CLK);
+  AGAIN:
+  ret = pg4_DMAget(devid, size);
+  if (pg4_DMAretry(devid) > 0) {
+    //    fprintf(stderr, "possible DMA failure\n");
+    //    pg4_DMAcheck(devid);
+    goto AGAIN;
+  }
+  memcpy(fodata, &ptr[devid][0], size);
 
-end rtl;
+  //  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
+}
+
+void pgr_getfoset2(int devid, unsigned long long int fodata[][FDIM], unsigned int size, unsigned int offset)
+{
+  int ret;
+
+  AGAIN2:
+  ret = pg4_DMAget_offset(devid, size, offset);
+  if (pg4_DMAretry(devid) > 0) {
+    //    fprintf(stderr, "possible DMA failure\n");
+    //    pg4_DMAcheck(devid);
+    goto AGAIN2;
+  }
+  memcpy(fodata, &ptr[devid][0], size);
+}
+
+//PIO version
+void pgr_getfoset3(int devid, unsigned long long int fodata[][FDIM])
+{
+  int npc = npipe_per_chip[devid];
+  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
+  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
+}
+
+void pgr_set_jwidth(int devid, int n)
+{
+ if(n < 1) {
+    fprintf(stderr,"pgr api error, JWIDTH be > 0.\n");
+    exit(-1);
+  }
+  jwidth[devid] = n;
+}
+
+void pgr_set_npipe_per_chip(int devid, int n){
+  if(n>256){
+    fprintf(stderr,"pgr api error, NPIPE/chip must be < 257.\n");
+    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
+    exit(-1);
+  }else if(n<1){
+    fprintf(stderr,"pgr api error, NPIPE/chip must be > 0.\n");
+    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
+    exit(-1);
+  }
+  npipe_per_chip[devid] = n; // this is used in pgr_getfoset().
+  WriteBase0(devid, NPIPE_IFPGA, n);
+}
+
+int pgr_open(int id)
+{
+  int rtn;
+  rtn = pg4_open(id);
+  bar1[id] = pg4_get_bar1ptr(id);
+
+  return rtn;
+}
+
+void pgr_close(int devid)
+{
+  pg4_close(devid);
+}
+
+
