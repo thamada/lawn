@@ -1,82 +1,86 @@
-Thu Oct 12 19:29:34 JST 2006
------------------------------------------------
---  pgpg-b3 dual port RAM module (for IMEM)
---      32 bits
---   16384 entries
---  Copyright(c) 2004- by Tsuyoshi Hamada
---  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
---  2004/10/29 : for Jmem by Tsuyoshi Hamada
------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
+Sat Oct 14 19:45:19 JST 2006
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-entity dp32b8192w is
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
 
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0));
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
 
-end dp32b8192w;
-
-architecture rtl of dp32b8192w is
-
-component RAMB16_S2_S2
-  generic (
-         INIT_A : bit_vector := X"0";
-         INIT_B : bit_vector := X"0";
-         SRVAL_A : bit_vector := X"0";
-         SRVAL_B : bit_vector := X"0";
-         WRITE_MODE_A : string :="WRITE_FIRST";
-         WRITE_MODE_B : string :="WRITE_FIRST");
-  port ( doa   : out std_logic_vector(1 downto 0);
-         addra : in std_logic_vector(12 downto 0);
-         clka  : in std_logic;
-         dia   : in std_logic_vector(1 downto 0);
-         ena   : in std_logic;
-         ssra  : in std_logic;
-         wea   : in std_logic;
-
-         dob   : out std_logic_vector(1 downto 0);
-         addrb : in std_logic_vector(12 downto 0);
-         clkb  : in std_logic;
-         dib   : in std_logic_vector(1 downto 0);
-         enb   : in std_logic;
-         ssrb  : in std_logic;
-         web   : in std_logic);
-end component;
-
-begin
-
-  forgen1: for i in 0 to 15 generate
-    uraml: RAMB16_S2_S2 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
-	      PORT MAP(-- FIFO SIDE --
-                       clka=>clka,
-                       addra=>addra,
-                       dia=>dina(((2*i)+1) downto 2*i),
-                       doa=>douta(((2*i)+1) downto 2*i),
-                       ena=>'1',
-                       ssra=>'0',
-                       wea=>wea,
-                       -- LOCAL SIDE --
-                       clkb=>clkb,
-                       addrb=>addrb,
-                       dib=>dinb(((2*i)+1) downto 2*i),
-                       dob=>doutb(((2*i)+1) downto 2*i),
-                       enb=>'1',
-                       ssrb=>'0',
-                       web=>web);
-  end generate forgen1;
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
 
-end rtl;
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
+
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
+
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
+
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
+
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+
+
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
+
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
+
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
+
+
+
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
+
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
 
