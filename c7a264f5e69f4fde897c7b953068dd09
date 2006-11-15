@@ -1,69 +1,53 @@
-Thu Nov  2 19:43:49 JST 2006
--- Copyright (c) by PGR project
--- All rights reserved.
--- Auther Tsuyoshi Hamada
--- for JDIM=4 (JDATA_WIDTH =< 128)
--- but DEPTH=16384
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+Wed Nov 15 20:26:04 JST 2006
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-entity jmem is
-  port (
-    rst        : in  std_logic; -- not used
-    we         : in  std_logic;
-    wclk       : in  std_logic;
-    wadr       : in  std_logic_vector(15 downto 0);
-    rclk       : in  std_logic;
-    radr       : in  std_logic_vector(15 downto 0);
-    idata      : in  std_logic_vector(63 downto 0);
-    odata      : out  std_logic_vector(127 downto 0)  -- for G5
---  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
---  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
-  );
-end jmem;
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-architecture rtl of jmem is
+void                   pg4_close (int id);
 
-component dpram
-	port (
-	wadr: IN std_logic_VECTOR(13 downto 0);
-	radr: IN std_logic_VECTOR(13 downto 0);
-	wclk: IN std_logic;
-	rclk: IN std_logic;
-	din: IN std_logic_VECTOR(63 downto 0);
-	dout: OUT std_logic_VECTOR(63 downto 0);
-	we: IN std_logic);
-end component;
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
 
-signal we0,we1,we2,we3 : std_logic;
-signal adr0,adr1,nadr0,nadr1 : std_logic;
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
 
-begin
+int                    pg4_open (int id);
 
-adr0  <= wadr(0);
-nadr0 <= NOT wadr(0);
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
 
-we0  <= we and nadr0;  -- we & wadr(0)="0"
-we1  <= we and  adr0;  -- we & wadr(0)="1"
+void                   pg4_set_pfpga_info (int devid, char *info);
 
-u0 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata,
-      dout=> odata(63 downto 0),
-      we  => we0);
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
 
-u1 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata, 
-      dout=> odata(127 downto 64),
-      we  => we1);
 
-end rtl;
+
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
+
+
