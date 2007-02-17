@@ -1,189 +1,211 @@
-Mon Feb  5 19:43:15 JST 2007
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
--- VHDL Test Bench created by
--- HDL Bencher 6.1i
--- Wed Dec 29 19:47:04 2004
--- 
--- Notes:
--- 1) This testbench has been automatically generated from
---   your Test Bench Waveform
--- 2) To use this as a user modifiable testbench do the following:
---   - Save it as a file with a .vhd extension (i.e. File->Save As...)
---   - Add it to your project as a testbench source (i.e. Project->Add Source...)
--- 
+Sat Feb 17 20:01:37 JST 2007
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_TEXTIO.ALL;
-USE STD.TEXTIO.ALL;
+-- **************************************
+--               INREVIUM                
+-- **************************************
 
-ENTITY sim_writecomb_check IS
-END sim_writecomb_check;
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO MODEL
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO (64 bit X 4 word) Module
+--------------------------------------------------------------------------------
+-- File                      : PCI_RDTFIFO.vhd
+-- Entity                    : PCI_RDTFIFO
+-- Architecture              : PCI_RDTFIFO_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         V‹K
+--------------------------------------------------------------------------------
 
-ARCHITECTURE testbench_arch OF sim_writecomb_check IS
--- If you get a compiler error on the following line,
--- from the menu do Options->Configuration select VHDL 87
-FILE RESULTS: TEXT OPEN WRITE_MODE IS "results.txt";
-	COMPONENT writecomb_check
-		PORT (
-			MEM_WEHA : In  std_logic;
-			MEM_WELA : In  std_logic;
-			IS_ERR : Out  std_logic_vector (1 DOWNTO 0);
-			RST : In  std_logic;
-			CLK : In  std_logic
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+
+entity PCI_RDTFIFO is
+	port (
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
+
+		FIFO_ENB		: in	std_logic;							-- FIFO Enable Signal
+
+		-- FIFO Data Write ports
+		FIFO_WRDT		: in	std_logic_vector(63 downto 0);		-- FIFO Write Data
+		FIFO_WE			: in	std_logic;					  		-- FIFO Write Enable
+
+		-- FIFO Data Read ports
+		FIFO_RE			: in	std_logic;							-- FIFO Read Enable
+		FIFO_RDDT		: out	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: out	std_logic							-- FIFO Read Data Enable
 		);
-	END COMPONENT;
+end PCI_RDTFIFO;
 
-	SIGNAL MEM_WEHA : std_logic;
-	SIGNAL MEM_WELA : std_logic;
-	SIGNAL IS_ERR : std_logic_vector (1 DOWNTO 0);
-	SIGNAL RST : std_logic;
-	SIGNAL CLK : std_logic;
 
-BEGIN
-	UUT : writecomb_check
-	PORT MAP (
-		MEM_WEHA => MEM_WEHA,
-		MEM_WELA => MEM_WELA,
-		IS_ERR => IS_ERR,
-		RST => RST,
-		CLK => CLK
-	);
+architecture PCI_RDTFIFO_rtl of PCI_RDTFIFO is
 
-	PROCESS -- clock process for CLK,
-	BEGIN
-		CLOCK_LOOP : LOOP
-		CLK <= transport '0';
-		WAIT FOR 5 ns;
-		CLK <= transport '1';
-		WAIT FOR 50 ns;
-		CLK <= transport '0';
-		WAIT FOR 35 ns;
-		WAIT FOR 10 ns;
-		END LOOP CLOCK_LOOP;
-	END PROCESS;
 
-	PROCESS   -- Process for CLK
-		VARIABLE TX_OUT : LINE;
-		VARIABLE TX_ERROR : INTEGER := 0;
+--------------------------------------------------
+-- signals
+--------------------------------------------------
 
-		PROCEDURE CHECK_IS_ERR(
-			next_IS_ERR : std_logic_vector (1 DOWNTO 0);
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (IS_ERR /= next_IS_ERR) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("ns IS_ERR="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, IS_ERR);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_IS_ERR);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
+--	type FIFO_TYPE is array (0 to 3) of std_logic_vector(64 downto 0);		------ Define Data Buffer Type (65bit X 4)
 
-		BEGIN
-		-- --------------------
-		RST <= transport '0';
-		MEM_WEHA <= transport '0';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 200 ns; -- Time=200 ns
-		RST <= transport '0';
-		-- --------------------
-		WAIT FOR 500 ns; -- Time=700 ns
-		MEM_WEHA <= transport '0';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 200 ns; -- Time=900 ns
-		RST <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=1000 ns
-		RST <= transport '0';
-		-- --------------------
-		WAIT FOR 1900 ns; -- Time=2900 ns
-		MEM_WEHA <= transport '1';
-		MEM_WELA <= transport '1';
-		-- --------------------
-		WAIT FOR 500 ns; -- Time=3400 ns
-		MEM_WEHA <= transport '0';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 1100 ns; -- Time=4500 ns
-		MEM_WEHA <= transport '1';
-		MEM_WELA <= transport '1';
-		-- --------------------
-		WAIT FOR 200 ns; -- Time=4700 ns
-		MEM_WEHA <= transport '0';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 1300 ns; -- Time=6000 ns
-		MEM_WELA <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=6100 ns
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=6200 ns
-		MEM_WEHA <= transport '0';
-		-- --------------------
-		WAIT FOR 300 ns; -- Time=6500 ns
-		MEM_WEHA <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=6600 ns
-		MEM_WEHA <= transport '0';
-		-- --------------------
-		WAIT FOR 1300 ns; -- Time=7900 ns
-		MEM_WELA <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=8000 ns
-		MEM_WEHA <= transport '1';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=8100 ns
-		MEM_WEHA <= transport '0';
-		MEM_WELA <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=8200 ns
-		MEM_WEHA <= transport '1';
-		MEM_WELA <= transport '0';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=8300 ns
-		MEM_WEHA <= transport '0';
-		-- --------------------
-		WAIT FOR 2005 ns; -- Time=10305 ns
-		-- --------------------
+	signal FIFO_DATA0	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 0
+	signal FIFO_DATA1	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 1
+	signal FIFO_DATA2	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 2
+	signal FIFO_DATA3	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 3
 
-		IF (TX_ERROR = 0) THEN 
-			STD.TEXTIO.write(TX_OUT,string'("No errors or warnings"));
-			STD.TEXTIO.writeline(results, TX_OUT);
-			ASSERT (FALSE) REPORT
-				"Simulation successful (not a failure).  No problems detected. "
-				SEVERITY FAILURE;
-		ELSE
-			STD.TEXTIO.write(TX_OUT, TX_ERROR);
-			STD.TEXTIO.write(TX_OUT, string'(
-				" errors found in simulation"));
-			STD.TEXTIO.writeline(results, TX_OUT);
-			ASSERT (FALSE) REPORT
-				"Errors found during simulation"
-				SEVERITY FAILURE;
-		END IF;
-	END PROCESS;
-END testbench_arch;
+	signal FIFO_WRADRS	: std_logic_vector( 1 downto 0);					------ FIFO Write Address
+	signal FIFO_RDADRS	: std_logic_vector( 1 downto 0);					------ FIFO Read Address
 
-CONFIGURATION writecomb_check_cfg OF sim_writecomb_check IS
-	FOR testbench_arch
-	END FOR;
-END writecomb_check_cfg;
+
+begin
+
+
+--***************************************************************
+--*
+--*  FIFO Data Write Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA0 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA0 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA0 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="00" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA0 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA1 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA1 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA1 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="01" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA1 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA2 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA2 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA2 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="10" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA2 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA3 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA3 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA3 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="11" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA3 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Write Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_WRADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_WRADRS <= (others=>'0');								------ FIFO Write Address Clear
+			elsif (FIFO_WE='1') then										------ FIFO Data Write ?
+				FIFO_WRADRS <= FIFO_WRADRS+1;								------ FIFO Write Address Increment
+			end if;
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  FIFO Data Read Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDDT <= FIFO_DATA0(63 downto 0);			------ Buffer0 Read
+			when "01"	=> FIFO_RDDT <= FIFO_DATA1(63 downto 0);			------ Buffer1 Read
+			when "10"	=> FIFO_RDDT <= FIFO_DATA2(63 downto 0);			------ Buffer2 Read
+			when "11"	=> FIFO_RDDT <= FIFO_DATA3(63 downto 0);			------ Buffer3 Read
+			when others => FIFO_RDDT <= (others=>'0');
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Enable Signal Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDTEN <= FIFO_DATA0(64);					------ Buffer0 Read Enable Signal
+			when "01"	=> FIFO_RDTEN <= FIFO_DATA1(64);					------ Buffer1 Read Enable Signal
+			when "10"	=> FIFO_RDTEN <= FIFO_DATA2(64);					------ Buffer2 Read Enable Signal
+			when "11"	=> FIFO_RDTEN <= FIFO_DATA3(64);					------ Buffer3 Read Enable Signal
+			when others => FIFO_RDTEN <= '0';
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_RDADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_RDADRS <= (others=>'0');								------ FIFO Read Address Clear
+			elsif (FIFO_RE='1') then										------ FIFO Data Read ?
+				FIFO_RDADRS <= FIFO_RDADRS+1;								------ FIFO Read Address Increment
+			end if;
+		end if;
+	end process;
+
+
+
+end PCI_RDTFIFO_rtl;
