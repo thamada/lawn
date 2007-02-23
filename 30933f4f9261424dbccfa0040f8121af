@@ -1,2 +1,5 @@
-Thu Jan 25 20:11:47 JST 2007
-set ADucfFile {../rtl/ifpga.ucf}
+Fri Feb 23 19:29:39 JST 2007
+-- ProjNav VHDL simulation template: sim_local_io.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
