@@ -1,17 +1,3 @@
-Mon Apr 23 20:09:21 JST 2007
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+Fri May  4 19:32:38 JST 2007
+# XST (Creating Lso File) : 
+top.lso
