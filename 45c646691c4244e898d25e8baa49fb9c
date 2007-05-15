@@ -1,40 +1,16 @@
-Tue May  8 19:57:00 JST 2007
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
-
-
-
-
-
-
-
+Tue May 15 20:11:51 JST 2007
+#include<stdio.h>
+#define LONG long long int 
+// bit level check between emulator and hardware(pg2)
+void check_pg2emu(LONG accel[][3],LONG accel_pg2[][3],int n)
+{
+  int i,j;
+  for(i=0;i<n;i++){
+    for(j=0;i<3;j++){
+      LONG a_emu,a_pg2;
+      a_emu = accel[i][j];
+      a_pg2 = accel_pg2[i][j];
+      if(a_emu != a_pg2){fprintf(stderr,"error\n");}
+    }
+  }
+}
