@@ -1,74 +1,60 @@
-Tue May 22 19:26:38 JST 2007
---------------------------------------------------------------------------------
-Release 6.2.03i Trace G.28
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
-
-trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-
-
-Design file:              top.ncd
-Physical constraint file: top.pcf
-Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
-Report level:             error report
-
-Environment Variable      Effect 
---------------------      ------ 
-NONE                      No environment variables were set
---------------------------------------------------------------------------------
-
-INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
-   option. All paths that are not constrained will be reported in the
-   unconstrained paths section(s) of the report.
-
-================================================================================
-Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
-
- 0 items analyzed, 0 timing errors detected.
---------------------------------------------------------------------------------
-
-================================================================================
-Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
-
- 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  19.569ns.
---------------------------------------------------------------------------------
-
-================================================================================
-Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
-
- 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  14.739ns.
---------------------------------------------------------------------------------
-
-
-All constraints were met.
-
-
-Data Sheet report:
------------------
-All values displayed in nanoseconds (ns)
-
-Clock to Setup on destination clock CK66
----------------+---------+---------+---------+---------+
-               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
-Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
----------------+---------+---------+---------+---------+
-CK66           |   19.959|         |         |         |
----------------+---------+---------+---------+---------+
-
-
-Timing summary:
----------------
-
-Timing errors: 0  Score: 0
-
-Constraints cover 1709651 paths, 0 nets, and 63904 connections
-
-Design statistics:
-   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
-
-
-Analysis completed Mon Jun 13 23:42:18 2005
---------------------------------------------------------------------------------
-
-Peak Memory Usage: 279 MB
+Sat Jun  2 20:19:12 JST 2007
+info x 52 510 0 0 0 0 0 0 0 0 0 0 0 0 0 0 VHDL
+col x 257 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+radix x 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+entity name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 local_read_if
+term mark 244 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+vlib save 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+var add 16 0 0 226 39 0 257 100 50 50 25 25 0 0 0 0 CLKInstd_logicRISING_EDGECLK
+var add 1 0 0 162 19 0 257 100 50 50 25 25 0 0 0 0 EXECInstd_logicRISING_EDGECLK
+var add 2 18 0 164 20 0 257 100 50 50 25 25 0 0 0 0 START_ADInstd_logic_vectorRISING_EDGECLK
+var add 3 8 0 164 21 0 257 100 50 50 25 25 0 0 0 0 NQWORDInstd_logic_vectorRISING_EDGECLK
+var add 4 3 0 164 22 0 257 100 50 50 25 25 0 0 0 0 CHIPSELInstd_logic_vectorRISING_EDGECLK
+var add 5 12 0 164 23 0 257 100 50 50 25 25 0 0 0 0 MEM_AD_BASEInstd_logic_vectorRISING_EDGECLK
+var add 9 63 0 164 29 0 257 100 50 50 25 25 0 0 0 0 DBUS_idataInstd_logic_vectorRISING_EDGECLK
+var add 15 0 0 162 38 0 257 100 50 50 25 25 0 0 0 0 RSTInstd_logicRISING_EDGECLK
+var add 6 0 0 162 24 0 257 100 50 50 25 25 0 0 0 0 BUSYOutstd_logicRISING_EDGECLK
+var add 7 3 0 164 27 0 257 100 50 50 25 25 0 0 0 0 DMAR_ENABLEOutstd_logic_vectorRISING_EDGECLK
+var add 8 63 0 164 28 0 257 100 50 50 25 25 0 0 0 0 DBUS_PortOutstd_logic_vectorRISING_EDGECLK
+var add 10 0 0 162 30 0 257 100 50 50 25 25 0 0 0 0 DBUS_HiZOutstd_logicRISING_EDGECLK
+var add 11 12 0 164 33 0 257 100 50 50 25 25 0 0 0 0 MEM_ADBOutstd_logic_vectorRISING_EDGECLK
+var add 12 0 0 162 34 0 257 100 50 50 25 25 0 0 0 0 MEM_WEHBOutstd_logicRISING_EDGECLK
+var add 13 0 0 162 35 0 257 100 50 50 25 25 0 0 0 0 MEM_WELBOutstd_logicRISING_EDGECLK
+var add 14 63 0 164 36 0 257 100 50 50 25 25 0 0 0 0 MEM_DTIBOutstd_logic_vectorRISING_EDGECLK
+vdone xxx 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+npos xxx 181 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cell fill 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 2 44 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 2 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 2 112 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 2 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000
+cell fill 3 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0001000000000000000
+cell fill 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 000000000
+cell fill 4 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 000000111
+cell fill 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000
+cell fill 5 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000
+cell fill 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000
+cell fill 6 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000100000000
+cell fill 7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
+cell fill 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+time info 50 50 25 25 50 50 1 1 0 0 0 0 0 0 0 0 nsCLK
+font save -14 0 400 49 0 0 0 0 0 0 0 0 0 0 0 0 Times New Roman
+src mod 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 c:\cygwin\home\administrator\fkit\pci64\rtl\local_read_if.vhd
+utd true 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cellenab on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+grid on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+com add 1 1 0 415 18 0 -67 0 0 0 0 0 0 0 0 0 Waveform created by
+HDL Bencher 6.1i
+Source = c:\cygwin\home\administrator\fkit\pci64\rtl\local_read_if.vhd
+Mon Jan 03 21:05:15 2005
+type info 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logicBITDOWNTO
+type info 31 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logic_vectorVECTORDOWNTO
+opt vhdl87 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+NumClocks x 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+clock_1 name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 CLK
+Zoom_level x 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.00000000000000
