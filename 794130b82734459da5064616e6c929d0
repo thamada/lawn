@@ -1,2104 +1,1166 @@
-Wed Apr 25 19:52:15 JST 2007
-#ChipScope Pro Analyzer Project File, Version 3.0
-#Thu Nov 18 18:12:55 JST 2004
-deviceChain.deviceName0=XC18V00
-deviceChain.deviceName1=XC2V1000
-deviceChain.iRLength0=8
-deviceChain.iRLength1=6
-deviceChain.name0=
-deviceChain.name1=
-deviceIds=0503609331028093
-mdiAreaHeight=0.8585657370517928
-mdiAreaHeightLast=0.799800796812749
-mdiCount=2
-mdiDevice0=1
-mdiDevice1=1
-mdiType0=1
-mdiType1=0
-mdiUnit0=0
-mdiUnit1=0
-navigatorHeight=0.17928286852589642
-navigatorHeightLast=0.17928286852589642
-navigatorWidth=0.17982799061767005
-navigatorWidthLast=0.17982799061767005
-unit.1.0.0.HEIGHT0=0.19441211
-unit.1.0.0.TriggerRow0=1
-unit.1.0.0.TriggerRow1=1
-unit.1.0.0.TriggerRow2=1
-unit.1.0.0.WIDTH0=1.0
-unit.1.0.0.X0=-9.718173E-4
-unit.1.0.0.Y0=0.0
-unit.1.0.1.HEIGHT1=0.40861467
-unit.1.0.1.WIDTH1=1.0
-unit.1.0.1.X1=0.0
-unit.1.0.1.Y1=0.58323634
-unit.1.0.MFBitsA0=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXRXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-unit.1.0.MFBitsB0=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-unit.1.0.MFCompareA0=0
-unit.1.0.MFCompareB0=999
-unit.1.0.MFCount=1
-unit.1.0.MFDisplay0=0
-unit.1.0.MFEventType0=0
-unit.1.0.SequencerOn=0
-unit.1.0.TCActive=0
-unit.1.0.TCAdvanced0=0
-unit.1.0.TCCondition0_0=M0
-unit.1.0.TCCondition0_1=
-unit.1.0.TCConditionType0=0
-unit.1.0.TCCount=1
-unit.1.0.TCEventCount0=1
-unit.1.0.TCEventType0=1
-unit.1.0.TCName0=TriggerCondition0
-unit.1.0.TCOutputEnable0=0
-unit.1.0.TCOutputHigh0=1
-unit.1.0.TCOutputMode0=0
-unit.1.0.browser_tree_state<DBUS_idata>=0
-unit.1.0.browser_tree_state<Data\ Port>=1
-unit.1.0.coretype=ILA
-unit.1.0.eventCount0=1
-unit.1.0.port.-1.b.0.alias=DBUS_idata
-unit.1.0.port.-1.b.0.channellist=50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82
-unit.1.0.port.-1.b.0.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.0.name=BUS_3
-unit.1.0.port.-1.b.0.orderindex=-1
-unit.1.0.port.-1.b.0.radix=Hex
-unit.1.0.port.-1.b.0.signedOffset=0.0
-unit.1.0.port.-1.b.0.signedPrecision=0
-unit.1.0.port.-1.b.0.signedScaleFactor=1.0
-unit.1.0.port.-1.b.0.tokencount=0
-unit.1.0.port.-1.b.0.unsignedOffset=0.0
-unit.1.0.port.-1.b.0.unsignedPrecision=0
-unit.1.0.port.-1.b.0.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.0.visible=1
-unit.1.0.port.-1.b.1.alias=DBUS_Port
-unit.1.0.port.-1.b.1.channellist=91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123
-unit.1.0.port.-1.b.1.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.1.name=BUS_0
-unit.1.0.port.-1.b.1.orderindex=-1
-unit.1.0.port.-1.b.1.radix=Hex
-unit.1.0.port.-1.b.1.signedOffset=0.0
-unit.1.0.port.-1.b.1.signedPrecision=0
-unit.1.0.port.-1.b.1.signedScaleFactor=1.0
-unit.1.0.port.-1.b.1.tokencount=0
-unit.1.0.port.-1.b.1.unsignedOffset=0.0
-unit.1.0.port.-1.b.1.unsignedPrecision=0
-unit.1.0.port.-1.b.1.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.1.visible=1
-unit.1.0.port.-1.b.2.alias=dmar_state
-unit.1.0.port.-1.b.2.channellist=2 3 4 5 6
-unit.1.0.port.-1.b.2.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.2.name=BUS_0
-unit.1.0.port.-1.b.2.orderindex=-1
-unit.1.0.port.-1.b.2.radix=Hex
-unit.1.0.port.-1.b.2.signedOffset=0.0
-unit.1.0.port.-1.b.2.signedPrecision=0
-unit.1.0.port.-1.b.2.signedScaleFactor=1.0
-unit.1.0.port.-1.b.2.tokencount=0
-unit.1.0.port.-1.b.2.unsignedOffset=0.0
-unit.1.0.port.-1.b.2.unsignedPrecision=0
-unit.1.0.port.-1.b.2.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.2.visible=1
-unit.1.0.port.-1.b.3.alias=dmaw_state
-unit.1.0.port.-1.b.3.channellist=88 89 90
-unit.1.0.port.-1.b.3.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.3.name=BUS_4
-unit.1.0.port.-1.b.3.orderindex=-1
-unit.1.0.port.-1.b.3.radix=Hex
-unit.1.0.port.-1.b.3.signedOffset=0.0
-unit.1.0.port.-1.b.3.signedPrecision=0
-unit.1.0.port.-1.b.3.signedScaleFactor=1.0
-unit.1.0.port.-1.b.3.tokencount=0
-unit.1.0.port.-1.b.3.unsignedOffset=0.0
-unit.1.0.port.-1.b.3.unsignedPrecision=0
-unit.1.0.port.-1.b.3.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.3.visible=1
-unit.1.0.port.-1.b.4.alias=MEM_ADB
-unit.1.0.port.-1.b.4.channellist=8 9 10 11 12 13 14 15 16
-unit.1.0.port.-1.b.4.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.4.name=BUS_1
-unit.1.0.port.-1.b.4.orderindex=-1
-unit.1.0.port.-1.b.4.radix=Hex
-unit.1.0.port.-1.b.4.signedOffset=0.0
-unit.1.0.port.-1.b.4.signedPrecision=0
-unit.1.0.port.-1.b.4.signedScaleFactor=1.0
-unit.1.0.port.-1.b.4.tokencount=0
-unit.1.0.port.-1.b.4.unsignedOffset=0.0
-unit.1.0.port.-1.b.4.unsignedPrecision=0
-unit.1.0.port.-1.b.4.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.4.visible=1
-unit.1.0.port.-1.b.5.alias=MEM_DTIB
-unit.1.0.port.-1.b.5.channellist=17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49
-unit.1.0.port.-1.b.5.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.5.name=BUS_2
-unit.1.0.port.-1.b.5.orderindex=-1
-unit.1.0.port.-1.b.5.radix=Hex
-unit.1.0.port.-1.b.5.signedOffset=0.0
-unit.1.0.port.-1.b.5.signedPrecision=0
-unit.1.0.port.-1.b.5.signedScaleFactor=1.0
-unit.1.0.port.-1.b.5.tokencount=0
-unit.1.0.port.-1.b.5.unsignedOffset=0.0
-unit.1.0.port.-1.b.5.unsignedPrecision=0
-unit.1.0.port.-1.b.5.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.5.visible=1
-unit.1.0.port.-1.b.6.alias=MEM_DTOB
-unit.1.0.port.-1.b.6.channellist=130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162
-unit.1.0.port.-1.b.6.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.b.6.name=BUS_0
-unit.1.0.port.-1.b.6.orderindex=-1
-unit.1.0.port.-1.b.6.radix=Hex
-unit.1.0.port.-1.b.6.signedOffset=0.0
-unit.1.0.port.-1.b.6.signedPrecision=0
-unit.1.0.port.-1.b.6.signedScaleFactor=1.0
-unit.1.0.port.-1.b.6.tokencount=0
-unit.1.0.port.-1.b.6.unsignedOffset=0.0
-unit.1.0.port.-1.b.6.unsignedPrecision=0
-unit.1.0.port.-1.b.6.unsignedScaleFactor=1.0
-unit.1.0.port.-1.b.6.visible=1
-unit.1.0.port.-1.buscount=7
-unit.1.0.port.-1.channelcount=163
-unit.1.0.port.-1.s.0.alias=DEBUG_CS_CLK
-unit.1.0.port.-1.s.0.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.0.name=DataPort[0]
-unit.1.0.port.-1.s.0.orderindex=-1
-unit.1.0.port.-1.s.0.visible=1
-unit.1.0.port.-1.s.1.alias=Hit_DMAR
-unit.1.0.port.-1.s.1.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.1.name=DataPort[1]
-unit.1.0.port.-1.s.1.orderindex=-1
-unit.1.0.port.-1.s.1.visible=1
-unit.1.0.port.-1.s.10.alias=
-unit.1.0.port.-1.s.10.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.10.name=DataPort[10]
-unit.1.0.port.-1.s.10.orderindex=-1
-unit.1.0.port.-1.s.10.visible=1
-unit.1.0.port.-1.s.100.alias=
-unit.1.0.port.-1.s.100.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.100.name=DataPort[100]
-unit.1.0.port.-1.s.100.orderindex=-1
-unit.1.0.port.-1.s.100.visible=1
-unit.1.0.port.-1.s.101.alias=
-unit.1.0.port.-1.s.101.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.101.name=DataPort[101]
-unit.1.0.port.-1.s.101.orderindex=-1
-unit.1.0.port.-1.s.101.visible=1
-unit.1.0.port.-1.s.102.alias=
-unit.1.0.port.-1.s.102.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.102.name=DataPort[102]
-unit.1.0.port.-1.s.102.orderindex=-1
-unit.1.0.port.-1.s.102.visible=1
-unit.1.0.port.-1.s.103.alias=
-unit.1.0.port.-1.s.103.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.103.name=DataPort[103]
-unit.1.0.port.-1.s.103.orderindex=-1
-unit.1.0.port.-1.s.103.visible=1
-unit.1.0.port.-1.s.104.alias=
-unit.1.0.port.-1.s.104.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.104.name=DataPort[104]
-unit.1.0.port.-1.s.104.orderindex=-1
-unit.1.0.port.-1.s.104.visible=1
-unit.1.0.port.-1.s.105.alias=
-unit.1.0.port.-1.s.105.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.105.name=DataPort[105]
-unit.1.0.port.-1.s.105.orderindex=-1
-unit.1.0.port.-1.s.105.visible=1
-unit.1.0.port.-1.s.106.alias=
-unit.1.0.port.-1.s.106.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.106.name=DataPort[106]
-unit.1.0.port.-1.s.106.orderindex=-1
-unit.1.0.port.-1.s.106.visible=1
-unit.1.0.port.-1.s.107.alias=
-unit.1.0.port.-1.s.107.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.107.name=DataPort[107]
-unit.1.0.port.-1.s.107.orderindex=-1
-unit.1.0.port.-1.s.107.visible=1
-unit.1.0.port.-1.s.108.alias=
-unit.1.0.port.-1.s.108.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.108.name=DataPort[108]
-unit.1.0.port.-1.s.108.orderindex=-1
-unit.1.0.port.-1.s.108.visible=1
-unit.1.0.port.-1.s.109.alias=
-unit.1.0.port.-1.s.109.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.109.name=DataPort[109]
-unit.1.0.port.-1.s.109.orderindex=-1
-unit.1.0.port.-1.s.109.visible=1
-unit.1.0.port.-1.s.11.alias=
-unit.1.0.port.-1.s.11.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.11.name=DataPort[11]
-unit.1.0.port.-1.s.11.orderindex=-1
-unit.1.0.port.-1.s.11.visible=1
-unit.1.0.port.-1.s.110.alias=
-unit.1.0.port.-1.s.110.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.110.name=DataPort[110]
-unit.1.0.port.-1.s.110.orderindex=-1
-unit.1.0.port.-1.s.110.visible=1
-unit.1.0.port.-1.s.111.alias=
-unit.1.0.port.-1.s.111.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.111.name=DataPort[111]
-unit.1.0.port.-1.s.111.orderindex=-1
-unit.1.0.port.-1.s.111.visible=1
-unit.1.0.port.-1.s.112.alias=
-unit.1.0.port.-1.s.112.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.112.name=DataPort[112]
-unit.1.0.port.-1.s.112.orderindex=-1
-unit.1.0.port.-1.s.112.visible=1
-unit.1.0.port.-1.s.113.alias=
-unit.1.0.port.-1.s.113.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.113.name=DataPort[113]
-unit.1.0.port.-1.s.113.orderindex=-1
-unit.1.0.port.-1.s.113.visible=1
-unit.1.0.port.-1.s.114.alias=
-unit.1.0.port.-1.s.114.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.114.name=DataPort[114]
-unit.1.0.port.-1.s.114.orderindex=-1
-unit.1.0.port.-1.s.114.visible=1
-unit.1.0.port.-1.s.115.alias=
-unit.1.0.port.-1.s.115.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.115.name=DataPort[115]
-unit.1.0.port.-1.s.115.orderindex=-1
-unit.1.0.port.-1.s.115.visible=1
-unit.1.0.port.-1.s.116.alias=
-unit.1.0.port.-1.s.116.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.116.name=DataPort[116]
-unit.1.0.port.-1.s.116.orderindex=-1
-unit.1.0.port.-1.s.116.visible=1
-unit.1.0.port.-1.s.117.alias=
-unit.1.0.port.-1.s.117.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.117.name=DataPort[117]
-unit.1.0.port.-1.s.117.orderindex=-1
-unit.1.0.port.-1.s.117.visible=1
-unit.1.0.port.-1.s.118.alias=
-unit.1.0.port.-1.s.118.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.118.name=DataPort[118]
-unit.1.0.port.-1.s.118.orderindex=-1
-unit.1.0.port.-1.s.118.visible=1
-unit.1.0.port.-1.s.119.alias=
-unit.1.0.port.-1.s.119.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.119.name=DataPort[119]
-unit.1.0.port.-1.s.119.orderindex=-1
-unit.1.0.port.-1.s.119.visible=1
-unit.1.0.port.-1.s.12.alias=
-unit.1.0.port.-1.s.12.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.12.name=DataPort[12]
-unit.1.0.port.-1.s.12.orderindex=-1
-unit.1.0.port.-1.s.12.visible=1
-unit.1.0.port.-1.s.120.alias=
-unit.1.0.port.-1.s.120.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.120.name=DataPort[120]
-unit.1.0.port.-1.s.120.orderindex=-1
-unit.1.0.port.-1.s.120.visible=1
-unit.1.0.port.-1.s.121.alias=
-unit.1.0.port.-1.s.121.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.121.name=DataPort[121]
-unit.1.0.port.-1.s.121.orderindex=-1
-unit.1.0.port.-1.s.121.visible=1
-unit.1.0.port.-1.s.122.alias=
-unit.1.0.port.-1.s.122.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.122.name=DataPort[122]
-unit.1.0.port.-1.s.122.orderindex=-1
-unit.1.0.port.-1.s.122.visible=1
-unit.1.0.port.-1.s.123.alias=
-unit.1.0.port.-1.s.123.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.123.name=DataPort[123]
-unit.1.0.port.-1.s.123.orderindex=-1
-unit.1.0.port.-1.s.123.visible=1
-unit.1.0.port.-1.s.124.alias=PFPGA_RST0
-unit.1.0.port.-1.s.124.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.124.name=DataPort[124]
-unit.1.0.port.-1.s.124.orderindex=-1
-unit.1.0.port.-1.s.124.visible=1
-unit.1.0.port.-1.s.125.alias=DBUS_HiZ
-unit.1.0.port.-1.s.125.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.125.name=DataPort[125]
-unit.1.0.port.-1.s.125.orderindex=-1
-unit.1.0.port.-1.s.125.visible=1
-unit.1.0.port.-1.s.126.alias=DMAW_ENABLE0
-unit.1.0.port.-1.s.126.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.126.name=DataPort[126]
-unit.1.0.port.-1.s.126.orderindex=-1
-unit.1.0.port.-1.s.126.visible=1
-unit.1.0.port.-1.s.127.alias=DMAW_ENABLE1
-unit.1.0.port.-1.s.127.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.127.name=DataPort[127]
-unit.1.0.port.-1.s.127.orderindex=-1
-unit.1.0.port.-1.s.127.visible=1
-unit.1.0.port.-1.s.128.alias=DMAW_ENABLE2
-unit.1.0.port.-1.s.128.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.128.name=DataPort[128]
-unit.1.0.port.-1.s.128.orderindex=-1
-unit.1.0.port.-1.s.128.visible=1
-unit.1.0.port.-1.s.129.alias=DMAW_ENABLE3
-unit.1.0.port.-1.s.129.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.129.name=DataPort[129]
-unit.1.0.port.-1.s.129.orderindex=-1
-unit.1.0.port.-1.s.129.visible=1
-unit.1.0.port.-1.s.13.alias=
-unit.1.0.port.-1.s.13.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.13.name=DataPort[13]
-unit.1.0.port.-1.s.13.orderindex=-1
-unit.1.0.port.-1.s.13.visible=1
-unit.1.0.port.-1.s.130.alias=
-unit.1.0.port.-1.s.130.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.130.name=DataPort[130]
-unit.1.0.port.-1.s.130.orderindex=-1
-unit.1.0.port.-1.s.130.visible=1
-unit.1.0.port.-1.s.131.alias=
-unit.1.0.port.-1.s.131.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.131.name=DataPort[131]
-unit.1.0.port.-1.s.131.orderindex=-1
-unit.1.0.port.-1.s.131.visible=1
-unit.1.0.port.-1.s.132.alias=
-unit.1.0.port.-1.s.132.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.132.name=DataPort[132]
-unit.1.0.port.-1.s.132.orderindex=-1
-unit.1.0.port.-1.s.132.visible=1
-unit.1.0.port.-1.s.133.alias=
-unit.1.0.port.-1.s.133.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.133.name=DataPort[133]
-unit.1.0.port.-1.s.133.orderindex=-1
-unit.1.0.port.-1.s.133.visible=1
-unit.1.0.port.-1.s.134.alias=
-unit.1.0.port.-1.s.134.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.134.name=DataPort[134]
-unit.1.0.port.-1.s.134.orderindex=-1
-unit.1.0.port.-1.s.134.visible=1
-unit.1.0.port.-1.s.135.alias=
-unit.1.0.port.-1.s.135.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.135.name=DataPort[135]
-unit.1.0.port.-1.s.135.orderindex=-1
-unit.1.0.port.-1.s.135.visible=1
-unit.1.0.port.-1.s.136.alias=
-unit.1.0.port.-1.s.136.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.136.name=DataPort[136]
-unit.1.0.port.-1.s.136.orderindex=-1
-unit.1.0.port.-1.s.136.visible=1
-unit.1.0.port.-1.s.137.alias=
-unit.1.0.port.-1.s.137.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.137.name=DataPort[137]
-unit.1.0.port.-1.s.137.orderindex=-1
-unit.1.0.port.-1.s.137.visible=1
-unit.1.0.port.-1.s.138.alias=
-unit.1.0.port.-1.s.138.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.138.name=DataPort[138]
-unit.1.0.port.-1.s.138.orderindex=-1
-unit.1.0.port.-1.s.138.visible=1
-unit.1.0.port.-1.s.139.alias=
-unit.1.0.port.-1.s.139.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.139.name=DataPort[139]
-unit.1.0.port.-1.s.139.orderindex=-1
-unit.1.0.port.-1.s.139.visible=1
-unit.1.0.port.-1.s.14.alias=
-unit.1.0.port.-1.s.14.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.14.name=DataPort[14]
-unit.1.0.port.-1.s.14.orderindex=-1
-unit.1.0.port.-1.s.14.visible=1
-unit.1.0.port.-1.s.140.alias=
-unit.1.0.port.-1.s.140.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.140.name=DataPort[140]
-unit.1.0.port.-1.s.140.orderindex=-1
-unit.1.0.port.-1.s.140.visible=1
-unit.1.0.port.-1.s.141.alias=
-unit.1.0.port.-1.s.141.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.141.name=DataPort[141]
-unit.1.0.port.-1.s.141.orderindex=-1
-unit.1.0.port.-1.s.141.visible=1
-unit.1.0.port.-1.s.142.alias=
-unit.1.0.port.-1.s.142.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.142.name=DataPort[142]
-unit.1.0.port.-1.s.142.orderindex=-1
-unit.1.0.port.-1.s.142.visible=1
-unit.1.0.port.-1.s.143.alias=
-unit.1.0.port.-1.s.143.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.143.name=DataPort[143]
-unit.1.0.port.-1.s.143.orderindex=-1
-unit.1.0.port.-1.s.143.visible=1
-unit.1.0.port.-1.s.144.alias=
-unit.1.0.port.-1.s.144.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.144.name=DataPort[144]
-unit.1.0.port.-1.s.144.orderindex=-1
-unit.1.0.port.-1.s.144.visible=1
-unit.1.0.port.-1.s.145.alias=
-unit.1.0.port.-1.s.145.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.145.name=DataPort[145]
-unit.1.0.port.-1.s.145.orderindex=-1
-unit.1.0.port.-1.s.145.visible=1
-unit.1.0.port.-1.s.146.alias=
-unit.1.0.port.-1.s.146.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.146.name=DataPort[146]
-unit.1.0.port.-1.s.146.orderindex=-1
-unit.1.0.port.-1.s.146.visible=1
-unit.1.0.port.-1.s.147.alias=
-unit.1.0.port.-1.s.147.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.147.name=DataPort[147]
-unit.1.0.port.-1.s.147.orderindex=-1
-unit.1.0.port.-1.s.147.visible=1
-unit.1.0.port.-1.s.148.alias=
-unit.1.0.port.-1.s.148.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.148.name=DataPort[148]
-unit.1.0.port.-1.s.148.orderindex=-1
-unit.1.0.port.-1.s.148.visible=1
-unit.1.0.port.-1.s.149.alias=
-unit.1.0.port.-1.s.149.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.149.name=DataPort[149]
-unit.1.0.port.-1.s.149.orderindex=-1
-unit.1.0.port.-1.s.149.visible=1
-unit.1.0.port.-1.s.15.alias=
-unit.1.0.port.-1.s.15.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.15.name=DataPort[15]
-unit.1.0.port.-1.s.15.orderindex=-1
-unit.1.0.port.-1.s.15.visible=1
-unit.1.0.port.-1.s.150.alias=
-unit.1.0.port.-1.s.150.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.150.name=DataPort[150]
-unit.1.0.port.-1.s.150.orderindex=-1
-unit.1.0.port.-1.s.150.visible=1
-unit.1.0.port.-1.s.151.alias=
-unit.1.0.port.-1.s.151.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.151.name=DataPort[151]
-unit.1.0.port.-1.s.151.orderindex=-1
-unit.1.0.port.-1.s.151.visible=1
-unit.1.0.port.-1.s.152.alias=
-unit.1.0.port.-1.s.152.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.152.name=DataPort[152]
-unit.1.0.port.-1.s.152.orderindex=-1
-unit.1.0.port.-1.s.152.visible=1
-unit.1.0.port.-1.s.153.alias=
-unit.1.0.port.-1.s.153.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.153.name=DataPort[153]
-unit.1.0.port.-1.s.153.orderindex=-1
-unit.1.0.port.-1.s.153.visible=1
-unit.1.0.port.-1.s.154.alias=
-unit.1.0.port.-1.s.154.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.154.name=DataPort[154]
-unit.1.0.port.-1.s.154.orderindex=-1
-unit.1.0.port.-1.s.154.visible=1
-unit.1.0.port.-1.s.155.alias=
-unit.1.0.port.-1.s.155.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.155.name=DataPort[155]
-unit.1.0.port.-1.s.155.orderindex=-1
-unit.1.0.port.-1.s.155.visible=1
-unit.1.0.port.-1.s.156.alias=
-unit.1.0.port.-1.s.156.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.156.name=DataPort[156]
-unit.1.0.port.-1.s.156.orderindex=-1
-unit.1.0.port.-1.s.156.visible=1
-unit.1.0.port.-1.s.157.alias=
-unit.1.0.port.-1.s.157.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.157.name=DataPort[157]
-unit.1.0.port.-1.s.157.orderindex=-1
-unit.1.0.port.-1.s.157.visible=1
-unit.1.0.port.-1.s.158.alias=
-unit.1.0.port.-1.s.158.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.158.name=DataPort[158]
-unit.1.0.port.-1.s.158.orderindex=-1
-unit.1.0.port.-1.s.158.visible=1
-unit.1.0.port.-1.s.159.alias=
-unit.1.0.port.-1.s.159.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.159.name=DataPort[159]
-unit.1.0.port.-1.s.159.orderindex=-1
-unit.1.0.port.-1.s.159.visible=1
-unit.1.0.port.-1.s.16.alias=
-unit.1.0.port.-1.s.16.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.16.name=DataPort[16]
-unit.1.0.port.-1.s.16.orderindex=-1
-unit.1.0.port.-1.s.16.visible=1
-unit.1.0.port.-1.s.160.alias=
-unit.1.0.port.-1.s.160.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.160.name=DataPort[160]
-unit.1.0.port.-1.s.160.orderindex=-1
-unit.1.0.port.-1.s.160.visible=1
-unit.1.0.port.-1.s.161.alias=
-unit.1.0.port.-1.s.161.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.161.name=DataPort[161]
-unit.1.0.port.-1.s.161.orderindex=-1
-unit.1.0.port.-1.s.161.visible=1
-unit.1.0.port.-1.s.162.alias=
-unit.1.0.port.-1.s.162.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.162.name=DataPort[162]
-unit.1.0.port.-1.s.162.orderindex=-1
-unit.1.0.port.-1.s.162.visible=1
-unit.1.0.port.-1.s.17.alias=
-unit.1.0.port.-1.s.17.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.17.name=DataPort[17]
-unit.1.0.port.-1.s.17.orderindex=-1
-unit.1.0.port.-1.s.17.visible=1
-unit.1.0.port.-1.s.18.alias=
-unit.1.0.port.-1.s.18.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.18.name=DataPort[18]
-unit.1.0.port.-1.s.18.orderindex=-1
-unit.1.0.port.-1.s.18.visible=1
-unit.1.0.port.-1.s.19.alias=
-unit.1.0.port.-1.s.19.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.19.name=DataPort[19]
-unit.1.0.port.-1.s.19.orderindex=-1
-unit.1.0.port.-1.s.19.visible=1
-unit.1.0.port.-1.s.2.alias=
-unit.1.0.port.-1.s.2.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.2.name=DataPort[2]
-unit.1.0.port.-1.s.2.orderindex=-1
-unit.1.0.port.-1.s.2.visible=1
-unit.1.0.port.-1.s.20.alias=
-unit.1.0.port.-1.s.20.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.20.name=DataPort[20]
-unit.1.0.port.-1.s.20.orderindex=-1
-unit.1.0.port.-1.s.20.visible=1
-unit.1.0.port.-1.s.21.alias=
-unit.1.0.port.-1.s.21.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.21.name=DataPort[21]
-unit.1.0.port.-1.s.21.orderindex=-1
-unit.1.0.port.-1.s.21.visible=1
-unit.1.0.port.-1.s.22.alias=
-unit.1.0.port.-1.s.22.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.22.name=DataPort[22]
-unit.1.0.port.-1.s.22.orderindex=-1
-unit.1.0.port.-1.s.22.visible=1
-unit.1.0.port.-1.s.23.alias=
-unit.1.0.port.-1.s.23.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.23.name=DataPort[23]
-unit.1.0.port.-1.s.23.orderindex=-1
-unit.1.0.port.-1.s.23.visible=1
-unit.1.0.port.-1.s.24.alias=
-unit.1.0.port.-1.s.24.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.24.name=DataPort[24]
-unit.1.0.port.-1.s.24.orderindex=-1
-unit.1.0.port.-1.s.24.visible=1
-unit.1.0.port.-1.s.25.alias=
-unit.1.0.port.-1.s.25.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.25.name=DataPort[25]
-unit.1.0.port.-1.s.25.orderindex=-1
-unit.1.0.port.-1.s.25.visible=1
-unit.1.0.port.-1.s.26.alias=
-unit.1.0.port.-1.s.26.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.26.name=DataPort[26]
-unit.1.0.port.-1.s.26.orderindex=-1
-unit.1.0.port.-1.s.26.visible=1
-unit.1.0.port.-1.s.27.alias=
-unit.1.0.port.-1.s.27.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.27.name=DataPort[27]
-unit.1.0.port.-1.s.27.orderindex=-1
-unit.1.0.port.-1.s.27.visible=1
-unit.1.0.port.-1.s.28.alias=
-unit.1.0.port.-1.s.28.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.28.name=DataPort[28]
-unit.1.0.port.-1.s.28.orderindex=-1
-unit.1.0.port.-1.s.28.visible=1
-unit.1.0.port.-1.s.29.alias=
-unit.1.0.port.-1.s.29.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.29.name=DataPort[29]
-unit.1.0.port.-1.s.29.orderindex=-1
-unit.1.0.port.-1.s.29.visible=1
-unit.1.0.port.-1.s.3.alias=
-unit.1.0.port.-1.s.3.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.3.name=DataPort[3]
-unit.1.0.port.-1.s.3.orderindex=-1
-unit.1.0.port.-1.s.3.visible=1
-unit.1.0.port.-1.s.30.alias=
-unit.1.0.port.-1.s.30.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.30.name=DataPort[30]
-unit.1.0.port.-1.s.30.orderindex=-1
-unit.1.0.port.-1.s.30.visible=1
-unit.1.0.port.-1.s.31.alias=
-unit.1.0.port.-1.s.31.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.31.name=DataPort[31]
-unit.1.0.port.-1.s.31.orderindex=-1
-unit.1.0.port.-1.s.31.visible=1
-unit.1.0.port.-1.s.32.alias=
-unit.1.0.port.-1.s.32.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.32.name=DataPort[32]
-unit.1.0.port.-1.s.32.orderindex=-1
-unit.1.0.port.-1.s.32.visible=1
-unit.1.0.port.-1.s.33.alias=
-unit.1.0.port.-1.s.33.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.33.name=DataPort[33]
-unit.1.0.port.-1.s.33.orderindex=-1
-unit.1.0.port.-1.s.33.visible=1
-unit.1.0.port.-1.s.34.alias=
-unit.1.0.port.-1.s.34.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.34.name=DataPort[34]
-unit.1.0.port.-1.s.34.orderindex=-1
-unit.1.0.port.-1.s.34.visible=1
-unit.1.0.port.-1.s.35.alias=
-unit.1.0.port.-1.s.35.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.35.name=DataPort[35]
-unit.1.0.port.-1.s.35.orderindex=-1
-unit.1.0.port.-1.s.35.visible=1
-unit.1.0.port.-1.s.36.alias=
-unit.1.0.port.-1.s.36.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.36.name=DataPort[36]
-unit.1.0.port.-1.s.36.orderindex=-1
-unit.1.0.port.-1.s.36.visible=1
-unit.1.0.port.-1.s.37.alias=
-unit.1.0.port.-1.s.37.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.37.name=DataPort[37]
-unit.1.0.port.-1.s.37.orderindex=-1
-unit.1.0.port.-1.s.37.visible=1
-unit.1.0.port.-1.s.38.alias=
-unit.1.0.port.-1.s.38.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.38.name=DataPort[38]
-unit.1.0.port.-1.s.38.orderindex=-1
-unit.1.0.port.-1.s.38.visible=1
-unit.1.0.port.-1.s.39.alias=
-unit.1.0.port.-1.s.39.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.39.name=DataPort[39]
-unit.1.0.port.-1.s.39.orderindex=-1
-unit.1.0.port.-1.s.39.visible=1
-unit.1.0.port.-1.s.4.alias=
-unit.1.0.port.-1.s.4.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.4.name=DataPort[4]
-unit.1.0.port.-1.s.4.orderindex=-1
-unit.1.0.port.-1.s.4.visible=1
-unit.1.0.port.-1.s.40.alias=
-unit.1.0.port.-1.s.40.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.40.name=DataPort[40]
-unit.1.0.port.-1.s.40.orderindex=-1
-unit.1.0.port.-1.s.40.visible=1
-unit.1.0.port.-1.s.41.alias=
-unit.1.0.port.-1.s.41.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.41.name=DataPort[41]
-unit.1.0.port.-1.s.41.orderindex=-1
-unit.1.0.port.-1.s.41.visible=1
-unit.1.0.port.-1.s.42.alias=
-unit.1.0.port.-1.s.42.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.42.name=DataPort[42]
-unit.1.0.port.-1.s.42.orderindex=-1
-unit.1.0.port.-1.s.42.visible=1
-unit.1.0.port.-1.s.43.alias=
-unit.1.0.port.-1.s.43.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.43.name=DataPort[43]
-unit.1.0.port.-1.s.43.orderindex=-1
-unit.1.0.port.-1.s.43.visible=1
-unit.1.0.port.-1.s.44.alias=
-unit.1.0.port.-1.s.44.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.44.name=DataPort[44]
-unit.1.0.port.-1.s.44.orderindex=-1
-unit.1.0.port.-1.s.44.visible=1
-unit.1.0.port.-1.s.45.alias=
-unit.1.0.port.-1.s.45.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.45.name=DataPort[45]
-unit.1.0.port.-1.s.45.orderindex=-1
-unit.1.0.port.-1.s.45.visible=1
-unit.1.0.port.-1.s.46.alias=
-unit.1.0.port.-1.s.46.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.46.name=DataPort[46]
-unit.1.0.port.-1.s.46.orderindex=-1
-unit.1.0.port.-1.s.46.visible=1
-unit.1.0.port.-1.s.47.alias=
-unit.1.0.port.-1.s.47.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.47.name=DataPort[47]
-unit.1.0.port.-1.s.47.orderindex=-1
-unit.1.0.port.-1.s.47.visible=1
-unit.1.0.port.-1.s.48.alias=
-unit.1.0.port.-1.s.48.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.48.name=DataPort[48]
-unit.1.0.port.-1.s.48.orderindex=-1
-unit.1.0.port.-1.s.48.visible=1
-unit.1.0.port.-1.s.49.alias=
-unit.1.0.port.-1.s.49.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.49.name=DataPort[49]
-unit.1.0.port.-1.s.49.orderindex=-1
-unit.1.0.port.-1.s.49.visible=1
-unit.1.0.port.-1.s.5.alias=
-unit.1.0.port.-1.s.5.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.5.name=DataPort[5]
-unit.1.0.port.-1.s.5.orderindex=-1
-unit.1.0.port.-1.s.5.visible=1
-unit.1.0.port.-1.s.50.alias=
-unit.1.0.port.-1.s.50.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.50.name=DataPort[50]
-unit.1.0.port.-1.s.50.orderindex=-1
-unit.1.0.port.-1.s.50.visible=1
-unit.1.0.port.-1.s.51.alias=
-unit.1.0.port.-1.s.51.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.51.name=DataPort[51]
-unit.1.0.port.-1.s.51.orderindex=-1
-unit.1.0.port.-1.s.51.visible=1
-unit.1.0.port.-1.s.52.alias=
-unit.1.0.port.-1.s.52.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.52.name=DataPort[52]
-unit.1.0.port.-1.s.52.orderindex=-1
-unit.1.0.port.-1.s.52.visible=1
-unit.1.0.port.-1.s.53.alias=
-unit.1.0.port.-1.s.53.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.53.name=DataPort[53]
-unit.1.0.port.-1.s.53.orderindex=-1
-unit.1.0.port.-1.s.53.visible=1
-unit.1.0.port.-1.s.54.alias=
-unit.1.0.port.-1.s.54.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.54.name=DataPort[54]
-unit.1.0.port.-1.s.54.orderindex=-1
-unit.1.0.port.-1.s.54.visible=1
-unit.1.0.port.-1.s.55.alias=
-unit.1.0.port.-1.s.55.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.55.name=DataPort[55]
-unit.1.0.port.-1.s.55.orderindex=-1
-unit.1.0.port.-1.s.55.visible=1
-unit.1.0.port.-1.s.56.alias=
-unit.1.0.port.-1.s.56.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.56.name=DataPort[56]
-unit.1.0.port.-1.s.56.orderindex=-1
-unit.1.0.port.-1.s.56.visible=1
-unit.1.0.port.-1.s.57.alias=
-unit.1.0.port.-1.s.57.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.57.name=DataPort[57]
-unit.1.0.port.-1.s.57.orderindex=-1
-unit.1.0.port.-1.s.57.visible=1
-unit.1.0.port.-1.s.58.alias=
-unit.1.0.port.-1.s.58.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.58.name=DataPort[58]
-unit.1.0.port.-1.s.58.orderindex=-1
-unit.1.0.port.-1.s.58.visible=1
-unit.1.0.port.-1.s.59.alias=
-unit.1.0.port.-1.s.59.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.59.name=DataPort[59]
-unit.1.0.port.-1.s.59.orderindex=-1
-unit.1.0.port.-1.s.59.visible=1
-unit.1.0.port.-1.s.6.alias=
-unit.1.0.port.-1.s.6.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.6.name=DataPort[6]
-unit.1.0.port.-1.s.6.orderindex=-1
-unit.1.0.port.-1.s.6.visible=1
-unit.1.0.port.-1.s.60.alias=
-unit.1.0.port.-1.s.60.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.60.name=DataPort[60]
-unit.1.0.port.-1.s.60.orderindex=-1
-unit.1.0.port.-1.s.60.visible=1
-unit.1.0.port.-1.s.61.alias=
-unit.1.0.port.-1.s.61.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.61.name=DataPort[61]
-unit.1.0.port.-1.s.61.orderindex=-1
-unit.1.0.port.-1.s.61.visible=1
-unit.1.0.port.-1.s.62.alias=
-unit.1.0.port.-1.s.62.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.62.name=DataPort[62]
-unit.1.0.port.-1.s.62.orderindex=-1
-unit.1.0.port.-1.s.62.visible=1
-unit.1.0.port.-1.s.63.alias=
-unit.1.0.port.-1.s.63.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.63.name=DataPort[63]
-unit.1.0.port.-1.s.63.orderindex=-1
-unit.1.0.port.-1.s.63.visible=1
-unit.1.0.port.-1.s.64.alias=
-unit.1.0.port.-1.s.64.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.64.name=DataPort[64]
-unit.1.0.port.-1.s.64.orderindex=-1
-unit.1.0.port.-1.s.64.visible=1
-unit.1.0.port.-1.s.65.alias=
-unit.1.0.port.-1.s.65.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.65.name=DataPort[65]
-unit.1.0.port.-1.s.65.orderindex=-1
-unit.1.0.port.-1.s.65.visible=1
-unit.1.0.port.-1.s.66.alias=
-unit.1.0.port.-1.s.66.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.66.name=DataPort[66]
-unit.1.0.port.-1.s.66.orderindex=-1
-unit.1.0.port.-1.s.66.visible=1
-unit.1.0.port.-1.s.67.alias=
-unit.1.0.port.-1.s.67.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.67.name=DataPort[67]
-unit.1.0.port.-1.s.67.orderindex=-1
-unit.1.0.port.-1.s.67.visible=1
-unit.1.0.port.-1.s.68.alias=
-unit.1.0.port.-1.s.68.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.68.name=DataPort[68]
-unit.1.0.port.-1.s.68.orderindex=-1
-unit.1.0.port.-1.s.68.visible=1
-unit.1.0.port.-1.s.69.alias=
-unit.1.0.port.-1.s.69.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.69.name=DataPort[69]
-unit.1.0.port.-1.s.69.orderindex=-1
-unit.1.0.port.-1.s.69.visible=1
-unit.1.0.port.-1.s.7.alias=MEM_WELB
-unit.1.0.port.-1.s.7.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.7.name=DataPort[7]
-unit.1.0.port.-1.s.7.orderindex=-1
-unit.1.0.port.-1.s.7.visible=1
-unit.1.0.port.-1.s.70.alias=
-unit.1.0.port.-1.s.70.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.70.name=DataPort[70]
-unit.1.0.port.-1.s.70.orderindex=-1
-unit.1.0.port.-1.s.70.visible=1
-unit.1.0.port.-1.s.71.alias=
-unit.1.0.port.-1.s.71.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.71.name=DataPort[71]
-unit.1.0.port.-1.s.71.orderindex=-1
-unit.1.0.port.-1.s.71.visible=1
-unit.1.0.port.-1.s.72.alias=
-unit.1.0.port.-1.s.72.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.72.name=DataPort[72]
-unit.1.0.port.-1.s.72.orderindex=-1
-unit.1.0.port.-1.s.72.visible=1
-unit.1.0.port.-1.s.73.alias=
-unit.1.0.port.-1.s.73.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.73.name=DataPort[73]
-unit.1.0.port.-1.s.73.orderindex=-1
-unit.1.0.port.-1.s.73.visible=1
-unit.1.0.port.-1.s.74.alias=
-unit.1.0.port.-1.s.74.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.74.name=DataPort[74]
-unit.1.0.port.-1.s.74.orderindex=-1
-unit.1.0.port.-1.s.74.visible=1
-unit.1.0.port.-1.s.75.alias=
-unit.1.0.port.-1.s.75.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.75.name=DataPort[75]
-unit.1.0.port.-1.s.75.orderindex=-1
-unit.1.0.port.-1.s.75.visible=1
-unit.1.0.port.-1.s.76.alias=
-unit.1.0.port.-1.s.76.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.76.name=DataPort[76]
-unit.1.0.port.-1.s.76.orderindex=-1
-unit.1.0.port.-1.s.76.visible=1
-unit.1.0.port.-1.s.77.alias=
-unit.1.0.port.-1.s.77.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.77.name=DataPort[77]
-unit.1.0.port.-1.s.77.orderindex=-1
-unit.1.0.port.-1.s.77.visible=1
-unit.1.0.port.-1.s.78.alias=
-unit.1.0.port.-1.s.78.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.78.name=DataPort[78]
-unit.1.0.port.-1.s.78.orderindex=-1
-unit.1.0.port.-1.s.78.visible=1
-unit.1.0.port.-1.s.79.alias=
-unit.1.0.port.-1.s.79.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.79.name=DataPort[79]
-unit.1.0.port.-1.s.79.orderindex=-1
-unit.1.0.port.-1.s.79.visible=1
-unit.1.0.port.-1.s.8.alias=
-unit.1.0.port.-1.s.8.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.8.name=DataPort[8]
-unit.1.0.port.-1.s.8.orderindex=-1
-unit.1.0.port.-1.s.8.visible=1
-unit.1.0.port.-1.s.80.alias=
-unit.1.0.port.-1.s.80.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.80.name=DataPort[80]
-unit.1.0.port.-1.s.80.orderindex=-1
-unit.1.0.port.-1.s.80.visible=1
-unit.1.0.port.-1.s.81.alias=
-unit.1.0.port.-1.s.81.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.81.name=DataPort[81]
-unit.1.0.port.-1.s.81.orderindex=-1
-unit.1.0.port.-1.s.81.visible=1
-unit.1.0.port.-1.s.82.alias=
-unit.1.0.port.-1.s.82.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.82.name=DataPort[82]
-unit.1.0.port.-1.s.82.orderindex=-1
-unit.1.0.port.-1.s.82.visible=1
-unit.1.0.port.-1.s.83.alias=DMAR_ENABLE0
-unit.1.0.port.-1.s.83.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.83.name=DataPort[83]
-unit.1.0.port.-1.s.83.orderindex=-1
-unit.1.0.port.-1.s.83.visible=1
-unit.1.0.port.-1.s.84.alias=DMAR_ENABLE1
-unit.1.0.port.-1.s.84.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.84.name=DataPort[84]
-unit.1.0.port.-1.s.84.orderindex=-1
-unit.1.0.port.-1.s.84.visible=1
-unit.1.0.port.-1.s.85.alias=DMAR_ENABLE2
-unit.1.0.port.-1.s.85.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.85.name=DataPort[85]
-unit.1.0.port.-1.s.85.orderindex=-1
-unit.1.0.port.-1.s.85.visible=1
-unit.1.0.port.-1.s.86.alias=DMAR_ENABLE3
-unit.1.0.port.-1.s.86.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.86.name=DataPort[86]
-unit.1.0.port.-1.s.86.orderindex=-1
-unit.1.0.port.-1.s.86.visible=1
-unit.1.0.port.-1.s.87.alias=Hit_DMAW
-unit.1.0.port.-1.s.87.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.87.name=DataPort[87]
-unit.1.0.port.-1.s.87.orderindex=-1
-unit.1.0.port.-1.s.87.visible=1
-unit.1.0.port.-1.s.88.alias=
-unit.1.0.port.-1.s.88.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.88.name=DataPort[88]
-unit.1.0.port.-1.s.88.orderindex=-1
-unit.1.0.port.-1.s.88.visible=1
-unit.1.0.port.-1.s.89.alias=
-unit.1.0.port.-1.s.89.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.89.name=DataPort[89]
-unit.1.0.port.-1.s.89.orderindex=-1
-unit.1.0.port.-1.s.89.visible=1
-unit.1.0.port.-1.s.9.alias=
-unit.1.0.port.-1.s.9.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.9.name=DataPort[9]
-unit.1.0.port.-1.s.9.orderindex=-1
-unit.1.0.port.-1.s.9.visible=1
-unit.1.0.port.-1.s.90.alias=
-unit.1.0.port.-1.s.90.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.90.name=DataPort[90]
-unit.1.0.port.-1.s.90.orderindex=-1
-unit.1.0.port.-1.s.90.visible=1
-unit.1.0.port.-1.s.91.alias=
-unit.1.0.port.-1.s.91.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.91.name=DataPort[91]
-unit.1.0.port.-1.s.91.orderindex=-1
-unit.1.0.port.-1.s.91.visible=1
-unit.1.0.port.-1.s.92.alias=
-unit.1.0.port.-1.s.92.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.92.name=DataPort[92]
-unit.1.0.port.-1.s.92.orderindex=-1
-unit.1.0.port.-1.s.92.visible=1
-unit.1.0.port.-1.s.93.alias=
-unit.1.0.port.-1.s.93.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.93.name=DataPort[93]
-unit.1.0.port.-1.s.93.orderindex=-1
-unit.1.0.port.-1.s.93.visible=1
-unit.1.0.port.-1.s.94.alias=
-unit.1.0.port.-1.s.94.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.94.name=DataPort[94]
-unit.1.0.port.-1.s.94.orderindex=-1
-unit.1.0.port.-1.s.94.visible=1
-unit.1.0.port.-1.s.95.alias=
-unit.1.0.port.-1.s.95.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.95.name=DataPort[95]
-unit.1.0.port.-1.s.95.orderindex=-1
-unit.1.0.port.-1.s.95.visible=1
-unit.1.0.port.-1.s.96.alias=
-unit.1.0.port.-1.s.96.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.96.name=DataPort[96]
-unit.1.0.port.-1.s.96.orderindex=-1
-unit.1.0.port.-1.s.96.visible=1
-unit.1.0.port.-1.s.97.alias=
-unit.1.0.port.-1.s.97.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.97.name=DataPort[97]
-unit.1.0.port.-1.s.97.orderindex=-1
-unit.1.0.port.-1.s.97.visible=1
-unit.1.0.port.-1.s.98.alias=
-unit.1.0.port.-1.s.98.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.98.name=DataPort[98]
-unit.1.0.port.-1.s.98.orderindex=-1
-unit.1.0.port.-1.s.98.visible=1
-unit.1.0.port.-1.s.99.alias=
-unit.1.0.port.-1.s.99.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.-1.s.99.name=DataPort[99]
-unit.1.0.port.-1.s.99.orderindex=-1
-unit.1.0.port.-1.s.99.visible=1
-unit.1.0.port.0.b.0.alias=
-unit.1.0.port.0.b.0.channellist=0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162
-unit.1.0.port.0.b.0.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.b.0.name=TriggerPort0
-unit.1.0.port.0.b.0.orderindex=-1
-unit.1.0.port.0.b.0.radix=Hex
-unit.1.0.port.0.b.0.signedOffset=0.0
-unit.1.0.port.0.b.0.signedPrecision=0
-unit.1.0.port.0.b.0.signedScaleFactor=1.0
-unit.1.0.port.0.b.0.unsignedOffset=0.0
-unit.1.0.port.0.b.0.unsignedPrecision=0
-unit.1.0.port.0.b.0.unsignedScaleFactor=1.0
-unit.1.0.port.0.b.0.visible=1
-unit.1.0.port.0.buscount=1
-unit.1.0.port.0.channelcount=163
-unit.1.0.port.0.s.0.alias=DEBUG_CS_CLK
-unit.1.0.port.0.s.0.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.0.name=TriggerPort0[0]
-unit.1.0.port.0.s.0.orderindex=-1
-unit.1.0.port.0.s.0.visible=1
-unit.1.0.port.0.s.1.alias=Hit_DMAR
-unit.1.0.port.0.s.1.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.1.name=TriggerPort0[1]
-unit.1.0.port.0.s.1.orderindex=-1
-unit.1.0.port.0.s.1.visible=1
-unit.1.0.port.0.s.10.alias=
-unit.1.0.port.0.s.10.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.10.name=TriggerPort0[10]
-unit.1.0.port.0.s.10.orderindex=-1
-unit.1.0.port.0.s.10.visible=1
-unit.1.0.port.0.s.100.alias=
-unit.1.0.port.0.s.100.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.100.name=TriggerPort0[100]
-unit.1.0.port.0.s.100.orderindex=-1
-unit.1.0.port.0.s.100.visible=1
-unit.1.0.port.0.s.101.alias=
-unit.1.0.port.0.s.101.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.101.name=TriggerPort0[101]
-unit.1.0.port.0.s.101.orderindex=-1
-unit.1.0.port.0.s.101.visible=1
-unit.1.0.port.0.s.102.alias=
-unit.1.0.port.0.s.102.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.102.name=TriggerPort0[102]
-unit.1.0.port.0.s.102.orderindex=-1
-unit.1.0.port.0.s.102.visible=1
-unit.1.0.port.0.s.103.alias=
-unit.1.0.port.0.s.103.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.103.name=TriggerPort0[103]
-unit.1.0.port.0.s.103.orderindex=-1
-unit.1.0.port.0.s.103.visible=1
-unit.1.0.port.0.s.104.alias=
-unit.1.0.port.0.s.104.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.104.name=TriggerPort0[104]
-unit.1.0.port.0.s.104.orderindex=-1
-unit.1.0.port.0.s.104.visible=1
-unit.1.0.port.0.s.105.alias=
-unit.1.0.port.0.s.105.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.105.name=TriggerPort0[105]
-unit.1.0.port.0.s.105.orderindex=-1
-unit.1.0.port.0.s.105.visible=1
-unit.1.0.port.0.s.106.alias=
-unit.1.0.port.0.s.106.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.106.name=TriggerPort0[106]
-unit.1.0.port.0.s.106.orderindex=-1
-unit.1.0.port.0.s.106.visible=1
-unit.1.0.port.0.s.107.alias=
-unit.1.0.port.0.s.107.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.107.name=TriggerPort0[107]
-unit.1.0.port.0.s.107.orderindex=-1
-unit.1.0.port.0.s.107.visible=1
-unit.1.0.port.0.s.108.alias=
-unit.1.0.port.0.s.108.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.108.name=TriggerPort0[108]
-unit.1.0.port.0.s.108.orderindex=-1
-unit.1.0.port.0.s.108.visible=1
-unit.1.0.port.0.s.109.alias=
-unit.1.0.port.0.s.109.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.109.name=TriggerPort0[109]
-unit.1.0.port.0.s.109.orderindex=-1
-unit.1.0.port.0.s.109.visible=1
-unit.1.0.port.0.s.11.alias=
-unit.1.0.port.0.s.11.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.11.name=TriggerPort0[11]
-unit.1.0.port.0.s.11.orderindex=-1
-unit.1.0.port.0.s.11.visible=1
-unit.1.0.port.0.s.110.alias=
-unit.1.0.port.0.s.110.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.110.name=TriggerPort0[110]
-unit.1.0.port.0.s.110.orderindex=-1
-unit.1.0.port.0.s.110.visible=1
-unit.1.0.port.0.s.111.alias=
-unit.1.0.port.0.s.111.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.111.name=TriggerPort0[111]
-unit.1.0.port.0.s.111.orderindex=-1
-unit.1.0.port.0.s.111.visible=1
-unit.1.0.port.0.s.112.alias=
-unit.1.0.port.0.s.112.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.112.name=TriggerPort0[112]
-unit.1.0.port.0.s.112.orderindex=-1
-unit.1.0.port.0.s.112.visible=1
-unit.1.0.port.0.s.113.alias=
-unit.1.0.port.0.s.113.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.113.name=TriggerPort0[113]
-unit.1.0.port.0.s.113.orderindex=-1
-unit.1.0.port.0.s.113.visible=1
-unit.1.0.port.0.s.114.alias=
-unit.1.0.port.0.s.114.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.114.name=TriggerPort0[114]
-unit.1.0.port.0.s.114.orderindex=-1
-unit.1.0.port.0.s.114.visible=1
-unit.1.0.port.0.s.115.alias=
-unit.1.0.port.0.s.115.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.115.name=TriggerPort0[115]
-unit.1.0.port.0.s.115.orderindex=-1
-unit.1.0.port.0.s.115.visible=1
-unit.1.0.port.0.s.116.alias=
-unit.1.0.port.0.s.116.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.116.name=TriggerPort0[116]
-unit.1.0.port.0.s.116.orderindex=-1
-unit.1.0.port.0.s.116.visible=1
-unit.1.0.port.0.s.117.alias=
-unit.1.0.port.0.s.117.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.117.name=TriggerPort0[117]
-unit.1.0.port.0.s.117.orderindex=-1
-unit.1.0.port.0.s.117.visible=1
-unit.1.0.port.0.s.118.alias=
-unit.1.0.port.0.s.118.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.118.name=TriggerPort0[118]
-unit.1.0.port.0.s.118.orderindex=-1
-unit.1.0.port.0.s.118.visible=1
-unit.1.0.port.0.s.119.alias=
-unit.1.0.port.0.s.119.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.119.name=TriggerPort0[119]
-unit.1.0.port.0.s.119.orderindex=-1
-unit.1.0.port.0.s.119.visible=1
-unit.1.0.port.0.s.12.alias=
-unit.1.0.port.0.s.12.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.12.name=TriggerPort0[12]
-unit.1.0.port.0.s.12.orderindex=-1
-unit.1.0.port.0.s.12.visible=1
-unit.1.0.port.0.s.120.alias=
-unit.1.0.port.0.s.120.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.120.name=TriggerPort0[120]
-unit.1.0.port.0.s.120.orderindex=-1
-unit.1.0.port.0.s.120.visible=1
-unit.1.0.port.0.s.121.alias=
-unit.1.0.port.0.s.121.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.121.name=TriggerPort0[121]
-unit.1.0.port.0.s.121.orderindex=-1
-unit.1.0.port.0.s.121.visible=1
-unit.1.0.port.0.s.122.alias=
-unit.1.0.port.0.s.122.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.122.name=TriggerPort0[122]
-unit.1.0.port.0.s.122.orderindex=-1
-unit.1.0.port.0.s.122.visible=1
-unit.1.0.port.0.s.123.alias=
-unit.1.0.port.0.s.123.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.123.name=TriggerPort0[123]
-unit.1.0.port.0.s.123.orderindex=-1
-unit.1.0.port.0.s.123.visible=1
-unit.1.0.port.0.s.124.alias=PFPGA_RST0
-unit.1.0.port.0.s.124.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.124.name=TriggerPort0[124]
-unit.1.0.port.0.s.124.orderindex=-1
-unit.1.0.port.0.s.124.visible=1
-unit.1.0.port.0.s.125.alias=DBUS_HiZ
-unit.1.0.port.0.s.125.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.125.name=TriggerPort0[125]
-unit.1.0.port.0.s.125.orderindex=-1
-unit.1.0.port.0.s.125.visible=1
-unit.1.0.port.0.s.126.alias=DMAW_ENABLE0
-unit.1.0.port.0.s.126.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.126.name=TriggerPort0[126]
-unit.1.0.port.0.s.126.orderindex=-1
-unit.1.0.port.0.s.126.visible=1
-unit.1.0.port.0.s.127.alias=DMAW_ENABLE1
-unit.1.0.port.0.s.127.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.127.name=TriggerPort0[127]
-unit.1.0.port.0.s.127.orderindex=-1
-unit.1.0.port.0.s.127.visible=1
-unit.1.0.port.0.s.128.alias=DMAW_ENABLE2
-unit.1.0.port.0.s.128.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.128.name=TriggerPort0[128]
-unit.1.0.port.0.s.128.orderindex=-1
-unit.1.0.port.0.s.128.visible=1
-unit.1.0.port.0.s.129.alias=DMAW_ENABLE3
-unit.1.0.port.0.s.129.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.129.name=TriggerPort0[129]
-unit.1.0.port.0.s.129.orderindex=-1
-unit.1.0.port.0.s.129.visible=1
-unit.1.0.port.0.s.13.alias=
-unit.1.0.port.0.s.13.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.13.name=TriggerPort0[13]
-unit.1.0.port.0.s.13.orderindex=-1
-unit.1.0.port.0.s.13.visible=1
-unit.1.0.port.0.s.130.alias=
-unit.1.0.port.0.s.130.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.130.name=TriggerPort0[130]
-unit.1.0.port.0.s.130.orderindex=-1
-unit.1.0.port.0.s.130.visible=1
-unit.1.0.port.0.s.131.alias=
-unit.1.0.port.0.s.131.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.131.name=TriggerPort0[131]
-unit.1.0.port.0.s.131.orderindex=-1
-unit.1.0.port.0.s.131.visible=1
-unit.1.0.port.0.s.132.alias=
-unit.1.0.port.0.s.132.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.132.name=TriggerPort0[132]
-unit.1.0.port.0.s.132.orderindex=-1
-unit.1.0.port.0.s.132.visible=1
-unit.1.0.port.0.s.133.alias=
-unit.1.0.port.0.s.133.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.133.name=TriggerPort0[133]
-unit.1.0.port.0.s.133.orderindex=-1
-unit.1.0.port.0.s.133.visible=1
-unit.1.0.port.0.s.134.alias=
-unit.1.0.port.0.s.134.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.134.name=TriggerPort0[134]
-unit.1.0.port.0.s.134.orderindex=-1
-unit.1.0.port.0.s.134.visible=1
-unit.1.0.port.0.s.135.alias=
-unit.1.0.port.0.s.135.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.135.name=TriggerPort0[135]
-unit.1.0.port.0.s.135.orderindex=-1
-unit.1.0.port.0.s.135.visible=1
-unit.1.0.port.0.s.136.alias=
-unit.1.0.port.0.s.136.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.136.name=TriggerPort0[136]
-unit.1.0.port.0.s.136.orderindex=-1
-unit.1.0.port.0.s.136.visible=1
-unit.1.0.port.0.s.137.alias=
-unit.1.0.port.0.s.137.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.137.name=TriggerPort0[137]
-unit.1.0.port.0.s.137.orderindex=-1
-unit.1.0.port.0.s.137.visible=1
-unit.1.0.port.0.s.138.alias=
-unit.1.0.port.0.s.138.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.138.name=TriggerPort0[138]
-unit.1.0.port.0.s.138.orderindex=-1
-unit.1.0.port.0.s.138.visible=1
-unit.1.0.port.0.s.139.alias=
-unit.1.0.port.0.s.139.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.139.name=TriggerPort0[139]
-unit.1.0.port.0.s.139.orderindex=-1
-unit.1.0.port.0.s.139.visible=1
-unit.1.0.port.0.s.14.alias=
-unit.1.0.port.0.s.14.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.14.name=TriggerPort0[14]
-unit.1.0.port.0.s.14.orderindex=-1
-unit.1.0.port.0.s.14.visible=1
-unit.1.0.port.0.s.140.alias=
-unit.1.0.port.0.s.140.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.140.name=TriggerPort0[140]
-unit.1.0.port.0.s.140.orderindex=-1
-unit.1.0.port.0.s.140.visible=1
-unit.1.0.port.0.s.141.alias=
-unit.1.0.port.0.s.141.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.141.name=TriggerPort0[141]
-unit.1.0.port.0.s.141.orderindex=-1
-unit.1.0.port.0.s.141.visible=1
-unit.1.0.port.0.s.142.alias=
-unit.1.0.port.0.s.142.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.142.name=TriggerPort0[142]
-unit.1.0.port.0.s.142.orderindex=-1
-unit.1.0.port.0.s.142.visible=1
-unit.1.0.port.0.s.143.alias=
-unit.1.0.port.0.s.143.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.143.name=TriggerPort0[143]
-unit.1.0.port.0.s.143.orderindex=-1
-unit.1.0.port.0.s.143.visible=1
-unit.1.0.port.0.s.144.alias=
-unit.1.0.port.0.s.144.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.144.name=TriggerPort0[144]
-unit.1.0.port.0.s.144.orderindex=-1
-unit.1.0.port.0.s.144.visible=1
-unit.1.0.port.0.s.145.alias=
-unit.1.0.port.0.s.145.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.145.name=TriggerPort0[145]
-unit.1.0.port.0.s.145.orderindex=-1
-unit.1.0.port.0.s.145.visible=1
-unit.1.0.port.0.s.146.alias=
-unit.1.0.port.0.s.146.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.146.name=TriggerPort0[146]
-unit.1.0.port.0.s.146.orderindex=-1
-unit.1.0.port.0.s.146.visible=1
-unit.1.0.port.0.s.147.alias=
-unit.1.0.port.0.s.147.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.147.name=TriggerPort0[147]
-unit.1.0.port.0.s.147.orderindex=-1
-unit.1.0.port.0.s.147.visible=1
-unit.1.0.port.0.s.148.alias=
-unit.1.0.port.0.s.148.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.148.name=TriggerPort0[148]
-unit.1.0.port.0.s.148.orderindex=-1
-unit.1.0.port.0.s.148.visible=1
-unit.1.0.port.0.s.149.alias=
-unit.1.0.port.0.s.149.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.149.name=TriggerPort0[149]
-unit.1.0.port.0.s.149.orderindex=-1
-unit.1.0.port.0.s.149.visible=1
-unit.1.0.port.0.s.15.alias=
-unit.1.0.port.0.s.15.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.15.name=TriggerPort0[15]
-unit.1.0.port.0.s.15.orderindex=-1
-unit.1.0.port.0.s.15.visible=1
-unit.1.0.port.0.s.150.alias=
-unit.1.0.port.0.s.150.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.150.name=TriggerPort0[150]
-unit.1.0.port.0.s.150.orderindex=-1
-unit.1.0.port.0.s.150.visible=1
-unit.1.0.port.0.s.151.alias=
-unit.1.0.port.0.s.151.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.151.name=TriggerPort0[151]
-unit.1.0.port.0.s.151.orderindex=-1
-unit.1.0.port.0.s.151.visible=1
-unit.1.0.port.0.s.152.alias=
-unit.1.0.port.0.s.152.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.152.name=TriggerPort0[152]
-unit.1.0.port.0.s.152.orderindex=-1
-unit.1.0.port.0.s.152.visible=1
-unit.1.0.port.0.s.153.alias=
-unit.1.0.port.0.s.153.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.153.name=TriggerPort0[153]
-unit.1.0.port.0.s.153.orderindex=-1
-unit.1.0.port.0.s.153.visible=1
-unit.1.0.port.0.s.154.alias=
-unit.1.0.port.0.s.154.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.154.name=TriggerPort0[154]
-unit.1.0.port.0.s.154.orderindex=-1
-unit.1.0.port.0.s.154.visible=1
-unit.1.0.port.0.s.155.alias=
-unit.1.0.port.0.s.155.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.155.name=TriggerPort0[155]
-unit.1.0.port.0.s.155.orderindex=-1
-unit.1.0.port.0.s.155.visible=1
-unit.1.0.port.0.s.156.alias=
-unit.1.0.port.0.s.156.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.156.name=TriggerPort0[156]
-unit.1.0.port.0.s.156.orderindex=-1
-unit.1.0.port.0.s.156.visible=1
-unit.1.0.port.0.s.157.alias=
-unit.1.0.port.0.s.157.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.157.name=TriggerPort0[157]
-unit.1.0.port.0.s.157.orderindex=-1
-unit.1.0.port.0.s.157.visible=1
-unit.1.0.port.0.s.158.alias=
-unit.1.0.port.0.s.158.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.158.name=TriggerPort0[158]
-unit.1.0.port.0.s.158.orderindex=-1
-unit.1.0.port.0.s.158.visible=1
-unit.1.0.port.0.s.159.alias=
-unit.1.0.port.0.s.159.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.159.name=TriggerPort0[159]
-unit.1.0.port.0.s.159.orderindex=-1
-unit.1.0.port.0.s.159.visible=1
-unit.1.0.port.0.s.16.alias=
-unit.1.0.port.0.s.16.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.16.name=TriggerPort0[16]
-unit.1.0.port.0.s.16.orderindex=-1
-unit.1.0.port.0.s.16.visible=1
-unit.1.0.port.0.s.160.alias=
-unit.1.0.port.0.s.160.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.160.name=TriggerPort0[160]
-unit.1.0.port.0.s.160.orderindex=-1
-unit.1.0.port.0.s.160.visible=1
-unit.1.0.port.0.s.161.alias=
-unit.1.0.port.0.s.161.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.161.name=TriggerPort0[161]
-unit.1.0.port.0.s.161.orderindex=-1
-unit.1.0.port.0.s.161.visible=1
-unit.1.0.port.0.s.162.alias=
-unit.1.0.port.0.s.162.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.162.name=TriggerPort0[162]
-unit.1.0.port.0.s.162.orderindex=-1
-unit.1.0.port.0.s.162.visible=1
-unit.1.0.port.0.s.17.alias=
-unit.1.0.port.0.s.17.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.17.name=TriggerPort0[17]
-unit.1.0.port.0.s.17.orderindex=-1
-unit.1.0.port.0.s.17.visible=1
-unit.1.0.port.0.s.18.alias=
-unit.1.0.port.0.s.18.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.18.name=TriggerPort0[18]
-unit.1.0.port.0.s.18.orderindex=-1
-unit.1.0.port.0.s.18.visible=1
-unit.1.0.port.0.s.19.alias=
-unit.1.0.port.0.s.19.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.19.name=TriggerPort0[19]
-unit.1.0.port.0.s.19.orderindex=-1
-unit.1.0.port.0.s.19.visible=1
-unit.1.0.port.0.s.2.alias=
-unit.1.0.port.0.s.2.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.2.name=TriggerPort0[2]
-unit.1.0.port.0.s.2.orderindex=-1
-unit.1.0.port.0.s.2.visible=1
-unit.1.0.port.0.s.20.alias=
-unit.1.0.port.0.s.20.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.20.name=TriggerPort0[20]
-unit.1.0.port.0.s.20.orderindex=-1
-unit.1.0.port.0.s.20.visible=1
-unit.1.0.port.0.s.21.alias=
-unit.1.0.port.0.s.21.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.21.name=TriggerPort0[21]
-unit.1.0.port.0.s.21.orderindex=-1
-unit.1.0.port.0.s.21.visible=1
-unit.1.0.port.0.s.22.alias=
-unit.1.0.port.0.s.22.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.22.name=TriggerPort0[22]
-unit.1.0.port.0.s.22.orderindex=-1
-unit.1.0.port.0.s.22.visible=1
-unit.1.0.port.0.s.23.alias=
-unit.1.0.port.0.s.23.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.23.name=TriggerPort0[23]
-unit.1.0.port.0.s.23.orderindex=-1
-unit.1.0.port.0.s.23.visible=1
-unit.1.0.port.0.s.24.alias=
-unit.1.0.port.0.s.24.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.24.name=TriggerPort0[24]
-unit.1.0.port.0.s.24.orderindex=-1
-unit.1.0.port.0.s.24.visible=1
-unit.1.0.port.0.s.25.alias=
-unit.1.0.port.0.s.25.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.25.name=TriggerPort0[25]
-unit.1.0.port.0.s.25.orderindex=-1
-unit.1.0.port.0.s.25.visible=1
-unit.1.0.port.0.s.26.alias=
-unit.1.0.port.0.s.26.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.26.name=TriggerPort0[26]
-unit.1.0.port.0.s.26.orderindex=-1
-unit.1.0.port.0.s.26.visible=1
-unit.1.0.port.0.s.27.alias=
-unit.1.0.port.0.s.27.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.27.name=TriggerPort0[27]
-unit.1.0.port.0.s.27.orderindex=-1
-unit.1.0.port.0.s.27.visible=1
-unit.1.0.port.0.s.28.alias=
-unit.1.0.port.0.s.28.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.28.name=TriggerPort0[28]
-unit.1.0.port.0.s.28.orderindex=-1
-unit.1.0.port.0.s.28.visible=1
-unit.1.0.port.0.s.29.alias=
-unit.1.0.port.0.s.29.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.29.name=TriggerPort0[29]
-unit.1.0.port.0.s.29.orderindex=-1
-unit.1.0.port.0.s.29.visible=1
-unit.1.0.port.0.s.3.alias=
-unit.1.0.port.0.s.3.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.3.name=TriggerPort0[3]
-unit.1.0.port.0.s.3.orderindex=-1
-unit.1.0.port.0.s.3.visible=1
-unit.1.0.port.0.s.30.alias=
-unit.1.0.port.0.s.30.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.30.name=TriggerPort0[30]
-unit.1.0.port.0.s.30.orderindex=-1
-unit.1.0.port.0.s.30.visible=1
-unit.1.0.port.0.s.31.alias=
-unit.1.0.port.0.s.31.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.31.name=TriggerPort0[31]
-unit.1.0.port.0.s.31.orderindex=-1
-unit.1.0.port.0.s.31.visible=1
-unit.1.0.port.0.s.32.alias=
-unit.1.0.port.0.s.32.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.32.name=TriggerPort0[32]
-unit.1.0.port.0.s.32.orderindex=-1
-unit.1.0.port.0.s.32.visible=1
-unit.1.0.port.0.s.33.alias=
-unit.1.0.port.0.s.33.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.33.name=TriggerPort0[33]
-unit.1.0.port.0.s.33.orderindex=-1
-unit.1.0.port.0.s.33.visible=1
-unit.1.0.port.0.s.34.alias=
-unit.1.0.port.0.s.34.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.34.name=TriggerPort0[34]
-unit.1.0.port.0.s.34.orderindex=-1
-unit.1.0.port.0.s.34.visible=1
-unit.1.0.port.0.s.35.alias=
-unit.1.0.port.0.s.35.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.35.name=TriggerPort0[35]
-unit.1.0.port.0.s.35.orderindex=-1
-unit.1.0.port.0.s.35.visible=1
-unit.1.0.port.0.s.36.alias=
-unit.1.0.port.0.s.36.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.36.name=TriggerPort0[36]
-unit.1.0.port.0.s.36.orderindex=-1
-unit.1.0.port.0.s.36.visible=1
-unit.1.0.port.0.s.37.alias=
-unit.1.0.port.0.s.37.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.37.name=TriggerPort0[37]
-unit.1.0.port.0.s.37.orderindex=-1
-unit.1.0.port.0.s.37.visible=1
-unit.1.0.port.0.s.38.alias=
-unit.1.0.port.0.s.38.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.38.name=TriggerPort0[38]
-unit.1.0.port.0.s.38.orderindex=-1
-unit.1.0.port.0.s.38.visible=1
-unit.1.0.port.0.s.39.alias=
-unit.1.0.port.0.s.39.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.39.name=TriggerPort0[39]
-unit.1.0.port.0.s.39.orderindex=-1
-unit.1.0.port.0.s.39.visible=1
-unit.1.0.port.0.s.4.alias=
-unit.1.0.port.0.s.4.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.4.name=TriggerPort0[4]
-unit.1.0.port.0.s.4.orderindex=-1
-unit.1.0.port.0.s.4.visible=1
-unit.1.0.port.0.s.40.alias=
-unit.1.0.port.0.s.40.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.40.name=TriggerPort0[40]
-unit.1.0.port.0.s.40.orderindex=-1
-unit.1.0.port.0.s.40.visible=1
-unit.1.0.port.0.s.41.alias=
-unit.1.0.port.0.s.41.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.41.name=TriggerPort0[41]
-unit.1.0.port.0.s.41.orderindex=-1
-unit.1.0.port.0.s.41.visible=1
-unit.1.0.port.0.s.42.alias=
-unit.1.0.port.0.s.42.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.42.name=TriggerPort0[42]
-unit.1.0.port.0.s.42.orderindex=-1
-unit.1.0.port.0.s.42.visible=1
-unit.1.0.port.0.s.43.alias=
-unit.1.0.port.0.s.43.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.43.name=TriggerPort0[43]
-unit.1.0.port.0.s.43.orderindex=-1
-unit.1.0.port.0.s.43.visible=1
-unit.1.0.port.0.s.44.alias=
-unit.1.0.port.0.s.44.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.44.name=TriggerPort0[44]
-unit.1.0.port.0.s.44.orderindex=-1
-unit.1.0.port.0.s.44.visible=1
-unit.1.0.port.0.s.45.alias=
-unit.1.0.port.0.s.45.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.45.name=TriggerPort0[45]
-unit.1.0.port.0.s.45.orderindex=-1
-unit.1.0.port.0.s.45.visible=1
-unit.1.0.port.0.s.46.alias=
-unit.1.0.port.0.s.46.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.46.name=TriggerPort0[46]
-unit.1.0.port.0.s.46.orderindex=-1
-unit.1.0.port.0.s.46.visible=1
-unit.1.0.port.0.s.47.alias=
-unit.1.0.port.0.s.47.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.47.name=TriggerPort0[47]
-unit.1.0.port.0.s.47.orderindex=-1
-unit.1.0.port.0.s.47.visible=1
-unit.1.0.port.0.s.48.alias=
-unit.1.0.port.0.s.48.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.48.name=TriggerPort0[48]
-unit.1.0.port.0.s.48.orderindex=-1
-unit.1.0.port.0.s.48.visible=1
-unit.1.0.port.0.s.49.alias=
-unit.1.0.port.0.s.49.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.49.name=TriggerPort0[49]
-unit.1.0.port.0.s.49.orderindex=-1
-unit.1.0.port.0.s.49.visible=1
-unit.1.0.port.0.s.5.alias=
-unit.1.0.port.0.s.5.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.5.name=TriggerPort0[5]
-unit.1.0.port.0.s.5.orderindex=-1
-unit.1.0.port.0.s.5.visible=1
-unit.1.0.port.0.s.50.alias=
-unit.1.0.port.0.s.50.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.50.name=TriggerPort0[50]
-unit.1.0.port.0.s.50.orderindex=-1
-unit.1.0.port.0.s.50.visible=1
-unit.1.0.port.0.s.51.alias=
-unit.1.0.port.0.s.51.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.51.name=TriggerPort0[51]
-unit.1.0.port.0.s.51.orderindex=-1
-unit.1.0.port.0.s.51.visible=1
-unit.1.0.port.0.s.52.alias=
-unit.1.0.port.0.s.52.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.52.name=TriggerPort0[52]
-unit.1.0.port.0.s.52.orderindex=-1
-unit.1.0.port.0.s.52.visible=1
-unit.1.0.port.0.s.53.alias=
-unit.1.0.port.0.s.53.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.53.name=TriggerPort0[53]
-unit.1.0.port.0.s.53.orderindex=-1
-unit.1.0.port.0.s.53.visible=1
-unit.1.0.port.0.s.54.alias=
-unit.1.0.port.0.s.54.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.54.name=TriggerPort0[54]
-unit.1.0.port.0.s.54.orderindex=-1
-unit.1.0.port.0.s.54.visible=1
-unit.1.0.port.0.s.55.alias=
-unit.1.0.port.0.s.55.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.55.name=TriggerPort0[55]
-unit.1.0.port.0.s.55.orderindex=-1
-unit.1.0.port.0.s.55.visible=1
-unit.1.0.port.0.s.56.alias=
-unit.1.0.port.0.s.56.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.56.name=TriggerPort0[56]
-unit.1.0.port.0.s.56.orderindex=-1
-unit.1.0.port.0.s.56.visible=1
-unit.1.0.port.0.s.57.alias=
-unit.1.0.port.0.s.57.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.57.name=TriggerPort0[57]
-unit.1.0.port.0.s.57.orderindex=-1
-unit.1.0.port.0.s.57.visible=1
-unit.1.0.port.0.s.58.alias=
-unit.1.0.port.0.s.58.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.58.name=TriggerPort0[58]
-unit.1.0.port.0.s.58.orderindex=-1
-unit.1.0.port.0.s.58.visible=1
-unit.1.0.port.0.s.59.alias=
-unit.1.0.port.0.s.59.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.59.name=TriggerPort0[59]
-unit.1.0.port.0.s.59.orderindex=-1
-unit.1.0.port.0.s.59.visible=1
-unit.1.0.port.0.s.6.alias=
-unit.1.0.port.0.s.6.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.6.name=TriggerPort0[6]
-unit.1.0.port.0.s.6.orderindex=-1
-unit.1.0.port.0.s.6.visible=1
-unit.1.0.port.0.s.60.alias=
-unit.1.0.port.0.s.60.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.60.name=TriggerPort0[60]
-unit.1.0.port.0.s.60.orderindex=-1
-unit.1.0.port.0.s.60.visible=1
-unit.1.0.port.0.s.61.alias=
-unit.1.0.port.0.s.61.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.61.name=TriggerPort0[61]
-unit.1.0.port.0.s.61.orderindex=-1
-unit.1.0.port.0.s.61.visible=1
-unit.1.0.port.0.s.62.alias=
-unit.1.0.port.0.s.62.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.62.name=TriggerPort0[62]
-unit.1.0.port.0.s.62.orderindex=-1
-unit.1.0.port.0.s.62.visible=1
-unit.1.0.port.0.s.63.alias=
-unit.1.0.port.0.s.63.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.63.name=TriggerPort0[63]
-unit.1.0.port.0.s.63.orderindex=-1
-unit.1.0.port.0.s.63.visible=1
-unit.1.0.port.0.s.64.alias=
-unit.1.0.port.0.s.64.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.64.name=TriggerPort0[64]
-unit.1.0.port.0.s.64.orderindex=-1
-unit.1.0.port.0.s.64.visible=1
-unit.1.0.port.0.s.65.alias=
-unit.1.0.port.0.s.65.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.65.name=TriggerPort0[65]
-unit.1.0.port.0.s.65.orderindex=-1
-unit.1.0.port.0.s.65.visible=1
-unit.1.0.port.0.s.66.alias=
-unit.1.0.port.0.s.66.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.66.name=TriggerPort0[66]
-unit.1.0.port.0.s.66.orderindex=-1
-unit.1.0.port.0.s.66.visible=1
-unit.1.0.port.0.s.67.alias=
-unit.1.0.port.0.s.67.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.67.name=TriggerPort0[67]
-unit.1.0.port.0.s.67.orderindex=-1
-unit.1.0.port.0.s.67.visible=1
-unit.1.0.port.0.s.68.alias=
-unit.1.0.port.0.s.68.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.68.name=TriggerPort0[68]
-unit.1.0.port.0.s.68.orderindex=-1
-unit.1.0.port.0.s.68.visible=1
-unit.1.0.port.0.s.69.alias=
-unit.1.0.port.0.s.69.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.69.name=TriggerPort0[69]
-unit.1.0.port.0.s.69.orderindex=-1
-unit.1.0.port.0.s.69.visible=1
-unit.1.0.port.0.s.7.alias=MEM_WELB
-unit.1.0.port.0.s.7.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.7.name=TriggerPort0[7]
-unit.1.0.port.0.s.7.orderindex=-1
-unit.1.0.port.0.s.7.visible=1
-unit.1.0.port.0.s.70.alias=
-unit.1.0.port.0.s.70.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.70.name=TriggerPort0[70]
-unit.1.0.port.0.s.70.orderindex=-1
-unit.1.0.port.0.s.70.visible=1
-unit.1.0.port.0.s.71.alias=
-unit.1.0.port.0.s.71.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.71.name=TriggerPort0[71]
-unit.1.0.port.0.s.71.orderindex=-1
-unit.1.0.port.0.s.71.visible=1
-unit.1.0.port.0.s.72.alias=
-unit.1.0.port.0.s.72.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.72.name=TriggerPort0[72]
-unit.1.0.port.0.s.72.orderindex=-1
-unit.1.0.port.0.s.72.visible=1
-unit.1.0.port.0.s.73.alias=
-unit.1.0.port.0.s.73.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.73.name=TriggerPort0[73]
-unit.1.0.port.0.s.73.orderindex=-1
-unit.1.0.port.0.s.73.visible=1
-unit.1.0.port.0.s.74.alias=
-unit.1.0.port.0.s.74.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.74.name=TriggerPort0[74]
-unit.1.0.port.0.s.74.orderindex=-1
-unit.1.0.port.0.s.74.visible=1
-unit.1.0.port.0.s.75.alias=
-unit.1.0.port.0.s.75.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.75.name=TriggerPort0[75]
-unit.1.0.port.0.s.75.orderindex=-1
-unit.1.0.port.0.s.75.visible=1
-unit.1.0.port.0.s.76.alias=
-unit.1.0.port.0.s.76.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.76.name=TriggerPort0[76]
-unit.1.0.port.0.s.76.orderindex=-1
-unit.1.0.port.0.s.76.visible=1
-unit.1.0.port.0.s.77.alias=
-unit.1.0.port.0.s.77.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.77.name=TriggerPort0[77]
-unit.1.0.port.0.s.77.orderindex=-1
-unit.1.0.port.0.s.77.visible=1
-unit.1.0.port.0.s.78.alias=
-unit.1.0.port.0.s.78.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.78.name=TriggerPort0[78]
-unit.1.0.port.0.s.78.orderindex=-1
-unit.1.0.port.0.s.78.visible=1
-unit.1.0.port.0.s.79.alias=
-unit.1.0.port.0.s.79.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.79.name=TriggerPort0[79]
-unit.1.0.port.0.s.79.orderindex=-1
-unit.1.0.port.0.s.79.visible=1
-unit.1.0.port.0.s.8.alias=
-unit.1.0.port.0.s.8.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.8.name=TriggerPort0[8]
-unit.1.0.port.0.s.8.orderindex=-1
-unit.1.0.port.0.s.8.visible=1
-unit.1.0.port.0.s.80.alias=
-unit.1.0.port.0.s.80.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.80.name=TriggerPort0[80]
-unit.1.0.port.0.s.80.orderindex=-1
-unit.1.0.port.0.s.80.visible=1
-unit.1.0.port.0.s.81.alias=
-unit.1.0.port.0.s.81.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.81.name=TriggerPort0[81]
-unit.1.0.port.0.s.81.orderindex=-1
-unit.1.0.port.0.s.81.visible=1
-unit.1.0.port.0.s.82.alias=
-unit.1.0.port.0.s.82.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.82.name=TriggerPort0[82]
-unit.1.0.port.0.s.82.orderindex=-1
-unit.1.0.port.0.s.82.visible=1
-unit.1.0.port.0.s.83.alias=DMAR_ENABLE0
-unit.1.0.port.0.s.83.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.83.name=TriggerPort0[83]
-unit.1.0.port.0.s.83.orderindex=-1
-unit.1.0.port.0.s.83.visible=1
-unit.1.0.port.0.s.84.alias=DMAR_ENABLE1
-unit.1.0.port.0.s.84.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.84.name=TriggerPort0[84]
-unit.1.0.port.0.s.84.orderindex=-1
-unit.1.0.port.0.s.84.visible=1
-unit.1.0.port.0.s.85.alias=DMAR_ENABLE2
-unit.1.0.port.0.s.85.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.85.name=TriggerPort0[85]
-unit.1.0.port.0.s.85.orderindex=-1
-unit.1.0.port.0.s.85.visible=1
-unit.1.0.port.0.s.86.alias=DMAR_ENABLE3
-unit.1.0.port.0.s.86.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.86.name=TriggerPort0[86]
-unit.1.0.port.0.s.86.orderindex=-1
-unit.1.0.port.0.s.86.visible=1
-unit.1.0.port.0.s.87.alias=Hit_DMAW
-unit.1.0.port.0.s.87.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.87.name=TriggerPort0[87]
-unit.1.0.port.0.s.87.orderindex=-1
-unit.1.0.port.0.s.87.visible=1
-unit.1.0.port.0.s.88.alias=
-unit.1.0.port.0.s.88.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.88.name=TriggerPort0[88]
-unit.1.0.port.0.s.88.orderindex=-1
-unit.1.0.port.0.s.88.visible=1
-unit.1.0.port.0.s.89.alias=
-unit.1.0.port.0.s.89.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.89.name=TriggerPort0[89]
-unit.1.0.port.0.s.89.orderindex=-1
-unit.1.0.port.0.s.89.visible=1
-unit.1.0.port.0.s.9.alias=
-unit.1.0.port.0.s.9.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.9.name=TriggerPort0[9]
-unit.1.0.port.0.s.9.orderindex=-1
-unit.1.0.port.0.s.9.visible=1
-unit.1.0.port.0.s.90.alias=
-unit.1.0.port.0.s.90.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.90.name=TriggerPort0[90]
-unit.1.0.port.0.s.90.orderindex=-1
-unit.1.0.port.0.s.90.visible=1
-unit.1.0.port.0.s.91.alias=
-unit.1.0.port.0.s.91.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.91.name=TriggerPort0[91]
-unit.1.0.port.0.s.91.orderindex=-1
-unit.1.0.port.0.s.91.visible=1
-unit.1.0.port.0.s.92.alias=
-unit.1.0.port.0.s.92.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.92.name=TriggerPort0[92]
-unit.1.0.port.0.s.92.orderindex=-1
-unit.1.0.port.0.s.92.visible=1
-unit.1.0.port.0.s.93.alias=
-unit.1.0.port.0.s.93.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.93.name=TriggerPort0[93]
-unit.1.0.port.0.s.93.orderindex=-1
-unit.1.0.port.0.s.93.visible=1
-unit.1.0.port.0.s.94.alias=
-unit.1.0.port.0.s.94.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.94.name=TriggerPort0[94]
-unit.1.0.port.0.s.94.orderindex=-1
-unit.1.0.port.0.s.94.visible=1
-unit.1.0.port.0.s.95.alias=
-unit.1.0.port.0.s.95.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.95.name=TriggerPort0[95]
-unit.1.0.port.0.s.95.orderindex=-1
-unit.1.0.port.0.s.95.visible=1
-unit.1.0.port.0.s.96.alias=
-unit.1.0.port.0.s.96.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.96.name=TriggerPort0[96]
-unit.1.0.port.0.s.96.orderindex=-1
-unit.1.0.port.0.s.96.visible=1
-unit.1.0.port.0.s.97.alias=
-unit.1.0.port.0.s.97.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.97.name=TriggerPort0[97]
-unit.1.0.port.0.s.97.orderindex=-1
-unit.1.0.port.0.s.97.visible=1
-unit.1.0.port.0.s.98.alias=
-unit.1.0.port.0.s.98.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.98.name=TriggerPort0[98]
-unit.1.0.port.0.s.98.orderindex=-1
-unit.1.0.port.0.s.98.visible=1
-unit.1.0.port.0.s.99.alias=
-unit.1.0.port.0.s.99.color=java.awt.Color[r\=0,g\=0,b\=124]
-unit.1.0.port.0.s.99.name=TriggerPort0[99]
-unit.1.0.port.0.s.99.orderindex=-1
-unit.1.0.port.0.s.99.visible=1
-unit.1.0.portcount=1
-unit.1.0.samplesPerTrigger=1
-unit.1.0.triggerCapture=1
-unit.1.0.triggerNSamplesTS=0
-unit.1.0.triggerPosition=0
-unit.1.0.triggerWindowCount=1
-unit.1.0.triggerWindowDepth=2048
-unit.1.0.triggerWindowTS=0
-unit.1.0.waveform.count=21
-unit.1.0.waveform.posn.0.channel=0
-unit.1.0.waveform.posn.0.name=DEBUG_CS_CLK
-unit.1.0.waveform.posn.0.radix=1
-unit.1.0.waveform.posn.0.type=signal
-unit.1.0.waveform.posn.1.channel=1
-unit.1.0.waveform.posn.1.name=Hit_DMAR
-unit.1.0.waveform.posn.1.type=signal
-unit.1.0.waveform.posn.10.channel=85
-unit.1.0.waveform.posn.10.name=DMAR_ENABLE2
-unit.1.0.waveform.posn.10.type=signal
-unit.1.0.waveform.posn.11.channel=86
-unit.1.0.waveform.posn.11.name=DMAR_ENABLE3
-unit.1.0.waveform.posn.11.type=signal
-unit.1.0.waveform.posn.12.channel=87
-unit.1.0.waveform.posn.12.name=Hit_DMAW
-unit.1.0.waveform.posn.12.radix=1
-unit.1.0.waveform.posn.12.type=signal
-unit.1.0.waveform.posn.13.channel=2147483646
-unit.1.0.waveform.posn.13.name=dmaw_state
-unit.1.0.waveform.posn.13.radix=1
-unit.1.0.waveform.posn.13.type=bus
-unit.1.0.waveform.posn.14.channel=2147483646
-unit.1.0.waveform.posn.14.name=DBUS_Port
-unit.1.0.waveform.posn.14.radix=1
-unit.1.0.waveform.posn.14.type=bus
-unit.1.0.waveform.posn.15.channel=124
-unit.1.0.waveform.posn.15.name=PFPGA_RST0
-unit.1.0.waveform.posn.15.radix=1
-unit.1.0.waveform.posn.15.type=signal
-unit.1.0.waveform.posn.16.channel=125
-unit.1.0.waveform.posn.16.name=DBUS_HiZ
-unit.1.0.waveform.posn.16.type=signal
-unit.1.0.waveform.posn.17.channel=126
-unit.1.0.waveform.posn.17.name=DMAW_ENABLE0
-unit.1.0.waveform.posn.17.type=signal
-unit.1.0.waveform.posn.18.channel=127
-unit.1.0.waveform.posn.18.name=DMAW_ENABLE1
-unit.1.0.waveform.posn.18.radix=1
-unit.1.0.waveform.posn.18.type=signal
-unit.1.0.waveform.posn.19.channel=128
-unit.1.0.waveform.posn.19.name=DMAW_ENABLE2
-unit.1.0.waveform.posn.19.radix=1
-unit.1.0.waveform.posn.19.type=signal
-unit.1.0.waveform.posn.2.channel=2147483646
-unit.1.0.waveform.posn.2.name=dmar_state
-unit.1.0.waveform.posn.2.radix=1
-unit.1.0.waveform.posn.2.type=bus
-unit.1.0.waveform.posn.20.channel=129
-unit.1.0.waveform.posn.20.name=DMAW_ENABLE3
-unit.1.0.waveform.posn.20.radix=1
-unit.1.0.waveform.posn.20.type=signal
-unit.1.0.waveform.posn.21.channel=2147483646
-unit.1.0.waveform.posn.21.name=MEM_DTOB
-unit.1.0.waveform.posn.21.radix=1
-unit.1.0.waveform.posn.21.type=bus
-unit.1.0.waveform.posn.22.channel=162
-unit.1.0.waveform.posn.22.name=DataPort[162]
-unit.1.0.waveform.posn.22.type=signal
-unit.1.0.waveform.posn.23.channel=162
-unit.1.0.waveform.posn.23.name=DataPort[162]
-unit.1.0.waveform.posn.23.type=signal
-unit.1.0.waveform.posn.24.channel=162
-unit.1.0.waveform.posn.24.name=DataPort[162]
-unit.1.0.waveform.posn.24.type=signal
-unit.1.0.waveform.posn.25.channel=162
-unit.1.0.waveform.posn.25.name=DataPort[162]
-unit.1.0.waveform.posn.25.type=signal
-unit.1.0.waveform.posn.26.channel=162
-unit.1.0.waveform.posn.26.name=DataPort[162]
-unit.1.0.waveform.posn.26.type=signal
-unit.1.0.waveform.posn.27.channel=162
-unit.1.0.waveform.posn.27.name=DataPort[162]
-unit.1.0.waveform.posn.27.type=signal
-unit.1.0.waveform.posn.28.channel=162
-unit.1.0.waveform.posn.28.name=DataPort[162]
-unit.1.0.waveform.posn.28.type=signal
-unit.1.0.waveform.posn.29.channel=162
-unit.1.0.waveform.posn.29.name=DataPort[162]
-unit.1.0.waveform.posn.29.type=signal
-unit.1.0.waveform.posn.3.channel=7
-unit.1.0.waveform.posn.3.name=MEM_WELB
-unit.1.0.waveform.posn.3.radix=1
-unit.1.0.waveform.posn.3.type=signal
-unit.1.0.waveform.posn.30.channel=162
-unit.1.0.waveform.posn.30.name=DataPort[162]
-unit.1.0.waveform.posn.30.type=signal
-unit.1.0.waveform.posn.31.channel=162
-unit.1.0.waveform.posn.31.name=DataPort[162]
-unit.1.0.waveform.posn.31.type=signal
-unit.1.0.waveform.posn.32.channel=162
-unit.1.0.waveform.posn.32.name=DataPort[162]
-unit.1.0.waveform.posn.32.type=signal
-unit.1.0.waveform.posn.33.channel=162
-unit.1.0.waveform.posn.33.name=DataPort[162]
-unit.1.0.waveform.posn.33.type=signal
-unit.1.0.waveform.posn.34.channel=162
-unit.1.0.waveform.posn.34.name=DataPort[162]
-unit.1.0.waveform.posn.34.type=signal
-unit.1.0.waveform.posn.35.channel=162
-unit.1.0.waveform.posn.35.name=DataPort[162]
-unit.1.0.waveform.posn.35.type=signal
-unit.1.0.waveform.posn.36.channel=162
-unit.1.0.waveform.posn.36.name=DataPort[162]
-unit.1.0.waveform.posn.36.type=signal
-unit.1.0.waveform.posn.37.channel=162
-unit.1.0.waveform.posn.37.name=DataPort[162]
-unit.1.0.waveform.posn.37.type=signal
-unit.1.0.waveform.posn.38.channel=162
-unit.1.0.waveform.posn.38.name=DataPort[162]
-unit.1.0.waveform.posn.38.type=signal
-unit.1.0.waveform.posn.39.channel=162
-unit.1.0.waveform.posn.39.name=DataPort[162]
-unit.1.0.waveform.posn.39.type=signal
-unit.1.0.waveform.posn.4.channel=2147483646
-unit.1.0.waveform.posn.4.name=MEM_ADB
-unit.1.0.waveform.posn.4.radix=1
-unit.1.0.waveform.posn.4.type=bus
-unit.1.0.waveform.posn.40.channel=162
-unit.1.0.waveform.posn.40.name=DataPort[162]
-unit.1.0.waveform.posn.40.type=signal
-unit.1.0.waveform.posn.41.channel=162
-unit.1.0.waveform.posn.41.name=DataPort[162]
-unit.1.0.waveform.posn.41.type=signal
-unit.1.0.waveform.posn.42.channel=162
-unit.1.0.waveform.posn.42.name=DataPort[162]
-unit.1.0.waveform.posn.42.type=signal
-unit.1.0.waveform.posn.43.channel=162
-unit.1.0.waveform.posn.43.name=DataPort[162]
-unit.1.0.waveform.posn.43.type=signal
-unit.1.0.waveform.posn.44.channel=162
-unit.1.0.waveform.posn.44.name=DataPort[162]
-unit.1.0.waveform.posn.44.type=signal
-unit.1.0.waveform.posn.45.channel=162
-unit.1.0.waveform.posn.45.name=DataPort[162]
-unit.1.0.waveform.posn.45.type=signal
-unit.1.0.waveform.posn.46.channel=162
-unit.1.0.waveform.posn.46.name=DataPort[162]
-unit.1.0.waveform.posn.46.type=signal
-unit.1.0.waveform.posn.47.channel=162
-unit.1.0.waveform.posn.47.name=DataPort[162]
-unit.1.0.waveform.posn.47.type=signal
-unit.1.0.waveform.posn.48.channel=162
-unit.1.0.waveform.posn.48.name=DataPort[162]
-unit.1.0.waveform.posn.48.type=signal
-unit.1.0.waveform.posn.49.channel=162
-unit.1.0.waveform.posn.49.name=DataPort[162]
-unit.1.0.waveform.posn.49.type=signal
-unit.1.0.waveform.posn.5.channel=2147483646
-unit.1.0.waveform.posn.5.name=MEM_DTOB
-unit.1.0.waveform.posn.5.radix=1
-unit.1.0.waveform.posn.5.type=bus
-unit.1.0.waveform.posn.50.channel=162
-unit.1.0.waveform.posn.50.name=DataPort[162]
-unit.1.0.waveform.posn.50.type=signal
-unit.1.0.waveform.posn.51.channel=162
-unit.1.0.waveform.posn.51.name=DataPort[162]
-unit.1.0.waveform.posn.51.type=signal
-unit.1.0.waveform.posn.52.channel=162
-unit.1.0.waveform.posn.52.name=DataPort[162]
-unit.1.0.waveform.posn.52.type=signal
-unit.1.0.waveform.posn.53.channel=162
-unit.1.0.waveform.posn.53.name=DataPort[162]
-unit.1.0.waveform.posn.53.type=signal
-unit.1.0.waveform.posn.54.channel=162
-unit.1.0.waveform.posn.54.name=DataPort[162]
-unit.1.0.waveform.posn.54.type=signal
-unit.1.0.waveform.posn.55.channel=90
-unit.1.0.waveform.posn.55.name=DataPort[90]
-unit.1.0.waveform.posn.55.type=signal
-unit.1.0.waveform.posn.56.channel=90
-unit.1.0.waveform.posn.56.name=DataPort[90]
-unit.1.0.waveform.posn.56.type=signal
-unit.1.0.waveform.posn.57.channel=90
-unit.1.0.waveform.posn.57.name=DataPort[90]
-unit.1.0.waveform.posn.57.type=signal
-unit.1.0.waveform.posn.58.channel=90
-unit.1.0.waveform.posn.58.name=DataPort[90]
-unit.1.0.waveform.posn.58.type=signal
-unit.1.0.waveform.posn.59.channel=90
-unit.1.0.waveform.posn.59.name=DataPort[90]
-unit.1.0.waveform.posn.59.type=signal
-unit.1.0.waveform.posn.6.channel=2147483646
-unit.1.0.waveform.posn.6.name=MEM_DTIB
-unit.1.0.waveform.posn.6.radix=1
-unit.1.0.waveform.posn.6.type=bus
-unit.1.0.waveform.posn.60.channel=90
-unit.1.0.waveform.posn.60.name=DataPort[90]
-unit.1.0.waveform.posn.60.type=signal
-unit.1.0.waveform.posn.61.channel=90
-unit.1.0.waveform.posn.61.name=DataPort[90]
-unit.1.0.waveform.posn.61.type=signal
-unit.1.0.waveform.posn.62.channel=90
-unit.1.0.waveform.posn.62.name=DataPort[90]
-unit.1.0.waveform.posn.62.type=signal
-unit.1.0.waveform.posn.63.channel=90
-unit.1.0.waveform.posn.63.name=DataPort[90]
-unit.1.0.waveform.posn.63.type=signal
-unit.1.0.waveform.posn.64.channel=90
-unit.1.0.waveform.posn.64.name=DataPort[90]
-unit.1.0.waveform.posn.64.type=signal
-unit.1.0.waveform.posn.65.channel=90
-unit.1.0.waveform.posn.65.name=DataPort[90]
-unit.1.0.waveform.posn.65.type=signal
-unit.1.0.waveform.posn.66.channel=90
-unit.1.0.waveform.posn.66.name=DataPort[90]
-unit.1.0.waveform.posn.66.type=signal
-unit.1.0.waveform.posn.67.channel=90
-unit.1.0.waveform.posn.67.name=DataPort[90]
-unit.1.0.waveform.posn.67.type=signal
-unit.1.0.waveform.posn.68.channel=90
-unit.1.0.waveform.posn.68.name=DataPort[90]
-unit.1.0.waveform.posn.68.type=signal
-unit.1.0.waveform.posn.69.channel=90
-unit.1.0.waveform.posn.69.name=DataPort[90]
-unit.1.0.waveform.posn.69.type=signal
-unit.1.0.waveform.posn.7.channel=2147483646
-unit.1.0.waveform.posn.7.name=DBUS_idata
-unit.1.0.waveform.posn.7.radix=1
-unit.1.0.waveform.posn.7.type=bus
-unit.1.0.waveform.posn.70.channel=90
-unit.1.0.waveform.posn.70.name=DataPort[90]
-unit.1.0.waveform.posn.70.type=signal
-unit.1.0.waveform.posn.71.channel=90
-unit.1.0.waveform.posn.71.name=DataPort[90]
-unit.1.0.waveform.posn.71.type=signal
-unit.1.0.waveform.posn.72.channel=90
-unit.1.0.waveform.posn.72.name=DataPort[90]
-unit.1.0.waveform.posn.72.type=signal
-unit.1.0.waveform.posn.73.channel=90
-unit.1.0.waveform.posn.73.name=DataPort[90]
-unit.1.0.waveform.posn.73.type=signal
-unit.1.0.waveform.posn.74.channel=90
-unit.1.0.waveform.posn.74.name=DataPort[90]
-unit.1.0.waveform.posn.74.type=signal
-unit.1.0.waveform.posn.75.channel=90
-unit.1.0.waveform.posn.75.name=DataPort[90]
-unit.1.0.waveform.posn.75.type=signal
-unit.1.0.waveform.posn.76.channel=90
-unit.1.0.waveform.posn.76.name=DataPort[90]
-unit.1.0.waveform.posn.76.type=signal
-unit.1.0.waveform.posn.77.channel=90
-unit.1.0.waveform.posn.77.name=DataPort[90]
-unit.1.0.waveform.posn.77.type=signal
-unit.1.0.waveform.posn.78.channel=90
-unit.1.0.waveform.posn.78.name=DataPort[90]
-unit.1.0.waveform.posn.78.type=signal
-unit.1.0.waveform.posn.79.channel=90
-unit.1.0.waveform.posn.79.name=DataPort[90]
-unit.1.0.waveform.posn.79.type=signal
-unit.1.0.waveform.posn.8.channel=83
-unit.1.0.waveform.posn.8.name=DMAR_ENABLE0
-unit.1.0.waveform.posn.8.radix=1
-unit.1.0.waveform.posn.8.type=signal
-unit.1.0.waveform.posn.80.channel=90
-unit.1.0.waveform.posn.80.name=DataPort[90]
-unit.1.0.waveform.posn.80.type=signal
-unit.1.0.waveform.posn.81.channel=90
-unit.1.0.waveform.posn.81.name=DataPort[90]
-unit.1.0.waveform.posn.81.type=signal
-unit.1.0.waveform.posn.82.channel=90
-unit.1.0.waveform.posn.82.name=DataPort[90]
-unit.1.0.waveform.posn.82.type=signal
-unit.1.0.waveform.posn.83.channel=90
-unit.1.0.waveform.posn.83.name=DataPort[90]
-unit.1.0.waveform.posn.83.type=signal
-unit.1.0.waveform.posn.84.channel=90
-unit.1.0.waveform.posn.84.name=DataPort[90]
-unit.1.0.waveform.posn.84.type=signal
-unit.1.0.waveform.posn.85.channel=90
-unit.1.0.waveform.posn.85.name=DataPort[90]
-unit.1.0.waveform.posn.85.type=signal
-unit.1.0.waveform.posn.86.channel=90
-unit.1.0.waveform.posn.86.name=DataPort[90]
-unit.1.0.waveform.posn.86.type=signal
-unit.1.0.waveform.posn.87.channel=90
-unit.1.0.waveform.posn.87.name=DataPort[90]
-unit.1.0.waveform.posn.87.type=signal
-unit.1.0.waveform.posn.88.channel=90
-unit.1.0.waveform.posn.88.name=DataPort[90]
-unit.1.0.waveform.posn.88.type=signal
-unit.1.0.waveform.posn.89.channel=90
-unit.1.0.waveform.posn.89.name=DataPort[90]
-unit.1.0.waveform.posn.89.type=signal
-unit.1.0.waveform.posn.9.channel=84
-unit.1.0.waveform.posn.9.name=DMAR_ENABLE1
-unit.1.0.waveform.posn.9.type=signal
-unit.1.0.waveform.posn.90.channel=90
-unit.1.0.waveform.posn.90.name=DataPort[90]
-unit.1.0.waveform.posn.90.type=signal
-unit.1.0.waveform.posn.91.channel=90
-unit.1.0.waveform.posn.91.name=DataPort[90]
-unit.1.0.waveform.posn.91.type=signal
+Mon Jun  4 20:02:19 JST 2007
+-- Top of the Interface FPGA
+-- by Tsuyoshi Hamada (2004)
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+
+entity ifpga is
+  port (
+  -- PCI ports; do not modify names!
+    AD        : inout std_logic_vector(63 downto 0);
+    CBE       : inout std_logic_vector( 7 downto 0);
+    PAR       : inout std_logic;
+    PAR64      : inout std_logic;
+    FRAME_N     : inout std_logic;
+    REQ64_N     : inout std_logic;
+    TRDY_N      : inout std_logic;
+    IRDY_N      : inout std_logic;
+    STOP_N      : inout std_logic;
+    DEVSEL_N    : inout std_logic;
+    ACK64_N     : inout std_logic;
+    IDSEL      : in  std_logic;
+    INTR_A      : out  std_logic;
+    PERR_N      : inout std_logic;
+    SERR_N      : inout std_logic;
+    REQ_N      : out  std_logic;
+    GNT_N      : in  std_logic;
+    RST_N      : in  std_logic;
+    PCLK      : in  std_logic;
+
+   -- PFPGA SIDE -----------------------------------------------------
+    PFPGA_RST : out std_logic_vector(3 downto 0); -- Active High
+   -- DBUS
+    DBUS  : inout std_logic_vector(63 downto 0);
+   -- CBUS
+    CBUS0 : inout std_logic_vector(7 downto 0);
+    CBUS1 : inout std_logic_vector(7 downto 0);
+    CBUS2 : inout std_logic_vector(7 downto 0);
+    CBUS3 : inout std_logic_vector(7 downto 0);
+
+   -- PFPGA CONFIG
+    CFG_D         : out  std_logic_vector(7 downto 0);  -- DATA
+    CFG_CCLK      : out  std_logic;           -- CCLK
+    CFG_PROG_B0   : out  std_logic;           -- PFPGA0向けPROG_B
+    CFG_PROG_B1   : out  std_logic;           -- PFPGA1向けPROG_B
+    CFG_PROG_B2   : out  std_logic;           -- PFPGA2向けPROG_B
+    CFG_PROG_B3   : out  std_logic;           -- PFPGA3向けPROG_B
+    CFG_CS_B0     : out  std_logic;           -- PFPGA0向けCS_B
+    CFG_CS_B1     : out  std_logic;           -- PFPGA1向けCS_B
+    CFG_CS_B2     : out  std_logic;           -- PFPGA2向けCS_B
+    CFG_CS_B3     : out  std_logic;           -- PFPGA3向けCS_B
+    CFG_RDWR_B    : out  std_logic;           -- RD/WR_B
+    CFG_INIT_B0   : in  std_logic;     -- PFPGA0向けINIT_B
+    CFG_INIT_B1   : in  std_logic;     -- PFPGA1向けINIT_B
+    CFG_INIT_B2   : in  std_logic;     -- PFPGA2向けINIT_B
+    CFG_INIT_B3   : in  std_logic;     -- PFPGA3向けINIT_B
+
+
+  -- PFPGA CLOCK
+    CK66_IFPGA   : out std_logic; --  66MHz clock to self chip( CK66)
+    CK66         : in  std_logic; --  66MHz clock from self chip(CK66_IFPGA)
+    CK66_PFPGA0  : out std_logic;
+    CK66_PFPGA1  : out std_logic;
+    CK66_PFPGA2  : out std_logic;
+    CK66_PFPGA3  : out std_logic;
+
+  -- Add user I/O ports here
+    PLED_OUT    : out  std_logic_vector(3 downto 0);  -- LED Output (LED 0..3)
+    LLED_OUT    : out  std_logic_vector(3 downto 0)   -- LED Output (LED 4..7)
+  );
+end ifpga;
+
+
+architecture rtl of ifpga is
+
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+-- Component declaration of PCI Interface
+
+component pcim_lc
+  port (
+  -- PCI ports; do not modify names!
+    AD_IO      : inout std_logic_vector( 63 downto 0);
+    CBE_IO      : inout std_logic_vector(  7 downto 0);
+    PAR_IO      : inout std_logic;
+    PAR64_IO    : inout std_logic;
+    FRAME_IO    : inout std_logic;
+    REQ64_IO    : inout std_logic;
+    TRDY_IO     : inout std_logic;
+    IRDY_IO     : inout std_logic;
+    STOP_IO     : inout std_logic;
+    DEVSEL_IO    : inout std_logic;
+    ACK64_IO    : inout std_logic;
+    IDSEL_I     : in  std_logic;
+    INTA_O      : out  std_logic;
+    PERR_IO     : inout std_logic;
+    SERR_IO     : inout std_logic;
+    REQ_O      : out  std_logic;
+    GNT_I      : in  std_logic;
+    RST_I      : in  std_logic;
+    PCLK      : in  std_logic;
+    CFG       : in  std_logic_vector(255 downto 0);
+    FRAMEQ_N    : out  std_logic;
+    REQ64Q_N    : out  std_logic;
+    TRDYQ_N     : out  std_logic;
+    IRDYQ_N     : out  std_logic;
+    STOPQ_N     : out  std_logic;
+    DEVSELQ_N    : out  std_logic;
+    ACK64Q_N    : out  std_logic;
+    ADDR      : out  std_logic_vector( 31 downto 0);
+    ADIO      : inout std_logic_vector( 63 downto 0);
+    CFG_VLD     : out  std_logic;
+    CFG_HIT     : out  std_logic;
+    C_TERM      : in  std_logic;
+    C_READY     : in  std_logic;
+    ADDR_VLD    : out  std_logic;
+    BASE_HIT    : out  std_logic_vector(  7 downto 0);
+    S_CYCLE64    : out  std_logic;
+    S_TERM      : in  std_logic;
+    S_READY     : in  std_logic;
+    S_ABORT     : in  std_logic;
+    S_WRDN      : out  std_logic;
+    S_SRC_EN    : out  std_logic;
+    S_DATA_VLD    : out  std_logic;
+    S_CBE      : out  std_logic_vector(  7 downto 0);
+    PCI_CMD     : out  std_logic_vector( 15 downto 0);
+    REQUEST     : in  std_logic;
+    REQUEST64    : in  std_logic;
+    REQUESTHOLD   : in  std_logic;
+    COMPLETE    : in  std_logic;
+    M_WRDN      : in  std_logic;
+    M_READY     : in  std_logic;
+    M_SRC_EN    : out  std_logic;
+    M_DATA_VLD    : out  std_logic;
+    M_CBE      : in  std_logic_vector(  7 downto 0);
+    TIME_OUT    : out  std_logic;
+    M_FAIL64    : out  std_logic;
+    CFG_SELF    : in  std_logic;
+    M_DATA      : out  std_logic;
+    DR_BUS      : out  std_logic;
+    I_IDLE      : out  std_logic;
+    M_ADDR_N    : out  std_logic;
+    IDLE      : out  std_logic;
+    B_BUSY      : out  std_logic;
+    S_DATA      : out  std_logic;
+    BACKOFF     : out  std_logic;
+    SLOT64      : in  std_logic;
+    INTR_N      : in  std_logic;
+    PERRQ_N     : out  std_logic;
+    SERRQ_N     : out  std_logic;
+    KEEPOUT     : in  std_logic;
+    CSR       : out  std_logic_vector( 39 downto 0);
+    SUB_DATA    : in  std_logic_vector( 31 downto 0);
+    RST       : inout std_logic;
+    CLK       : inout std_logic
+  );
+end component;
+
+  -- Component declaration for Configuration
+component CFG
+  port (
+    CFG       : out  std_logic_vector(255 downto 0)
+  );
+end component;
+
+
+  -- Component declaration of Userapp
+
+component pcicnt
+  port (
+  -- Interface to PCI Logicore.
+    FRAMEQ_N    : in  std_logic;              -- Latched FRAME# Signal
+    REQ64Q_N    : in  std_logic;              -- Latched REQ64# Signal
+    TRDYQ_N     : in  std_logic;              -- Latched TRDY# Signal
+    IRDYQ_N     : in  std_logic;              -- Latched IRDY# Signal
+    STOPQ_N     : in  std_logic;              -- Latched STOP# Signal
+    DEVSELQ_N   : in  std_logic;              -- Latched DEVSEL# Signal
+    ACK64Q_N    : in  std_logic;              -- Latched ACK64# Signal
+
+    ADDR        : in  std_logic_vector( 31 downto 0);    -- Latched Target Address Bus
+    ADIO        : inout std_logic_vector( 63 downto 0);    -- Internal Address/Data Bus
+
+    CFG_VLD     : in  std_logic;              -- Configulation Cycle Valid
+    CFG_HIT     : in  std_logic;              -- Configuration Cycle Start
+    C_TERM      : out  std_logic;              -- Configuraton Cycle Terminate Signal
+    C_READY     : out  std_logic;              -- Configuration Data Transfer Ready Signal
+
+    ADDR_VLD    : in  std_logic;              -- Internal Address Valid
+    BASE_HIT    : in  std_logic_vector(  7 downto 0);    -- Base Address Hit
+
+    S_CYCLE64   : in  std_logic;              -- 64 bit Transaction Go On
+    S_TERM      : out  std_logic;              -- Target Transaction Terminate Signal
+    S_READY     : out  std_logic;              -- Target Transaction Data Transfer Ready Siganl
+    S_ABORT     : out  std_logic;              -- Target Abort Request Signal
+    S_WRDN      : in  std_logic;              -- Target Transaction Data Direction (0:Write, 1:Read)
+    S_SRC_EN    : in  std_logic;              -- Target Transaction Data Source Enable
+    S_DATA_VLD  : in  std_logic;              -- Target Transaction Data Phase Valid Signal
+    S_CBE       : in  std_logic_vector(  7 downto 0);    -- Target Command & Byte Enable Signal
+    PCI_CMD     : in  std_logic_vector( 15 downto 0);    -- Latched Bus Command
+
+    REQUEST     : out  std_logic;              -- REQ# Signal Assert Request
+    REQUEST64   : out  std_logic;              -- REQ64# Signal Assert Request
+    REQUESTHOLD : out  std_logic;              -- Extended REQ# Signal Assert Request (Not Use)
+    COMPLETE    : out  std_logic;              -- Initiator Transaction End Signal
+
+    M_WRDN      : out  std_logic;              -- Initiator Transaction Data Direction (0:Write, 1:Read)
+    M_READY     : out  std_logic;              -- Initiator Transaction Data Transfer Ready Siganl
+    M_SRC_EN    : in  std_logic;              -- Initiator Transaction Data Source Enable
+    M_DATA_VLD  : in  std_logic;              -- Initiator Transaction Data Phase Valid Signal
+    M_CBE       : out  std_logic_vector(  7 downto 0);    -- Initiator Command & Byte Enable Signal
+
+    TIME_OUT    : in  std_logic;              -- Latency Timer Timeout Signal
+    M_FAIL64    : in  std_logic;              -- 64 bit Transaction Fail Signal
+    CFG_SELF    : out  std_logic;              -- Self Configuration Start Signal
+
+    M_DATA      : in  std_logic;              -- Data Transfer State
+    DR_BUS      : in  std_logic;              -- Bus Park State
+    I_IDLE      : in  std_logic;              -- Initiator Idle State
+    M_ADDR_N    : in  std_logic;              -- Initiator Address State
+    IDLE        : in  std_logic;              -- Target Idle State
+    B_BUSY      : in  std_logic;              -- PCI Bus Busy State
+    S_DATA      : in  std_logic;              -- Target Data Transfer State
+    BACKOFF     : in  std_logic;              -- Target State Machine Transaction End State
+
+    SLOT64      : out  std_logic;              -- 64 bit Extended Signal Eable
+    INTR_N      : out  std_logic;              -- Interrupt Request
+    PERRQ_N     : in  std_logic;              -- latched PERR# Signal
+    SERRQ_N     : in  std_logic;              -- Latched SERR# Signal
+    KEEPOUT     : out  std_logic;              -- ADIO Bus Disable Request Signal
+
+    CSR         : in  std_logic_vector( 39 downto 0);    -- Command/Status Register State
+    SUB_DATA    : out  std_logic_vector( 31 downto 0);    -- Sub-Identification
+    CFG         : in  std_logic_vector(255 downto 0);    -- Confiuration Data
+
+    RST         : in  std_logic;              -- PCI Bus Reset
+    CLK         : in  std_logic;              -- PCI bus Clock
+
+  -- Internal Register Access Control Signal
+    REG_AD      : out  std_logic_vector( 7 downto 0);    -- REGCNT R/W Address
+    REG_WE      : out  std_logic;              -- REGCNT Write Enable
+    REG_RE      : out  std_logic;              -- REGCNT Read Enable
+    REG_DTI     : out  std_logic_vector(31 downto 0);    -- REGCNT Write Data
+    REG_DTO     : in  std_logic_vector(31 downto 0);    -- REGCNT Read Data
+    REG_DTOEN   : in  std_logic;              -- REGCNT Read Data Enable
+
+  -- Internal Memory Access Control Signal
+    MEM_ADA     : out  std_logic_vector(19 downto 0);    -- DPRAM Port A R/W Address
+    MEM_WEHA    : out  std_logic;              -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA    : out  std_logic;              -- DPRAM Port A Write Enable (Low  Word)
+    MEM_REA     : out  std_logic;              -- DPRAM Port A Read Enable
+    MEM_DTIA    : out  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
+    MEM_DTOA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
+    MEM_DTOEN   : in  std_logic;              -- DPRAM Port A Read Data Enable
+
+    DMAEND_INT  : out  std_logic;                -- DMA End Interrupt On Request
+    INT_REQ     : in  std_logic;                -- PCI Interrupt On Request
+
+
+
+--################################
+--##    for Debug
+--################################
+
+
+    DEBUG_OUT    : out  std_logic_vector( 7 downto 0)
+
+
+
+  );
+end component;
+
+
+component REGCNT
+  port (
+    RST       : in  std_logic;  -- PCI Bus Reset
+    CLK       : in  std_logic;  -- PCI bus Clock
+    -- PCI R/W ports
+    REG_AD      : in  std_logic_vector( 7 downto 0);   -- REGCNT R/W Address
+    REG_WE      : in  std_logic;                       -- REGCNT Write Enable
+    REG_RE      : in  std_logic;                       -- REGCNT Read Enable
+    REG_DTI      : in  std_logic_vector(31 downto 0);  -- REGCNT Write Data
+    REG_DTO      : out  std_logic_vector(31 downto 0); -- REGCNT Read Data
+    REG_DTOEN    : out  std_logic;                     -- REGCNT Read Data Enable
+    -- USER Application Interface ports
+    LED_CNT      : out  std_logic_vector( 7 downto 0); -- LED Control Signal
+    DIPSW      : in  std_logic_vector( 3 downto 0);    -- DIPSW Signal
+    DMAEND_INT    : in  std_logic;                 -- DMA End Interrupt On Request
+    PSW_ON0      : in  std_logic;                  -- User Interrupt 0 On Request
+    PSW_ON1      : in  std_logic;                  -- User Interrupt 1 On Request
+    USERINT2_ON    : in  std_logic;                -- User Interrupt 2 On Request
+    GPREG0 : in  std_logic_vector(31 downto 0);    -- Read Only Register
+    GPREG1 : out std_logic_vector(31 downto 0);    -- Read Only Register
+    PGPG_REG0 : out std_logic_vector(31 downto 0);
+    PGPG_REG1 : out std_logic_vector(31 downto 0);
+    PGPG_REG2 : out std_logic_vector(31 downto 0);
+    PGPG_REG3 : out std_logic_vector(31 downto 0);
+    Hit_PGPG_REG2 : out std_logic;
+    Hit_PGPG_REG3 : out std_logic;
+    INT_REQ      : out  std_logic                   -- Interrupt Request
+    );
+end component;
+
+
+component DPRAM
+  port (
+    RST       : in  std_logic;                          -- PCI Bus Reset
+    CLK       : in  std_logic;                          -- PCI bus Clock
+    CLKB      : in  std_logic;                          -- Port B Clock
+    -- PCI R/W ports
+    MEM_ADA      : in  std_logic_vector(13 downto 0);   -- DPRAM Port A R/W Address
+    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
+    MEM_REA      : in  std_logic;                       -- DPRAM Port A Read Enable
+    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
+    MEM_DTOA    : out  std_logic_vector(63 downto 0);   -- DPRAM Port A Read Data
+    MEM_DTOEN    : out  std_logic;                      -- DPRAM Port A Read Data Enable
+    -- USER Application R/W ports
+    MEM_ADB      : in  std_logic_vector(12 downto 0);   -- DPRAM Port B R/W Address
+    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
+    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
+    );
+end component;
+
+
+component USER
+  port (
+    RST         : in  std_logic;                     -- PCI Bus Reset
+    CLK         : in  std_logic;                     -- PCI bus Clock
+    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
+    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
+    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
+    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
+    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
+    );
+end component;
+
+component pfpga_config
+  port( clk   : in std_logic;
+        rst_n : in std_logic;
+        cmd_reg  : in std_logic_vector(8 downto 0);
+        data_reg : in std_logic_vector(31 downto 0);
+	-- Pipeline FPGA side
+        CFG_D         : out  std_logic_vector(7 downto 0);  -- DATA
+        CFG_CCLK      : out  std_logic;           -- CCLK
+        CFG_PROG_B0   : out  std_logic;           -- PFPGA0向けPROG_B
+        CFG_PROG_B1   : out  std_logic;           -- PFPGA1向けPROG_B
+        CFG_PROG_B2   : out  std_logic;           -- PFPGA2向けPROG_B
+        CFG_PROG_B3   : out  std_logic;           -- PFPGA3向けPROG_B
+        CFG_CS_B0     : out  std_logic;           -- PFPGA0向けCS_B
+        CFG_CS_B1     : out  std_logic;           -- PFPGA1向けCS_B
+        CFG_CS_B2     : out  std_logic;           -- PFPGA2向けCS_B
+        CFG_CS_B3     : out  std_logic;           -- PFPGA3向けCS_B
+        CFG_RDWR_B    : out  std_logic);          -- RD/WR_B
+end component;
+
+component FDDRRSE
+  port(
+    Q        : out  std_logic;      -- DDR output
+    D0        : in  std_logic;      -- data in to fddr
+    D1        : in  std_logic;      -- data in to fddr
+    C0        : in  std_logic;      -- clock
+    C1        : in  std_logic;      -- inversee of C0
+    CE        : in  std_logic;      -- clock enable
+    R        : in  std_logic;       -- reset
+    S        : in  std_logic        -- set
+);
+end component;
+
+component dcm_ps_f
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;     -- リセット
+    CLK_IN        : in  std_logic;    -- クロック入力
+    CLK_FB_IN      : in  std_logic;   -- クロックFB入力
+    CLK_OUT        : out  std_logic   -- クロック出力
+  );
+end component;
+
+component LOCAL_IO
+  generic (NBIT_L_ADRO : integer := 3);
+  port (
+    
+    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
+    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
+    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
+
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
+
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+
+component WRITECOMB_CHECK
+  port (
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    IS_ERR : out std_logic_vector(25 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+component FIFOFIFO
+  port (
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
+    -- output
+    MEM_AD     : out std_logic_vector(31 downto 0);
+    MEM_WE     : out std_logic;
+    MEM_DTI    : out std_logic_vector(63 downto 0);
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+  -- Internal signals; do not modify names!
+
+  signal FRAMEQ_N      : std_logic;                -- Latched FRAME# Signal
+  signal REQ64Q_N      : std_logic;                -- Latched REQ64# Signal
+  signal TRDYQ_N      : std_logic;                -- Latched TRDY# Signal
+  signal IRDYQ_N      : std_logic;                -- Latched IRDY# Signal
+  signal STOPQ_N      : std_logic;                -- Latched STOP# Signal
+  signal DEVSELQ_N    : std_logic;                -- Latched DEVSEL# Signal
+  signal ACK64Q_N      : std_logic;                -- Latched ACK64# Signal
+
+  signal ADDR        : std_logic_vector( 31 downto 0);      -- Latched Target Address Bus
+  signal ADIO        : std_logic_vector( 63 downto 0);      -- Internal Address/Data Bus
+
+  signal CFG_VLD      : std_logic;                -- Configulation Cycle Valid
+  signal CFG_HIT      : std_logic;                -- Configuration Cycle Start
+  signal C_TERM       : std_logic;                -- Configuraton Cycle Terminate Signal
+  signal C_READY      : std_logic;                -- Configuration Data Transfer Ready Signal
+
+  signal ADDR_VLD      : std_logic;                -- Internal Address Valid
+  signal BASE_HIT      : std_logic_vector(  7 downto 0);      -- Base Address Hit
+
+  signal S_CYCLE64    : std_logic;                -- 64 bit Transaction Go On
+  signal S_TERM       : std_logic;                -- Target Transaction Terminate Signal
+  signal S_READY      : std_logic;                -- Target Transaction Data Transfer Ready Siganl
+  signal S_ABORT      : std_logic;                -- Target Abort Request Signal
+  signal S_WRDN       : std_logic;                -- Target Transaction Data Direction (0:Write, 1:Read)
+  signal S_SRC_EN      : std_logic;                -- Target Transaction Data Source Enable
+  signal S_DATA_VLD     : std_logic;                -- Target Transaction Data Phase Valid Signal
+  signal S_CBE      : std_logic_vector(  7 downto 0);      -- Target Command & Byte Enable Signal
+                                    -- Latched Bus Command
+  signal PCI_CMD      : std_logic_vector( 15 downto 0);
+  signal REQUEST      : std_logic;                -- REQ# Signal Assert Request
+  signal REQUEST64    : std_logic;                -- REQ64# Signal Assert Request
+  signal REQUESTHOLD    : std_logic;                -- Extended REQ# Signal Assert Request (Not Use)
+  signal COMPLETE      : std_logic;                -- Initiator Transaction End Signal
+
+  signal M_WRDN       : std_logic;                -- Initiator Transaction Data Direction (0:Write, 1:Read)
+  signal M_READY      : std_logic;                -- Initiator Transaction Data Transfer Ready Siganl
+  signal M_SRC_EN      : std_logic;                -- Initiator Transaction Data Source Enable
+  signal M_DATA_VLD     : std_logic;                -- Initiator Transaction Data Phase Valid Signal
+  signal M_CBE      : std_logic_vector(  7 downto 0);      -- Initiator Command & Byte Enable Signal
+
+  signal TIME_OUT      : std_logic;                -- Latency Timer Timeout Signal
+  signal M_FAIL64      : std_logic;                -- 64 bit Transaction Fail Signal
+  signal CFG_SELF      : std_logic;                -- Self Configuration Start Signal
+
+  signal M_DATA       : std_logic;                -- Data Transfer State
+  signal DR_BUS       : std_logic;                -- Bus Park State
+  signal I_IDLE       : std_logic;                -- Initiator Idle State
+  signal M_ADDR_N      : std_logic;                -- Initiator Address State
+  signal IDLE        : std_logic;                -- Target Idle State
+  signal B_BUSY       : std_logic;                -- PCI Bus Busy State
+  signal S_DATA       : std_logic;                -- Target Data Transfer State
+  signal BACKOFF      : std_logic;                -- Target State Machine Transaction End State
+
+  signal SLOT64       : std_logic;                -- 64 bit Extended Signal Eable
+  signal INTR_N       : std_logic;                -- Interrupt Request
+  signal PERRQ_N      : std_logic;                -- latched PERR# Signal
+  signal SERRQ_N      : std_logic;                -- Latched SERR# Signal
+  signal KEEPOUT      : std_logic;                -- ADIO Bus Disable Request Signal
+
+  signal CSR        : std_logic_vector( 39 downto 0);      -- Command/Status Register State
+  signal SUB_DATA      : std_logic_vector( 31 downto 0);      -- Sub-Identification
+  signal CFG_BUS      : std_logic_vector(255 downto 0);      -- Confiuration Data
+
+  signal RST        : std_logic;                -- PCI Bus Reset
+  signal CLK        : std_logic;                -- PCI bus Clock
+
+  -- Internal Register Access Control Signal
+  signal  REG_AD      : std_logic_vector( 7 downto 0);      -- REGCNT R/W Address
+  signal  REG_WE      : std_logic;                -- REGCNT Write Enable
+  signal  REG_RE      : std_logic;                -- REGCNT Read Enable
+  signal  REG_DTI      : std_logic_vector(31 downto 0);      -- REGCNT Write Data
+  signal  REG_DTO      : std_logic_vector(31 downto 0);      -- REGCNT Read Data
+  signal  REG_DTOEN    : std_logic;                -- REGCNT Read Data Enable
+
+  -- USER Application Interface ports
+  signal  LED_CNT      : std_logic_vector( 7 downto 0);      -- LED Control Signal
+  signal  DIPSW      : std_logic_vector( 3 downto 0);      -- DIPSW Signal
+
+  signal  DMAEND_INT    : std_logic;                  -- DMA End Interrupt On Request
+  signal  PSW_ON0      : std_logic;                  -- User Interrupt 0 On Request
+  signal  PSW_ON1      : std_logic;                  -- User Interrupt 1 On Request
+  signal  USERINT2_ON    : std_logic;                  -- User Interrupt 2 On Request
+
+  signal  INT_REQ      : std_logic;                -- Interrupt Request
+
+  -- Internal Memory Access from PCI Control Signal
+  signal  MEM_ADA      : std_logic_vector(19 downto 0);      -- DPRAM Port A R/W Address
+  signal  MEM_WEHA    : std_logic;                -- DPRAM Port A Write Enable (High Word)
+  signal  MEM_WELA    : std_logic;                -- DPRAM Port A Write Enable (Low  Word)
+  signal  MEM_REA      : std_logic;                -- DPRAM Port A Read Enable
+  signal  MEM_DTIA    : std_logic_vector(63 downto 0);      -- DPRAM Port A Write Data
+  signal  MEM_DTOA    : std_logic_vector(63 downto 0);      -- DPRAM Port A Read Data
+  signal  MEM_DTOEN    : std_logic;                -- DPRAM Port A Read Data Enable
+
+  -- Internal Memory Access from User Application Control Signal
+  signal  MEM_ADB      : std_logic_vector(12 downto 0);      -- DPRAM Port B R/W Address
+  signal  MEM_WEHB    : std_logic;                  -- DPRAM Port B Write Enable (High Word)
+  signal  MEM_WELB    : std_logic;                  -- DPRAM Port B Write Enable (Low  Word)
+  signal  MEM_DTIB    : std_logic_vector(63 downto 0);      -- DPRAM Port B Write Data
+  signal  MEM_DTOB    : std_logic_vector(63 downto 0);      -- DPRAM Port B Read Data
+
+
+  -- for PGPG
+  constant  const_0 : std_logic :='0';
+  constant  const_1 : std_logic :='1';
+  signal CK66_DCM   : std_logic;
+  signal xCK66_DCM  : std_logic;
+  signal GPREG0_ff : std_logic_vector(31 downto 0); -- REGCNF <- (0):CALC_END(FOGET READY), (31 downto 6):WRITECOMB_CHECK
+  signal GPREG1_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
+  signal PGPG_REG0_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
+  signal PGPG_REG1_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
+  signal PGPG_REG2_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA  # RESERVED!
+  signal PGPG_REG3_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
+  signal Hit_PGPG_REG2_ff      : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
+  signal Hit_PGPG_REG2_ff0     : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
+  signal Hit_PGPG_REG2_ff_CK66 : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
+  signal Hit_PGPG_REG3_ff      : std_logic;            -- REGCNF -> PFPGA_DMA  # NOT USED!
+  signal Hit_PGPG_REG3_ff0     : std_logic;            -- REGCNF -> PFPGA_DMA  # NOT USED!
+  signal Hit_PGPG_REG3_ff_CK66 : std_logic;            -- REGCNF -> PFPGA_DMA -- Bugfixed Hit_PGPG_REG3
+  signal DBUS_Port  : std_logic_vector(63 downto 0) := (others=>'0'); -- PFPGA_DMA -> PFPGA
+  signal DBUS_idata : std_logic_vector(63 downto 0) := (others=>'0'); -- PFPGA_DMA <- PFPGA
+  signal DBUS_HiZ   : std_logic;
+  signal DMAW_ENABLE : std_logic_vector(3 downto 0);
+  signal DMAR_ENABLE : std_logic_vector(3 downto 0);
+  signal PFPGA_DMA_STS : std_logic_vector(31 downto 0) :=(others=>'0'); -- -> GPREG0_ff
+  signal PFPGA_PIPE_STS : std_logic_vector(3 downto 0) :=(others=>'0'); -- -> GPREG0_ff
+  -- FIFOFIFO
+  signal FIFO_WE  : std_logic;
+  signal FIFO_AD  : std_logic_vector(31 downto 0);
+  signal FIFO_DTI : std_logic_vector(63 downto 0);
+  -- LOCAL_IO
+  signal BUSY_LOCAL_READ : std_logic;
+
+  -- FF for PFPGA COnfiguration Pins
+  signal CFG_INIT_B0_iff, CFG_INIT_B1_iff, CFG_INIT_B2_iff, CFG_INIT_B3_iff : std_logic;
+  signal CFG_D_o : std_logic_vector(7 downto 0);
+  signal CFG_CCLK_o,CFG_RDWR_B_o                                    : std_logic;
+  signal CFG_PROG_B0_o, CFG_PROG_B1_o, CFG_PROG_B2_o, CFG_PROG_B3_o : std_logic;
+  signal CFG_CS_B0_o, CFG_CS_B1_o, CFG_CS_B2_o, CFG_CS_B3_o         : std_logic;
+
+  -- LED
+  signal LED_ff : std_logic_vector(7 downto 0);
+
+--################################
+--##    for Debug
+--################################
+  signal  DEBUG_OUT    : std_logic_vector( 7 downto 0);
+  signal  DEBUG_SIG    : std_logic_vector(13 downto 0);
+  signal  DEBUG_CS_CLK0 : std_logic := '0';
+  signal  DEBUG_CS_CLK1 : std_logic;
+
+
+  signal CLK_CFG : std_logic;
+
+  constant PSW_IN : std_logic_vector(1 downto 0) := (others=>'1');
+  signal DSW_OUT : std_logic_vector(1 downto 0) := (others=>'1');
+
+begin
+
+
+  -- Do not modify any port, signal, or instance
+  -- names related to the PCI Interface!
+
+  PCI_CORE : pcim_lc port map (
+    AD_IO      => AD,
+    CBE_IO      => CBE,
+    PAR_IO      => PAR,
+    PAR64_IO    => PAR64,
+    FRAME_IO    => FRAME_N,
+    REQ64_IO    => REQ64_N,
+    TRDY_IO     => TRDY_N,
+    IRDY_IO     => IRDY_N,
+    STOP_IO     => STOP_N,
+    DEVSEL_IO    => DEVSEL_N,
+    ACK64_IO    => ACK64_N,
+    IDSEL_I     => IDSEL,
+    INTA_O      => INTR_A,
+    PERR_IO     => PERR_N,
+    SERR_IO     => SERR_N,
+    REQ_O      => REQ_N,
+    GNT_I      => GNT_N,
+    RST_I      => RST_N,
+    PCLK      => PCLK,
+
+    FRAMEQ_N    => FRAMEQ_N,                -- Latched FRAME# Signal
+    REQ64Q_N    => REQ64Q_N,                -- Latched REQ64# Signal
+    TRDYQ_N     => TRDYQ_N,                 -- Latched TRDY# Signal
+    IRDYQ_N     => IRDYQ_N,                 -- Latched IRDY# Signal
+    STOPQ_N     => STOPQ_N,                 -- Latched STOP# Signal
+    DEVSELQ_N    => DEVSELQ_N,                -- Latched DEVSEL# Signal
+    ACK64Q_N    => ACK64Q_N,                -- Latched ACK64# Signal
+
+    ADDR      => ADDR,                  -- Latched Target Address Bus
+    ADIO      => ADIO,                  -- Internal Address/Data Bus
+
+    CFG_VLD     => CFG_VLD,                 -- Configulation Cycle Valid
+    CFG_HIT     => CFG_HIT,                 -- Configuration Cycle Start
+    C_TERM      => C_TERM,                  -- Configuraton Cycle Terminate Signal
+    C_READY     => C_READY,                 -- Configuration Data Transfer Ready Signal
+
+    ADDR_VLD    => ADDR_VLD,                -- Internal Address Valid
+    BASE_HIT    => BASE_HIT,                -- Base Address Hit
+
+    S_CYCLE64    => S_CYCLE64,                -- 64 bit Transaction Go On
+    S_TERM      => S_TERM,                  -- Target Transaction Terminate Signal
+    S_READY     => S_READY,                 -- Target Transaction Data Transfer Ready Siganl
+    S_ABORT     => S_ABORT,                 -- Target Abort Request Signal
+    S_WRDN      => S_WRDN,                  -- Target Transaction Data Direction (0:Write, 1:Read)
+    S_SRC_EN    => S_SRC_EN,                -- Target Transaction Data Source Enable
+    S_DATA_VLD    => S_DATA_VLD,                -- Target Transaction Data Phase Valid Signal
+    S_CBE      => S_CBE,                  -- Target Command & Byte Enable Signal
+    PCI_CMD     => PCI_CMD,                 -- Latched Bus Command
+
+    REQUEST     => REQUEST,                 -- REQ# Signal Assert Request
+    REQUEST64    => REQUEST64,                -- REQ64# Signal Assert Request
+    REQUESTHOLD   => REQUESTHOLD,               -- Extended REQ# Signal Assert Request (Not Use)
+    COMPLETE    => COMPLETE,                -- Initiator Transaction End Signal
+
+    M_WRDN      => M_WRDN,                  -- Initiator Transaction Data Direction (0:Write, 1:Read)
+    M_READY     => M_READY,                 -- Initiator Transaction Data Transfer Ready Siganl
+    M_SRC_EN    => M_SRC_EN,                -- Initiator Transaction Data Source Enable
+    M_DATA_VLD    => M_DATA_VLD,                -- Initiator Transaction Data Phase Valid Signal
+    M_CBE      => M_CBE,                  -- Initiator Command & Byte Enable Signal
+
+    TIME_OUT    => TIME_OUT,                -- Latency Timer Timeout Signal
+    M_FAIL64    => M_FAIL64,                -- 64 bit Transaction Fail Signal
+    CFG_SELF    => CFG_SELF,                -- Self Configuration Start Signal
+
+    M_DATA      => M_DATA,                  -- Data Transfer State
+    DR_BUS      => DR_BUS,                  -- Bus Park State
+    I_IDLE      => I_IDLE,                  -- Initiator Idle State
+    M_ADDR_N    => M_ADDR_N,                -- Initiator Address State
+    IDLE      => IDLE,                  -- Target Idle State
+    B_BUSY      => B_BUSY,                  -- PCI Bus Busy State
+    S_DATA      => S_DATA,                  -- Target Data Transfer State
+    BACKOFF     => BACKOFF,                 -- Target State Machine Transaction End State
+
+    SLOT64      => SLOT64,                  -- 64 bit Extended Signal Eable
+    INTR_N      => INTR_N,                  -- Interrupt Request
+    PERRQ_N     => PERRQ_N,                 -- latched PERR# Signal
+    SERRQ_N     => SERRQ_N,                 -- Latched SERR# Signal
+    KEEPOUT     => KEEPOUT,                 -- ADIO Bus Disable Request Signal
+
+    CSR       => CSR,                   -- Command/Status Register State
+    SUB_DATA    => SUB_DATA,                -- Sub-Identification
+    CFG       => CFG_BUS,                 -- Confiuration Data
+
+    RST       => RST,                   -- PCI Bus Reset
+    CLK       => CLK                    -- PCI bus Clock
+  );
+
+
+  -- Instantiate the configuration module
+
+  CFG_INST : CFG port map (CFG => CFG_BUS);
+
+
+  -- Instantiate the user application
+
+  PCI_CNT : pcicnt port map (
+    FRAMEQ_N    => FRAMEQ_N,                -- Latched FRAME# Signal
+    REQ64Q_N    => REQ64Q_N,                -- Latched REQ64# Signal
+    TRDYQ_N     => TRDYQ_N,                 -- Latched TRDY# Signal
+    IRDYQ_N     => IRDYQ_N,                 -- Latched IRDY# Signal
+    STOPQ_N     => STOPQ_N,                 -- Latched STOP# Signal
+    DEVSELQ_N    => DEVSELQ_N,                -- Latched DEVSEL# Signal
+    ACK64Q_N    => ACK64Q_N,                -- Latched ACK64# Signal
+
+    ADDR      => ADDR,                  -- Latched Target Address Bus
+    ADIO      => ADIO,                  -- Internal Address/Data Bus
+
+    CFG_VLD     => CFG_VLD,                 -- Configulation Cycle Valid
+    CFG_HIT     => CFG_HIT,                 -- Configuration Cycle Start
+    C_TERM      => C_TERM,                  -- Configuraton Cycle Terminate Signal
+    C_READY     => C_READY,                 -- Configuration Data Transfer Ready Signal
+
+    ADDR_VLD    => ADDR_VLD,                -- Internal Address Valid
+    BASE_HIT    => BASE_HIT,                -- Base Address Hit
+
+    S_CYCLE64    => S_CYCLE64,                -- 64 bit Transaction Go On
+    S_TERM      => S_TERM,                  -- Target Transaction Terminate Signal
+    S_READY     => S_READY,                 -- Target Transaction Data Transfer Ready Siganl
+    S_ABORT     => S_ABORT,                 -- Target Abort Request Signal
+    S_WRDN      => S_WRDN,                  -- Target Transaction Data Direction (0:Write, 1:Read)
+    S_SRC_EN    => S_SRC_EN,                -- Target Transaction Data Source Enable
+    S_DATA_VLD    => S_DATA_VLD,                -- Target Transaction Data Phase Valid Signal
+    S_CBE      => S_CBE,                  -- Target Command & Byte Enable Signal
+    PCI_CMD     => PCI_CMD,                 -- Latched Bus Command
+
+    REQUEST     => REQUEST,                 -- REQ# Signal Assert Request
+    REQUEST64    => REQUEST64,                -- REQ64# Signal Assert Request
+    REQUESTHOLD   => REQUESTHOLD,               -- Extended REQ# Signal Assert Request (Not Use)
+    COMPLETE    => COMPLETE,                -- Initiator Transaction End Signal
+
+    M_WRDN      => M_WRDN,                  -- Initiator Transaction Data Direction (0:Write, 1:Read)
+    M_READY     => M_READY,                 -- Initiator Transaction Data Transfer Ready Siganl
+    M_SRC_EN    => M_SRC_EN,                -- Initiator Transaction Data Source Enable
+    M_DATA_VLD    => M_DATA_VLD,                -- Initiator Transaction Data Phase Valid Signal
+    M_CBE      => M_CBE,                  -- Initiator Command & Byte Enable Signal
+
+    TIME_OUT    => TIME_OUT,                -- Latency Timer Timeout Signal
+    M_FAIL64    => M_FAIL64,                -- 64 bit Transaction Fail Signal
+    CFG_SELF    => CFG_SELF,                -- Self Configuration Start Signal
+
+    M_DATA      => M_DATA,                  -- Data Transfer State
+    DR_BUS      => DR_BUS,                  -- Bus Park State
+    I_IDLE      => I_IDLE,                  -- Initiator Idle State
+    M_ADDR_N    => M_ADDR_N,                -- Initiator Address State
+    IDLE      => IDLE,                  -- Target Idle State
+    B_BUSY      => B_BUSY,                  -- PCI Bus Busy State
+    S_DATA      => S_DATA,                  -- Target Data Transfer State
+    BACKOFF     => BACKOFF,                 -- Target State Machine Transaction End State
+
+    SLOT64      => SLOT64,                  -- 64 bit Extended Signal Eable
+    INTR_N      => INTR_N,                  -- Interrupt Request
+    PERRQ_N     => PERRQ_N,                 -- latched PERR# Signal
+    SERRQ_N     => SERRQ_N,                 -- Latched SERR# Signal
+    KEEPOUT     => KEEPOUT,                 -- ADIO Bus Disable Request Signal
+
+    CSR       => CSR,                   -- Command/Status Register State
+    SUB_DATA    => SUB_DATA,                -- Sub-Identification
+    CFG       => CFG_BUS,                 -- Confiuration Data
+
+    RST       => RST,                   -- PCI Bus Reset
+    CLK       => CLK,                   -- PCI bus Clock
+
+  -- Internal Register Access Control Signal
+    REG_AD      => REG_AD,                  -- REGCNT R/W Address
+    REG_WE      => REG_WE,                  -- REGCNT Write Enable
+    REG_RE      => REG_RE,                  -- REGCNT Read Enable
+    REG_DTI      => REG_DTI,                  -- REGCNT Write Data
+    REG_DTO      => REG_DTO,                  -- REGCNT Read Data
+    REG_DTOEN    => REG_DTOEN,                -- REGCNT Read Data Enable
+
+  -- Internal Memory Access Control Signal
+    MEM_ADA     => MEM_ADA,                  -- DPRAM Port A R/W Address
+    MEM_WEHA     => MEM_WEHA,                -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA     => MEM_WELA,                -- DPRAM Port A Write Enable (Low  Word)
+    MEM_REA     => MEM_REA,                  -- DPRAM Port A Read Enable
+    MEM_DTIA     => MEM_DTIA,                -- DPRAM Port A Write Data
+    MEM_DTOA     => MEM_DTOA,                -- DPRAM Port A Read Data
+    MEM_DTOEN     => MEM_DTOEN,                -- DPRAM Port A Read Data Enable
+
+    DMAEND_INT    => DMAEND_INT,                -- DMA End Interrupt On Request
+    INT_REQ      => INT_REQ,                  -- PCI Interrupt On Request
+
+
+
+
+--################################
+--##    for Debug
+--################################
+
+
+
+    DEBUG_OUT    =>  DEBUG_OUT                -- DMA End Interrupt On Request
+  );
+
+  reg0 : REGCNT port map (
+    RST       => RST,                   -- PCI Bus Reset
+    CLK       => CLK,                   -- PCI bus Clock
+
+    -- PCI R/W ports
+    REG_AD      => REG_AD,                  -- REGCNT R/W Address
+    REG_WE      => REG_WE,                  -- REGCNT Write Enable
+    REG_RE      => REG_RE,                  -- REGCNT Read Enable
+    REG_DTI      => REG_DTI,                  -- REGCNT Write Data
+    REG_DTO      => REG_DTO,                  -- REGCNT Read Data
+    REG_DTOEN    => REG_DTOEN,                -- REGCNT Read Data Enable
+
+    -- USER Application Interface ports
+    LED_CNT      => LED_CNT,                  -- LED Control Signal
+    DIPSW      => DIPSW,                  -- DIPSW Signal
+
+    DMAEND_INT    => DMAEND_INT,                -- DMA End Interrupt On Request
+    PSW_ON0      => PSW_ON0,                  -- User Interrupt 0 On Request
+    PSW_ON1      => PSW_ON1,                  -- User Interrupt 1 On Request
+    USERINT2_ON    => USERINT2_ON,                -- User Interrupt 2 On Request
+
+    GPREG0 => GPREG0_ff,         -- from PFPGA_DMA_STS/ PFPGA_PIPE_STS
+    GPREG1 => GPREG1_ff,         -- to PFPGA_RST
+    PGPG_REG0 => PGPG_REG0_ff,   -- to PFPGA_DMA
+    PGPG_REG1 => PGPG_REG1_ff,   -- to PFPGA_DMA
+    PGPG_REG2 => PGPG_REG2_ff,   -- to PFPGA_DMA
+    PGPG_REG3 => PGPG_REG3_ff,   -- to PFPGA_DMA
+    Hit_PGPG_REG2 => Hit_PGPG_REG2_ff,   -- to PFPGA_DMA
+    Hit_PGPG_REG3 => Hit_PGPG_REG3_ff,   -- to PFPGA_DMA
+
+    INT_REQ      => INT_REQ                  -- Interrupt Request
+  );
+
+
+  dp0 : DPRAM port map (
+    RST         => RST,                   -- PCI Bus Reset
+    CLK         => CLK,                   -- PCI bus Clock
+--hoge
+--    CLKB      => CK66,                  -- Port B Clock
+    CLKB        => CLK,                   -- Port B Clock
+
+    -- PCI R/W ports
+
+--  ========================================================================================= どうにかして!
+    MEM_ADA     => MEM_ADA(13 downto 0),  -- DPRAM Port A R/W Address
+    MEM_WEHA    => MEM_WEHA,              -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA    => MEM_WELA,              -- DPRAM Port A Write Enable (Low  Word)
+    MEM_DTIA    => MEM_DTIA,              -- DPRAM Port A Write Data
+--    MEM_ADA     => (others=>'0'),
+--    MEM_WEHA    => '0',
+--    MEM_WELA    => '0',
+--    MEM_DTIA    => (others=>'0'),
+--  =========================================================================================
+
+    MEM_REA     => MEM_REA,               -- DPRAM Port A Read Enable
+    MEM_DTOA    => MEM_DTOA,              -- DPRAM Port A Read Data
+    MEM_DTOEN   => MEM_DTOEN,             -- DPRAM Port A Read Data Enable
+
+    -- USER Application R/W ports
+    MEM_ADB     => MEM_ADB,               -- DPRAM Port B R/W Address
+    MEM_WEHB    => MEM_WEHB,              -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    => MEM_WELB,              -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    => MEM_DTIB,              -- DPRAM Port B Write Data
+    MEM_DTOB    => MEM_DTOB               -- DPRAM Port B Read Data
+    );
+
+
+  user0 : USER port map (
+    RST         => RST,           -- PCI Bus Reset
+    CLK         => CLK,           -- PCI bus Clock
+    PSW_IN      => PSW_IN,        -- Push SW Input
+    DIPSW       => DIPSW,         -- DIPSW Signal
+    PSW_ON0     => PSW_ON0,       -- User Interrupt 0 On Request
+    PSW_ON1     => PSW_ON1,       -- User Interrupt 1 On Request
+    USERINT2_ON => USERINT2_ON    -- User Interrupt 2 On Request
+    );
+
+--***************************************************************
+--*
+--*  FPGA Reserve PIN Control Block
+--*
+--***************************************************************
+--    CNT2 <= (others=>'Z');
+--    CNT4 <= (others=>'Z');
+--    RES   <= (others=>'Z');
+
+--################################
+--##    for Debug
+--################################
+    DEBUG_SIG( 4) <= LED_CNT(0);
+    DEBUG_SIG( 5) <= LED_CNT(1);
+    DEBUG_SIG( 6) <= FRAMEQ_N  ;
+    DEBUG_SIG( 7) <= IRDYQ_N  ;
+    DEBUG_SIG( 8) <= TRDYQ_N   ;
+    DEBUG_SIG( 9) <= STOPQ_N   ;
+    DEBUG_SIG(10) <= DEVSELQ_N   ;
+    DEBUG_SIG(11) <= M_DATA  ;
+    DEBUG_SIG(12) <= '0';
+    DEBUG_SIG(13) <= '0';
+
+
+-- *************************************************************************
+-- PGPG  LOGIC
+-- *************************************************************************
+
+pgpg0 : pfpga_config  port map(
+--    clk      => CLK,
+    clk      => CLK,
+    rst_n    => (not RST),
+    cmd_reg  => PGPG_REG0_ff(8 downto 0),
+    data_reg => PGPG_REG1_ff(31 downto 0),
+    -- Connected to Chip Output Pins Directly
+    CFG_D       => CFG_D_o,
+    CFG_CCLK    => CFG_CCLK_o,
+    CFG_PROG_B0 => CFG_PROG_B0_o,
+    CFG_PROG_B1 => CFG_PROG_B1_o,
+    CFG_PROG_B2 => CFG_PROG_B2_o,
+    CFG_PROG_B3 => CFG_PROG_B3_o,
+    CFG_CS_B0   => CFG_CS_B0_o,
+    CFG_CS_B1   => CFG_CS_B1_o,
+    CFG_CS_B2   => CFG_CS_B2_o,
+    CFG_CS_B3   => CFG_CS_B3_o,
+    CFG_RDWR_B  => CFG_RDWR_B_o);
+
+  -- PFPGA Configuration Pins
+  process(CLK, RST)  begin
+    if (RST = '1') then
+      CFG_D <= (others => '0');
+      CFG_CCLK <= '0';
+      CFG_PROG_B0 <= '1'; CFG_PROG_B1 <= '1'; CFG_PROG_B2 <= '1'; CFG_PROG_B3 <= '1';
+      CFG_CS_B0 <= '1'; CFG_CS_B1 <= '1'; CFG_CS_B2 <= '1'; CFG_CS_B3 <= '1';
+      CFG_RDWR_B <= '1';
+      CFG_INIT_B0_iff <= '0';
+      CFG_INIT_B1_iff <= '0';
+      CFG_INIT_B2_iff <= '0';
+      CFG_INIT_B3_iff <= '0';
+    elsif (CLK'event and CLK = '1') then
+      CFG_D <= CFG_D_o;
+      CFG_CCLK <= CFG_CCLK_o;
+      CFG_INIT_B0_iff <= CFG_INIT_B0;
+      CFG_INIT_B1_iff <= CFG_INIT_B1;
+      CFG_INIT_B2_iff <= CFG_INIT_B2;
+      CFG_INIT_B3_iff <= CFG_INIT_B3;
+      CFG_PROG_B0 <= CFG_PROG_B0_o;
+      CFG_PROG_B1 <= CFG_PROG_B1_o;
+      CFG_PROG_B2 <= CFG_PROG_B2_o;
+      CFG_PROG_B3 <= CFG_PROG_B3_o;
+      CFG_CS_B0 <= CFG_CS_B0_o;
+      CFG_CS_B1 <= CFG_CS_B1_o;
+      CFG_CS_B2 <= CFG_CS_B2_o;
+      CFG_CS_B3 <= CFG_CS_B3_o;
+      CFG_RDWR_B <= CFG_RDWR_B_o;
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------------------------------------
+--  LOCAL Input/Output controller between IFPGA and PFPGA
+--------------------------------------------------------------------------------------------------------------
+pgpg1 : LOCAL_IO
+  generic map (NBIT_L_ADRO => 3) -- MAX    (FDIM=8)
+--  generic map (NBIT_L_ADRO => 2) -- for G5 (FDIM=4) # ジェネリックの伝播がうまくいかないので直接local_read_cnt.vhdのI_NFIを変更しましょう!!
+  port map (
+    CALC_STS => PFPGA_PIPE_STS(0),         -- 1: PIPE CALC DONE, 0: PIPE RUNNING
+    NPIPE    => PGPG_REG3_ff(7 downto 0),  -- from REGNCT ( PGPG_REG3 )
+    BUSY_LOCAL_READ => BUSY_LOCAL_READ,    -- to REGNCT (GPREG0)
+    -- pcicnt input
+    MEM_ADA  => FIFO_AD(19 downto 0),
+    MEM_WEHA => FIFO_WE,
+    MEM_WELA => FIFO_WE,
+    MEM_DTIA => FIFO_DTI,
+
+    -- CBUS/DBUS
+    DMAW_ENABLE => DMAW_ENABLE,
+    DMAR_ENABLE => DMAR_ENABLE,
+    DBUS_Port   => DBUS_Port,
+    DBUS_idata  => DBUS_idata,
+    DBUS_HiZ    => DBUS_HiZ,
+    -- DPRAM R/W ports
+    MEM_ADB     => MEM_ADB,                  -- DPRAM Port B R/W Address
+    MEM_WEHB    => MEM_WEHB,                 -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    => MEM_WELB,                 -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    => MEM_DTIB,                 -- DPRAM Port B Write Data
+    MEM_DTOB    => MEM_DTOB,                 -- DPRAM Port B Read Data
+    RST => RST,
+    CLK => CLK
+    );
+
+pgpg2 : WRITECOMB_CHECK
+  port map (
+    -- pcicnt input
+    MEM_WEHA => MEM_WEHA,
+    MEM_WELA => MEM_WELA,
+    IS_ERR => GPREG0_ff(31 downto 6),
+    RST => GPREG1_ff(0),
+    CLK => CLK
+    );
+
+pgpg3 : FIFOFIFO
+  port map(
+    -- pcicnt input
+    MEM_ADA  => MEM_ADA,
+    MEM_WEHA => MEM_WEHA,
+    MEM_WELA => MEM_WELA,
+    MEM_DTIA => MEM_DTIA,
+    -- output
+    MEM_AD   => FIFO_AD,
+    MEM_WE   => FIFO_WE,
+    MEM_DTI  => FIFO_DTI,
+    RST => RST,
+    CLK => CLK);
+
+
+  -- CBUS --------------------------------------------------------(2004/11/23 by T.H.)
+  CBUS0(0) <= DMAW_ENABLE(0);  CBUS0(1) <= DMAR_ENABLE(0);
+  CBUS1(0) <= DMAW_ENABLE(1);  CBUS1(1) <= DMAR_ENABLE(1);
+  CBUS2(0) <= DMAW_ENABLE(2);  CBUS2(1) <= DMAR_ENABLE(2);
+  CBUS3(0) <= DMAW_ENABLE(3);  CBUS3(1) <= DMAR_ENABLE(3);
+--  PFPGA_PIPE_STS <= CBUS3(7) & CBUS2(7) & CBUS1(7) & CBUS0(7);
+--  PFPGA_PIPE_STS <= "1111";
+  PFPGA_PIPE_STS <= "111" & CBUS0(7);
+
+  CBUS0(6 downto 2) <= (others=>'Z');
+  CBUS1(7 downto 2) <= (others=>'Z');
+  CBUS2(7 downto 2) <= (others=>'Z');
+  CBUS3(7 downto 2) <= (others=>'Z');
+  ----------------------------------------------------------------//
+
+  DBUS <= (others=>'Z') when DBUS_HiZ='1' else DBUS_Port;
+  DBUS_idata <= DBUS;
+
+  PFPGA_RST <= GPREG1_ff(3 downto 0);
+
+  -- GPREG0 -----------------------------------------------------(2004/11/23 by T.H.)
+--GPREG0_ff(31 downto 6) <-- from WRITECOMB_CHECK
+  GPREG0_ff(5 downto 1) <= (others=>'0');
+  GPREG0_ff(0) <= BUSY_LOCAL_READ;
+  ---------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------
+--  CLOCK to Pipeline FPGAs   (by Tsuyoshi Hamada)
+--------------------------------------------------------------------------------------------------------------
+--           +-------------------------+
+--           |          FPGA           |
+--  (CK66) ->| -> DCM -> (IOB:FDDRRSE) -> CK66_IFPGA, CK66_PFPGA
+--           | CLK-+                   |
+--           +-------------------------+
+  -- ADJUSTMENT OF CHIP INPUT CLOCK AND DCM CLOCK GENERATION
+
+  dcm_ps_f0 : dcm_ps_f  generic map(PS=>0)
+    port map(RST => RST, CLK_IN => CLK, CLK_FB_IN => CK66, CLK_OUT => CK66_DCM);
+
+  xCK66_DCM   <= not CK66_DCM;
+
+  -- OUTPUT CLOCK GENERATION
+  ck66_0  : FDDRRSE port map(Q => CK66_PFPGA0,
+            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
+  ck66_1  : FDDRRSE port map(Q => CK66_PFPGA1,
+            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
+  ck66_2  : FDDRRSE port map(Q => CK66_PFPGA2,
+            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
+  ck66_3  : FDDRRSE port map(Q => CK66_PFPGA3,
+            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
+  ck66_4  : FDDRRSE port map(Q => CK66_IFPGA,
+            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
+
+  -------------------
+  -- LED
+  -------------------
+  PLED_OUT(3 downto 0) <= LED_ff(3 downto 0);
+  LLED_OUT(2 downto 0) <= LED_ff(6 downto 4);
+  LLED_OUT(3) <= LED_ff(7) OR (DSW_OUT(1) AND DSW_OUT(0));
+
+  process(CLK, RST) begin
+    if(RST = '1') then
+      LED_ff <= "00000000";
+    elsif(CLK'event and CLK='1') then
+      LED_ff <= not GPREG1_ff(7 downto 0);
+    end if;
+  end process;
+
+
+  ----------------------------------------------------------------
+  -- Trans Hit_PGPG_REG2_ff (CLK) -> Hit_PGPG_REG2_ff_CK66 (CK66)
+  -- Trans Hit_PGPG_REG3_ff (CLK) -> Hit_PGPG_REG3_ff_CK66 (CK66)
+  ----------------------------------------------------------------
+  Hit_PGPG_REG3_ff_CK66 <= Hit_PGPG_REG3_ff_CK66;
+  process(CK66) begin
+    if(CK66'event and CK66='1') then
+      Hit_PGPG_REG2_ff0 <= Hit_PGPG_REG2_ff;
+      Hit_PGPG_REG3_ff0 <= Hit_PGPG_REG3_ff;
+    end if;
+  end process;
+
+  process(CK66, RST, Hit_PGPG_REG2_ff, Hit_PGPG_REG2_ff0) begin
+    if(RST = '1') then
+      Hit_PGPG_REG2_ff_CK66 <= '0';
+    elsif(CK66'event and CK66='1') then
+      if(Hit_PGPG_REG2_ff = '0' AND Hit_PGPG_REG2_ff0 ='1') then
+        Hit_PGPG_REG2_ff_CK66 <= '1';
+      else
+        Hit_PGPG_REG2_ff_CK66 <= '0';
+      end if;
+    end if;
+  end process;
+
+  process(CK66, RST, Hit_PGPG_REG3_ff, Hit_PGPG_REG3_ff0) begin
+    if(RST = '1') then
+      Hit_PGPG_REG3_ff_CK66 <= '0';
+    elsif(CK66'event and CK66='1') then
+      if(Hit_PGPG_REG3_ff = '0' AND Hit_PGPG_REG3_ff0 ='1') then
+        Hit_PGPG_REG3_ff_CK66 <= '1';
+      else
+        Hit_PGPG_REG3_ff_CK66 <= '0';
+      end if;
+    end if;
+  end process;
+
+
+  ----------------------------
+  -- CK33 for ChipScope Debug
+  ----------------------------
+  DEBUG_CS_CLK1 <= DEBUG_CS_CLK0;
+  process(CLK, RST) begin
+    if(RST = '1') then
+      DEBUG_CS_CLK0<= '0';
+    elsif(CLK'event and CLK='1') then
+      if(DEBUG_CS_CLK1='0') then
+        DEBUG_CS_CLK0<= '1';
+      else
+        DEBUG_CS_CLK0<= '0';
+      end if;
+    end if;
+  end process;
+
+
+  ----------------------------
+  -- Not Used But Need Signals
+  ----------------------------
+
+  process(CLK, RST) begin
+    if(RST = '1') then
+      DSW_OUT(0) <= '1';
+      DSW_OUT(1) <= '1';
+    elsif(CLK'event and CLK='1') then
+      DSW_OUT(0) <= CFG_INIT_B0_iff AND CFG_INIT_B1_iff AND CFG_INIT_B2_iff AND CFG_INIT_B3_iff;
+      DSW_OUT(1) <= DEBUG_CS_CLK0;
+    end if;
+  end process;
+
+
+
+end rtl;
