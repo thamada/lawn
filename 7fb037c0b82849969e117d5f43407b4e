@@ -1,129 +1,124 @@
-Mon Jun  4 20:31:04 JST 2007
-#!/bin/sh
-#
-# An example hook script to blocks unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
-#
-# To enable this hook, rename this file to "update".
-#
-# Config
-# ------
-# hooks.allowunannotated
-#   This boolean sets whether unannotated tags will be allowed into the
-#   repository.  By default they won't be.
-# hooks.allowdeletetag
-#   This boolean sets whether deleting tags will be allowed in the
-#   repository.  By default they won't be.
-# hooks.allowmodifytag
-#   This boolean sets whether a tag may be modified after creation. By default
-#   it won't be.
-# hooks.allowdeletebranch
-#   This boolean sets whether deleting branches will be allowed in the
-#   repository.  By default they won't be.
-# hooks.denycreatebranch
-#   This boolean sets whether remotely creating branches will be denied
-#   in the repository.  By default this is allowed.
-#
+Fri Jun 22 19:28:51 JST 2007
+#include "pg_util.h"
+// Funtion Prototyping
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sqrt_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_recipro_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_expadd_31_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
 
-# --- Command line
-refname="$1"
-oldrev="$2"
-newrev="$3"
 
-# --- Safety check
-if [ -z "$GIT_DIR" ]; then
-	echo "Don't run this script from the command line." >&2
-	echo " (if you want, you could supply GIT_DIR then run" >&2
-	echo "  $0 <ref> <oldrev> <newrev>)" >&2
-	exit 1
-fi
+// API
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    int             i, j;
+    LONG            sx_0;
+    LONG            sx_1;
+    LONG            sx_2;
+    LONG            xi_0;
+    LONG            xj_0;
+    LONG            xi_1;
+    LONG            xj_1;
+    LONG            xi_2;
+    LONG            xj_2;
+    LONG            dx2_0;
+    LONG            dx2_1;
+    LONG            dx2_2;
+    LONG            ieps2;
+    LONG            x2y2;
+    LONG            z2e2;
+    LONG            r2;
+    LONG            r1;
+    LONG            r3;
+    LONG            r3i;
+    LONG            mj;
+    LONG            mf;
+    LONG            dx_0;
+    LONG            dx_1;
+    LONG            fs;
+    LONG            dx_2;
+    LONG            fx_0;
+    LONG            fx_1;
+    LONG            fx_2;
 
-if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
-	exit 1
-fi
 
-# --- Config
-allowunannotated=$(git config --bool hooks.allowunannotated)
-allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --bool hooks.denycreatebranch)
-allowdeletetag=$(git config --bool hooks.allowdeletetag)
-allowmodifytag=$(git config --bool hooks.allowmodifytag)
+    for (i = 0; i < n; i++) {
+	/*
+	 * CONVERT(xi_0,float) 
+	 */ xi_0 = double2pgpgfloat_r(x[i][0], 26, 16, 6);
+	/*
+	 * CONVERT(xi_1,float) 
+	 */ xi_1 = double2pgpgfloat_r(x[i][1], 26, 16, 6);
+	/*
+	 * CONVERT(xi_2,float) 
+	 */ xi_2 = double2pgpgfloat_r(x[i][2], 26, 16, 6);
+	/*
+	 * CONVERT(ieps2,float) 
+	 */ ieps2 = double2pgpgfloat_r(eps2, 26, 16, 6);
 
-# check for no description
-projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-case "$projectdesc" in
-"Unnamed repository"* | "")
-	echo "*** Project description file hasn't been set" >&2
-	exit 1
-	;;
-esac
+	sx_0 = 0;
+	sx_1 = 0;
+	sx_2 = 0;
 
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
-zero="0000000000000000000000000000000000000000"
-if [ "$newrev" = "$zero" ]; then
-	newrev_type=delete
-else
-	newrev_type=$(git cat-file -t $newrev)
-fi
+	for (j = n - 1; j >= 0; j--) {
+	    /*
+	     * CONVERT(xj_0,float) 
+	     */ xj_0 = double2pgpgfloat_r(x[j][0], 26, 16, 6);
+	    /*
+	     * CONVERT(xj_1,float) 
+	     */ xj_1 = double2pgpgfloat_r(x[j][1], 26, 16, 6);
+	    /*
+	     * CONVERT(xj_2,float) 
+	     */ xj_2 = double2pgpgfloat_r(x[j][2], 26, 16, 6);
+	    /*
+	     * CONVERT(mj,float) 
+	     */ mj = double2pgpgfloat_r(m[j], 26, 16, 6);
 
-case "$refname","$newrev_type" in
-	refs/tags/*,commit)
-		# un-annotated tag
-		short_refname=${refname##refs/tags/}
-		if [ "$allowunannotated" != "true" ]; then
-			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,delete)
-		# delete tag
-		if [ "$allowdeletetag" != "true" ]; then
-			echo "*** Deleting a tag is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,tag)
-		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
-		then
-			echo "*** Tag '$refname' already exists." >&2
-			echo "*** Modifying a tag is not allowed in this repository." >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,commit)
-		# branch
-		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
-			echo "*** Creating a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,delete)
-		# delete branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/remotes/*,commit)
-		# tracking branch
-		;;
-	refs/remotes/*,delete)
-		# delete tracking branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	*)
-		# Anything else (is there anything else?)
-		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
-		exit 1
-		;;
-esac
-
-# --- Finished
-exit 0
+	    pg_float_sub_26_16(xi_0, xj_0, &dx_0);
+	    pg_float_sub_26_16(xi_1, xj_1, &dx_1);
+	    pg_float_sub_26_16(xi_2, xj_2, &dx_2);
+	    pg_float_mult_26_16(dx_0, dx_0, &dx2_0);
+	    pg_float_mult_26_16(dx_1, dx_1, &dx2_1);
+	    pg_float_mult_26_16(dx_2, dx_2, &dx2_2);
+	    pg_float_unsigned_add_26_16(dx2_0, dx2_1, &x2y2);
+	    pg_float_unsigned_add_26_16(dx2_2, ieps2, &z2e2);
+	    pg_float_unsigned_add_26_16(x2y2, z2e2, &r2);
+	    pg_float_sqrt_26_16(r2, &r1);
+	    pg_float_mult_26_16(r2, r1, &r3);
+	    pg_float_recipro_26_16(r3, &r3i);
+	    pg_float_mult_26_16(r3i, mj, &mf);
+	    pg_float_expadd_31_26_16(mf, &fs);
+	    pg_float_mult_26_16(fs, dx_0, &fx_0);
+	    pg_float_mult_26_16(fs, dx_1, &fx_1);
+	    pg_float_mult_26_16(fs, dx_2, &fx_2);
+	    pg_float_fixaccum_26_16_57_64(fx_0, &sx_0);
+	    pg_float_fixaccum_26_16_57_64(fx_1, &sx_1);
+	    pg_float_fixaccum_26_16_57_64(fx_2, &sx_2);
+	}
+	a[i][0] =
+	    ((double) (((long long int) sx_0) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	a[i][1] =
+	    ((double) (((long long int) sx_1) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	a[i][2] =
+	    ((double) (((long long int) sx_2) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+    }
+}
