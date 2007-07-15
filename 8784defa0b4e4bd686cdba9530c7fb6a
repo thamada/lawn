@@ -1,9 +1,2 @@
-Mon Jul  9 20:30:44 JST 2007
-#!/bin/sh
-#
-# An example hook script to prepare a packed repository for use over
-# dumb transports.
-#
-# To enable this hook, rename this file to "post-update".
-
-exec git update-server-info
+Sun Jul 15 19:35:56 JST 2007
+EN pfpga_config NULL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd sub00/vhpl00
