@@ -1,17 +1,16 @@
-Wed Aug 29 19:41:04 JST 2007
-#!/usr/bin/perl
+Tue Sep  4 19:28:32 JST 2007
+/** 
+# vを1/2ステップ進める
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
 
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
+#include <stdio.h>
+#include "nbodysim.h"
 
-srand(12345);
-
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
 }
