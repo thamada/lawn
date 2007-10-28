@@ -1,10 +1,5 @@
-Sun Oct  7 19:35:50 JST 2007
-# ProjNav -> New Source -> TBW
-c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
-# ProjNav -> New Source -> TBW
-C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
-# Bencher Waveform : PDCL (jhdparse)
-# ModelSim : Simulate Behavioral VHDL Model
-sim.fdo
-# ModelSim : Simulate Behavioral VHDL Model
-vsim.wlf
+Sun Oct 28 19:55:15 JST 2007
+-- ProjNav VHDL simulation template: sim_pfpga_dma.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
