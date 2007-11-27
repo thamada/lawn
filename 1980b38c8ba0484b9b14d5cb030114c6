@@ -1,131 +1,91 @@
-Thu Oct 18 19:27:26 JST 2007
+Tue Nov 27 19:31:00 JST 2007
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+
+--  ena0      _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--  ena1           _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+-- acnt                0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_ADR                   0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                     <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--MEM_WE                   ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity USER is
+entity dmaw is
   port (
-    RST         : in  std_logic;                     -- PCI Bus Reset
-    CLK         : in  std_logic;                     -- PCI bus Clock
-    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
-    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
-    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
-    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
-    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
-    );
-end USER;
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    MEM_WE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : out std_logic_vector(63 downto 0)   );
+end dmaw;
 
+architecture rtl of dmaw is
 
-architecture USER_rtl of USER is
-
---------------------------------------------------
--- signals
---------------------------------------------------
-
-  signal DIPSWi      : std_logic_vector( 3 downto 0);          ------ Internal DIPSW Data
-  signal SWCHK_CUNT  : std_logic_vector( 7 downto 0);          ------ Push SW Check Counter
-  signal PSWCHK_CNT0 : std_logic_vector( 2 downto 0);          ------ Push SW 0 Check
-  signal PSWCHK_CNT1 : std_logic_vector( 2 downto 0);          ------ Push SW 1 Check
-  signal PSW_ON0i    : std_logic;                      ------ User Interrupt 0 On Request
-  signal PSW_ON1i    : std_logic;                      ------ User Interrupt 1 On Request
+signal ena0,ena1,ena2,ena3,ena4 : std_logic :='0';
+signal acnt,acntr : std_logic_vector(18 downto 0) :=(others=>'0');
+signal we : std_logic :='0';
 
 begin
 
-
---------------------------------------------------------------------------------
--- DIPSW Input Signal Output Control Process
---------------------------------------------------------------------------------
-    DIPSWi <= (others=>'0');  -- 2004/11/11 by T.Hamada
-    DIPSW <= DIPSWi;
-
---------------------------------------------------------------------------------
--- Push SW Check Counter Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       SWCHK_CUNT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-       SWCHK_CUNT <= SWCHK_CUNT+1;                  ------ Counter Increment
+  -- MEM_DATA --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_DATA <= DBUS;
     end if;
   end process;
 
---------------------------------------------------------------------------------
--- Push SW 0 Check Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT0 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT0 <= PSWCHK_CNT0(1 downto 0) & PSW_IN(0);    ------ PSW_IN(0) Sampling
-      end if;
+  -- MEM_WE --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_WE <= ena1;
     end if;
   end process;
 
---------------------------------------------------------------------------------
--- Push SW 0 On Signal Output Control Process
---------------------------------------------------------------------------------
+  -- MEM_ADR --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_ADR <= acnt;
+    end if;
+  end process;
 
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON0i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON0i <= PSWCHK_CNT0(2) and (not PSWCHK_CNT0(1));    ------ SW Check Signal Set
+  -- acnt
+  acntr <= acnt;
+  process (RST,CLK,ena0,ena1) begin
+    if(RST = '1') then
+      acnt  <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((ena0='1') AND (ena1='0')) then
+        acnt <= DBUS(18 downto 0);
+      elsif((ena0='1') AND (ena1='1')) then
+        acnt <= acntr + "0000000000000000001";
       else
-        PSW_ON0i <= '0';
+        acnt <= (others=>'0');
       end if;
     end if;
   end process;
 
-    PSW_ON0 <= PSW_ON0i;
 
---------------------------------------------------------------------------------
--- Push SW 1 Check Control Process
---------------------------------------------------------------------------------
 
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT1 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT1 <= PSWCHK_CNT1(1 downto 0) & PSW_IN(1);    ------ PSW_IN(1) Sampling
-      end if;
+  -- ENABLE delays
+  ena0 <= ENABLE;
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      ena4 <= ena3;
+      ena3 <= ena2;
+      ena2 <= ena1;
+      ena1 <= ena0;
     end if;
   end process;
 
---------------------------------------------------------------------------------
--- Push SW 1 On Signal Output Control Process
---------------------------------------------------------------------------------
 
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON1i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON1i <= PSWCHK_CNT1(2) and (not PSWCHK_CNT1(1));    ------ SW Check Signal Set
-      else
-        PSW_ON1i <= '0';
-      end if;
-    end if;
-  end process;
-
-    PSW_ON1 <= PSW_ON1i;
-
---------------------------------------------------------------------------------
--- User Interrupt 2 Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT2_ON <= '0';
-    elsif (CLK'event and CLK='1') then
-      USERINT2_ON <=  RST and DIPSWi(0) and (not PSWCHK_CNT1(2))
-                            and PSWCHK_CNT1(1);
-    end if;
-  end process;
-
-end USER_rtl;
+end rtl;
