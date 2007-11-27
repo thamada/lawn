@@ -1,231 +1,170 @@
-Thu Nov  8 19:48:25 JST 2007
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
--- VHDL Annotation Test Bench created by
--- HDL Bencher 6.1i
--- Tue Jan 04 15:15:30 2005
+Tue Nov 27 19:47:19 JST 2007
+#!/bin/sh
+#
+# Copyright (c) 2006, 2008 Junio C Hamano
+#
+# The "pre-rebase" hook is run just before "git rebase" starts doing
+# its job, and can prevent the command from running by exiting with
+# non-zero status.
+#
+# The hook is called with the following parameters:
+#
+# $1 -- the upstream the series was forked from.
+# $2 -- the branch being rebased (or empty when rebasing the current branch).
+#
+# This sample shows how to prevent topic branches that are already
+# merged to 'next' branch from getting rebased, because allowing it
+# would result in rebasing already published history.
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_TEXTIO.ALL;
-USE STD.TEXTIO.ALL;
+publish=next
+basebranch="$1"
+if test "$#" = 2
+then
+	topic="refs/heads/$2"
+else
+	topic=`git symbolic-ref HEAD` ||
+	exit 0 ;# we do not interrupt rebasing detached HEAD
+fi
 
-ENTITY sim_local_read_cnt IS
-END sim_local_read_cnt;
+case "$topic" in
+refs/heads/??/*)
+	;;
+*)
+	exit 0 ;# we do not interrupt others.
+	;;
+esac
 
-ARCHITECTURE testbench_arch OF sim_local_read_cnt IS
--- If you get a compiler error on the following line,
--- from the menu do Options->Configuration select VHDL 87
-FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read_cnt.ano";
-	COMPONENT local_read_cnt
-		GENERIC (
-			CNT_WIDTH : INTEGER;
-			FO_BASE : INTEGER;
-			NBIT_FO_UAD : INTEGER;
-			INTF_LAT : INTEGER
-		);
-		PORT (
-			NPIPE : In  std_logic_vector (7 DOWNTO 0);
-			CALC_DONE : In  std_logic;
-			BUSY : Out  std_logic;
-			EXEC : Out  std_logic;
-			START_AD : Out  std_logic_vector (18 DOWNTO 0);
-			NQWORD : Out  std_logic_vector (8 DOWNTO 0);
-			CHIPSEL : Out  std_logic_vector (3 DOWNTO 0);
-			MEM_AD_BASE : Out  std_logic_vector (12 DOWNTO 0);
-			BUSY_IF : In  std_logic;
-			RST : In  std_logic;
-			CLK : In  std_logic
-		);
-	END COMPONENT;
+# Now we are dealing with a topic branch being rebased
+# on top of master.  Is it OK to rebase it?
 
-	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
-	SIGNAL CALC_DONE : std_logic;
-	SIGNAL BUSY : std_logic;
-	SIGNAL EXEC : std_logic;
-	SIGNAL START_AD : std_logic_vector (18 DOWNTO 0);
-	SIGNAL NQWORD : std_logic_vector (8 DOWNTO 0);
-	SIGNAL CHIPSEL : std_logic_vector (3 DOWNTO 0);
-	SIGNAL MEM_AD_BASE : std_logic_vector (12 DOWNTO 0);
-	SIGNAL BUSY_IF : std_logic;
-	SIGNAL RST : std_logic;
-	SIGNAL CLK : std_logic;
+# Does the topic really exist?
+git show-ref -q "$topic" || {
+	echo >&2 "No such branch $topic"
+	exit 1
+}
 
-BEGIN
-	UUT : local_read_cnt
-	GENERIC MAP (
-		CNT_WIDTH => 16,
-		FO_BASE => 24576,
-		NBIT_FO_UAD => 3,
-		INTF_LAT => 8
-	)
-	PORT MAP (
-		NPIPE => NPIPE,
-		CALC_DONE => CALC_DONE,
-		BUSY => BUSY,
-		EXEC => EXEC,
-		START_AD => START_AD,
-		NQWORD => NQWORD,
-		CHIPSEL => CHIPSEL,
-		MEM_AD_BASE => MEM_AD_BASE,
-		BUSY_IF => BUSY_IF,
-		RST => RST,
-		CLK => CLK
-	);
+# Is topic fully merged to master?
+not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
+if test -z "$not_in_master"
+then
+	echo >&2 "$topic is fully merged to master; better remove it."
+	exit 1 ;# we could allow it, but there is no point.
+fi
 
-	PROCESS -- clock process for CLK,
-		VARIABLE TX_TIME : INTEGER :=0;
+# Is topic ever merged to next?  If so you should not be rebasing it.
+only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
+only_next_2=`git rev-list ^master           ${publish} | sort`
+if test "$only_next_1" = "$only_next_2"
+then
+	not_in_topic=`git rev-list "^$topic" master`
+	if test -z "$not_in_topic"
+	then
+		echo >&2 "$topic is already up-to-date with master"
+		exit 1 ;# we could allow it, but there is no point.
+	else
+		exit 0
+	fi
+else
+	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
+	/usr/bin/perl -e '
+		my $topic = $ARGV[0];
+		my $msg = "* $topic has commits already merged to public branch:\n";
+		my (%not_in_next) = map {
+			/^([0-9a-f]+) /;
+			($1 => 1);
+		} split(/\n/, $ARGV[1]);
+		for my $elem (map {
+				/^([0-9a-f]+) (.*)$/;
+				[$1 => $2];
+			} split(/\n/, $ARGV[2])) {
+			if (!exists $not_in_next{$elem->[0]}) {
+				if ($msg) {
+					print STDERR $msg;
+					undef $msg;
+				}
+				print STDERR " $elem->[1]\n";
+			}
+		}
+	' "$topic" "$not_in_next" "$not_in_master"
+	exit 1
+fi
 
-		PROCEDURE ANNOTATE_BUSY(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+exit 0
 
-		PROCEDURE ANNOTATE_EXEC(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",EXEC,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, EXEC);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+################################################################
 
-		PROCEDURE ANNOTATE_START_AD(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",START_AD,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, START_AD);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+This sample hook safeguards topic branches that have been
+published from being rewound.
 
-		PROCEDURE ANNOTATE_NQWORD(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",NQWORD,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, NQWORD);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+The workflow assumed here is:
 
-		PROCEDURE ANNOTATE_CHIPSEL(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",CHIPSEL,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CHIPSEL);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+ * Once a topic branch forks from "master", "master" is never
+   merged into it again (either directly or indirectly).
 
-		PROCEDURE ANNOTATE_MEM_AD_BASE(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",MEM_AD_BASE,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_AD_BASE);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+ * Once a topic branch is fully cooked and merged into "master",
+   it is deleted.  If you need to build on top of it to correct
+   earlier mistakes, a new topic branch is created by forking at
+   the tip of the "master".  This is not strictly necessary, but
+   it makes it easier to keep your history simple.
 
-	BEGIN
-		CLOCK_LOOP : LOOP
-		CLK <= transport '0';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		CLK <= transport '1';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		ANNOTATE_BUSY(TX_TIME);
-		ANNOTATE_EXEC(TX_TIME);
-		ANNOTATE_START_AD(TX_TIME);
-		ANNOTATE_NQWORD(TX_TIME);
-		ANNOTATE_CHIPSEL(TX_TIME);
-		ANNOTATE_MEM_AD_BASE(TX_TIME);
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		CLK <= transport '0';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		END LOOP CLOCK_LOOP;
-	END PROCESS;
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
 
-	PROCESS   -- Process for CLK
-		VARIABLE TX_OUT : LINE;
+The script, being an example, hardcodes the publish branch name
+to be "next", but it is trivial to make it configurable via
+$GIT_DIR/config mechanism.
 
-		BEGIN
-		-- --------------------
-		CALC_DONE <= transport '0';
-		BUSY_IF <= transport '0';
-		RST <= transport '0';
-		NPIPE <= transport std_logic_vector'("00000000"); --0
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=100 ns
-		NPIPE <= transport std_logic_vector'("00000010"); --2
-		-- --------------------
-		WAIT FOR 500 ns; -- Time=600 ns
-		CALC_DONE <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=700 ns
-		CALC_DONE <= transport '0';
-		-- --------------------
-		WAIT FOR 32225 ns; -- Time=32925 ns
-		-- --------------------
+With this workflow, you would want to know:
 
-		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
-		STD.TEXTIO.writeline(results, TX_OUT);
-		ASSERT (FALSE) REPORT
-			"Success! Simulation for annotation completed"
-			SEVERITY FAILURE;
-	END PROCESS;
-END testbench_arch;
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up before publishing, and things that have not been
+    merged into other branches can be easily rebased without
+    affecting other people.  But once it is published, you would
+    not want to rewind it.
 
-CONFIGURATION local_read_cnt_cfg OF sim_local_read_cnt IS
-	FOR testbench_arch
-	END FOR;
-END local_read_cnt_cfg;
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you should not
+    build on top of it -- other people may already want to
+    change things related to the topic as patches against your
+    "master", so if you need further changes, it is better to
+    fork the topic (perhaps with the same name) afresh from the
+    tip of "master".
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
+
+
+A, B and C are topic branches.
+
+ * A has one fix since it was merged up to "next".
+
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
+
+ * C has not merged to "next" at all.
+
+We would want to allow C to be rebased, refuse A, and encourage
+B to be deleted.
+
+To compute (1):
+
+	git rev-list ^master ^topic next
+	git rev-list ^master        next
+
+	if these match, topic has not merged in next at all.
+
+To compute (2):
+
+	git rev-list master..topic
+
+	if this is empty, it is fully merged to "master".
