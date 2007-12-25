@@ -1,36 +1,74 @@
-Thu Dec  6 20:30:24 JST 2007
--- Copyright 2004 Tsuyoshi Hamada
---
---
---
--- DMAR_STATE is used only 
---                dmar_mem_adr.vhd  
---                dmar_mem_re.vhd
---                dmar_start_adr.vhd
--- dmar_dbus_hiz and dma_mem_data do not used DMAR_STATE.
+Tue Dec 25 19:57:56 JST 2007
+--------------------------------------------------------------------------------
+Release 6.2.03i Trace G.28
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
 
-entity dmar_state is
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end dmar_state;
 
-architecture rtl of dmar_state is
+Design file:              top.ncd
+Physical constraint file: top.pcf
+Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
+Report level:             error report
 
-component dmaw_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
 
-begin
-  u0 : dmaw_state port map(RST=>RST, CLK=>CLK, ENABLE=>ENABLE, STATE=>STATE);
-end rtl;
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
+   option. All paths that are not constrained will be reported in the
+   unconstrained paths section(s) of the report.
+
+================================================================================
+Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
+
+ 0 items analyzed, 0 timing errors detected.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  19.569ns.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  14.739ns.
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Clock to Setup on destination clock CK66
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+CK66           |   19.959|         |         |         |
+---------------+---------+---------+---------+---------+
+
+
+Timing summary:
+---------------
+
+Timing errors: 0  Score: 0
+
+Constraints cover 1709651 paths, 0 nets, and 63904 connections
+
+Design statistics:
+   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
+
+
+Analysis completed Mon Jun 13 23:42:18 2005
+--------------------------------------------------------------------------------
+
+Peak Memory Usage: 279 MB
