@@ -1,113 +1,49 @@
-Mon Nov 19 19:41:36 JST 2007
--- LOCAL WRITE ( ifpga -> pfpga )
--- by Tsuyoshi Hamada
---
--- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
--- MEM_WE            __/~~~~~~~~~~\_____ 
--- MEM_AD              < a0 >< a1 >
--- MEM_DTI             < d0 >< d1 >
--- DMAW_ENABLE                      __/~~~~~~~~~~\___  
--- DBUS_Port                     < a0 >< d0 >< d1 >
+Mon Dec 31 19:47:47 JST 2007
+//Time-stamp: <2006-09-07 13:50:20 hamada>
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+/NPIPE 1;
 
-entity LOCAL_WRITE is
-  port (
-    -- pcicnt input
-    MEM_AD  : in std_logic_vector(19 downto 0);
-    MEM_WE  : in std_logic;
-    MEM_DTI : in std_logic_vector(63 downto 0);
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_WRITE;
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
-architecture rtl of LOCAL_WRITE is
+/MEM xj[3] <= x[][] : fix(NPOS);
+/MEM mj    <= m[]   : log(NLOG,NMAN);
+/REG xi[3] <= x[][] : fix(NPOS);
+/REG ieps2 <= eps2  : log(NLOG,NMAN);
+/REG sx[3] => a[][] : fix(NACC);
 
-  signal we0  : std_logic := '0';
-  signal we1  : std_logic := '0';
-  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
+/SCALE xj[3] : xscale;
+/SCALE mj    : mscale;
+/SCALE xi[3] : xscale;
+/SCALE ieps2 : escale;
+/SCALE sx[3] : fscale;
+/NVMP 1;
 
-begin
-  ------------------------------
-  --- we0,1                  ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      we0 <= MEM_WE;
-    end if;
-  end process;
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      we1 <= we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- adr                    ---
-  ------------------------------
-  process (RST,CLK,MEM_WE,we0) begin
-    if(RST='1') then
-      adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((MEM_WE = '1') and (we0 = '0')) then
-        adr(18 downto 0) <= MEM_AD(19 downto 1);
-      end if;
-      adr(63 downto 19) <= (others=>'0');
-    end if;
-  end process;
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
 
-  ------------------------------
-  --- data delay             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      data1 <= (others=>'0');
-      data0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      data1 <= data0;
-      data0 <= MEM_DTI;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (RST,CLK,we0,we1) begin
-    if(RST='1') then
-      DBUS_Port <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(we0 = '1' and we1 = '0') then
-        DBUS_Port <= adr;
-      else
-        DBUS_Port <= data1;
-      end if;
-    end if;
-  end process;
-
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= we1;
-      DMAW_ENABLE(1) <= we1;
-      DMAW_ENABLE(2) <= we1;
-      DMAW_ENABLE(3) <= we1;
-    end if;
-  end process;
-
-
-end rtl;
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
+pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
+pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
