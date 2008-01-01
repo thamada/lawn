@@ -1,52 +1,86 @@
-Tue Dec 11 19:51:01 JST 2007
-#include "cutil.h"
+Tue Jan  1 19:29:21 JST 2008
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-__device__ float4 
-inter(float4 xj, float4 xi, float4 apot)
-{
-  /* ここは図5.と同じ */ 
-  float mj    = xj.w;        // Mass Mj
-  float ieps2 = xi.w;        // epsilon^2
-  float dx = xj.x - xi.x;    // Coordinates Xj - Xi
-  float dy = xj.y - xi.y;    // Coordinates Yj - Yi
-  float dz = xj.z - xi.z;    // Coordinates Zj - Zi
-  float r2 = dx*dx+dy*dy+dz*dz+ieps2;
-  float r1i = 1/sqrt(r2);
-  float r2i = r1i * r1i;
-  float mr3i = mj * r2i * r1i;
-  apot.x += dx * mr3i;       // Accel AXi
-  apot.y += dy * mr3i;       // Accel AYi
-  apot.z += dz * mr3i;       // Accel AZi
-  return (apot);
-}
-#define NTHRE (128) // blockDim.xと同値
-__global__ void
-kernel(float4* g_xj,
-       float* g_xi,
-       float* g_fi,
-       int ni,
-       int nj)
-{
-  int tid      = threadIdx.x;
-  int i = blockIdx.x*NTHRE+tid;
-  float4 ai = make_float4(0.0, 0.0, 0.0, 0.0);
-  float4 xi;
-  xi.x = g_xi[i];
-  xi.y = g_xi[i+ni];
-  xi.z = g_xi[i+ni*2];
-  xi.w = g_xi[i+ni*3];
-  __shared__ float4 s_xj[NTHRE];
-  for(int j = 0; j<nj; j+=NTHRE){
-    __syncthreads();
-    s_xj[tid] = g_xj[j+tid];
-    __syncthreads();
-    for(int js = 0; js<NTHRE; js++) ai = inter(s_xj[js], xi, ai);
-  }
-  if(i<ni){
-    g_fi[i]      = ai.x;
-    g_fi[i+ni]   = ai.y;
-    g_fi[i+ni*2] = ai.z;
-  }
-}
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
 
-#include "api.h"
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
+
+
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
+
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
+
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
+
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
+
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+
+
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
+
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
+
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
+
+
+
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
+
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
+
