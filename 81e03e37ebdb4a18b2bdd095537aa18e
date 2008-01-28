@@ -1,34 +1,23 @@
-Sun Jan 27 20:17:06 JST 2008
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
---mem_we                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+Mon Jan 28 20:16:29 JST 2008
+#include <stdio.h>
+#include "nbodysim.h"
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n)
+{
+    int i,j;
 
-entity dmaw_mem_we is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end dmaw_mem_we;
+    printf("-------------------------------\n");
+    printf("The debuging routine is called.\n");
+    printf("-------------------------------\n");
+    printf("n = %d\n",n);
+    printf("eps2 = %e\n",eps2);
 
-architecture rtl of dmaw_mem_we is
+    for(i=0;i<n;i++){
+        printf("---\n");
+        printf("particle %d\n",i);
+        printf("m[%d] = %e\n",i,m[i]);
+        for(j=0;j<3;j++) printf("x[%d][%d] = %e\n",i,j,x[i][j]);
+        for(j=0;j<3;j++) printf("a[%d][%d] = %e\n",i,j,a[i][j]);
+    }
+}
 
-begin
-
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="10") then
-        MEM_WE <= '1';
-      else
-        MEM_WE <= '0';
-      end if;
-    end if;
-  end process;
-
-end rtl;
