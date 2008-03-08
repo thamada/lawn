@@ -1,34 +1,30 @@
-Fri Mar  7 19:44:45 JST 2008
-#include <stdio.h>
+Sat Mar  8 19:39:09 JST 2008
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
+entity setn is
+  port (
+    clk       : in std_logic;
+    we        : in std_logic;
+    idata     : in std_logic_vector(31 downto 0);
+    odata     : out std_logic_vector(31 downto 0));
+end setn;
 
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
-{
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+architecture rtl of setn is
+signal nreg :  std_logic_vector(31 downto 0) := "00000000000000000000000000000011"; -- default 3
+begin
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
+odata <= nreg;
+--odata <= "00000000000000000000000000000011";
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
+process (clk) begin
+  if(clk'event and clk='1') then
+    if(we = '1') then
+      nreg <= idata;
+    end if;
+  end if;
+end process;
 
-    fwrite(x, n*24,1,fp);
-
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
-
-    //    fclose(fp);
-    fflush(fp);
-}
-
+end rtl;
