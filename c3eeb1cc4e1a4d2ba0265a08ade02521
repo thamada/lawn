@@ -1,29 +1,37 @@
-Tue May  6 19:40:39 JST 2008
-#! /bin/sh
-# Time-stamp: <2006-11-22 17:38:27 hamada>
-# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-#
-# init script for PGR & PROGRAPE-4 (for developers)
-#
+Fri May  9 19:48:16 JST 2008
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+--mem_data                          <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
-rm -rf /tmp/*
-ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
-ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
-ln -s /usr/local/src/package.20060613 /tmp/pgr
-ln -s /usr/local/src/progrape /tmp/progrape
-cd /pciDriver/src/driver/; ./insmod.sh
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-cd /tmp/progrape/driver;  make load
+entity dmaw_mem_data is
+  port (
+    CLK      : in std_logic;
+    DBUS     : in std_logic_vector(63 downto 0);
+    STATE    : in std_logic_vector(1 downto 0);
+    MEM_DATA : out std_logic_vector(63 downto 0) );
+end dmaw_mem_data;
 
+architecture rtl of dmaw_mem_data is
+constant zero : std_logic_vector(63 downto 0) := (others=>'0');
+begin
 
-umount /mnt/ram
-rm -rf /mnt/ram
-mkdir /mnt/ram
-mke2fs /dev/ram0
-mount -t ext2 /dev/ram0 /mnt/ram
-chmod -R 777 /mnt/ram
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="10") then
+        MEM_DATA <= DBUS;
+      else
+        MEM_DATA <= zero;
+      end if;
+    end if;
+  end process;
 
-cp /usr/local/bin/xxx.log /mnt/ram
-chmod -R 777 /mnt/ram
-
-
+end rtl;
