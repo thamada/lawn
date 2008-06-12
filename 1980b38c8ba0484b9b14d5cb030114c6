@@ -1,40 +1,53 @@
-Mon May 19 20:17:53 JST 2008
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+Thu Jun 12 19:37:32 JST 2008
+/*
+ * ifpga_bram_clear.c
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
-entity WRITECOMB_CHECK is
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+//#define NMAX (0x1<<10) // 4KB
+//#define NMAX (0x1<<11) // 8KB
+//#define NMAX (0x1<<12) // 16KB
+//#define NMAX (0x1<<13) // 32KB
+#define NMAX (0x1<<14) // 64KB
 
-architecture rtl of WRITECOMB_CHECK is
+unsigned int* ptr;
+unsigned int* bar1;
 
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
+int main(int argc,char *argv[])
+{
+  int devid = 0;
+  int n = NMAX;
+  int val = 0x1234567;
+  int i;
 
-begin
+  if(argc > 1){
+    n = atoi(argv[1]);
+  }
+  if(argc > 2){
+    val = atoi(argv[2]);
+  }
 
-  IS_ERR <= cnt;
+  printf("n = %d\n",n);
+  printf("filled by %x\n",val);
 
-  cntr <= cnt;
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
-      end if;
-    end if;
-  end process;
+  for(i = 0; i < n; i++) {
+    pg4_writebase1(devid, i, val);
+  }
 
-end rtl;
+  return 0;
+}
