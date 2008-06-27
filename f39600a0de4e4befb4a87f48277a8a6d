@@ -1,180 +1,190 @@
-Mon Jun 23 19:53:21 JST 2008
-/*
-  Copyright(c) 2003-2004 by Tsuyoshi Hamada
-  Nbody program for programmable GRAPE
-  Last Modified at 2004/04/13
-*/
-#include <stdio.h>
-#include <stdlib.h> // exit()
-#include <string.h> // strcpy()
-#include "nbodysim.h"
+Fri Jun 27 19:35:05 JST 2008
+#include <math.h>
+#include "pg_util.h"
+
+// Funtion Prototyping
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_shift_log17_m1(int x, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_div_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
 
 
-#define PI (3.1415926535897932)
-//#define TRIALS_PER_R (6000)
-//#define TRIALS_PER_R (300)
-
-
-//#define N_PLOTS (1920)
-//#define N_PLOTS (640)
-
-
-#define TRIALS_PER_R (300)
-#define N_PLOTS (640)
-
-
-#define XSIZE (1.0)
-#define RMAX (XSIZE*2.0)
-//#define EPS2 (pow((RMAX*9e-7),2.0))
-#define EPS2 (pow((RMAX*1e-6),2.0))
-
-
-#define MASS (1.0)
-
-//#define R_START (6.6)  //-- for G3
-#define R_START (9.9)  //-- for G5
-
-void get_xi(double x[])
-{
-  x[0] = XSIZE*rand()/(RAND_MAX+1.0);
-  x[1] = XSIZE*rand()/(RAND_MAX+1.0);
-  x[2] = XSIZE*rand()/(RAND_MAX+1.0);
-  if(rand()/(RAND_MAX+1.0)<0.5) x[0] *= -1.0;
-  if(rand()/(RAND_MAX+1.0)<0.5) x[1] *= -1.0;
-  if(rand()/(RAND_MAX+1.0)<0.5) x[2] *= -1.0;
-}
-
-int check_position(double xi[],double xj[],double r)
-{
-  static unsigned int count=0;
-  int d;
-  if(r>= RMAX){
-    fprintf(stderr,"r(%f)>%f, finished\n",r,RMAX);
-    exit(0);
-  }
-  if(count > 0x4000){
-    fprintf(stderr,"r %f\tlog(r/RMAX) %f\n",r,log(r/RMAX)/log(10.0));
-    exit(0);
-  }
-  count++;
-  for(d=0;d<3;d++){
-    if((xi[d]>=XSIZE)||(xi[d]<=-XSIZE)){
-      //      fprintf(stderr,"xi bad \t %f\t%f\t%f\n",xi[0],xi[1],xi[2]);
-      return 0;
-    }
-    if((xj[d]>=XSIZE)||(xj[d]<=-XSIZE)){
-      //      fprintf(stderr,"xj bad \t %f\t%f\t%f\n",xj[0],xj[1],xj[2]);
-      return 0;
-    }
-  }
-  count=0;
-  return 1;
-}
-
-void get_xj(double xi[],double r,double theta,double phi,double xj[])
-{
-  xj[0] = xi[0] + r*cos(phi)*cos(theta);
-  xj[1] = xi[1] + r*cos(phi)*sin(theta);
-  xj[2] = xi[2] + r*sin(phi);
-}
-
-int main(int argc,char** argv)
-{
-  double x[NMAX][DIM];
-  double m[NMAX];
-  double radmax=TRIALS_PER_R;
-  double r=R_START;
-  double eps2 = EPS2;
-  int i,k,n=2;
-
-  srand(0x1192296);
-  m[0]=MASS;  m[1]=MASS;
-
-  for(k=0;k<N_PLOTS;k++){
-    double Sr=0.0;
-    double a_host[2][DIM];
-    double a_b3[2][DIM];
-
-    r = pow(10,R_START*(k-N_PLOTS)/N_PLOTS)*RMAX;
-    for(i=0;i<radmax;i++){
-      int j,d, is_in_range;
-      double theta,phi;
-      is_in_range=0;
-
-      while(is_in_range==0){
-	get_xi(x[0]);
-	phi   = 2.0*PI*(double)(rand()/(RAND_MAX+1.0));
-	theta = 2.0*PI*(double)(rand()/(RAND_MAX+1.0));
-	get_xj(x[0],r,theta,phi,x[1]);
-	is_in_range = check_position(x[0],x[1],r);
-      }
-
-      force_on_host(x,m,eps2,a_host,n);
-      force(x,m,eps2,a_b3,n);
-      /*************************
-      if(0){
-	void scale_1f(int n, double x[],    double s, double z[]);
-	void scale_3f(int n, double x[][3], double s, double z[][3]);
-	double _m[NMAX];
-	double _a[NMAX][3];
-	double _e;
-	double s;
-	s = 1.0;
-	s = pow(2.0,-18.0);
-	scale_1f(n, m, s,             _m);
-	force(x,_m,_e,_a, n);
-	scale_3f(n, _a, 1.0/s, a_b3);
-      }
-      *****************************/
-      {
-	double df2,f2;
-	df2 = f2 = 0.0;
-	for(d=0;d<DIM;d++) df2 += (a_b3[0][d]-a_host[0][d])*(a_b3[0][d]-a_host[0][d]);
-	for(d=0;d<DIM;d++) f2 += a_host[0][d]*a_host[0][d];
-	Sr += df2/f2;
-      }
-    }
-    //    exit(0);
-
-    Sr /= (double)(radmax);
-    Sr = pow(Sr,0.5);
-    printf("%e\t",log(r/XSIZE)/log(10.0));
-    printf("%e\t",Sr);
-    printf("%e\t",r);
-
-
-    /****
-      printf("%e\t",a_host[0][1]);
-      printf("%e |\t",  a_b3[0][1]);
-      printf("%e\t",a_host[0][2]);
-      printf("%e |\t",  a_b3[0][2]);
-      printf("%e\t",a_host[0][3]);
-      printf("%e\n",  a_b3[0][3]);
-    ***/
-    printf("%e\t",a_host[0][0]);
-    printf("%e\t",  a_b3[0][0]);
-    puts("");    
-
-
-  }
-  return 0;
-}
-
-
-
-/////////////////////////////////////////
-void scale_1f(int n, double x[], double scale, double z[])
+#define NJMAX 16384
+static LONG _a[NJMAX][3];
+static unsigned int _xi[NJMAX][3];
+void dump_foset(int n)
 {
   int i;
-  for(i=0;i<n;i++) z[i] = x[i]*scale;
-}
+  static int flag=0;
+  static FILE* fp;
 
-void scale_3f(int n, double x[][3], double scale, double z[][3])
-{
-  int i;
+  if(flag==0){
+    fp = fopen("xxx.log","w");
+    flag=1;
+  }
+
   for(i=0;i<n;i++){
-    z[i][0] = x[i][0]*scale;
-    z[i][1] = x[i][1]*scale;
-    z[i][2] = x[i][2]*scale;
+    fprintf(fp,"%08x,",_xi[i][0]);
+    fprintf(fp,"%08x,",_xi[i][1]);
+    fprintf(fp,"%08x,",_xi[i][2]);
+
+    fprintf(fp,"%016llx,",_a[i][0]);
+    fprintf(fp,"%016llx,",_a[i][1]);
+    fprintf(fp,"%016llx,",_a[i][2]);
+
+    fprintf(fp,"\n");
   }
+  fflush(fp);
+}
+
+
+
+// API
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    double log2(double);
+    int             i, j;
+    long long int   sx_0;
+    long long int   sx_1;
+    long long int   sx_2;
+    int             xi_0;
+    int             xj_0;
+    int             xi_1;
+    int             xj_1;
+    int             xi_2;
+    int             xj_2;
+    int             xij_0;
+    int             xij_1;
+    int             xij_2;
+    LONG            x2_0;
+    LONG            x2_1;
+    LONG            x2_2;
+    LONG            ieps2;
+    LONG            x2y2;
+    LONG            z2e2;
+    int             r2;
+    int             r1;
+    int             mj;
+    int             r3;
+    int             dx_0;
+    int             dx_1;
+    int             mf;
+    int             dx_2;
+    int             fx_0;
+    int             fx_1;
+    int             fx_2;
+    int             f_shift;
+    int             fxs_0;
+    int             fxs_1;
+    int             fxs_2;
+    long long int   ffx_0;
+    long long int   ffx_1;
+    long long int   ffx_2;
+
+    f_shift = 0x9700;
+
+    for (i = 0; i < n; i++) {
+      xi_0 = ((unsigned int)((x[i][0] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      xi_1 = ((unsigned int)((x[i][1] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      xi_2 = ((unsigned int)((x[i][2] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      ieps2 = (((int)(256.0*log2(eps2*(1.844674407e+15)))) & 0x7FFF) | 0x8000;
+      _xi[i][0] = xi_0;
+      _xi[i][1] = xi_1;
+      _xi[i][2] = xi_2;
+
+	sx_0 = 0;
+	sx_1 = 0;
+	sx_2 = 0;
+
+	for (j = n - 1; j >= 0; j--) {
+	  xj_0 = ((unsigned int) ((x[j][0] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+	  xj_1 = ((unsigned int) ((x[j][1] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+	  xj_2 = ((unsigned int) ((x[j][2] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+
+#define MSCALE (4.223095768e+32)
+
+	  if (m[j] == 0.0) {
+	    mj = 0;
+	  } else if (m[j] > 0.0) {
+	    mj =(((int)(256.0 * log2(m[j] * MSCALE))) & 0x7FFF) | 0x8000;
+	  } else {
+	    mj =(((int)(256.0 * log2(-m[j] * MSCALE))) & 0x7FFF) | 0x18000;
+	  }
+
+	    pg_fix_sub_32(xi_0, xj_0, &xij_0);
+	    pg_fix_sub_32(xi_1, xj_1, &xij_1);
+	    pg_fix_sub_32(xi_2, xj_2, &xij_2);
+	    pg_conv_ftol_fix32_log17_man8(xij_0, &dx_0);
+	    pg_conv_ftol_fix32_log17_man8(xij_1, &dx_1);
+	    pg_conv_ftol_fix32_log17_man8(xij_2, &dx_2);
+	    pg_log_shift_log17_1(dx_0, &x2_0);
+	    pg_log_shift_log17_1(dx_1, &x2_1);
+	    pg_log_shift_log17_1(dx_2, &x2_2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2_0, x2_1, &x2y2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2_2, ieps2, &z2e2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2y2, z2e2, &r2);
+	    pg_log_shift_log17_m1(r2, &r1);
+	    pg_log_mul_17(r2, r1, &r3);
+	    pg_log_div_17(mj, r3, &mf);
+	    pg_log_mul_17(mf, dx_0, &fx_0);
+	    pg_log_mul_17(mf, dx_1, &fx_1);
+	    pg_log_mul_17(mf, dx_2, &fx_2);
+	    pg_log_sdiv_17(fx_0, f_shift, &fxs_0);
+	    pg_log_sdiv_17(fx_1, f_shift, &fxs_1);
+	    pg_log_sdiv_17(fx_2, f_shift, &fxs_2);
+	    pg_conv_ltof_log17_man8_fix57(fxs_0, &ffx_0);
+	    pg_conv_ltof_log17_man8_fix57(fxs_1, &ffx_1);
+	    pg_conv_ltof_log17_man8_fix57(fxs_2, &ffx_2);
+	    pg_fix_accum_f57_s64(ffx_0, &sx_0);
+	    pg_fix_accum_f57_s64(ffx_1, &sx_1);
+	    pg_fix_accum_f57_s64(ffx_2, &sx_2);
+	}
+	_a[i][0] = sx_0;
+	_a[i][1] = sx_1;
+	_a[i][2] = sx_2;
+
+	a[i][0] =
+	    ((double) (sx_0 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+	a[i][1] =
+	    ((double) (sx_1 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+	a[i][2] =
+	    ((double) (sx_2 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+    }
+    dump_foset(n);
 }
