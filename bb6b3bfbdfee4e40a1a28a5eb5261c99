@@ -1,210 +1,127 @@
-Sun Jul 20 19:32:56 JST 2008
-#COREGen Project File
-#Tue Nov 09 19:41:17 JST 2004
-overwritefiles=Default
-blkmemsp_v5_0|Xilinx,\ Inc.|5.0=true
-sid_v3_1|Xilinx,\ Inc.|3.1=true
-decode_8b10b_v5_0|Xilinx,\ Inc.|5.0=true
-C_REG_FD_V6_0|Xilinx,\ Inc.|6.0=true
-C_REG_FD_V3_0|Xilinx,\ Inc.|3.0=false
-C_MUX_BIT_V5_0|Xilinx,\ Inc.|5.0=false
-convolution_v2_0|Xilinx,\ Inc.|2.0=false
-pci32_v3_0|Xilinx,\ Inc.|3.0=true
-C_TWOS_COMP_V4_0|Xilinx,\ Inc.|4.0=false
-C_SHIFT_FD_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_PCI32sII|Xilinx,\ Inc.|3.0=false
-gig_eth_pcs_pma_v4_0|Xilinx,\ Inc.|4.0=true
-C_DDS_V4_2|Xilinx,\ Inc.|4.2=true
-ten_gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
-C_ACCUM_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_pci_express_x1|Xilinx,\ Inc.|1.0=true
-C_GATE_BIT_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-xilinxfamily=Virtex2
-C_COUNTER_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
-C_DIST_MEM_V4_1|Xilinx,\ Inc.|4.1=false
-C_COUNTER_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
-C_ADDSUB_V4_0|Xilinx,\ Inc.|4.0=false
-outputoption=DesignFlow
-C_MUX_SLICE_BUFE_V2_0|Xilinx,\ Inc.|2.0=false
-dividervht|Xilinx,\ Inc.|2.0=true
-C_GATE_BIT_V4_0|Xilinx,\ Inc.|4.0=false
-simvendor=ModelSim
-mult_gen_v6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-vfft64v2|Xilinx,\ Inc.|2.0=true
-C_DA_FIR_V7_0|Xilinx,\ Inc.|7.0=false
-C_REG_LD_V6_0|Xilinx,\ Inc.|6.0=true
-mac_v2_0|Xilinx,\ Inc.|2.0=true
-C_REG_LD_V3_0|Xilinx,\ Inc.|3.0=false
-sid_v2_0|Xilinx,\ Inc.|2.0=false
-C_SHIFT_RAM_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_SLICE_BUFT_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFE_V5_0|Xilinx,\ Inc.|5.0=false
-C_SHIFT_RAM_V3_0|Xilinx,\ Inc.|3.0=false
-ADPCM32_catalog|Xilinx,\ Inc.|1.0=true
-C_MUX_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-outputproducts=ImpNetlist;ASYSymbol;VHDLSim
-cam_v4_0|Xilinx,\ Inc.|4.0=true
-C_MAC_FIR_V2_0|Xilinx,\ Inc.|2.0=false
-C_COMPARE_V4_0|Xilinx,\ Inc.|4.0=false
-C_DA_2D_DCT_V2_0|Xilinx,\ Inc.|2.0=true
-C_BIT_CORRELATOR_V3_0|Xilinx,\ Inc.|3.0=true
-cordic_v2_0|Xilinx,\ Inc.|2.0=true
-xlnx_PCI64v|Xilinx,\ Inc.|3.0=false
-fileversion=4
-C_DIST_MEM_V3_0|Xilinx,\ Inc.|3.0=false
-decode_8b10b_v4_0|Xilinx,\ Inc.|4.0=false
-viterbi_v3_0|Xilinx,\ Inc.|3.0=true
-C_MUX_SLICE_BUFT_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_FD_V2_0|Xilinx,\ Inc.|2.0=false
-encode_8b10b_v4_0|Xilinx,\ Inc.|4.0=true
-xapp265|Xilinx,\ Inc.|1.1=true
-C_DECODE_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
-C_SHIFT_FD_V2_0|Xilinx,\ Inc.|2.0=false
-rs_decoder_v4_0|Xilinx,\ Inc.|4.0=false
-C_DECODE_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
-C_GATE_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-blkmemdp_v3_0|Xilinx,\ Inc.|3.0=false
-C_MAC_V3_0|Xilinx,\ Inc.|3.0=true
-posphyl3_link_v1_0|Xilinx,\ Inc.|3.2=true
-sync_fifo_v2_0|Xilinx,\ Inc.|2.0=false
-blkmemsp_v4_0|Xilinx,\ Inc.|4.0=false
-C_DIST_MEM_V6_0|Xilinx,\ Inc.|6.0=true
-C_REG_FD_V5_0|Xilinx,\ Inc.|5.0=false
-C_MUX_BIT_V4_0|Xilinx,\ Inc.|4.0=false
-C_TWOS_COMP_V3_0|Xilinx,\ Inc.|3.0=false
-C_SHIFT_FD_V5_0|Xilinx,\ Inc.|5.0=false
-posphyl4_v6_0_1|Xilinx,\ Inc.|6.0.1=true
-formalverification=None
-C_ACCUM_V4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BIT_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-vfft1024|Xilinx,\ Inc.|1.0=true
-C_COUNTER_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
-C_ADDSUB_V3_0|Xilinx,\ Inc.|3.0=false
-vfft1024v2|Xilinx,\ Inc.|2.0=true
-C_MUX_SLICE_BUFE_V4_0|Xilinx,\ Inc.|4.0=false
-C_SHIFT_RAM_V2_0|Xilinx,\ Inc.|2.0=false
-xfft_v2_0|Xilinx,\ Inc.|2.0=false
-designflow=VHDL
-C_GATE_BIT_V3_0|Xilinx,\ Inc.|3.0=false
-rs_decoder_v4_1|Xilinx,\ Inc.|4.1=true
-mult_gen_v5_0|Xilinx,\ Inc.|5.0=false
-C_TWOS_COMP_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_pci64_dk|Xilinx,\ Inc.|1.0=true
-vfft64|Xilinx,\ Inc.|1.0=true
-C_DDC_V1_0|Xilinx,\ Inc.|1.0=true
-C_DA_FIR_V6_0|Xilinx,\ Inc.|6.0=false
-C_REG_LD_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_LD_V2_0|Xilinx,\ Inc.|2.0=false
-lockedprops=
-lfsr_v3_0|Xilinx,\ Inc.|3.0=true
-C_ADDSUB_V6_0|Xilinx,\ Inc.|6.0=true
-xfft_v2_1|Xilinx,\ Inc.|2.1=true
-C_CIC_V3_0|Xilinx,\ Inc.|3.0=true
-C_SHIFT_RAM_V5_0|Xilinx,\ Inc.|5.0=false
-async_fifo_v5_0|Xilinx,\ Inc.|5.0=false
-blkmemdp_v3_2|Xilinx,\ Inc.|3.2=false
-C_GATE_BIT_V6_0|Xilinx,\ Inc.|6.0=true
-simulationoutputproducts=VHDL
-C_MUX_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-C_SIN_COS_V4_0|Xilinx,\ Inc.|4.0=false
-HDLC32_catalog|Xilinx,\ Inc.|1.0=true
-busformat=BusFormatAngleBracketNotRipped
-cam_v3_0|Xilinx,\ Inc.|3.0=false
-vfft256v2|Xilinx,\ Inc.|2.0=true
-C_MAC_FIR_V1_0|Xilinx,\ Inc.|1.0=false
-C_COMPARE_V3_0|Xilinx,\ Inc.|3.0=false
-vfft16|Xilinx,\ Inc.|1.0=true
-xlnx_PCI64s2|Xilinx,\ Inc.|3.0=false
-cordic_v1_0|Xilinx,\ Inc.|1.0=false
-flowvendor=Foundation_iSE
-magicnumber=-1172307782
-viterbi_v2_0|Xilinx,\ Inc.|2.0=false
-C_DIST_MEM_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFT_V4_0|Xilinx,\ Inc.|4.0=false
-encode_8b10b_v3_0|Xilinx,\ Inc.|3.0=false
-C_SIN_COS_V4_1|Xilinx,\ Inc.|4.1=false
-HDLC1_catalog|Xilinx,\ Inc.|1.0=true
-C_DECODE_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
-rs_encoder_v4_0|Xilinx,\ Inc.|4.0=false
-rs_decoder_v3_0|Xilinx,\ Inc.|3.0=false
-blkmemdp_v5_0|Xilinx,\ Inc.|5.0=true
-C_GATE_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-sync_fifo_v4_0|Xilinx,\ Inc.|4.0=true
-tcc_decoder_v1_0|Xilinx,\ Inc.|1.0=true
-C_MAC_FIR_V4_0|Xilinx,\ Inc.|4.0=false
-C_ACCUM_V3_0|Xilinx,\ Inc.|3.0=false
-sync_fifo_v1_0|Xilinx,\ Inc.|1.0=false
-C_COMPARE_V6_0|Xilinx,\ Inc.|6.0=true
-cordic_v1_1|Xilinx,\ Inc.|1.1=false
-blkmemsp_v3_0|Xilinx,\ Inc.|3.0=false
-async_fifo_v5_1|Xilinx,\ Inc.|5.1=true
-C_DIST_MEM_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_FD_V4_0|Xilinx,\ Inc.|4.0=false
-C_MUX_BIT_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_BIT_V3_0|Xilinx,\ Inc.|3.0=false
-convolution_v3_0|Xilinx,\ Inc.|3.0=true
-rs_encoder_v4_1|Xilinx,\ Inc.|4.1=true
-mult_gen_v4_0|Xilinx,\ Inc.|4.0=false
-xfft1024_v1_1|Xilinx,\ Inc.|1.1=true
-C_TWOS_COMP_V2_0|Xilinx,\ Inc.|2.0=false
-flexbus4_v1_0|Xilinx,\ Inc.|1.0=false
-C_SHIFT_FD_V4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-C_ACCUM_V6_0|Xilinx,\ Inc.|6.0=true
-C_GATE_BIT_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-C_DIST_MEM_V5_1|Xilinx,\ Inc.|5.1=false
-C_ADDSUB_V5_0|Xilinx,\ Inc.|5.0=false
-lfsr_v2_0|Xilinx,\ Inc.|2.0=false
-C_COUNTER_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
-C_ADDSUB_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFE_V3_0|Xilinx,\ Inc.|3.0=false
-C_SIN_COS_V4_2|Xilinx,\ Inc.|4.2=true
-xaui_v4_0|Xilinx,\ Inc.|4.0=true
-vfft16v2|Xilinx,\ Inc.|2.0=true
-xlnx_PCIX64_virtex_e_ii|Xilinx,\ Inc.|5.0=true
-C_GATE_BIT_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-C_TWOS_COMP_V5_0|Xilinx,\ Inc.|5.0=false
-posphyl4_lite_v2_0|Xilinx,\ Inc.|2.0=true
-C_DA_FIR_V8_0|Xilinx,\ Inc.|8.0=true
-C_DA_FIR_V5_0|Xilinx,\ Inc.|5.0=false
-xlnx_PCI64|Xilinx,\ Inc.|3.0=true
-C_DDS_V4_0|Xilinx,\ Inc.|4.0=false
-C_REG_LD_V4_0|Xilinx,\ Inc.|4.0=false
-C_DA_1D_DCT_V2_1|Xilinx,\ Inc.|2.1=true
-C_COUNTER_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_SLICE_BUFE_V6_0|Xilinx,\ Inc.|6.0=true
-C_SHIFT_RAM_V4_0|Xilinx,\ Inc.|4.0=false
-async_fifo_v4_0|Xilinx,\ Inc.|4.0=false
-xlnx_PCI32v|Xilinx,\ Inc.|3.0=false
-vfft32_v3_0|Xilinx,\ Inc.|3.0=true
-C_MUX_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-blkmemsp_v3_2|Xilinx,\ Inc.|3.2=false
-C_COMPARE_V2_0|Xilinx,\ Inc.|2.0=false
-C_DDS_V4_1|Xilinx,\ Inc.|4.1=false
-vfft256|Xilinx,\ Inc.|1.0=true
-simelaboptions=
-C_DIST_MEM_V4_0|Xilinx,\ Inc.|4.0=false
-C_MUX_SLICE_BUFT_V6_0|Xilinx,\ Inc.|6.0=true
-sid_v3_0|Xilinx,\ Inc.|3.0=false
-xilinxsubfamily=Virtex2
-C_MUX_SLICE_BUFT_V3_0|Xilinx,\ Inc.|3.0=false
-C_MUX_BIT_V2_0|Xilinx,\ Inc.|2.0=false
-gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
-C_DECODE_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
-C_SHIFT_FD_V3_0|Xilinx,\ Inc.|3.0=false
-corelibraryid=0
-C_DECODE_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
-rs_encoder_v3_0|Xilinx,\ Inc.|3.0=false
-C_GATE_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-blkmemdp_v4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-sync_fifo_v3_0|Xilinx,\ Inc.|3.0=false
-tcc_encoder_v1_0|Xilinx,\ Inc.|1.0=true
-C_MAC_FIR_V3_0|Xilinx,\ Inc.|3.0=true
-C_ACCUM_V2_0|Xilinx,\ Inc.|2.0=false
-C_COMPARE_V5_0|Xilinx,\ Inc.|5.0=false
+Sun Jul 20 19:42:49 JST 2008
+//-------------------------
+#define NMAX (1<<17)
+#include <cstdio>
+#include <cstdlib>
+#define USE_CUDA_MALLOC_HOST (yes)
+#define IDIM (4)
+#define JDIM (4)
+#define FDIM (3)
+#define NJ_SHMEM (NTHRE)
+
+float4* h_xj;
+float* h_xi;
+float* h_fo;
+float4* d_xj;
+float* d_xi;
+float* d_fo;
+
+extern "C" void 
+force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
+{
+  static bool is_open = false;
+  int devid = 0;
+  int ndev;
+  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
+
+  if( ni > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" ni > %d : ni=%d\n",ni, NMAX);
+    exit(-1);
+  }
+
+  if( nj > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" nj > %d : nj=%d\n",nj, NMAX);
+    exit(-1);
+  }
+
+  unsigned int ip_size = sizeof(float) * ni * IDIM;
+  unsigned int jp_size = sizeof(float4) * nj1;
+  unsigned int fo_size = sizeof(float) * ni * FDIM;
+
+  if(is_open == false){
+    char gpu_name[256];
+    CUDA_SAFE_CALL(cudaSetDevice(devid));
+    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
+    if(ndev == 0){
+      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
+      exit(-1);
+    }else{
+      int dev = devid;
+      cudaDeviceProp deviceProp;
+      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
+      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
+	printf("There is no device supporting CUDA.\n");
+      }
+      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
+      sprintf(gpu_name,"%s", deviceProp.name);
+    }
+
+    unsigned int _nmax = NMAX;
+    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
+    unsigned int _jp_size = sizeof(float4) * _nmax;
+    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
+
+#if defined(USE_CUDA_MALLOC_HOST)
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
+#else
+    h_xj = (float4*) malloc(_jp_size);
+    h_xi = (float*)  malloc(_ip_size);
+    h_fo = (float*)  malloc(_fo_size);
+#endif
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
+    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
+    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
+    is_open = true;
+  }
+  for(int i = 0; i < nj; i++){
+    h_xj[i].x = (float) xj[i][0];
+    h_xj[i].y = (float) xj[i][1];
+    h_xj[i].z = (float) xj[i][2];
+    h_xj[i].w = (float) mj[i];
+    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
+  }
+  if(nj < nj1){
+    for(int i = nj; i < nj1; i++){
+      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
+    }
+  }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
+  for(int i = 0; i < ni; i++){
+    h_xi[i     ] = (float) xi[i][0];
+    h_xi[i+ni  ] = (float) xi[i][1];
+    h_xi[i+ni*2] = (float) xi[i][2];
+    h_xi[i+ni*3] = (float) eps2;
+    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
+  }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
+
+  //  printf("Nj=%d\n",nj1);
+  /*
+  dim3 grid((ni+NTHRE)/NTHRE);
+  dim3 threads  (NTHRE);
+  */
+  //  printf("------------------------ %d, %d\n",ni, nj1);
+  dim3 grid(ni/128);
+  dim3 threads  (128);
+  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
+  CUT_CHECK_ERROR("Kernel execution failed");
+
+  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
+
+  for(int i=0;i<ni; i++){
+    a[i][0] = (double)h_fo[i];
+    a[i][1] = (double)h_fo[i+ni];
+    a[i][2] = (double)h_fo[i+ni*2];
+    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
+  }
+}
