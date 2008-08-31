@@ -1,74 +1,229 @@
-Mon Aug  4 20:07:58 JST 2008
-// gravity3.pgdl
-// Calculate Potential, Acceleration and Jerk
-// Author: Andreas Ernst, August 18, 2006
+Sun Aug 31 19:26:43 JST 2008
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--[WRITE]
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+-- CBUS(0)    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                          <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--MEM_WE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
 
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define NEXAD2 1
-#define FSHIFT pow(2.0,(double)NEXAD)
+--[READ] 
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+-- CBUS(1)    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_Port_ff                                <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
+--MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+--MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
-/MEM xj[3] <= x[][]  : float(NFLO, NMAN);
-/MEM vj[3] <= v[][]  : float(NFLO, NMAN);
-/MEM mj    <= m[]    : float(NFLO, NMAN);
-/REG xi[3] <= x[][]  : float(NFLO, NMAN);
-/REG vi[3] <= v[][]  : float(NFLO, NMAN);
-/REG rx    => p[]    : fix(NACC);
-/REG sx[3] => a[][]  : fix(NACC);
-/REG tx[3] => jk[][] : fix(NACC);
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-/SCALE rx    : (1.0/FSHIFT);
-/SCALE sx[3] : (1.0/FSHIFT);
-/SCALE tx[3] : (1.0/FSHIFT);
+entity top is
+  port (
+    RST       : in std_logic;
+    CK66      : in std_logic;
+    CK133     : in std_logic; -- not used
+    CBUS      : inout std_logic_vector(7 downto 0);
+    DBUS      : inout std_logic_vector(63 downto 0);
+    LED       : out std_logic_vector(7 downto 0);
+    TPIN      : out std_logic_vector(15 downto 0); -- TEST PIN
+    DSW       : in std_logic_vector(7 downto 0);   -- DIP SWITCH
+    FPGA_NO   : in std_logic_vector(1 downto 0)
+  );
+end top;
 
-/NVMP 1;
-/NPIPE 1;
+architecture rtl of top is
 
-// Acceleration, 1st part
+component dmaw
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    MEM_WE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : out std_logic_vector(63 downto 0)   );
+end component;
 
-pg_float_sub           (xj,xi,dx,              NFLO,NMAN, 4);     // (1)
-pg_float_mult          (dx,dx,dx2,             NFLO,NMAN, 2);     // (2)
-pg_float_unsigned_add  (dx2[0],dx2[1],x2y2,    NFLO,NMAN, 4);     // (3)
-pg_float_unsigned_add  (dx2[2],x2y2,r2,        NFLO,NMAN, 4);     // (4)
-pg_float_sqrt          (r2,r1,                 NFLO,NMAN, 3);     // (5)
-pg_float_mult          (r2,r1,r3,              NFLO,NMAN, 2);     // (6)
-pg_float_mult          (r3,r2,r5,              NFLO,NMAN, 2);     // (7)
-pg_float_recipro       (r5,r5i,                NFLO,NMAN, 2);     // (8)
-pg_float_mult          (r5i,mj,mr5i,           NFLO,NMAN, 2);     // (9)
-pg_float_mult          (mr5i,r2,mf,            NFLO,NMAN, 2);     // (10)
+component dmar
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_RE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
+end component;
 
-// Potential
+component user
+  port (
+    FPGA_NO : in std_logic_vector(1 downto 0);
+    RST : in std_logic;
+    CLK  : in std_logic;
+    PCLK : in std_logic;
+    WE  : in std_logic;
+    RE  : in std_logic;
+    WAD : in std_logic_vector(18 downto 0);
+    WDT : in std_logic_vector(63 downto 0);
+    RAD : in std_logic_vector(18 downto 0);
+    RDT : out std_logic_vector(63 downto 0);
+    STS : out std_logic);
+end component;
 
-pg_float_mult          (mf,r2,mp,              NFLO,NMAN, 2);      // (11)
-pg_float_expadd        (mp,ps,                 NEXAD,NFLO,NMAN,1); // (12)
-pg_float_fixaccum      (ps,rx,                 NFLO,NMAN, NFIX, NACC, 2);  // (13)
+component CLK_MULDIV
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end component;
 
-// Acceleration, 2nd part
+--COMPONENT CLK_MULDIV_BY_XCORE
+--PORT(
+--	CLKIN_IN : IN std_logic;
+--	RST_IN : IN std_logic;          
+--	CLKFX_OUT : OUT std_logic;
+--	CLK0_OUT : OUT std_logic;
+--	LOCKED_OUT : OUT std_logic
+--	);
+--END COMPONENT;
 
-pg_float_expadd        (mf,fs,                 NEXAD,NFLO,NMAN,1);// (14)
-pg_float_mult          (fs,dx,fx,              NFLO,NMAN, 2);     // (15)
-pg_float_fixaccum      (fx,sx,                 NFLO,NMAN, NFIX, NACC, 2);  // (16)
 
-// Jerk, 1st term
+signal DBUS_HiZ    : std_logic;
+signal DBUS_idata  : std_logic_vector(63 downto 0);
+signal DBUS_Port   : std_logic_vector(63 downto 0);
+signal DBUS_Port_ff: std_logic_vector(63 downto 0);
+signal dmaw_enable : std_logic;
+signal dmar_enable : std_logic;
+signal dmaw_mem_adr : std_logic_vector(18 downto 0);
+signal dmar_mem_adr : std_logic_vector(18 downto 0);
+signal dmaw_mem_we  : std_logic;
+signal dmar_mem_re  : std_logic;
+signal dmaw_mem_data : std_logic_vector(63 downto 0);
+signal dmar_mem_data : std_logic_vector(63 downto 0);
+---
+signal LED_ff : std_logic_vector(7 downto 0) := (others=>'1');
 
-pg_float_sub           (vj,vi,dv,              NFLO,NMAN, 4);     // (17)
-pg_float_mult          (fs,dv,jk1,             NFLO,NMAN, 2);     // (18)
+signal user_status : std_logic :='0';
+signal CLK0,CLK1 : std_logic;
+signal DCM_LOCKED : std_logic;
+signal FPGA_NO_ff : std_logic_vector(1 downto 0);
+signal tmp0 : std_logic_vector(5 downto 0);
+begin
 
-// Jerk, 2nd term
+dcm0: CLK_MULDIV
+  generic map (CLKFX_MULTIPLY => 2,
+               CLKFX_DIVIDE   => 2)
+  port map (ICLK => CK66,
+            OCLK => CLK0,
+            OCLK_FX => CLK1,
+            LOCKED => DCM_LOCKED);
 
-pg_float_mult          (dx,dv,xv,              NFLO,NMAN, 2);      // (19)
-pg_float_unsigned_add  (xv[0],xv[1],xv1,       NFLO,NMAN, 4);      // (20)
-pg_float_unsigned_add  (xv[2],xv1,xv2,         NFLO,NMAN, 4);      // (21)
-pg_float_expadd        (xv2,xv2x2,             NEXAD2,NFLO,NMAN,1);// (22)
-pg_float_unsigned_add  (xv2x2,xv2,xv2x3,       NFLO,NMAN, 4);      // (23)
-pg_float_mult          (mr5i,xv2x3,jk2a,       NFLO,NMAN, 2);      // (24)
-pg_float_expadd        (jk2a,jk2s,             NEXAD,NFLO,NMAN,1); // (25)
-pg_float_mult          (jk2s,dx,jk2,           NFLO,NMAN, 2);      // (26)
+-- CLK0 <= CK66;
+-- CLK1 <= CK66;
+-- DCM_LOCKED <= '0';
 
-// Jerk, 1st - 2nd term
 
-pg_float_sub           (jk1,jk2,jk0,           NFLO,NMAN, 4);      // (27)
-pg_float_fixaccum      (jk0,tx,                NFLO,NMAN, NFIX, NACC, 2);  // (28)
+
+  CBUS(7) <= user_status;
+
+  DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port_ff;
+  DBUS_idata <= DBUS;
+  dmaw_enable <= CBUS(0);
+  dmar_enable <= CBUS(1);
+  process (CLK0) begin
+    if(CLK0'event and CLK0='1') then
+      DBUS_Port_ff <= DBUS_Port;
+    end if;
+  end process;
+
+  u0 : dmaw port map(
+    RST       => RST,
+    CLK       => CLK0,
+    ENABLE    => dmaw_enable,
+    DBUS      => DBUS_idata,
+    MEM_WE    => dmaw_mem_we,
+    MEM_ADR   => dmaw_mem_adr,
+    MEM_DATA  => dmaw_mem_data);
+
+  u1: dmar port map(
+    RST       => RST,
+    CLK       => CLK0,
+    ENABLE    => dmar_enable,
+    DBUS      => DBUS_idata,
+    DBUS_Port => DBUS_Port,
+    DBUS_HiZ  => DBUS_HiZ,
+    MEM_RE    => dmar_mem_re,
+    MEM_ADR   => dmar_mem_adr,
+    MEM_DATA  => dmar_mem_data);
+
+  u2: user port map(
+      FPGA_NO => FPGA_NO_ff,
+      RST => RST,
+      CLK  => CLK0,
+      PCLK => CLK1,
+      WE  => dmaw_mem_we,
+      RE  => dmar_mem_re,
+      WAD => dmaw_mem_adr,
+      WDT => dmaw_mem_data,
+      RAD => dmar_mem_adr,
+      RDT => dmar_mem_data,
+      STS => user_status);
+
+-----------------------------
+  process (CLK0) begin
+    if(CLK0'event and CLK0='1') then
+      FPGA_NO_ff <= FPGA_NO;
+    end if;
+  end process;
+
+-------------------------------------------------------------------------------
+  -- LED --
+  LED <= LED_ff;
+
+  process (RST,CLK0) begin
+    if(RST='1') then
+      LED_ff <= (others=>'0');
+    elsif(CLK0'event and CLK0='1') then
+--      if(dmaw_enable = '1' AND dmar_enable = '0') then
+--        LED_ff(7 downto 4) <= (others=>'0');
+--        LED_ff(3 downto 0) <= (others=>'1');
+--      elsif(dmaw_enable = '0' AND dmar_enable = '1') then
+--        LED_ff(7 downto 4) <= (others=>'1');
+--        LED_ff(3 downto 0) <= (others=>'0');
+--      else
+--        LED_ff <= "1111111" & DCM_LOCKED;
+--      end if;
+      LED_ff <= "1110011" & DCM_LOCKED;
+    end if;
+  end process;
+
+  -- TEST PIN --
+  process (CLK0) begin
+    if(CLK0'event and CLK0='1') then
+      tmp0(5 downto 0) <= CK133 & CBUS(6 downto 2);
+    end if;
+  end process;
+
+  process (CLK0) begin
+    if(CLK0'event and CLK0='1') then
+      TPIN(15 downto 10) <= tmp0(5 downto 0);
+      TPIN(9) <= 'Z';
+      TPIN(8) <= 'Z';
+      TPIN(7 downto 0) <= DSW;
+    end if;
+  end process;
+  TPIN(14 downto 11) <= (others=>'Z');
+
+end rtl;
