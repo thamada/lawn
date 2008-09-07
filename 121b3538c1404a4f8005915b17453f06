@@ -1,418 +1,129 @@
-Mon Aug  4 20:16:04 JST 2008
-// Time-stamp: "2007-01-24 20:26:48 hamada"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <asm/page.h>
-#include <errno.h>
-#include <memory.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <time.h>
-
-void pg4_close_and_exit(int devid);
-
-#include "pg4.h"
-
-/* Function macros not implemented in C language */
-#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
-#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
-
-//#define NMAX (0x1<<10) // 4KB
-#define NMAX (0x1<<14)   // 64KB
-
-unsigned int buf[NMAX], buf2[NMAX];
-int devid;
-unsigned int* ptr;
-unsigned int* bar0;
-unsigned int* bar1;
-unsigned int* dmaw_buf;
-unsigned int* dmar_buf;
-
-double Rpeak, Wpeak;
-
-double e_time(void)
-{
-  static struct timeval now;
-  static struct timezone tz;
-
-  gettimeofday(&now, &tz);
-  return (double)(now.tv_sec  + now.tv_usec/1000000.0);
-}
-
-void PIO(void)
-{
-  int i, n, j, count, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO write
-  count = 0x1000;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-
-    //    for(i = 0; i < n; i++)  pg4_writebase1(devid, i, buf[i]);
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-
-  }
-  lap = e_time() - dum;
-  printf("PIO Write %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  Wpeak = MAX(Wpeak, (double)size*count/lap/1.0e6);
-
-
-  // PIO read
-  count = 0x100;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    for(i = 0; i < n; i++) {
-      buf[i] = pg4_readbase1(devid, i);
-    }
-  }
-  lap = e_time() - dum;
-  printf("PIO Read %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-}
-
-
-void DMA(void)
-{
-  int i, n, j, count, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // write speed
-  count = 0x800;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAput(devid, size);
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Write %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-
-  // read speed
-  count = 0x3000;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAget(devid, size);
-    if (ret < 0) {
-      printf("count %i\n", j);
-      pg4_DMAcheck(devid);
-    }
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Read %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-  Rpeak = MAX(Rpeak, (double)size*count/lap/1.0e6);
-
-}
-
-void PIO_W_speed(int count)
-{
-  int i, n, j, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO write
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    //    for(i = 0; i < n; i++)  pg4_writebase1(devid, i, buf[i]);
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-  }
-  lap = e_time() - dum;
-  printf("PIO Write %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  Wpeak = MAX(Wpeak, (double)size*count/lap/1.0e6);
-}
-
-void PIO_R_speed(int count)
-{
-  int i, n, j, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO read
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    for(i = 0; i < n; i++) {
-      buf[i] = pg4_readbase1(devid, i);
-    }
-  }
-  lap = e_time() - dum;
-  printf("PIO Read %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-}
-
-void DMA_W_speed(int count)
-{
-  int i, n, j, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    //    buf[i] = rand();
-    buf[i] = i;
-  }
-  size = n*sizeof(int);
-
-  // write speed
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAput(devid, size);
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Write %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-}
-
-void DMA_R_speed(int count)
-{
-  int i, n, j, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // read speed
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAget(devid, size);
-    if (ret < 0) {
-      printf("count %i\n", j);
-      pg4_DMAcheck(devid);
-    }
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Read %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-  Rpeak = MAX(Rpeak, (double)size*count/lap/1.0e6);
-
-}
-
-
-void DMA_R_check(void)
-{
-  int i, j, n, ret, size, is_err=0;
-  n = NMAX;
-  size = n*sizeof(int);
-
-  // read test
-  for(j = 0; j < 200; j++) {
-    for(i = 0; i < n; i++) {
-      //      buf[i] = rand();
-      buf[i] = i;
-      pg4_writebase1(devid, i, buf[i]);
-    }
-
-    ret = pg4_DMAget(devid, size);
-
-    if (ret < 0) {
-      fprintf(stderr, "DMA failed!!!!!\n");
-    }
-
-
-    is_err = 0;
-    for(i = 0; i < n; i++) {
-      if (dmar_buf[i] != buf[i]) {
-	//	if(is_err <20) printf("DMAR error(%d) buf[%i] %x %x %x\n", 
-	printf("DMAR error(%d) buf[%i] %x %x %x\n", 
-			      is_err, i, buf[i], dmar_buf[i], buf[i] - dmar_buf[i]);
-	is_err++;
-      }
-    }
-
-    if(is_err == 0){
-      //      printf("R");
-    } else {
-      puts("----------- FAILED DMA_R");
-      pg4_close_and_exit(devid);
-    }
-  }
-  printf("R");
-  fflush(NULL);
-}
-
-
-void DMA_W_check(void)
-{
-  int i, j, n, ret, size, is_err=0;
-  n = NMAX;
-
-  size = n*sizeof(int);
-
-  // write test
-  for(j = 0; j < 50; j++) {
-    for(i = 0; i < n; i++) {
-      unsigned int x = rand();
-      //      unsigned int x = 0x222<<16 | i;
-      x = i;
-      dmaw_buf[i] = x;
-      buf[i]      = x;
-      //      pg4_writebase1(devid, i, 0x777);
-    }
-
-    ret = pg4_DMAput(devid, size);
-
-    if (ret < 0) {
-      fprintf(stderr, "DMA failed!!!!!\n");
-    }
-
-    is_err=0;
-    for(i = 0; i < n; i++) {
-      unsigned int x = pg4_readbase1(devid, i);
-      if (buf[i] != x) {
-	if(is_err < 100)	printf("DMAW error %i %x %x %x\n", i, buf[i], x, buf[i]-x);
-	is_err++;
-      }
-    }
-
-    if(is_err == 0){
-      //      printf("W");
-    }else{
-      puts("----------- FAILED");
-      exit(-1);
-    }
-
-  }
-  printf("W");
-  fflush(NULL);
-}
-
-
-void ErrorCheck_PIOW(void)
-{
-  int i, j, k, n, size;
-  int is_err=0;
-  n = NMAX;
-  size = n*sizeof(int);
-
-  for(k = 0; k < 20000; k++) {
-    // write test
-    for(j = 0; j < 100; j++) {
-      for(i = 0; i < n; i++) {
-	buf[i] = rand();
-      }
-
-
-      //      for(i = 0; i < n; i++) {
-      //	pg4_writebase1(devid, i, buf[i]);
-      //      }
-      memcpy(bar1, buf, n*sizeof(unsigned int));
-
-
-      for(i = 0; i < n; i++) {
-	unsigned int x = pg4_readbase1(devid, i);
-	if (buf[i] != x) {
-	  printf("error %i %x %x %x\n", i, buf[i], x, buf[i]-x);
-	  is_err++;
-	}
-      }
-      if(is_err != 0) {printf("is_err %d\n",is_err);exit(-1);}
-    }
-    printf(".");
-    fflush(NULL);
-  }
-
-  printf("\n");
-  fflush(NULL);
-}
-
-
-
-
-int main(int argc,char *argv[])
-{
-  int i;
-  int dma_size;
-  Rpeak = Wpeak = 0.0;
-  srand(time(NULL));
-
-  devid = 0;
-
-  pg4_open(devid);
-
-  bar0 = pg4_get_bar0ptr(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-
-  dmaw_buf = pg4_get_dmawptr(devid);
-  dmar_buf = pg4_get_dmarptr(devid);
-  dma_size = pg4_get_dma_size(devid);
-
-  printf("DMA SIZE=0x%x\n",dma_size);
-  printf("BAR0 (%ld Bytes)    : %lx\n"
-	 ,pg4_getbaseaddr_size(devid,0)
-	 ,pg4_getbaseaddr(devid,0));
-  printf("BAR1 (%ld Bytes)    : %lx\n"
-	 ,pg4_getbaseaddr_size(devid,1)
-	 ,pg4_getbaseaddr(devid,1));
-
-
-  //  DMA_W_speed();
-  //  DMA_R_speed();
-
-  if(0){
-    int i, n;
-    n = (dma_size >> 2);
-    for(i = 0; i < n; i++) buf[i] = i;
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-
-    pg4_DMAput(devid, dma_size);
-
-    for(i = 0; i < (dma_size>>2); i++) {
-      int res  = dmar_buf[i];
-      int diff = i  - res;
-      if(diff != 0)
-	printf("dmar_buf[%i] %i %i\n",i ,res, diff);
-    }
-  }
-
-
-
-  PIO_W_speed(1000);
-  PIO_R_speed(40);
-  
-  DMA_W_speed(40);
-  DMA_R_speed(1000);
-
-  while(0) {
-    DMA_W_check();
-    DMA_R_check();
-  }
-
-
-  ErrorCheck_PIOW();
-  return 0;
-}
-
-
+Sun Sep  7 20:20:18 JST 2008
+/*                                                                  
+   Interface Program for PG2                                        
+     generated by pgpgi : ver 0.0, Dec 29 2004                      
+     Toshiyuki Fukushige                                            
+*/                                                                  
+#include <stdio.h>                                                  
+#include <math.h>                                                   
+                                                                    
+void force_gravity_on_emulator(x,m,eps2,a,n)
+        double x[][3];
+        double m[];
+        double eps2;
+        double a[][3];
+        int n;
+{                                                                   
+  int i,j,ii,nn;                                                    
+  int devid,npipe;                                                  
+  static int initflag=1;                                            
+  int ndj,ni,nd,nword,retword;                                      
+  unsigned int ipdata[2048];                                        
+  unsigned int jpdata[2048];                                        
+  unsigned int fodata[2048];                                        
+  int xj;
+  int yj;
+  int zj;
+  int mj;
+  int xi;
+  int yi;
+  int zi;
+  int ieps2;
+  long long int sx;
+  long long int sy;
+  long long int sz;
+                                                                    
+  devid = 0;                                                        
+  npipe = 1;                                                 
+                                                                    
+  if(initflag == 1){                                                
+    g6_init(devid);                                                 
+    g6_send_fpga_data(devid,"pgfpga.ttf");                        
+    initflag = 0;                                                   
+  }                                                                 
+                                                                    
+  ndj = 2;                                                          
+  ipdata[0] = 0x2000;                                               
+  ipdata[1] = 0x2;                                                  
+  ipdata[2] = ndj;                                                  
+  ipdata[3] = 0x0;                                                  
+  g6_set_ipdata(devid,ipdata);                                      
+                                                                    
+  ni = 1;                                                    
+  nd = 6;                                                    
+  ipdata[0] = 0x3002;                                               
+  ipdata[1] = 0x2;                                                  
+  ipdata[2] = ni;                                                   
+  ipdata[3] = nd;                                                   
+  g6_set_ipdata(devid,ipdata);                                      
+                                                                    
+  for(j=0;j<n;j++){                                             
+
+    xj = ((unsigned int) ((x[j][0] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+    yj = ((unsigned int) ((x[j][1] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+    zj = ((unsigned int) ((x[j][2] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+    if(m[j] == 0.0){                                         
+      mj = 0;                                                
+    }else if(m[j] > 0.0){                                    
+      mj = (((int)(pow(2.0,8.0)*log(m[j]*(pow(2.0,95.38)/(1.220703125e-04)))/log(2.0))) & 0x7fff) | 0x8000;
+    }else{                                                 
+      mj = (((int)(pow(2.0,8.0)*log(-m[j]*(pow(2.0,95.38)/(1.220703125e-04)))/log(2.0))) & 0x7fff) | 0x18000;
+    }                                                      
+                                                                    
+    nword = 4;                                                      
+    jpdata[0] = 0xffc00;                                            
+    jpdata[1] = 1*j+0;                 
+    jpdata[2] = 0x0 | ((0xffffffff & xj) << 0) ;  
+    jpdata[3] = 0x0 | ((0xffffffff & yj) << 0) | ((0xffffffff & zj) << 32) | ((0x1ffff & mj) << 64) ;  
+    g6_set_jpdata(devid,nword,jpdata);                              
+                                                                    
+  }                                                                 
+
+  for(i=0;i<n;i+=npipe){                                              
+    if((i+npipe)>n){                                                  
+      nn = n - i;                                                     
+    }else{                                                            
+      nn = npipe;                                                     
+    }                                                                 
+    for(ii=0;ii<nn;ii++){                                             
+      xi = ((unsigned int) ((x[i+ii][0] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+      yi = ((unsigned int) ((x[i+ii][1] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+      zi = ((unsigned int) ((x[i+ii][2] + ((100.0)/2.0)) * (pow(2.0,(double)32)/(100.0)) + 0.5)) & 0xffffffff;
+      if(eps2 == 0.0){                                         
+        ieps2 = 0;                                                
+      }else if(eps2 > 0.0){                                    
+        ieps2 = (((int)(pow(2.0,8.0)*log(eps2*((pow(2.0,(double)32)/(100.0))*(pow(2.0,(double)32)/(100.0))))/log(2.0))) & 0x7fff) | 0x8000;
+      }else{                                                 
+        ieps2 = (((int)(pow(2.0,8.0)*log(-eps2*((pow(2.0,(double)32)/(100.0))*(pow(2.0,(double)32)/(100.0))))/log(2.0))) & 0x7fff) | 0x18000;
+      }                                                      
+      ipdata[0] = 0x0 | (ii<<4);                                     
+      ipdata[1] = 4;                                            
+      ipdata[2] = 0xffffffff & xi;          
+      ipdata[3] = 0xffffffff & yi;          
+      ipdata[4] = 0xffffffff & zi;          
+      ipdata[5] = 0x1ffff & ieps2;          
+      g6_set_ipdata(devid,ipdata);                                  
+    }                                                               
+                                                                    
+    ipdata[0] = 0x4000;                                             
+    ipdata[1] = 0x1;                                                
+    ipdata[2] = 1*n;                                     
+    g6_set_ipdata(devid,ipdata);                                    
+                                                                    
+    nword = ni * nd;                                                
+    retword = g6_get_fodata(devid,nword,fodata);                    
+                                                                    
+    for(ii=0;ii<nn;ii++){                                           
+      sx = ((long long int)fodata[1+nd*ii] << 32)
+           | (long long int)fodata[0+nd*ii];                     
+      sy = ((long long int)fodata[3+nd*ii] << 32)
+           | (long long int)fodata[2+nd*ii];                     
+      sz = ((long long int)fodata[5+nd*ii] << 32)
+           | (long long int)fodata[4+nd*ii];                     
+      a[i+ii][0] = ((double)(sx<<0))*(-(pow(2.0,(double)32)/(100.0))*(pow(2.0,(double)32)/(100.0))*(pow(2.0,23.0))/(pow(2.0,95.38)/(1.220703125e-04)))/pow(2.0,0.0);
+      a[i+ii][1] = ((double)(sy<<0))*(-(pow(2.0,(double)32)/(100.0))*(pow(2.0,(double)32)/(100.0))*(pow(2.0,23.0))/(pow(2.0,95.38)/(1.220703125e-04)))/pow(2.0,0.0);
+      a[i+ii][2] = ((double)(sz<<0))*(-(pow(2.0,(double)32)/(100.0))*(pow(2.0,(double)32)/(100.0))*(pow(2.0,23.0))/(pow(2.0,95.38)/(1.220703125e-04)))/pow(2.0,0.0);
+    }                                                               
+                                                                    
+  }                                                                   
+}                                                                   
