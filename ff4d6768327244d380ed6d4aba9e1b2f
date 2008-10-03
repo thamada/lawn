@@ -1,5 +1,2 @@
-Tue Sep 23 19:29:48 JST 2008
--- ProjNav VHDL simulation template: sim_local_read_if.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+Fri Oct  3 19:54:14 JST 2008
+set ElfFiles { }
