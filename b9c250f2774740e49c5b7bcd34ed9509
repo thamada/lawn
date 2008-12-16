@@ -1,4 +1,4 @@
-Wed Dec 10 19:37:57 JST 2008
+Tue Dec 16 19:37:15 JST 2008
 
 -- **************************************
 --               INREVIUM                
@@ -7,13 +7,13 @@ Wed Dec 10 19:37:57 JST 2008
 --------------------------------------------------------------------------------
 -- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
 --------------------------------------------------------------------------------
--- REGCNT MODEL
+-- PCI_TARGETCNT MODEL
 --------------------------------------------------------------------------------
--- Internal Register Control Module
+-- PCI64_CORE Target Access Control Module
 --------------------------------------------------------------------------------
--- File                      : regcnt.vhd
--- Entity                    : REGCNT
--- Architecture              : REGCNT_rtl
+-- File                      : PCI_TARGETCNT.vhd
+-- Entity                    : PCI_TARGETCNT
+-- Architecture              : PCI_TARGETCNT_rtl
 --------------------------------------------------------------------------------
 -- Project Navigator version : ISE6.2.03i
 -- Design Flow               : XST
@@ -25,441 +25,363 @@ Wed Dec 10 19:37:57 JST 2008
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
-entity REGCNT is
-  port (
-    RST          : in  std_logic;              -- PCI Bus Reset
-    CLK          : in  std_logic;              -- PCI bus Clock
+entity PCI_TARGETCNT is
+	port (
+	-- Interface to PCI Logicore.
+		FRAMEQ_N		: in	std_logic;							-- Latched FRAME# Signal
+		REQ64Q_N		: in	std_logic;							-- Latched REQ64# Signal
+		TRDYQ_N 		: in	std_logic;							-- Latched TRDY# Signal
+		IRDYQ_N 		: in	std_logic;							-- Latched IRDY# Signal
+		STOPQ_N 		: in	std_logic;							-- Latched STOP# Signal
+		DEVSELQ_N		: in	std_logic;							-- Latched DEVSEL# Signal
+		ACK64Q_N		: in	std_logic;							-- Latched ACK64# Signal
 
-    -- PCI R/W ports
-    REG_AD       : in  std_logic_vector( 7 downto 0);    -- REGCNT R/W Address
-    REG_WE       : in  std_logic;              -- REGCNT Write Enable
-    REG_RE       : in  std_logic;              -- REGCNT Read Enable
-    REG_DTI      : in  std_logic_vector(31 downto 0);    -- REGCNT Write Data
-    REG_DTO      : out  std_logic_vector(31 downto 0);    -- REGCNT Read Data
-    REG_DTOEN    : out  std_logic;              -- REGCNT Read Data Enable
+		ADDR			: in	std_logic_vector( 31 downto 0);		-- Latched Target Address Bus
+		ADIO			: inout std_logic_vector( 63 downto 0);		-- Internal Address/Data Bus
 
-    -- USER Application Interface ports
-    LED_CNT      : out  std_logic_vector( 7 downto 0);    -- LED Control Signal
-    DIPSW        : in  std_logic_vector( 3 downto 0);    -- DIPSW Signal
+		CFG_VLD 		: in	std_logic;							-- Configulation Cycle Valid
+		CFG_HIT 		: in	std_logic;							-- Configuration Cycle Start
+		C_TERM			: out	std_logic;							-- Configuraton Cycle Terminate Signal
+		C_READY 		: out	std_logic;							-- Configuration Data Transfer Ready Signal
 
-    DMAEND_INT   : in  std_logic;                -- DMA End Interrupt On Request
-    PSW_ON0      : in  std_logic;                -- User Interrupt 0 On Request
-    PSW_ON1      : in  std_logic;                -- User Interrupt 1 On Request
-    USERINT2_ON  : in  std_logic;                -- User Interrupt 2 On Request
+		ADDR_VLD		: in	std_logic;							-- Internal Address Valid
+		BASE_HIT		: in	std_logic_vector(  7 downto 0);		-- Base Address Hit
 
-    PGPG_REG0 : out std_logic_vector(31 downto 0);
-    PGPG_REG1 : out std_logic_vector(31 downto 0);
-    PGPG_REG2 : out std_logic_vector(31 downto 0);
-    PGPG_REG3 : out std_logic_vector(31 downto 0);
-    GPREG0    : in std_logic_vector(31 downto 0);  -- READ ONLY REGISTER
-    GPREG1    : out std_logic_vector(31 downto 0);
-    Hit_PGPG_REG2 : out std_logic; -- Active High
-    Hit_PGPG_REG3 : out std_logic; -- Active High
+		S_CYCLE64		: in	std_logic;							-- 64 bit Transaction Go On
+		S_TERM			: out	std_logic;							-- Target Transaction Terminate Signal
+		S_READY 		: out	std_logic;							-- Target Transaction Data Transfer Ready Siganl
+		S_ABORT 		: out	std_logic;							-- Target Abort Request Signal
+		S_WRDN			: in	std_logic;							-- Target Transaction Data Direction (0:Write, 1:Read)
+		S_SRC_EN		: in	std_logic;							-- Target Transaction Data Source Enable
+		S_DATA_VLD		: in	std_logic;							-- Target Transaction Data Phase Valid Signal
+		S_CBE			: in	std_logic_vector(  7 downto 0);		-- Target Command & Byte Enable Signal
+		PCI_CMD 		: in	std_logic_vector( 15 downto 0);		-- Latched Bus Command
+
+		IDLE			: in	std_logic;							-- Target Idle State
+		B_BUSY			: in	std_logic;							-- PCI Bus Busy State
+		S_DATA			: in	std_logic;							-- Target Data Transfer State
+		BACKOFF 		: in	std_logic;							-- Target State Machine Transaction End State
+
+		SLOT64			: out	std_logic;							-- 64 bit Extended Signal Eable
+		PERRQ_N 		: in	std_logic;							-- latched PERR# Signal
+		SERRQ_N 		: in	std_logic;							-- Latched SERR# Signal
+		KEEPOUT 		: out	std_logic;							-- ADIO Bus Disable Request Signal
+
+		CSR 			: in	std_logic_vector( 39 downto 0);		-- Command/Status Register State
+		SUB_DATA		: out	std_logic_vector( 31 downto 0);		-- Sub-Identification
+		CFG 			: in	std_logic_vector(255 downto 0);		-- Confiuration Data
+
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
+
+	-- Internal Block Target Access Control Signal
+		TARGET_AD		: out	std_logic_vector(31 downto 0);		-- Target Access Address
+
+		FIFO_RDDT		: in	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: in	std_logic;							-- FIFO Read Data Enable Signel
+
+	-- Base Address 0 Area (Internal Register) Target Access Control Signal
+		BAR0_WRDT		: out	std_logic_vector(31 downto 0);		-- BAR0 Area Target Access Write Data
+		BAR0_WR			: out	std_logic_vector( 3 downto 0);		-- BAR0 Area Target Access Write Signal
+		BAR0_RD			: out	std_logic;							-- BAR0 Area Target Access Read  Signal
+
+	-- Base Address 1 Area (Internal Memoery) Target Access Control Signal
+		BAR1_WRDT		: out	std_logic_vector(63 downto 0);		-- BAR1 Area Target Access Write Data
+		BAR1_WR			: out	std_logic_vector( 7 downto 0);		-- BAR1 Area Target Access Write Signal
+		BAR1_RD			: out	std_logic							-- BAR1 Area Target Access Read  Signal
+		);
+end PCI_TARGETCNT;
 
 
-    INT_REQ      : out  std_logic              -- Interrupt Request
-    );
-end REGCNT;
+architecture PCI_TARGETCNT_rtl of PCI_TARGETCNT is
 
+--------------------------------------------------
+-- Components
+--------------------------------------------------
 
-architecture REGCNT_rtl of REGCNT is
 
 --------------------------------------------------
 -- signals
 --------------------------------------------------
 
--- Register Access Control Signal
+-- Internal Block R/W Select Signal
+--
+--	BAR0 : Internal Register
+--	BAR1 : Internal Memory Block
 
-  signal REG_SEL    : std_logic_vector( 9 downto 0);  -- Register Select Signal
-  signal GPREG0_SEL  : std_logic;                -- General Register 0 Select (ReadOnly)
-  signal GPREG1_SEL  : std_logic;                -- General Register 1 Select
-  signal LEDCONT_SEL  : std_logic;               -- LED Control Register Select
-  signal DIPSW_SEL  : std_logic;                 -- DIPSW Register Select
-  signal INTSTAT_SEL  : std_logic;               -- Interrupt Status Register Select
-  signal INTMASK_SEL  : std_logic;               -- Interrupt Mask Register Select
-  signal PGPG_REG0_SEL : std_logic;              -- PGPG REG0
-  signal PGPG_REG1_SEL : std_logic;              -- PGPG REG1
-  signal PGPG_REG2_SEL : std_logic;              -- PGPG REG2
-  signal PGPG_REG3_SEL : std_logic;              -- PGPG REG3
+	signal	BAR0_WRENB		: std_logic;							-- BAR0 Block Write Select Signal
+	signal	BAR0_RDENB		: std_logic;							-- BAR0 Block Read  Select Signal
 
-  signal REGRD_CNT  : std_logic;                -- Register Read Timing Control Signal
+	signal	BAR1_WRENB		: std_logic;							-- BAR1 Block Write Select Signal
+	signal	BAR1_RDENB		: std_logic;							-- BAR1 Block Read  Select Signal
 
--- General Register 0
+-- Internal Block Access Control Signal
+	signal	TARGET_ADRS		: std_logic_vector(31 downto 2);		-- Target Access Address
 
-  signal GPREG0_DT  : std_logic_vector(31 downto 0);      -- General Register 0 Data
+	signal	PRERD_CNT		: std_logic_vector(3 downto 0);			-- Pre READ Signal Assert Control
 
--- General Register 1
+	signal	BAR0_PRERD		: std_logic;							-- BAR0 Block Pre-Read Signal
+	signal	BAR1_PRERD		: std_logic;							-- BAR1 Block Pre-Read Signal
 
-  signal GPREG1_DT  : std_logic_vector(31 downto 0) := (others=>'0');      -- General Register 1 Data
+	signal	BAR0_READ		: std_logic;							-- Internal BAR0 Block Read Signal
+	signal	BAR1_READ		: std_logic;							-- Internal BAR1 Block Read Signal
 
--- LED Control Register
+	signal	DTRD_FLG		: std_logic;							-- Data Read Flag
 
-  signal LEDCONT_DT  : std_logic_vector( 7 downto 0);      -- LED Control Register Data
-  signal LEDCONT_RDDT  : std_logic_vector(31 downto 0);      -- LED Control Register Read Data
 
--- DIPSW Register
-
-  signal DIPSW_RDDT  : std_logic_vector(31 downto 0);      -- DIPSW Register Read Data
-
--- Interrupt Status Register
-
-  signal DMAEND_BIT  : std_logic;                -- DMA End Interrupt Status Bit
-  signal USERINT0_BIT  : std_logic;                -- User Interrupt 0 Status Bit (Push Button1)
-  signal USERINT1_BIT  : std_logic;                -- User Interrupt 1 Status Bit (Push Button2)
-  signal USERINT2_BIT  : std_logic;                -- User Interrupt 2 Status Bit (YOBI)
-
-  signal INTSTAT_RDDT  : std_logic_vector(31 downto 0);      -- Interrupt Status Register Read Data
-
--- Interrupt Mask Register
-
-  signal INTMASK_DT  : std_logic_vector( 3 downto 0);      -- Interrupt Mask Register Data
-  signal INTMASK_RDDT  : std_logic_vector(31 downto 0);      -- Interrupt Mask Register Read Data
-
--- PGPG Register
-  signal PGPG_REG0_ff : std_logic_vector(31 downto 0);
-  signal PGPG_REG1_ff : std_logic_vector(31 downto 0);
-  signal PGPG_REG2_ff : std_logic_vector(31 downto 0);
-  signal PGPG_REG3_ff : std_logic_vector(31 downto 0);
-  signal Hit_PGPG_REG2_ff : std_logic;
-  signal Hit_PGPG_REG3_ff : std_logic;
 
 begin
 
 
---***************************************************************
---*
---*  Register Access Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- Register Select Signal Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      REG_SEL <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      case REG_AD(7 downto 2) is
-        when "000000" => REG_SEL <= "0000000001";            ------ General Register 0 Select
-        when "000001" => REG_SEL <= "0000000010";            ------ General Register 1 Select
-        when "000010" => REG_SEL <= "0000000100";            ------ LED Control Register Select
-        when "000011" => REG_SEL <= "0000001000";            ------ DIPSW Register Select
-        when "000100" => REG_SEL <= "0000010000";            ------ Interrupt Status Register Select
-        when "000101" => REG_SEL <= "0000100000";            ------ Interrupt Mask Register Select
-        when "100000" => REG_SEL <= "0001000000";            ------ PGPG REG0 (0x80)
-        when "100001" => REG_SEL <= "0010000000";            ------ PGPG REG1 (0x84)
-        when "100010" => REG_SEL <= "0100000000";            ------ PGPG REG2 (0x88)
-        when "100011" => REG_SEL <= "1000000000";            ------ PGPG REG3 (0x88)
-        when others   => REG_SEL <= "0000000000";            ------ Register No Select
-      end case;
-    end if;
-  end process;
-
-     GPREG0_SEL  <= REG_SEL(0);                      ------ General Register 0 Select
-     GPREG1_SEL  <= REG_SEL(1);                      ------ General Register 1 Select
-     LEDCONT_SEL <= REG_SEL(2);                      ------ LED Control Register Select
-     DIPSW_SEL   <= REG_SEL(3);                      ------ DIPSW Register Select
-     INTSTAT_SEL <= REG_SEL(4);                      ------ Interrupt Status Register Select
-     INTMASK_SEL <= REG_SEL(5);                      ------ Interrupt Mask Register Select
-     PGPG_REG0_SEL <= REG_SEL(6);  --- PGPG REG0 Select
-     PGPG_REG1_SEL <= REG_SEL(7);  --- PGPG REG1 Select
-     PGPG_REG2_SEL <= REG_SEL(8);  --- PGPG REG2 Select
-     PGPG_REG3_SEL <= REG_SEL(9);  --- PGPG REG3 Select
-
-
---------------------------------------------------------------------------------
--- Register Read Data Select Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      REG_DTO <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      case REG_SEL is
-        when "0000000001" => REG_DTO <= GPREG0_DT;             ------ General Register 0 Data Select
-        when "0000000010" => REG_DTO <= GPREG1_DT;             ------ General Register 1 Data Select
-        when "0000000100" => REG_DTO <= LEDCONT_RDDT;          ------ LED Control Register Read Data Select
-        when "0000001000" => REG_DTO <= DIPSW_RDDT;            ------ DIPSW Register Read Data Select
-        when "0000010000" => REG_DTO <= INTSTAT_RDDT;          ------ Interrupt Status Register Read Data Select
-        when "0000100000" => REG_DTO <= INTMASK_RDDT;          ------ Interrupt Mask Register Read Data Select
-        when "0001000000" => REG_DTO <= PGPG_REG0_ff;
-        when "0010000000" => REG_DTO <= PGPG_REG1_ff;
-        when "0100000000" => REG_DTO <= PGPG_REG2_ff;
-        when "1000000000" => REG_DTO <= PGPG_REG3_ff;
-        when others      => REG_DTO <= (others=>'0');         ------ No Read Data
-      end case;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Register Read Data Signal Timing Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      REGRD_CNT <= '0';
-    elsif (CLK'event and CLK='1') then
-      REGRD_CNT <= REG_RE;                      ------ Register Read Signal Shift
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Register Read Data Enable Signal Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      REG_DTOEN <= '0';
-    elsif (CLK'event and CLK='1') then
-      REG_DTOEN <= REGRD_CNT;                      ------ Register Read Signal Shift
-    end if;
-  end process;
-
 
 --***************************************************************
 --*
---*  Register Data Control Block
+--*  Base Address 0 Area Access Control Signal Generate Block
 --*
 --***************************************************************
 
 --------------------------------------------------------------------------------
--- PGPG Register 0 (0x80) (now this is for config fpga command)
---------------------------------------------------------------------------------
-  process (RST,CLK) begin
-    if (RST='1') then
-      PGPG_REG0_ff(31 downto 8) <= (others=>'0');
-      PGPG_REG0_ff(7 downto 0) <= "11110000";
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG0_SEL='1' and REG_WE='1') then        ------ Register Write Enable ?
-        PGPG_REG0_ff <= REG_DTI;                        ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-  PGPG_REG0 <= PGPG_REG0_ff;
---------------------------------------------------------------------------------
--- PGPG Register 1 (0x84) (now this is for config fpga data)
---------------------------------------------------------------------------------
-  process (RST,CLK) begin
-    if (RST='1') then
-      PGPG_REG1_ff <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG1_SEL='1' and REG_WE='1') then        ------ Register Write Enable ?
-        PGPG_REG1_ff <= REG_DTI;                        ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-  PGPG_REG1 <= PGPG_REG1_ff;
---------------------------------------------------------------------------------
--- PGPG Register 2 (0x88)
---------------------------------------------------------------------------------
-  process (RST,CLK) begin
-    if (RST='1') then
-      PGPG_REG2_ff <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG2_SEL='1' and REG_WE='1') then        ------ Register Write Enable ?
-        PGPG_REG2_ff <= REG_DTI;                        ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-  process (RST,CLK) begin
-    if (RST='1') then
-      Hit_PGPG_REG2_ff <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG2_SEL='1' and REG_WE='1') then
-        Hit_PGPG_REG2_ff <= '1';
-      else
-        Hit_PGPG_REG2_ff <= '0';
-      end if;
-    end if;
-  end process;
-  PGPG_REG2     <= PGPG_REG2_ff;
-  Hit_PGPG_REG2 <= Hit_PGPG_REG2_ff;
---------------------------------------------------------------------------------
--- PGPG Register 3 (0x8C)
---------------------------------------------------------------------------------
-  process (RST,CLK) begin
-    if (RST='1') then
-      PGPG_REG3_ff <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG3_SEL='1' and REG_WE='1') then        ------ Register Write Enable ?
-        PGPG_REG3_ff <= REG_DTI;                        ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-  process (RST,CLK) begin
-    if (RST='1') then
-      Hit_PGPG_REG3_ff <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (PGPG_REG3_SEL='1' and REG_WE='1') then
-        Hit_PGPG_REG3_ff <= '1';
-      else
-        Hit_PGPG_REG3_ff <= '0';
-      end if;
-    end if;
-  end process;
-  PGPG_REG3 <= PGPG_REG3_ff;
-  Hit_PGPG_REG3 <= Hit_PGPG_REG3_ff;
---------------------------------------------------------------------------------
--- General Register 0 Data Control Process
+-- BAR0(Internal Register) R/W Select Signal Control Process
 --------------------------------------------------------------------------------
 
---  process (RST,CLK) begin
---    if (RST='1') then
---      GPREG0_DT <= (others=>'0');
---    elsif (CLK'event and CLK='1') then
---      if (GPREG0_SEL='1' and REG_WE='1') then              ------ Register Write Enable ?
---        GPREG0_DT <= REG_DTI;                    ------ Register Write Data Set
---      end if;
---    end if;
---  end process;
-
-GPREG0_DT <= GPREG0;
-
---------------------------------------------------------------------------------
--- General Register 1 Data Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      GPREG1_DT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (GPREG1_SEL='1' and REG_WE='1') then              ------ Register Write Enable ?
-        GPREG1_DT <= REG_DTI;                    ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-
-GPREG1 <= GPREG1_DT;
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_WRENB <= '0';
+			BAR0_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1') then										------ Base Address 0 Area Access ?
+				BAR0_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR0_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR0_WRENB <= '0';											------ Select Signal Clear
+				BAR0_RDENB <= '0';
+			end if;
+		end if;
+	end process;
 
 --------------------------------------------------------------------------------
--- LED Control Register Data Control Process
+-- BAR0(Internal Register) Area Write Signal Control Process
 --------------------------------------------------------------------------------
 
-  process (RST,CLK) begin
-    if (RST='1') then
-      LEDCONT_DT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (LEDCONT_SEL='1' and REG_WE='1') then            ------ Register Write Enable ?
-        LEDCONT_DT <= REG_DTI(7 downto 0);              ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
-
-    LEDCONT_RDDT(31 downto  8) <= (others=>'0');            ------ LED Control Register Read Data
-    LEDCONT_RDDT( 7 downto  0) <= LEDCONT_DT;              ------ LED Control Register Read Data
-
-    LED_CNT <= LEDCONT_DT;                        ------ LED Control Signal Output
+	process (BAR0_WRENB,S_DATA_VLD,S_CBE) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WR <= (not S_CBE(3 downto 0));								------ High Word Write Signal Set
+		else
+			BAR0_WR <= (others => '0');										------ BAR0_WR Signal Negate
+		end if;
+	end process;
 
 --------------------------------------------------------------------------------
--- DIPSW Control Register Data Control Process
+-- BAR0(Internal Register) Area Write Data Control Process
 --------------------------------------------------------------------------------
 
-    DIPSW_RDDT(31 downto  4) <= (others=>'0');              ------ DIPSW Register Read Data
-    DIPSW_RDDT( 3 downto  0) <= (not DIPSW);              ------ DIPSW Read Data Set
+	process (BAR0_WRENB,S_DATA_VLD,ADIO) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WRDT(31 downto  0) <= ADIO(31 downto 0);					------ Low  Word Write Data Set
+		else
+			BAR0_WRDT <= (others => '0');									------ Write Data Clear
+		end if;
+	end process;
 
 --------------------------------------------------------------------------------
--- Interrupt Status Register Control Process
+-- BAR0(Internal Register) Area Pre-Read Signal Control Process
 --------------------------------------------------------------------------------
 
---------------------------------------------------
--- DMA End Interrupt Status Bit
---------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      DMAEND_BIT <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (DMAEND_INT='1') then                    ------ DMA End Interrupt On ?
-        DMAEND_BIT <= '1';                      ------ DMA End Interrupt Status On
-      elsif (INTSTAT_SEL='1' and REG_WE='1' and REG_DTI(0)='0' ) then  ------ DMA End Interrupt Status Clear ?
-        DMAEND_BIT <= '0';                      ------ DMA End Interrupt Status Clear
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------
--- User Interrupt 0 Status Bit
---------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT0_BIT <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (PSW_ON0='1') then                      ------ Push_Button 0 On ?
-        USERINT0_BIT <= '1';                    ------ Push_Button 0 Interrupt Status On
-      elsif (INTSTAT_SEL='1' and REG_WE='1' and REG_DTI(1)='0' ) then  ------ Push_Button 0 Interrupt Status Clear ?
-        USERINT0_BIT <= '0';                    ------ Push_Button 0 Interrupt Status Clear
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------
--- User Interrupt 1 Status Bit
---------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT1_BIT <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (PSW_ON1='1') then                      ------ Push_Button 1 On ?
-        USERINT1_BIT <= '1';                    ------ Push_Button 1 Interrupt Status On
-      elsif (INTSTAT_SEL='1' and REG_WE='1' and REG_DTI(2)='0' ) then  ------ Push_Button 1 Interrupt Status Clear ?
-        USERINT1_BIT <= '0';                    ------ Push_Button 1 Interrupt Status Clear
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------
--- User Interrupt 2 Status Bit
---------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT2_BIT <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (USERINT2_ON='1') then                    ------ User Interrupt 2 On ?
-        USERINT2_BIT <= '1';                    ------ User Interrupt 2 Interrupt Status On
-      elsif (INTSTAT_SEL='1' and REG_WE='1' and REG_DTI(3)='0' ) then  ------ User Interrupt 2 Interrupt Status Clear ?
-        USERINT2_BIT <= '0';                    ------ User Interrupt 2 Interrupt Status Clear
-      end if;
-    end if;
-  end process;
-
-    INTSTAT_RDDT(31 downto  4) <= (others=>'0');            ------ Interrupt Status Register Read Data
-    INTSTAT_RDDT( 3 downto  0) <= USERINT2_BIT & USERINT1_BIT
-                  & USERINT0_BIT & DMAEND_BIT;      ------ Interrupt Status Register Read Data Set
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1' and S_WRDN='0') then						------ Base Address 0 Area Read Access ?
+				BAR0_PRERD <= '1';											------ Base Address 0 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR0_PRERD <= '0';											------ Base Address 0 Area Pre-Read End
+			end if;
+		end if;
+	end process;
 
 --------------------------------------------------------------------------------
--- Interrupt Mask Register Data Control Process
+-- BAR0(Internal Register) Area Read Signal Control Process
 --------------------------------------------------------------------------------
 
-  process (RST,CLK) begin
-    if (RST='1') then
-      INTMASK_DT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (INTMASK_SEL='1' and REG_WE='1') then            ------ Register Write Enable ?
-        INTMASK_DT <= REG_DTI(3 downto 0);              ------ Register Write Data Set
-      end if;
-    end if;
-  end process;
+		BAR0_READ <= (BAR0_PRERD or S_SRC_EN) and BAR0_RDENB;			------ Data Read Signal Set
 
-    INTMASK_RDDT(31 downto  4) <= (others=>'0');            ------ Interrupt Mask Register Read Data
-    INTMASK_RDDT( 3 downto  0) <= INTMASK_DT;              ------ Interrupt Mask Register Read Data Set
+		BAR0_RD   <= BAR0_READ;												------ Data Read Signal Output
+
+
+--***************************************************************
+--*
+--*  Base Address 1 Area Access Control Signal Generate Block
+--*
+--***************************************************************
 
 --------------------------------------------------------------------------------
--- Interrupt Rrequest Signal Output Control Process
+-- BAR1(Internal Memory) R/W Select Signal Control Process
 --------------------------------------------------------------------------------
 
-    INT_REQ <= (DMAEND_BIT   and INTMASK_DT(0))
-        or (USERINT0_BIT and INTMASK_DT(1))
-        or (USERINT1_BIT and INTMASK_DT(2))
-        or (USERINT2_BIT and INTMASK_DT(3));            ------ Interrupt Request Output
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_WRENB <= '0';
+			BAR1_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1') then										------ Base Address 1 Area Access ?
+				BAR1_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR1_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR1_WRENB <= '0';											------ Select Signal Clear
+				BAR1_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,S_CBE) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WR <= (not S_CBE);										------ S_CBE Signal Set
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WR <= (not S_CBE(3 downto 0)) & "0000";			------ High Word Write Signal Set
+				else
+					BAR1_WR <=  "0000" & (not S_CBE(3 downto 0));			------ High Word Write Signal Set
+				end if;
+			end if;
+		else
+				BAR1_WR <= (others => '0');									------ BAR1_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,ADIO) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WRDT <= ADIO;											------ 64 bit Write Data Output
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WRDT(31 downto  0) <= (others => '0');				------ Low  Word Write Data Clear
+					BAR1_WRDT(63 downto 32) <= ADIO(31 downto 0);			------ High Word Write Data Set
+				else
+					BAR1_WRDT(31 downto  0) <= ADIO(31 downto 0);			------ Low  Word Write Data Set
+					BAR1_WRDT(63 downto 32) <= (others => '0');				------ High Word Write Data Clear
+				end if;
+			end if;
+		else
+				BAR1_WRDT <= (others => '0');								------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1' and S_WRDN='0') then						------ Base Address 1 Area Read Access ?
+				BAR1_PRERD <= '1';											------ Base Address 1 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR1_PRERD <= '0';											------ Base Address 1 Area Pre-Read End
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		BAR1_READ <= (BAR1_PRERD or S_SRC_EN) and BAR1_RDENB;			------ Data Read Signal Set
+
+		BAR1_RD   <= BAR1_READ;												------ Data Read Signal Output
+
+--------------------------------------------------------------------------------
+-- S_READY Signal Output Control Process
+--------------------------------------------------------------------------------
+
+		S_READY <= BAR0_WRENB or BAR1_WRENB or FIFO_RDTEN;					------ Target Write Access Start or Read Data Available
+
+--------------------------------------------------------------------------------
+-- Internal Block Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PRERD_CNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			PRERD_CNT <= PRERD_CNT(2 downto 0) & (BAR0_PRERD or BAR1_PRERD);		------ FRAMEQ_N Signal Sampling
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Target Access Address Output Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			TARGET_ADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (ADDR_VLD='1') then											------- Target Access Start ?
+				TARGET_ADRS <= ADIO(31 downto 2);							------- Start Address Set
+			elsif (S_WRDN='1' and S_DATA_VLD='1') then						------- Target Write Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			elsif (BAR0_READ='1' or BAR1_READ='1') then						------- Target Read Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+		TARGET_AD <= TARGET_ADRS & "00";									------- Target Access Address Output
+
+--------------------------------------------------------------------------------
+-- ADIO Signal Output Control Process
+--------------------------------------------------------------------------------
+
+	process (S_DATA,FIFO_RDTEN,FIFO_RDDT) begin
+		if (S_DATA='1' and FIFO_RDTEN='1') then								------ PCI Target Read Transaction & Data Valid ?
+			ADIO <= FIFO_RDDT;												------ Read Data Output
+		else
+			ADIO <= (others=>'Z');									--: inout std_logic_vector( 63 downto 0);
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  Unused or Fixed PCI Core Signal Control Block
+--*
+--***************************************************************
+
+
+		C_TERM			<= '0'; --: out   std_logic;
+		C_READY 		<= '1'; --: out   std_logic;
+
+		S_TERM			<= '0'; --: out   std_logic;
+		S_ABORT 		<= '0'; --: out   std_logic;
+
+		SLOT64			<= '1'; --: out   std_logic;
+		KEEPOUT 		<= '0'; --: out   std_logic;
+
+		SUB_DATA		<= (others=>'0'); 								--: out	 std_logic_vector( 31 downto 0);
 
 
 
 
 
-end REGCNT_rtl;
+end PCI_TARGETCNT_rtl;
