@@ -1,256 +1,206 @@
-Tue Dec  9 19:29:10 JST 2008
--- LOCAL READ INTERFACE ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
---
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
--- EXEC           __/~~~~~\_____
--- BUSY           ________/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______
--- DMAR_ENABLE                   __/~~~~~~~~~~~~~~~\___ { (Ndata+1) clock }
--- DBUS_Port                       < adr ><XXXX
--- DBUS_idata                                          < d0 >< d1 >
--- DBUS                                  <adr><XXXXXXX>< d0 >< d1 >
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+Thu Dec 25 19:38:43 JST 2008
+#include <stdio.h>
+#include <GL/glut.h>
+#include <string.h> // strtok(),strcpy()
+#include <stdlib.h> // atof()
+#include <math.h>
+#define NMAX 210000
+#define XSCALE 2.0
+#define YSCALE 2.0
+//#define IS_PRESET 0
+#define IS_PRESET 1
+#define PRESET_NBODY 4096
+//#define PRESET_NBODY 16384
+//#define PRESET_NBODY 3
 
-entity LOCAL_READ_IF is
-  port (
-    -- PGPG REG input
-    EXEC : in std_logic;                         -- Execution Pulse
-    START_AD : in std_logic_vector(18 downto 0); -- 19 bit  -- constant in transaction
-    NQWORD   : in std_logic_vector( 8 downto 0); --  9 bit  -- constant in transaction : (NQWORD + 1) words transfer
-    CHIPSEL  : in std_logic_vector( 3 downto 0); --  4 bit  -- constant in transaction
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);         -- constant in transaction
-    BUSY : out std_logic;  -- to GPREG0
+#define PRESET_NWRITE 1
+#define PRESET_NSKIP 1
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+static char ifile[256];
+static int istep;
+static FILE *fp;
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+int imax;
+double x[NMAX];
+double y[NMAX];
+int NBODY;
+int SKIP_STEP;
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ_IF;
+void reset_fp()
+{
+    printf("restart\n");
+    fclose(fp);
+    fp = fopen(ifile,"r");
+    istep=0;
+}
 
-architecture rtl of LOCAL_READ_IF is
+void skip_step()
+{
+  int i;
+  char line[101];
+  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
+}
 
------------------------------------------------------------------
--- DMAW/R
-  signal hit,hitr : std_logic;
-  signal csel    : std_logic_vector(3 downto 0);
-  signal s_adr : std_logic_vector(18 downto 0);
+void myidle()
+{
+  istep++;
+  if((istep%SKIP_STEP) != 0){
+    skip_step();
+  }else{
+    glutPostRedisplay();
+  }
+  //  printf("%d step\n",(istep*SKIP_STEP));
+}
 
--- DMAR
-  signal en_cnt0   : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal en_cnt0_r : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal en0,en1,en2,en3,en4,en5,en6,en7 : std_logic :='0';
-  signal lo_mem_wad, lo_mem_wad_z : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal mem_ad_offset : std_logic_vector(12 downto 0) :=(others=>'0');
-begin
+void display();
 
-  -- DMA BUSY or IDLE
-  BUSY  <= hit or hitr or en0 or en1 or en2 or en3 or en4 or en5 or en6 or en7;
-  hit <= EXEC;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      hitr <= hit;
-    end if;
-  end process;
-
-  ----------------------------
-  --- DMAR START ADR       ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      s_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        s_adr <= START_AD(18 downto 0);
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  --- DMAR START ADR       ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      mem_ad_offset <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        mem_ad_offset <= MEM_AD_BASE;
-      end if;
-    end if;
-  end process;
+void init()
+{
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glColor3f(1.0,1.0,1.0);
+}
 
 
-  ----------------------------
-  --- CHIP SEL             ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      csel <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        if    (CHIPSEL(0) = '1') then
-          csel <= "0001";
-        elsif (CHIPSEL(1) = '1') then
-          csel <= "0010";
-        elsif (CHIPSEL(2) = '1') then
-          csel <= "0100";
-        else
-          csel <= "1000";
-        end if;
-      end if;
-    end if;
-  end process;
+int main(int argc, char** argv)
+{
 
-  ------------------------------
-  --- MEM_ADB                ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      MEM_ADB <= lo_mem_wad + mem_ad_offset;
-    end if;
-  end process;
+  if(IS_PRESET){
+    NBODY = PRESET_NBODY*PRESET_NWRITE;
+    SKIP_STEP=PRESET_NSKIP;
+  }else{
+    int nb,nw;
+    printf("enter NBODY:");  scanf("%d",&nb);  //粒子数を指定
+    printf("enter Nwrite:");  scanf("%d",&nw);  //連続書込みコマ数
+    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
+    NBODY = (int)(nb * nw);
+    SKIP_STEP=1; // Fixed
+  }
+  istep=0;
+  if(argc <2){printf("no inputfile.\n"); exit(0); }
+  strcpy(ifile,argv[1]);
+  fp = fopen(ifile,"r");
 
-  ----------------------------
-  -- DMAR EN COUNT     ---
-  ----------------------------
-  en_cnt0_r <= en_cnt0;
-  process (RST,CLK,hit,hitr,en_cnt0_r) begin
-    if(RST='1') then
-      en_cnt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1'))then
-        en_cnt0 <= "0000" & NQWORD(8 downto 0);   -- SET NQWORD
-      elsif(en_cnt0_r /= "000000000000") then
-        en_cnt0 <= en_cnt0_r - "000000000001";
-      end if;
-    end if;
-  end process;
+  glutInit(&argc,argv);
+  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
+  glutInitWindowSize(400,400);
+  glutInitWindowPosition(600,0);
+  glutCreateWindow("NBODYH-2003/11/08");
+  glutDisplayFunc(display);
+  glutIdleFunc(myidle);
+  init();
+  glutMainLoop();
 
-  ----------------------------
-  -- DMAR EN 0         ---
-  ----------------------------
-  process (RST,CLK,hit,hitr,en_cnt0) begin
-    if(RST='1') then
-      en0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1'))then
-        en0 <= '1';
-      elsif(en_cnt0 = "000000000000") then
-        en0 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      en7 <= en6;
-      en6 <= en5;
-      en5 <= en4;
-      en4 <= en3;
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-    end if;
-  end process;
+  fclose(fp);
+  return 0;
+}
 
 
-  ------------------------------
-  --- DMAR ENABLE            ---
-  ------------------------------
-  process (CLK,en1,en2)  begin
-    if(CLK'event and CLK='1') then
-      if((en0 = '1') OR (en1 = '1')) then
-        DMAR_ENABLE(0) <= '1' AND csel(0);
-        DMAR_ENABLE(1) <= '1' AND csel(1);
-        DMAR_ENABLE(2) <= '1' AND csel(2);
-        DMAR_ENABLE(3) <= '1' AND csel(3);
-      else
-        DMAR_ENABLE <= (others=>'0');
-      end if;
-    end if;
-  end process;
 
-  ------------------------------
-  --- DBUS_PORT            ---
-  ------------------------------
-  process (RST,CLK,en0,en1,en2,en3)  begin
-    if(RST='1') then
-      DBUS_Port <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(    (en0 = '1') AND (en1 = '0') ) then
-        DBUS_Port <= ("000000000000000000000000000000000000000000000" & s_adr);
-      elsif( (en1 = '1') AND (en2 = '0') ) then
---        DBUS_Port <= X"FFFFFFFFFFFFFFFF";
-        NULL;
-      elsif( (en2 = '1') AND (en3 = '0') ) then
-        DBUS_Port <= (others=>'0');
-      end if;
-    end if;
-  end process;
 
-  ------------------------------
-  --- DBUS_HiZ               ---
-  ------------------------------
-  process (RST,CLK,en2,en3,en4,en5)  begin
-    if(RST='1') then
-      DBUS_HiZ <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((en2 = '1') OR (en3 = '1') OR (en4 = '1') OR (en5 = '1') ) then
-        DBUS_HiZ <= '1';
-      else
-        DBUS_HiZ <= '0';
-      end if;
-    end if;
-  end process;
+void display()
+{
+  static int flag=0;
+  void display_set_GL_LINES();
+  void display_get_position();
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPointSize(1.0);
 
-  ------------------------------
-  --- MEM_DTIB               ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_DTIB <= DBUS_idata;
-    end if;
-  end process;
+  { //--- TIME METER ---
+    char p[10];
+    int i,nketa;
+    nketa = 6;
+    sprintf(p,"%06d",istep);
+    glColor3f(0.1 ,0.2,0.3);
+    for(i=0;i<nketa;i++){
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
+      glRasterPos2f(-0.70-0.06*i, -0.95);
+    }
+  }
 
-  ------------------------------
-  --- MEM_WEHB, MEM_WELB     ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_WEHB <= en6;
-      MEM_WELB <= en6;
-    end if;
-  end process;
+  display_set_GL_LINES();
+  glBegin(GL_POINTS);
+  //  glColor3f(1.0 ,0.8,0.0);
+  if(flag != 0){
+    int n;
+    display_get_position();
+    for(n=0;n<NBODY;n++){
+      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
+      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
+    }
+  }
+  flag=1;
+  glEnd();
+  glutSwapBuffers();
+}
 
-  ------------------------------
-  --- lo_mem_wad             ---
-  ------------------------------
-  lo_mem_wad_z <= lo_mem_wad;
-  process (RST,CLK,en5,en6)  begin
-    if(RST='1') then
-      lo_mem_wad <= "0000000000000";
-    elsif(CLK'event and CLK='1') then
-      if((en5 = '1') AND (en6 = '0')) then
-        lo_mem_wad <= "0000000000000";
-      elsif((en5 = '1') AND (en6 = '1')) then
-        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
-      elsif((en5 = '0') AND (en6 = '1')) then
-        lo_mem_wad <= "0000000000000";
-      end if;
-    end if;
-  end process;
 
-end rtl;
+/* display関数用 */
+void display_set_GL_LINES()
+{ // --- MEMORI ---
+
+  glBegin(GL_LINES);
+
+  glColor3f(0.7,0.0,0.0);
+  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
+  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
+
+  glColor3f(0.0,0.2,0.5);
+  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
+  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
+  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
+  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
+
+  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
+  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
+  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
+  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
+
+  {
+    double tiny=0.04;
+    double small=0.04;
+    glColor3f(0.9,0.4,0.8);
+    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
+    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
+    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
+    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
+
+    glColor3f(0.38, 0.01, 0.8);
+    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
+    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
+    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
+    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
+    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
+    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
+    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
+    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
+
+    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
+    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
+    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
+    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
+    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
+    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
+    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
+    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
+  }
+  glEnd(); // --- End GL_LINES;
+}
+
+void display_get_position()
+{
+  int i;
+  char line[1024];
+  char* p;
+  double _x,_y,_z;
+  for(i=0;i<NBODY;i++){
+    if(fgets(line,100,fp)!=NULL){
+      p = (char* )strtok(line,"\t"); _x = atof(p);
+      p = (char* )strtok(NULL,"\t"); _y = atof(p);
+      p = (char* )strtok(NULL,"\t"); _z = atof(p);
+      x[i] = _x;
+      y[i] = _y;
+    }else{
+      reset_fp();
+    }
+  }
+}
