@@ -1,206 +1,86 @@
-Thu Dec 25 19:38:43 JST 2008
-#include <stdio.h>
-#include <GL/glut.h>
-#include <string.h> // strtok(),strcpy()
-#include <stdlib.h> // atof()
-#include <math.h>
-#define NMAX 210000
-#define XSCALE 2.0
-#define YSCALE 2.0
-//#define IS_PRESET 0
-#define IS_PRESET 1
-#define PRESET_NBODY 4096
-//#define PRESET_NBODY 16384
-//#define PRESET_NBODY 3
+Thu Jan  8 19:31:13 JST 2009
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-#define PRESET_NWRITE 1
-#define PRESET_NSKIP 1
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
 
-static char ifile[256];
-static int istep;
-static FILE *fp;
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
 
-int imax;
-double x[NMAX];
-double y[NMAX];
-int NBODY;
-int SKIP_STEP;
-
-void reset_fp()
-{
-    printf("restart\n");
-    fclose(fp);
-    fp = fopen(ifile,"r");
-    istep=0;
-}
-
-void skip_step()
-{
-  int i;
-  char line[101];
-  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
-}
-
-void myidle()
-{
-  istep++;
-  if((istep%SKIP_STEP) != 0){
-    skip_step();
-  }else{
-    glutPostRedisplay();
-  }
-  //  printf("%d step\n",(istep*SKIP_STEP));
-}
-
-void display();
-
-void init()
-{
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-  glColor3f(1.0,1.0,1.0);
-}
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
 
-int main(int argc, char** argv)
-{
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
-  if(IS_PRESET){
-    NBODY = PRESET_NBODY*PRESET_NWRITE;
-    SKIP_STEP=PRESET_NSKIP;
-  }else{
-    int nb,nw;
-    printf("enter NBODY:");  scanf("%d",&nb);  //粒子数を指定
-    printf("enter Nwrite:");  scanf("%d",&nw);  //連続書込みコマ数
-    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
-    NBODY = (int)(nb * nw);
-    SKIP_STEP=1; // Fixed
-  }
-  istep=0;
-  if(argc <2){printf("no inputfile.\n"); exit(0); }
-  strcpy(ifile,argv[1]);
-  fp = fopen(ifile,"r");
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
 
-  glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
-  glutInitWindowSize(400,400);
-  glutInitWindowPosition(600,0);
-  glutCreateWindow("NBODYH-2003/11/08");
-  glutDisplayFunc(display);
-  glutIdleFunc(myidle);
-  init();
-  glutMainLoop();
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
 
-  fclose(fp);
-  return 0;
-}
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
+
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+
+
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
+
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
+
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
 
 
 
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
 
-void display()
-{
-  static int flag=0;
-  void display_set_GL_LINES();
-  void display_get_position();
-  glClear(GL_COLOR_BUFFER_BIT);
-  glPointSize(1.0);
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
 
-  { //--- TIME METER ---
-    char p[10];
-    int i,nketa;
-    nketa = 6;
-    sprintf(p,"%06d",istep);
-    glColor3f(0.1 ,0.2,0.3);
-    for(i=0;i<nketa;i++){
-      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
-      glRasterPos2f(-0.70-0.06*i, -0.95);
-    }
-  }
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
 
-  display_set_GL_LINES();
-  glBegin(GL_POINTS);
-  //  glColor3f(1.0 ,0.8,0.0);
-  if(flag != 0){
-    int n;
-    display_get_position();
-    for(n=0;n<NBODY;n++){
-      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
-      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
-    }
-  }
-  flag=1;
-  glEnd();
-  glutSwapBuffers();
-}
-
-
-/* display関数用 */
-void display_set_GL_LINES()
-{ // --- MEMORI ---
-
-  glBegin(GL_LINES);
-
-  glColor3f(0.7,0.0,0.0);
-  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
-  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
-
-  glColor3f(0.0,0.2,0.5);
-  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
-  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
-  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
-  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
-
-  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
-  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
-  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
-  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
-
-  {
-    double tiny=0.04;
-    double small=0.04;
-    glColor3f(0.9,0.4,0.8);
-    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
-    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
-    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
-    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
-
-    glColor3f(0.38, 0.01, 0.8);
-    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
-    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
-    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
-    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
-    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
-    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
-    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
-    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
-
-    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
-    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
-    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
-    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
-    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
-    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
-    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
-    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
-  }
-  glEnd(); // --- End GL_LINES;
-}
-
-void display_get_position()
-{
-  int i;
-  char line[1024];
-  char* p;
-  double _x,_y,_z;
-  for(i=0;i<NBODY;i++){
-    if(fgets(line,100,fp)!=NULL){
-      p = (char* )strtok(line,"\t"); _x = atof(p);
-      p = (char* )strtok(NULL,"\t"); _y = atof(p);
-      p = (char* )strtok(NULL,"\t"); _z = atof(p);
-      x[i] = _x;
-      y[i] = _y;
-    }else{
-      reset_fp();
-    }
-  }
-}
