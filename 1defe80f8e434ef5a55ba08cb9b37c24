@@ -1,690 +1,401 @@
-Thu Mar 19 19:44:58 JST 2009
--- Copyright(C) 2004 - Tsuyoshi Hamada
--- 2004/12/26 MEM_ADA : 14bit(64KB)->17bit(512KB)
--- 2004/12/02 MEM_ADA : 10bit(4KB) ->14bit(64KB)
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-
-entity pcicnt is
-  port (
-  -- Interface to PCI Logicore.
-        FRAMEQ_N        : in    std_logic;               -- Latched FRAME# Signal
-        REQ64Q_N        : in    std_logic;               -- Latched REQ64# Signal
-        TRDYQ_N         : in    std_logic;               -- Latched TRDY# Signal
-        IRDYQ_N         : in    std_logic;               -- Latched IRDY# Signal
-        STOPQ_N         : in    std_logic;               -- Latched STOP# Signal
-        DEVSELQ_N       : in    std_logic;               -- Latched DEVSEL# Signal
-        ACK64Q_N        : in    std_logic;               -- Latched ACK64# Signal
-
-        ADDR            : in    std_logic_vector( 31 downto 0);    -- Latched Target Address Bus
-        ADIO            : inout std_logic_vector( 63 downto 0);    -- Internal Address/Data Bus
-
-        CFG_VLD         : in    std_logic;               -- Configulation Cycle Valid
-        CFG_HIT         : in    std_logic;               -- Configuration Cycle Start
-        C_TERM          : out   std_logic;               -- Configuraton Cycle Terminate Signal
-        C_READY         : out   std_logic;               -- Configuration Data Transfer Ready Signal
-
-        ADDR_VLD        : in    std_logic;               -- Internal Address Valid
-        BASE_HIT        : in    std_logic_vector(  7 downto 0);    -- Base Address Hit
-
-        S_CYCLE64       : in    std_logic;               -- 64 bit Transaction Go On
-        S_TERM          : out   std_logic;               -- Target Transaction Terminate Signal
-        S_READY         : out   std_logic;               -- Target Transaction Data Transfer Ready Siganl
-        S_ABORT         : out   std_logic;               -- Target Abort Request Signal
-        S_WRDN          : in    std_logic;               -- Target Transaction Data Direction (0:Write, 1:Read)
-        S_SRC_EN        : in    std_logic;               -- Target Transaction Data Source Enable
-        S_DATA_VLD      : in    std_logic;               -- Target Transaction Data Phase Valid Signal
-        S_CBE           : in    std_logic_vector(  7 downto 0);    -- Target Command & Byte Enable Signal
-        PCI_CMD         : in    std_logic_vector( 15 downto 0);    -- Latched Bus Command
-
-        REQUEST         : out   std_logic;               -- REQ# Signal Assert Request
-        REQUEST64       : out   std_logic;               -- REQ64# Signal Assert Request
-        REQUESTHOLD     : out   std_logic;               -- Extended REQ# Signal Assert Request (Not Use)
-        COMPLETE        : out   std_logic;               -- Initiator Transaction End Signal
-
-        M_WRDN          : out   std_logic;               -- Initiator Transaction Data Direction (0:Write, 1:Read)
-        M_READY         : out   std_logic;               -- Initiator Transaction Data Transfer Ready Siganl
-        M_SRC_EN        : in    std_logic;               -- Initiator Transaction Data Source Enable
-        M_DATA_VLD      : in    std_logic;               -- Initiator Transaction Data Phase Valid Signal
-        M_CBE           : out   std_logic_vector(  7 downto 0);    -- Initiator Command & Byte Enable Signal
-
-        TIME_OUT        : in    std_logic;               -- Latency Timer Timeout Signal
-        M_FAIL64        : in    std_logic;               -- 64 bit Transaction Fail Signal
-        CFG_SELF        : out   std_logic;               -- Self Configuration Start Signal
-
-        M_DATA          : in    std_logic;               -- Data Transfer State
-        DR_BUS          : in    std_logic;               -- Bus Park State
-        I_IDLE          : in    std_logic;               -- Initiator Idle State
-        M_ADDR_N        : in    std_logic;               -- Initiator Address State
-        IDLE            : in    std_logic;               -- Target Idle State
-        B_BUSY          : in    std_logic;               -- PCI Bus Busy State
-        S_DATA          : in    std_logic;               -- Target Data Transfer State
-        BACKOFF         : in    std_logic;               -- Target State Machine Transaction End State
-
-        SLOT64          : out   std_logic;               -- 64 bit Extended Signal Eable
-        INTR_N          : out   std_logic;               -- Interrupt Request
-        PERRQ_N         : in    std_logic;               -- latched PERR# Signal
-        SERRQ_N         : in    std_logic;               -- Latched SERR# Signal
-        KEEPOUT         : out   std_logic;               -- ADIO Bus Disable Request Signal
-
-        CSR             : in    std_logic_vector( 39 downto 0);    -- Command/Status Register State
-        SUB_DATA        : out   std_logic_vector( 31 downto 0);    -- Sub-Identification
-        CFG             : in    std_logic_vector(255 downto 0);    -- Confiuration Data
-
-        RST             : in    std_logic;               -- PCI Bus Reset
-        CLK             : in    std_logic;               -- PCI bus Clock
-
-  -- Internal Register Access Control Signal
-    REG_AD      : out  std_logic_vector( 7 downto 0);    -- REGCNT R/W Address
-    REG_WE      : out  std_logic;                        -- REGCNT Write Enable
-    REG_RE      : out  std_logic;                        -- REGCNT Read Enable
-    REG_DTI     : out  std_logic_vector(31 downto 0);    -- REGCNT Write Data
-    REG_DTO     : in  std_logic_vector(31 downto 0);     -- REGCNT Read Data
-    REG_DTOEN   : in  std_logic;                         -- REGCNT Read Data Enable
-
-  -- Internal Memory Access Control Signal
-    -- PCI R/W ports
-    MEM_ADA     : out  std_logic_vector(19 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : out  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : out  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : out  std_logic;                        -- DPRAM Port A Read Enable
-    MEM_DTIA    : out  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : in  std_logic_vector(63 downto 0);     -- DPRAM Port A Read Data
-    MEM_DTOEN   : in  std_logic;                         -- DPRAM Port A Read Data Enable
-
-    DMAEND_INT  : out  std_logic;                        -- DMA End Interrupt On Request
-    INT_REQ     : in  std_logic;                         -- PCI Interrupt On Request
-
---################################
---##    for Debug
---################################
-    DEBUG_OUT    : out  std_logic_vector( 7 downto 0)
-  );
-end pcicnt;
-
-
-architecture pcicnt_rtl of pcicnt is
-
---------------------------------------------------
--- Components
---------------------------------------------------
-
-component PCI_TARGETCNT
-  port (
-  -- Interface to PCI Logicore.
-        FRAMEQ_N        : in    std_logic;              -- Latched FRAME# Signal
-        REQ64Q_N        : in    std_logic;              -- Latched REQ64# Signal
-        TRDYQ_N         : in    std_logic;              -- Latched TRDY# Signal
-        IRDYQ_N         : in    std_logic;              -- Latched IRDY# Signal
-        STOPQ_N         : in    std_logic;              -- Latched STOP# Signal
-        DEVSELQ_N       : in    std_logic;              -- Latched DEVSEL# Signal
-        ACK64Q_N        : in    std_logic;              -- Latched ACK64# Signal
-
-        ADDR            : in    std_logic_vector( 31 downto 0);    -- Latched Target Address Bus
-        ADIO            : inout std_logic_vector( 63 downto 0);    -- Internal Address/Data Bus
-
-        CFG_VLD         : in    std_logic;              -- Configulation Cycle Valid
-        CFG_HIT         : in    std_logic;              -- Configuration Cycle Start
-        C_TERM          : out   std_logic;              -- Configuraton Cycle Terminate Signal
-        C_READY         : out   std_logic;              -- Configuration Data Transfer Ready Signal
-
-        ADDR_VLD        : in    std_logic;              -- Internal Address Valid
-        BASE_HIT        : in    std_logic_vector(  7 downto 0);    -- Base Address Hit
-
-        S_CYCLE64       : in    std_logic;              -- 64 bit Transaction Go On
-        S_TERM          : out   std_logic;              -- Target Transaction Terminate Signal
-        S_READY         : out   std_logic;              -- Target Transaction Data Transfer Ready Siganl
-        S_ABORT         : out   std_logic;              -- Target Abort Request Signal
-        S_WRDN          : in    std_logic;              -- Target Transaction Data Direction (0:Write, 1:Read)
-        S_SRC_EN        : in    std_logic;              -- Target Transaction Data Source Enable
-        S_DATA_VLD      : in    std_logic;              -- Target Transaction Data Phase Valid Signal
-        S_CBE           : in    std_logic_vector(  7 downto 0);    -- Target Command & Byte Enable Signal
-        PCI_CMD         : in    std_logic_vector( 15 downto 0);    -- Latched Bus Command
-
-        IDLE            : in    std_logic;              -- Target Idle State
-        B_BUSY          : in    std_logic;              -- PCI Bus Busy State
-        S_DATA          : in    std_logic;              -- Target Data Transfer State
-        BACKOFF         : in    std_logic;              -- Target State Machine Transaction End State
-
-        SLOT64          : out   std_logic;              -- 64 bit Extended Signal Eable
-        PERRQ_N         : in    std_logic;              -- latched PERR# Signal
-        SERRQ_N         : in    std_logic;              -- Latched SERR# Signal
-        KEEPOUT         : out   std_logic;              -- ADIO Bus Disable Request Signal
-
-        CSR             : in    std_logic_vector( 39 downto 0);    -- Command/Status Register State
-        SUB_DATA        : out   std_logic_vector( 31 downto 0);    -- Sub-Identification
-        CFG             : in    std_logic_vector(255 downto 0);    -- Confiuration Data
-
-        RST             : in    std_logic;              -- PCI Bus Reset
-        CLK             : in    std_logic;              -- PCI bus Clock
-
-  -- Internal Block Target Access Control Signal
-    TARGET_AD    : out  std_logic_vector(31 downto 0);    -- Target Access Address
-
-    FIFO_RDDT    : in  std_logic_vector(63 downto 0);    -- FIFO Read Data
-    FIFO_RDTEN    : in  std_logic;              -- FIFO Read Data Enable Signel
-
-  -- Base Address 0 Area (Internal Register) Target Access Control Signal
-    BAR0_WRDT    : out  std_logic_vector(31 downto 0);    -- BAR0 Area Target Access Write Data
-    BAR0_WR      : out  std_logic_vector( 3 downto 0);    -- BAR0 Area Target Access Write Signal
-    BAR0_RD      : out  std_logic;              -- BAR0 Area Target Access Read  Signal
-
-  -- Base Address 1 Area (Internal Memoery) Target Access Control Signal
-    BAR1_WRDT    : out  std_logic_vector(63 downto 0);    -- BAR1 Area Target Access Write Data
-    BAR1_WR      : out  std_logic_vector( 7 downto 0);    -- BAR1 Area Target Access Write Signal
-    BAR1_RD      : out  std_logic              -- BAR1 Area Target Access Read  Signal
-    );
-end component;
-
-
-component PCI_DMACNT
-  port (
-    RST       : in  std_logic;              -- PCI Bus Reset
-    CLK       : in  std_logic;              -- PCI bus Clock
-
-    FRAMEQ_N    : in  std_logic;              -- Latched FRAME# Signal
-    REQ64Q_N    : in  std_logic;              -- Latched REQ64# Signal
-    TRDYQ_N     : in  std_logic;              -- Latched TRDY# Signal
-    IRDYQ_N     : in  std_logic;              -- Latched IRDY# Signal
-    STOPQ_N     : in  std_logic;              -- Latched STOP# Signal
-    DEVSELQ_N    : in  std_logic;              -- Latched DEVSEL# Signal
-    ACK64Q_N    : in  std_logic;              -- Latched ACK64# Signal
-
-    ADIO      : inout std_logic_vector( 63 downto 0);    -- Internal Address/Data Bus
-
-    REQUEST     : out  std_logic;              -- REQ# Signal Assert Request
-    REQUEST64    : out  std_logic;              -- REQ64# Signal Assert Request
-    REQUESTHOLD   : out  std_logic;              -- Extended REQ# Signal Assert Request (Not Use)
-    COMPLETE    : out  std_logic;              -- Initiator Transaction End Signal
-
-    M_WRDN      : out  std_logic;              -- Initiator Transaction Data Direction (0:Write, 1:Read)
-    M_READY     : out  std_logic;              -- Initiator Transaction Data Transfer Ready Siganl
-    M_SRC_EN    : in  std_logic;              -- Initiator Transaction Data Source Enable
-    M_DATA_VLD    : in  std_logic;              -- Initiator Transaction Data Phase Valid Signal
-    M_CBE      : out  std_logic_vector(  7 downto 0);    -- Initiator Command & Byte Enable Signal
-
-    TIME_OUT    : in  std_logic;              -- Latency Timer Timeout Signal
-    M_FAIL64    : in  std_logic;              -- 64 bit Transaction Fail Signal
-    CFG_SELF    : out  std_logic;              -- Self Configuration Start Signal
-
-    M_DATA      : in  std_logic;              -- Data Transfer State
-    DR_BUS      : in  std_logic;              -- Bus Park State
-    I_IDLE      : in  std_logic;              -- Initiator Idle State
-    M_ADDR_N    : in  std_logic;              -- Initiator Address State
-
-    PERRQ_N     : in  std_logic;              -- latched PERR# Signal
-    SERRQ_N     : in  std_logic;              -- Latched SERR# Signal
-
-    CSR       : in  std_logic_vector( 39 downto 0);    -- Command/Status Register State
-    CFG       : in  std_logic_vector(255 downto 0);    -- Confiuration Data
-
-  -- DMA Register R/W ports
-    DMAREG_AD    : in  std_logic_vector( 7 downto 0);    -- PCI_DMACNT R/W Address
-    DMAREG_WE    : in  std_logic;              -- PCI_DMACNT Write Enable
-    DMAREG_RE    : in  std_logic;              -- PCI_DMACNT Read Enable
-    DMAREG_DTI    : in  std_logic_vector(31 downto 0);    -- PCI_DMACNT Write Data
-    DMAREG_DTO    : out  std_logic_vector(31 downto 0);    -- PCI_DMACNT Read Data
-    DMAREG_DTOEN  : out  std_logic;              -- PCI_DMACNT Read Data Enable
-
-  -- Internal DMA Access Control Signal
-    DMA_ADRS    : out  std_logic_vector(31 downto 0);    -- Internal Memory DMA Access Address
-
-    DMA_WRDT    : out  std_logic_vector(63 downto 0);    -- Internal Memory DMA Access Write Data
-    DMA_WRT      : out  std_logic_vector( 7 downto 0);    -- Internal Memory DMA Access Write Signal
-    DMA_READ    : out  std_logic;              -- Internal Memory DMA Access Read  Signal
-
-    FIFO_RDDT    : in  std_logic_vector(63 downto 0);    -- FIFO Read Data
-    FIFO_RDTEN    : in  std_logic;              -- FIFO Read Data Enable Signel
-
-    DMATRNS_ENB    : out  std_logic;              -- PCI DMA Transfer Enable
-
-    DMAEND_INT    : out  std_logic;                -- DMA End Interrupt On Request
-
-
-
---################################
---##    for Debug
---################################
-
-
-    DEBUG_OUT    : out  std_logic_vector( 7 downto 0)
-
-
-
-    );
-end component;
-
-
-component PCI_RDTFIFO
-  port (
-    RST       : in  std_logic;              -- PCI Bus Reset
-    CLK       : in  std_logic;              -- PCI bus Clock
-
-    FIFO_ENB    : in  std_logic;              -- FIFO Enable Signal
-
-  -- FIFO Data Write ports
-    FIFO_WRDT    : in  std_logic_vector(63 downto 0);    -- FIFO Write Data
-    FIFO_WE      : in  std_logic;                -- FIFO Write Enable
-
-  -- FIFO Data Read ports
-    FIFO_RE      : in  std_logic;              -- FIFO Read Enable
-    FIFO_RDDT    : out  std_logic_vector(63 downto 0);    -- FIFO Read Data
-    FIFO_RDTEN    : out  std_logic              -- FIFO Read Data Enable
-    );
-end component;
-
-
---------------------------------------------------
--- signals
---------------------------------------------------
-
-  -- Internal Block Target Access Control Signal
-  signal  TARGET_AD    : std_logic_vector(31 downto 0);    -- Target Access Address
-
-  -- Base Address 0 Area (Internal Register) Target Access Control Signal
-  signal  BAR0_WRDT    : std_logic_vector(31 downto 0);    -- BAR0 Area Target Access Write Data
-  signal  BAR0_WR      : std_logic_vector( 3 downto 0);    -- BAR0 Area Target Access Write Signal
-  signal  BAR0_RD      : std_logic;              -- BAR0 Area Target Access Read  Signal
-
-  -- Base Address 1 Area (Internal Memoery) Target Access Control Signal
-  signal  BAR1_WRDT    : std_logic_vector(63 downto 0);    -- BAR1 Area Target Access Write Data
-  signal  BAR1_WR      : std_logic_vector( 7 downto 0);    -- BAR1 Area Target Access Write Signal
-  signal  BAR1_RD      : std_logic;              -- BAR1 Area Target Access Read  Signal
-
-  -- DMA Register R/W ports
-  signal  DMAREG_AD    : std_logic_vector( 7 downto 0);    -- PCI_DMACNT R/W Address
-  signal  DMAREG_WE    : std_logic;              -- PCI_DMACNT Write Enable
-  signal  DMAREG_RE    : std_logic;              -- PCI_DMACNT Read Enable
-  signal  DMAREG_DTI    : std_logic_vector(31 downto 0);    -- PCI_DMACNT Write Data
-  signal  DMAREG_DTO    : std_logic_vector(31 downto 0);    -- PCI_DMACNT Read Data
-  signal  DMAREG_DTOEN  : std_logic;              -- PCI_DMACNT Read Data Enable
-
-  -- Internal DMA Access Control Signal
-  signal  DMA_ADRS    : std_logic_vector(31 downto 0);    -- Internal Memory DMA Access Address
-
-  signal  DMA_WRDT    : std_logic_vector(63 downto 0);    -- Internal Memory DMA Access Write Data
-  signal  DMA_WRT      : std_logic_vector( 7 downto 0);    -- Internal Memory DMA Access Write Signal
-  signal  DMA_READ    : std_logic;              -- Internal Memory DMA Access Read  Signal
-
-  signal  DMATRNS_ENB    : std_logic;              -- PCI DMA Transfer Enable
-
-  -- FIFO Control Signal
-  signal  FIFO_ENB    : std_logic;              -- FIFO Enable Signal
-
-  -- FIFO Data Write ports
-  signal  FIFO_WRDT    : std_logic_vector(63 downto 0);    -- FIFO Write Data
-  signal  FIFO_WE      : std_logic;                -- FIFO Write Enable
-
-  -- FIFO Data Read ports
-  signal  FIFO_RE      : std_logic;              -- FIFO Read Enable
-  signal  FIFO_RDDT    : std_logic_vector(63 downto 0);    -- FIFO Read Data
-  signal  FIFO_RDTEN    : std_logic;              -- FIFO Read Data Enable
-
-
-begin
-
---***************************************************************
---* instantiate sub-blocks
---***************************************************************
-
-  u0 : PCI_TARGETCNT port map (
-  -- Interface to PCI Logicore.
-    FRAMEQ_N    =>  FRAMEQ_N,                -- Latched FRAME# Signal
-    REQ64Q_N    =>  REQ64Q_N,                -- Latched REQ64# Signal
-    TRDYQ_N     =>  TRDYQ_N,                -- Latched TRDY# Signal
-    IRDYQ_N     =>  IRDYQ_N,                -- Latched IRDY# Signal
-    STOPQ_N     =>  STOPQ_N,                -- Latched STOP# Signal
-    DEVSELQ_N    =>  DEVSELQ_N,                -- Latched DEVSEL# Signal
-    ACK64Q_N    =>  ACK64Q_N,                -- Latched ACK64# Signal
-
-    ADDR      =>  ADDR,                  -- Latched Target Address Bus
-    ADIO      =>  ADIO,                  -- Internal Address/Data Bus
-
-    CFG_VLD     =>  CFG_VLD,                -- Configulation Cycle Valid
-    CFG_HIT     =>  CFG_HIT,                -- Configuration Cycle Start
-    C_TERM      =>  C_TERM,                  -- Configuraton Cycle Terminate Signal
-    C_READY     =>  C_READY,                -- Configuration Data Transfer Ready Signal
-
-    ADDR_VLD    =>  ADDR_VLD,                -- Internal Address Valid
-    BASE_HIT    =>  BASE_HIT,                -- Base Address Hit
-
-    S_CYCLE64    =>  S_CYCLE64,                -- 64 bit Transaction Go On
-    S_TERM      =>  S_TERM,                  -- Target Transaction Terminate Signal
-    S_READY     =>  S_READY,                -- Target Transaction Data Transfer Ready Siganl
-    S_ABORT     =>  S_ABORT,                -- Target Abort Request Signal
-    S_WRDN      =>  S_WRDN,                  -- Target Transaction Data Direction (0:Write, 1:Read)
-    S_SRC_EN    =>  S_SRC_EN,                -- Target Transaction Data Source Enable
-    S_DATA_VLD    =>  S_DATA_VLD,                -- Target Transaction Data Phase Valid Signal
-    S_CBE      =>  S_CBE,                  -- Target Command & Byte Enable Signal
-    PCI_CMD     =>  PCI_CMD,                -- Latched Bus Command
-
-    IDLE      =>  IDLE,                  -- Target Idle State
-    B_BUSY      =>  B_BUSY,                  -- PCI Bus Busy State
-    S_DATA      =>  S_DATA,                  -- Target Data Transfer State
-    BACKOFF     =>  BACKOFF,                -- Target State Machine Transaction End State
-
-    SLOT64      =>  SLOT64,                  -- 64 bit Extended Signal Eable
-    PERRQ_N     =>  PERRQ_N,                -- latched PERR# Signal
-    SERRQ_N     =>  SERRQ_N,                -- Latched SERR# Signal
-    KEEPOUT     =>  KEEPOUT,                -- ADIO Bus Disable Request Signal
-
-    CSR       =>  CSR,                  -- Command/Status Register State
-    SUB_DATA    =>  SUB_DATA,                -- Sub-Identification
-    CFG       =>  CFG,                  -- Confiuration Data
-
-    RST       =>  RST,                  -- PCI Bus Reset
-    CLK       =>  CLK,                  -- PCI bus Clock
-
-  -- Internal Block Target Access Control Signal
-    TARGET_AD    =>  TARGET_AD,                -- Target Access Address
-
-    FIFO_RDDT    =>  FIFO_RDDT,                -- FIFO Read Data
-    FIFO_RDTEN    =>  FIFO_RDTEN,                -- FIFO Read Data Enable Signel
-
-  -- Base Address 0 Area (Internal Register) Target Access Control Signal
-    BAR0_WRDT    =>  BAR0_WRDT,                -- BAR0 Area Target Access Write Data
-    BAR0_WR      =>  BAR0_WR,                -- BAR0 Area Target Access Write Signal
-    BAR0_RD      =>  BAR0_RD,                -- BAR0 Area Target Access Read  Signal
-
-  -- Base Address 1 Area (Internal Memoery) Target Access Control Signal
-    BAR1_WRDT    =>  BAR1_WRDT,                -- BAR1 Area Target Access Write Data
-    BAR1_WR      =>  BAR1_WR,                -- BAR1 Area Target Access Write Signal
-    BAR1_RD      =>  BAR1_RD                  -- BAR1 Area Target Access Read  Signal
-    );
-
-
-  u1 : PCI_RDTFIFO port map (
-    RST       =>  RST,                  -- PCI Bus Reset
-    CLK       =>  CLK,                  -- PCI bus Clock
-
-    FIFO_ENB    =>  FIFO_ENB,                -- FIFO Enable Signal
-
-  -- FIFO Data Write ports
-    FIFO_WRDT    =>  FIFO_WRDT,                -- FIFO Write Data
-    FIFO_WE      =>  FIFO_WE,                -- FIFO Write Enable
-
-  -- FIFO Data Read ports
-    FIFO_RE      =>  FIFO_RE,                -- FIFO Read Enable
-    FIFO_RDDT    =>  FIFO_RDDT,                -- FIFO Read Data
-    FIFO_RDTEN    =>  FIFO_RDTEN                -- FIFO Read Data Enable
-    );
-
-
-  u2 : PCI_DMACNT port map (
-    RST       =>  RST,                  -- PCI Bus Reset
-    CLK       =>  CLK,                  -- PCI bus Clock
-
-    FRAMEQ_N    =>  FRAMEQ_N,                -- Latched FRAME# Signal
-    REQ64Q_N    =>  REQ64Q_N,                -- Latched REQ64# Signal
-    TRDYQ_N     =>  TRDYQ_N,                -- Latched TRDY# Signal
-    IRDYQ_N     =>  IRDYQ_N,                -- Latched IRDY# Signal
-    STOPQ_N     =>  STOPQ_N,                -- Latched STOP# Signal
-    DEVSELQ_N    =>  DEVSELQ_N,                -- Latched DEVSEL# Signal
-    ACK64Q_N    =>  ACK64Q_N,                -- Latched ACK64# Signal
-
-    ADIO      =>  ADIO,                  -- Internal Address/Data Bus
-
-    REQUEST     =>  REQUEST,                -- REQ# Signal Assert Request
-    REQUEST64    =>  REQUEST64,                -- REQ64# Signal Assert Request
-    REQUESTHOLD   =>  REQUESTHOLD,              -- Extended REQ# Signal Assert Request (Not Use)
-    COMPLETE    =>  COMPLETE,                -- Initiator Transaction End Signal
-
-    M_WRDN      =>  M_WRDN,                  -- Initiator Transaction Data Direction (0:Write, 1:Read)
-    M_READY     =>  M_READY,                -- Initiator Transaction Data Transfer Ready Siganl
-    M_SRC_EN    =>  M_SRC_EN,                -- Initiator Transaction Data Source Enable
-    M_DATA_VLD    =>  M_DATA_VLD,                -- Initiator Transaction Data Phase Valid Signal
-    M_CBE      =>  M_CBE,                  -- Initiator Command & Byte Enable Signal
-
-    TIME_OUT    =>  TIME_OUT,                -- Latency Timer Timeout Signal
-    M_FAIL64    =>  M_FAIL64,                -- 64 bit Transaction Fail Signal
-    CFG_SELF    =>  CFG_SELF,                -- Self Configuration Start Signal
-
-    M_DATA      =>  M_DATA,                  -- Data Transfer State
-    DR_BUS      =>  DR_BUS,                  -- Bus Park State
-    I_IDLE      =>  I_IDLE,                  -- Initiator Idle State
-    M_ADDR_N    =>  M_ADDR_N,                -- Initiator Address State
-
-    PERRQ_N     =>  PERRQ_N,                -- latched PERR# Signal
-    SERRQ_N     =>  SERRQ_N,                -- Latched SERR# Signal
-
-    CSR       =>  CSR,                  -- Command/Status Register State
-    CFG       =>  CFG,                  -- Confiuration Data
-
-  -- DMA Register R/W ports
-    DMAREG_AD    =>  DMAREG_AD,                -- PCI_DMACNT R/W Address
-    DMAREG_WE    =>  DMAREG_WE,                -- PCI_DMACNT Write Enable
-    DMAREG_RE    =>  DMAREG_RE,                -- PCI_DMACNT Read Enable
-    DMAREG_DTI    =>  DMAREG_DTI,                -- PCI_DMACNT Write Data
-    DMAREG_DTO    =>  DMAREG_DTO,                -- PCI_DMACNT Read Data
-    DMAREG_DTOEN  =>  DMAREG_DTOEN,              -- PCI_DMACNT Read Data Enable
-
-  -- Internal DMA Access Control Signal
-    DMA_ADRS    =>  DMA_ADRS,                -- Internal Memory DMA Access Address
-
-    DMA_WRDT    =>  DMA_WRDT,                -- Internal Memory DMA Access Write Data
-    DMA_WRT      =>  DMA_WRT,                -- Internal Memory DMA Access Write Signal
-    DMA_READ    =>  DMA_READ,                -- Internal Memory DMA Access Read  Signal
-
-    FIFO_RDDT    =>  FIFO_RDDT,                -- FIFO Read Data
-    FIFO_RDTEN    =>  FIFO_RDTEN,                -- FIFO Read Data Enable Signel
-
-    DMATRNS_ENB    =>  DMATRNS_ENB,              -- PCI DMA Transfer Enable
-
-    DMAEND_INT    =>  DMAEND_INT,                -- DMA End Interrupt On Request
-
-
-
---################################
---##    for Debug
---################################
-
-
-
-    DEBUG_OUT    =>  DEBUG_OUT                -- DMA End Interrupt On Request
-    );
-
-
-
-
-
---***************************************************************
---*
---*  Internal Register (BAR0) Area Access Signal Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- Internal Register (BAR0) Area Address Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      DMAREG_AD <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      DMAREG_AD <= TARGET_AD( 7 downto 0);              ------ Target Access Address Output
-    end if;
-  end process;
-
-    REG_AD <= DMAREG_AD;
-
---------------------------------------------------------------------------------
--- Internal Register (BAR0) Area Write Enable Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      DMAREG_WE <= '0';
-    elsif (CLK'event and CLK='1') then
-      DMAREG_WE <= BAR0_WR(3) or BAR0_WR(2) or BAR0_WR(1) or BAR0_WR(0);  -- Low Word Write Enable Set
-    end if;
-  end process;
-
-    REG_WE <= DMAREG_WE;
-
---------------------------------------------------------------------------------
--- Internal Register (BAR0) Area Write Data Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      DMAREG_DTI <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (BAR0_WR/="0000") then                    ------ BAR0 Area Data Write ?
-        DMAREG_DTI <= BAR0_WRDT;                  ------ Write Data Output
-      else
-        DMAREG_DTI <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-    REG_DTI <= DMAREG_DTI;                        ------ Write Data Output
-
---------------------------------------------------------------------------------
--- Internal Register (BAR0) Area Read Enable Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      DMAREG_RE <= '0';
-    elsif (CLK'event and CLK='1') then
-      DMAREG_RE <= BAR0_RD;                        ------ BAR0 Area Data Read Signal Set
-    end if;
-  end process;
-
-    REG_RE <= DMAREG_RE;
-
-
---***************************************************************
---*
---*  Internal Memory (BAR1) Area Access Signal Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- Internal Memory (BAR1) Area Address Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_ADA <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (DMATRNS_ENB='1') then                    ------ DMA Access ?
-        MEM_ADA <= DMA_ADRS(21 downto 2);          ------ DMA Access Address Output
-      else
-        MEM_ADA <= TARGET_AD(21 downto 2);         ------ Target Access Address Output
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Internal Memory (BAR1) Area Write Enable Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_WEHA <= '0';
-      MEM_WELA <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (DMATRNS_ENB='1') then                        -- DMA Access ?
-        MEM_WEHA <= DMA_WRT(7) or DMA_WRT(6) or DMA_WRT(5) or DMA_WRT(4);  -- High Word Write Enable Set
-        MEM_WELA <= DMA_WRT(3) or DMA_WRT(2) or DMA_WRT(1) or DMA_WRT(0);  -- Low  Word Write Enable Set
-      else
-        MEM_WEHA <= BAR1_WR(7) or BAR1_WR(6) or BAR1_WR(5) or BAR1_WR(4);  -- High Word Write Enable Set
-        MEM_WELA <= BAR1_WR(3) or BAR1_WR(2) or BAR1_WR(1) or BAR1_WR(0);  -- Low  Word Write Enable Set
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Internal Memory (BAR1) Area Write Data Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_DTIA <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if (DMATRNS_ENB='1') then                    ------ DMA Access ?
-        MEM_DTIA <= DMA_WRDT;                    ------ DMA Write Data Output
-      elsif (BAR1_WR/="00000000") then                ------ BAR1 Area Data Write ?
-        MEM_DTIA <= BAR1_WRDT;                    ------ Traget Access Write Data Output
-      else
-        MEM_DTIA <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Internal Memory (BAR1) Area Read Enable Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_REA <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_REA <= BAR1_RD or DMA_READ;                  ------ Memory Read Signal Set
-    end if;
-  end process;
-
-
---***************************************************************
---*
---*  Data Read FIFO Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- FIFO Enable Signal Output Control Process
---------------------------------------------------------------------------------
-
-    FIFO_ENB <= S_DATA or M_DATA or DMATRNS_ENB;            ------ PCI Data Phase Set
-
---------------------------------------------------------------------------------
--- FIFO Write Data Select Control Process
---------------------------------------------------------------------------------
-
-  process (MEM_DTOEN,MEM_DTOA,REG_DTOEN,REG_DTO,
-                DMAREG_DTOEN,DMAREG_DTO) begin
-    if (DMAREG_DTOEN='1') then                      ------ BAR0 DMA Register Read Data Available ?
-      FIFO_WRDT(31 downto  0) <= DMAREG_DTO;              ------ BAR0 DMA Register Read Data Select
-      FIFO_WRDT(63 downto 32) <= (others=>'0');            ------ BAR0 High Word Clear
-    elsif (REG_DTOEN='1') then                      ------ BAR0 Register Read Data Available ?
-      FIFO_WRDT(31 downto  0) <= REG_DTO;                ------ BAR0 Register Read Data Select
-      FIFO_WRDT(63 downto 32) <= (others=>'0');            ------ BAR0 High Word Clear
-    elsif (MEM_DTOEN='1') then                      ------ BAR1 Memory Read Data Available ?
-      FIFO_WRDT <= MEM_DTOA;                      ------ BAR1 Memory Read Data Select
-    else
-      FIFO_WRDT <= (others=>'0');
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- FIFO Write Enable SIgnal Control Process
---------------------------------------------------------------------------------
-
-    FIFO_WE <= REG_DTOEN or MEM_DTOEN or DMAREG_DTOEN;
-
---------------------------------------------------------------------------------
--- FIFO Read Enable SIgnal Control Process
---------------------------------------------------------------------------------
-
-    FIFO_RE <= S_SRC_EN or M_SRC_EN;
-
-
-
---***************************************************************
---*
---*  PCI interrupt Request Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- PCI Interrupt Request Output Control Process
---------------------------------------------------------------------------------
-
-    INTR_N <= not INT_REQ;
-
-end pcicnt_rtl;
+Thu Apr 16 20:05:07 JST 2009
+// Time-stamp: <2007-01-08 05:05:50 hamada>
+// The lowest level library for PROGRAPE-4
+//
+// by Tsuyoshi Hamada
+// 20061229.rev1 : back to non pci_driver version
+// 20061116.rev1 : try pci_driver
+// 20060916.rev1 : Development start
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/ioctl.h> // ioctl()
+#include <sys/mman.h>  // mmap()
+#include <sys/types.h> // open()
+#include <sys/stat.h>  // open()
+#include <sys/fcntl.h> // open()
+
+#undef CERR
+#define CERR(fmt, args...) fprintf(stderr, fmt, ## args)
+
+
+#define MAX_NBOARD 8
+unsigned int* bar0[MAX_NBOARD];
+unsigned int* bar1[MAX_NBOARD];
+
+//---------------------------------------
+#include "progrape.h"
+
+static char *devname[] = {
+  "/dev/progrape0",
+  "/dev/progrape1",
+  "/dev/progrape2",
+  "/dev/progrape3",
+  "/dev/progrape4",
+  "/dev/progrape5",
+  "/dev/progrape6",
+  "/dev/progrape7",
+  "/dev/progrape8",
+};
+
+static int pg4_dev[] = {
+  -1,-1,-1,-1,-1,-1,-1,-1,
+};
+
+unsigned int* pg4_get_bar0ptr(int devid){ return bar0[devid]; }
+unsigned int* pg4_get_bar1ptr(int devid){ return bar1[devid]; }
+
+#define DMA_BSIZE (0x1<<10) // 4KB
+
+static void * __mmap_bar     (int devid, int bar);
+//    static int __pg4_DMA         (int devid, unsigned int size, unsigned int offset, unsigned int dir);
+//    static int __pg4_DMA_noInterrupt(int devid, unsigned int size, unsigned int offset, unsigned int dir);
+//    static int __pg4_DMA_with_retry(int devid, unsigned int size, unsigned int offset, unsigned int dir);
+int           pg4_DMAget     (int devid, unsigned int size);
+int           pg4_DMAput     (int devid, unsigned int size);
+int           pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int           pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void          pg4_wait       (int devid, int n);
+void          pg4_DMAcheck   (int devid);
+int           pg4_DMAretry   (int devid);
+unsigned long pg4_getbaseaddr(int devid, int j);
+unsigned long pg4_getbaseaddr_size(int devid, int bar);
+unsigned long pg4_read_pciconfig_dword(int devid, int adr);
+void pg4_get_pfpga_info(int devid, char *info);
+void pg4_set_pfpga_info(int devid, char *info);
+
+
+static void * __mmap_bar(int id, int bar)
+{
+  unsigned long size;
+  unsigned long pagesize = getpagesize();
+  void *mapped_ptr;
+
+  switch (bar) {
+  case 0:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_REG_PIORW)) {
+	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
+    }
+    break;
+  case 1:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_MEM_PIORW)) {
+	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
+    }
+    break;
+  default :
+    CERR("mmap bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
+    exit (-1);
+  }
+
+  mapped_ptr = mmap(NULL,
+		    (size/pagesize+1)*pagesize,
+		    (PROT_READ| PROT_WRITE),
+		    MAP_SHARED,
+		    pg4_dev[id],
+		    0);
+
+  return (mapped_ptr);
+}
+
+
+int pg4_open(int id)
+{
+  pg4_dev[id] = open(devname[id], O_RDWR);
+  if(pg4_dev[id] == -1) {
+    CERR("open failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
+    return -1;
+  }
+
+  bar0[id] = (unsigned int *) __mmap_bar(id, 0); // mmap BAR0
+  bar1[id] = (unsigned int *) __mmap_bar(id, 1); // mmap BAR1
+  //  Allocate Kernel Memory(&pg4_dev[id], DMA_BSIZE, &(kernel_memory[id]));
+
+  return 1;
+}
+
+void pg4_close(int id){
+  //  Free Kernel Memory( &(kernel_memory[id]) );
+  close(pg4_dev[id]);
+  pg4_dev[id] = -1;
+}
+
+void pg4_close_and_exit(int id){
+  //  pg4_DMAcheck(id);
+  pg4_close(id);
+  exit(1);
+}
+
+inline unsigned int pg4_readbase0(int id, unsigned int index){ return *(bar0[id] + index); }
+inline void         pg4_writebase0(int id, unsigned int index, unsigned int val){ *(bar0[id] + index) = val; }
+inline unsigned int pg4_readbase1(int id, unsigned int index){ return *(bar1[id] + index); }
+inline void         pg4_writebase1(int id, unsigned int index, unsigned int val){ *(bar1[id] + index) = val; }
+inline unsigned int ReadBase0(int id, unsigned int addr){return pg4_readbase0(id, addr>>2);}
+inline unsigned int ReadBase1(int id, unsigned int addr){return pg4_readbase1(id, addr>>2);}
+inline void         WriteBase0(int id, unsigned int addr, unsigned int val){pg4_writebase0(id, addr>>2, val);}
+inline void         WriteBase1(int id, unsigned int addr, unsigned int val){pg4_writebase1(id, addr>>2, val);}
+
+#ifdef ___HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH___
+// return kernel memory (for DMA buffer) pointer in user space
+unsigned int* pg4_get_dmabuf_userspace_pointer(int devid) { return ( (unsigned int*)kernel_memory[devid].mem );}
+unsigned int  pg4_get_dmabuf_phisical_address(int devid){ return ( kernel_memory[devid].pa ); }
+unsigned int  pg4_get_dmabuf_size(int devid){ return ( kernel_memory[devid].size ); }
+
+// Temporaly function (sonouchi kesu !!)
+unsigned int* pg4mmap(int devid) { return (pg4_get_dmabuf_userspace_pointer(devid));}
+
+int pg4_DMAput(int devid, unsigned int size)
+{
+  unsigned int dir    = 1; //  Host -> Board
+  unsigned int offset = 0;
+  return (__pg4_DMA(devid, size, offset, dir));
+}
+
+int pg4_DMAget(int devid, unsigned int size)
+{
+  unsigned int dir    = 0; //  Host <- Board
+  unsigned int offset = 0;
+  return (__pg4_DMA_with_retry(devid, size, offset, dir));
+  //  return (__pg4_DMA(devid, size, offset, dir));
+}
+
+int __pg4_DMA_with_retry(int devid, unsigned int size, unsigned int offset, unsigned int dir)
+{
+  static int recurse = 0;
+  unsigned int n_retry, n_disconnect, x;
+  __pg4_DMA(devid, size, offset, dir);
+
+  x = ReadBase0(devid, 0x34);
+  n_disconnect = ((0x1<<16)-1) & (x>>16);
+  n_retry      = ((0x1<<16)-1) & x;
+  
+  if(n_retry > 0){
+    puts("");
+    puts("----------------------------");
+    fprintf(stderr,"recurse %d\n",recurse);
+    fprintf(stderr,"n_disconnect %d\n", n_disconnect);
+    fprintf(stderr,"n_retry      %d\n", n_retry);
+    WriteBase0(devid, 0x34, 0);
+    fflush(NULL);
+    recurse++;
+    __pg4_DMA_with_retry(devid, size, offset, dir);
+    recurse--;
+  }
+
+  return 0;
+}
+
+
+// Basic Function for DMA trans. (private function)
+//int xxxx__pg4_DMA(int devid, unsigned int size, unsigned int offset, unsigned int dir)
+int __pg4_DMA(int devid, unsigned int size, unsigned int offset, unsigned int dir)
+{
+  unsigned int adr;
+  adr = kernel_memory[devid].pa;
+  //  fprintf(stderr,"kernel_memory[%d].pa = %x\n",devid,adr); exit(-1);
+  WriteBase0(devid, 0x20, adr);    // 0x20 : DMA_PCI_ADRS
+  WriteBase0(devid, 0x24, offset); // 0x24 : DMA_LOCAL_ADRS
+  WriteBase0(devid, 0x28, size);   // 0x28 : DMA_COUNT
+
+  { // Interrupt thread setup
+    pthread_t tid;
+
+    int_count=0;
+    thread_alive= 1;
+    pthread_create( &tid, NULL, pg4_int_handler, &dev[devid] );
+    pthread_mutex_init( &int_mutex, NULL );
+    pthread_mutex_lock( &int_mutex );
+  }
+
+  { // 0x30 : DMA_INTERVAL
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    WriteBase0(devid, 0x30, ((burst<<16)|(inter)));
+  }
+  { // 0x2C : DMA_CTRL
+    //                  reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = dir; // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1; // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = 0x0; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1; // DMA_CTRL(0)
+    unsigned int cmd;
+
+    cmd = (dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start;
+
+    WriteBase0(devid, 0x10,   0); // 0x10 : INT_STAT ... clear
+    WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+    WriteBase0(devid, 0x34,   0); // 0x34 : DMA_STAT ... clear
+    WriteBase0(devid, 0x14,   1); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+    WriteBase0(devid, 0x2C, cmd); // do DMA
+
+    // -------------- !! WAIT !! -----------------
+    puts("-------------------------- ");
+    pthread_mutex_lock( &int_mutex );
+//    pd_waitForInterrupt(&dev[devid]);
+    puts("--------------------------// ");
+    // -------------- !! WAIT !! -----------------
+
+    {
+     pthread_mutex_unlock( &int_mutex );
+     pthread_mutex_destroy( &int_mutex );
+    }
+
+    WriteBase0(devid, 0x10,   0); // 0x10 : INT_STAT ... clear
+    WriteBase0(devid, 0x14, 0x0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+    WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+    pg4_close_and_exit(devid);
+  }
+
+  //  if(ReadBase0(devid, 0x34)) pg4_close_and_exit(devid);
+  //  pg4_close_and_exit(devid);
+  return 0;
+}
+
+// Basic Function for DMA trans. (private function)
+//int __pg4_DMA(int devid, unsigned int size, unsigned int offset, unsigned int dir)
+int __pg4_DMA_noInterrupt(int devid, unsigned int size, unsigned int offset, unsigned int dir)
+{
+  unsigned int adr;
+  adr = kernel_memory[devid].pa;
+  //  fprintf(stderr,"kernel_memory[%d].pa = %x\n",devid,adr); exit(-1);
+  WriteBase0(devid, 0x20, adr);    // 0x20 : DMA_PCI_ADRS
+  WriteBase0(devid, 0x24, offset); // 0x24 : DMA_LOCAL_ADRS
+  WriteBase0(devid, 0x28, size);   // 0x28 : DMA_COUNT
+  { // 0x30 : DMA_INTERVAL
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    WriteBase0(devid, 0x30, ((burst<<16)|(inter)));
+  }
+  { // 0x2C : DMA_CTRL
+    //                  reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = dir; // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1; // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = 0x0; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1; // DMA_CTRL(0)
+    unsigned int cmd;
+    cmd = (dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start;
+    WriteBase0(devid, 0x10,   0); // 0x10 : INT_STAT ... clear
+    WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+    WriteBase0(devid, 0x34,   0); // 0x34 : DMA_STAT ... clear
+    WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+    WriteBase0(devid, 0x2C, cmd); // do DMA
+    // -------------- !! WAIT !! -----------------
+    usleep(1000);
+    // -------------- !! WAIT !! -----------------
+    WriteBase0(devid, 0x10,   0); // 0x10 : INT_STAT ... clear
+    WriteBase0(devid, 0x14, 0x0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+    WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+  }
+  return 0;
+}
+
+
+int pg4_DMAput_offset(int devid, unsigned int size, unsigned offset)
+{
+  return -1;
+}
+
+int pg4_DMAget_offset(int devid, unsigned int size, unsigned offset)
+{
+  return -1;
+}
+
+void pg4_wait(int devid, int n)
+{
+  unsigned int i;
+  n = n << 1;
+  for(i=0;i<n;i++) {
+    WriteBase0(devid,0x4, 1);
+    WriteBase0(devid,0x4, 0);
+  }
+}
+
+void pg4_DMAcheck(int devid)
+{
+  unsigned int flag, retry;
+  fprintf(stderr,"\t INT_STAT       (0x10) : %x\n", ReadBase0(devid, 0x10));
+  fprintf(stderr,"\t INT_MASK       (0x14) : %x\n", ReadBase0(devid, 0x14));
+  fprintf(stderr,"\t DMA_PCI_ADRS   (0x20) : %x\n", ReadBase0(devid, 0x20));
+  fprintf(stderr,"\t DMA_LOCAL_ADRS (0x24) : %x\n", ReadBase0(devid, 0x24));
+  fprintf(stderr,"\t DMA_COUNT      (0x28) : %x\n", ReadBase0(devid, 0x28));
+  fprintf(stderr,"\t DMA_CTRL       (0x2C) : %x\n", ReadBase0(devid, 0x2c));
+  fprintf(stderr,"\t DMA_INTERVAL   (0x30) : %x\n", ReadBase0(devid, 0x30));
+  fprintf(stderr,"\t DMA_STAT       (0x34) : %x\n", ReadBase0(devid, 0x34));
+
+  flag = ReadBase0(devid, 0x34);
+
+  retry = ((0x1<<16)-1)&flag;
+  fprintf(stderr,"\t DMA dissconnect count %i\n", (flag>>16));
+  fprintf(stderr,"\t DMA retry count       %i\n", retry);
+  fprintf(stderr,"\n");
+  fflush(NULL);
+}
+
+int pg4_DMAretry(int devid)
+{
+  unsigned int flag, retry;
+  flag = ReadBase0(devid, 0x34);
+  retry = ((0x1<<16)-1)&flag;
+  return retry;
+}
+#endif
+//HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+
+unsigned long pg4_getbaseaddr(int id, int bar)
+{
+  unsigned long ret;
+  if( (bar==0) || (bar==1)){
+    int bar0_dword_adr = 0x4;
+    ret = pg4_read_pciconfig_dword(id, bar0_dword_adr + bar);
+  }else{
+    CERR("bar %d invalid | %s:%d\n",bar ,__FILE__ ,__LINE__);
+    exit(-1);
+  }
+  return ret;
+}
+
+unsigned long pg4_getbaseaddr_size(int id, int bar)
+{
+  unsigned long size;
+  switch (bar) {
+  case 0:
+    size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
+    break;
+  case 1:
+    size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
+    break;
+  default :
+    CERR("bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
+    exit (-1);
+  }
+
+  return (size); // [Bytes]
+}
+
+unsigned long pg4_read_pciconfig_dword(int id, int adr)
+{
+  // note : 'adr' uses dword address (not byte address).
+  return (unsigned long) ioctl(pg4_dev[id], IOC_GV_PCICFG, adr);
+}
+
+void pg4_get_pfpga_info(int id, char* ret){
+  char info[NB_FPGA_INFO];
+  ioctl(pg4_dev[id], IOC_GP_FPGA_INFO, info);
+  strcpy(ret, info);
+}
+
+void pg4_set_pfpga_info(int id, char* info){
+  ioctl(pg4_dev[id], IOC_SP_FPGA_INFO, info);
+}
