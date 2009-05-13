@@ -1,5 +1,4 @@
-Sun Apr 12 19:50:40 JST 2009
-SETPROJECT .
-SET BusFormat = BusFormatAngleBracketNotRipped
-SETXIPCPORTHOST 1271
-XIPCPJSENDCORES virtex2
+Wed May 13 20:22:55 JST 2009
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
+OK
