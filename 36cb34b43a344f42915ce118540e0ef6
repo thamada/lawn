@@ -1,163 +1,324 @@
-Sat Jul  4 19:40:47 JST 2009
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
+Tue Aug 18 19:40:46 JST 2009
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\TMP2
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Wed Nov 10 11:38:24 2004
 
--- LOCAL READ ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
--- (※) l_adroのビット幅(NBIT_L_ADRO)を変えた場合はpromを焼きなおす必要があることに注意.(直すのは上のモジュール)
--- (※) そもそもの前提：LOCAL_READはPFPGA0からのPIPE_STS信号(CBUS0(7))をトランザクション開始信号としています。
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+ENTITY sim IS
+END sim;
 
-entity LOCAL_READ is
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
+ARCHITECTURE testbench_arch OF sim IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\tmp2\sim.ano";
+	COMPONENT pfpga_config
+		PORT (
+			clk : In  std_logic;
+			rst_n : In  std_logic;
+			cmd_reg : In  std_logic_vector (8 DOWNTO 0);
+			data_reg : In  std_logic_vector (31 DOWNTO 0);
+			CFG_D : Out  std_logic_vector (7 DOWNTO 0);
+			CFG_CCLK : Out  std_logic;
+			CFG_PROG_B0 : Out  std_logic;
+			CFG_PROG_B1 : Out  std_logic;
+			CFG_PROG_B2 : Out  std_logic;
+			CFG_PROG_B3 : Out  std_logic;
+			CFG_CS_B0 : Out  std_logic;
+			CFG_CS_B1 : Out  std_logic;
+			CFG_CS_B2 : Out  std_logic;
+			CFG_CS_B3 : Out  std_logic;
+			CFG_RDWR_B : Out  std_logic
+		);
+	END COMPONENT;
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+	SIGNAL clk : std_logic;
+	SIGNAL rst_n : std_logic;
+	SIGNAL cmd_reg : std_logic_vector (8 DOWNTO 0);
+	SIGNAL data_reg : std_logic_vector (31 DOWNTO 0);
+	SIGNAL CFG_D : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CFG_CCLK : std_logic;
+	SIGNAL CFG_PROG_B0 : std_logic;
+	SIGNAL CFG_PROG_B1 : std_logic;
+	SIGNAL CFG_PROG_B2 : std_logic;
+	SIGNAL CFG_PROG_B3 : std_logic;
+	SIGNAL CFG_CS_B0 : std_logic;
+	SIGNAL CFG_CS_B1 : std_logic;
+	SIGNAL CFG_CS_B2 : std_logic;
+	SIGNAL CFG_CS_B3 : std_logic;
+	SIGNAL CFG_RDWR_B : std_logic;
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+BEGIN
+	UUT : pfpga_config
+	PORT MAP (
+		clk => clk,
+		rst_n => rst_n,
+		cmd_reg => cmd_reg,
+		data_reg => data_reg,
+		CFG_D => CFG_D,
+		CFG_CCLK => CFG_CCLK,
+		CFG_PROG_B0 => CFG_PROG_B0,
+		CFG_PROG_B1 => CFG_PROG_B1,
+		CFG_PROG_B2 => CFG_PROG_B2,
+		CFG_PROG_B3 => CFG_PROG_B3,
+		CFG_CS_B0 => CFG_CS_B0,
+		CFG_CS_B1 => CFG_CS_B1,
+		CFG_CS_B2 => CFG_CS_B2,
+		CFG_CS_B3 => CFG_CS_B3,
+		CFG_RDWR_B => CFG_RDWR_B
+	);
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ;
+	PROCESS -- clock process for clk,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-architecture rtl of LOCAL_READ is
+		PROCEDURE ANNOTATE_CFG_D(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_D,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_D);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-component LOCAL_READ_CNT
-  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
-  port (
-    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
-    CALC_DONE  : in std_logic;                 -- pulse
-    FETCH_DONE : out std_logic;
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+		PROCEDURE ANNOTATE_CFG_CCLK(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CCLK,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CCLK);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-component LOCAL_READ_IF
-  port (
-    EXEC : in std_logic;
-    START_AD : in std_logic_vector(18 downto 0);
-    NQWORD   : in std_logic_vector( 8 downto 0);
-    CHIPSEL  : in std_logic_vector( 3 downto 0);
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);
-    BUSY : out std_logic;  -- to GPREG0
-    DMAR_ENABLE : out std_logic_vector(3 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_ADB     : out std_logic_vector(12 downto 0);
-    MEM_WEHB    : out std_logic;
-    MEM_WELB    : out std_logic;
-    MEM_DTIB    : out std_logic_vector(63 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+		PROCEDURE ANNOTATE_CFG_PROG_B0(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B0,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B0);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-signal calc_done : std_logic :='0';   -- to cnt
-signal csts0,csts1 : std_logic :='0'; -- from pfpga
+		PROCEDURE ANNOTATE_CFG_PROG_B1(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B1,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B1);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
--- CNT
-signal fetch_done : std_logic :='0';
-signal exec : std_logic;                          -- cnt -> if
-signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
-signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
-signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
-signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
--- IF
-signal ignore_busy : std_logic; 
+		PROCEDURE ANNOTATE_CFG_PROG_B2(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B2,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B2);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-begin
+		PROCEDURE ANNOTATE_CFG_PROG_B3(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B3,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B3);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  -- CALC STATUS
-  csts0 <= CALC_STS;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      csts1 <= csts0;
-    end if;
-  end process;
+		PROCEDURE ANNOTATE_CFG_CS_B0(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B0,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B0);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  -- CALC DONE
-  process (RST,CLK,csts0,csts1) begin
-    if(RST='1') then
-      calc_done <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        calc_done <= '1';
-      else
-        calc_done <= '0';
-      end if;
-    end if;
-  end process;
+		PROCEDURE ANNOTATE_CFG_CS_B1(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B1,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B1);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  -- BUSY
-  process (RST,CLK,csts0,csts1,fetch_done) begin
-    if (RST='1') then
-      BUSY <='1';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        BUSY <= '1';
-      elsif(fetch_done='1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
+		PROCEDURE ANNOTATE_CFG_CS_B2(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B2,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B2);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  -- =================================================== SUBMODULE INSTANCES
-  u0: LOCAL_READ_CNT 
-    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
-    port map(NPIPE => NPIPE,
-             CALC_DONE => calc_done,
-             FETCH_DONE => fetch_done,
-             EXEC       => exec,
-             START_AD   => start_ad,
-             NQWORD     => nqword,
-             CHIPSEL    => chipsel,
-             MEM_AD_BASE => mem_base,
-             RST => RST, CLK=>CLK);
+		PROCEDURE ANNOTATE_CFG_CS_B3(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B3,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B3);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_CFG_RDWR_B(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_RDWR_B,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_RDWR_B);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  u1: LOCAL_READ_IF
-    port map(EXEC        => exec,     -- from cnt
-             START_AD    => start_ad, -- from cnt
-             NQWORD      => nqword,   -- from cnt
-             CHIPSEL     => chipsel,  -- from cnt
-             MEM_AD_BASE => mem_base, -- from cnt
-             BUSY => ignore_busy,
-             DMAR_ENABLE => DMAR_ENABLE, -- output directly
-             DBUS_Port   => DBUS_Port,   -- output directly
-             DBUS_idata  => DBUS_idata,  -- output directly
-             DBUS_HiZ    => DBUS_HiZ,    -- output directly
-             MEM_ADB  => MEM_ADB,        -- output directly
-             MEM_WEHB => MEM_WEHB,       -- output directly
-             MEM_WELB => MEM_WELB,       -- output directly
-             MEM_DTIB => MEM_DTIB,       -- output directly
-             RST=>RST,CLK=>CLK);
+	BEGIN
+		CLOCK_LOOP : LOOP
+		clk <= transport '0';
+		WAIT FOR 5 us;
+		TX_TIME := TX_TIME + 5;
+		clk <= transport '1';
+		WAIT FOR 5 us;
+		TX_TIME := TX_TIME + 5;
+		ANNOTATE_CFG_D(TX_TIME);
+		ANNOTATE_CFG_CCLK(TX_TIME);
+		ANNOTATE_CFG_PROG_B0(TX_TIME);
+		ANNOTATE_CFG_PROG_B1(TX_TIME);
+		ANNOTATE_CFG_PROG_B2(TX_TIME);
+		ANNOTATE_CFG_PROG_B3(TX_TIME);
+		ANNOTATE_CFG_CS_B0(TX_TIME);
+		ANNOTATE_CFG_CS_B1(TX_TIME);
+		ANNOTATE_CFG_CS_B2(TX_TIME);
+		ANNOTATE_CFG_CS_B3(TX_TIME);
+		ANNOTATE_CFG_RDWR_B(TX_TIME);
+		WAIT FOR 45 us;
+		TX_TIME := TX_TIME + 45;
+		clk <= transport '0';
+		WAIT FOR 45 us;
+		TX_TIME := TX_TIME + 45;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
+	PROCESS   -- Process for clk
+		VARIABLE TX_OUT : LINE;
 
-end rtl;
+		BEGIN
+		-- --------------------
+		rst_n <= transport '0';
+		cmd_reg <= transport std_logic_vector'("000000000"); --0
+		data_reg <= transport std_logic_vector'("00000000000000000000000000000000"); --0
+		-- --------------------
+		WAIT FOR 300 us; -- Time=300 us
+		rst_n <= transport '1';
+		-- --------------------
+		WAIT FOR 500 us; -- Time=800 us
+		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		-- --------------------
+		WAIT FOR 400 us; -- Time=1200 us
+		cmd_reg <= transport std_logic_vector'("011100001"); --E1
+		-- --------------------
+		WAIT FOR 400 us; -- Time=1600 us
+		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		-- --------------------
+		WAIT FOR 800 us; -- Time=2400 us
+		data_reg <= transport std_logic_vector'("10000000100000001000000011111111"); --808080FF
+		-- --------------------
+		WAIT FOR 700 us; -- Time=3100 us
+		cmd_reg <= transport std_logic_vector'("111110001"); --1F1
+		-- --------------------
+		WAIT FOR 3355 us; -- Time=6455 us
+		-- --------------------
+
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
+
+CONFIGURATION pfpga_config_cfg OF sim IS
+	FOR testbench_arch
+	END FOR;
+END pfpga_config_cfg;
