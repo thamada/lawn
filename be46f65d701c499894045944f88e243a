@@ -1,44 +1,28 @@
-Sun Oct 25 20:05:12 JST 2009
-// Time-stamp: " "
-#include <stdio.h> 
-#include <string.h>
-#include <stdlib.h>
+Thu Nov 19 19:52:02 JST 2009
+#define NFLO 26
+#define NMAN 16
+#define NFIX 57
+#define NACC 64
+#define NEXAD 31
+#define FSHIFT pow(2.0,(double)NEXAD)
 
-void read_data(char* fname, int* nbody, double posi[][2])
-{
-  int idx,n;
-  char line[2560];
-  FILE *fp;
-  fp = fopen(fname,"r");
-  idx=0;
+/JPSET xj[3],  x[][],  float, NFLO, NMAN;
+/JPSET mj,     m[],    float, NFLO, NMAN;
+/IPSET xi[3],  x[][],  float, NFLO, NMAN;
+/IPSET ieps2,  eps2,   float, NFLO, NMAN;
+/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
+/NVMP 1;
+/NPIPE 1;
 
-  { // get N (number of particles)
-    char* p;
-    fgets(line,100,fp);
-    p = (char* )strtok(line,"\n");
-    sscanf(p,"%d",&n);
-    *nbody = n;
-  }
-
-  // get all data
-  for(idx=0;idx<n;idx++){
-    char* p;
-    char col[10][400];
-    int i=0;
-    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
-    p = (char* )strtok(line,"\t");
-    strcpy(col[i],p);
-    i++;
-    while((p = (char* )strtok(NULL, "\t"))!=NULL){
-      strcpy(col[i],p);
-      i++;
-    }
-    //--- for debug ---
-    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
-    //    printf("\n");
-
-    posi[idx][0]=atof(col[0]);
-    posi[idx][1]=atof(col[1]);
-  }
-  fclose(fp);
-}
+pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
+pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
+pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
+pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
+pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
+pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
+pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
+pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
+pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
+pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
+pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
+pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
