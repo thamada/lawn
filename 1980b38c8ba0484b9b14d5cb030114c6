@@ -1,53 +1,68 @@
-Sun Dec 27 19:52:25 JST 2009
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- *
- ***************************************************/
+Wed Dec 30 20:07:49 JST 2009
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-inline unsigned int    ReadBase0 (int devid, unsigned int addr);
-inline unsigned int    ReadBase1 (int devid, unsigned int addr);
-inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
-inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
+entity calc is
+  port (
+    start      : in  std_logic;
+    clk        : in  std_logic;
+    pclk       : in  std_logic;
+    n          : in  std_logic_vector(31 downto 0);
+    run        : out  std_logic;
+    mem_adr    : out  std_logic_vector(31 downto 0));
+end calc;
 
-void                   pg4_close (int id);
+architecture rtl of calc is
 
-int                    pg4_DMAput (int devid, unsigned int size);
-int                    pg4_DMAget (int devid, unsigned int size);
-void                   pg4_DMAcheck (int devid);
-int                    pg4_DMAretry (int devid);
+signal rst :  std_logic;
+signal rstn : std_logic_vector(31 downto 0);
+signal start_r : std_logic;
+signal mema_dc : std_logic_vector(17 downto 0) := (others=>'0');
+begin
 
-unsigned long          pg4_getbaseaddr (int devid, int j);
-unsigned long          pg4_getbaseaddr_size (int devid, int bar);
-unsigned int*          pg4_get_bar0ptr(int devid);
-unsigned int*          pg4_get_bar1ptr(int devid);
-unsigned int*          pg4_get_dmawptr (int devid);
-unsigned int*          pg4_get_dmarptr (int devid);
-unsigned int           pg4_get_dma_size (int devid);
-void                   pg4_get_pfpga_info (int devid, char *info);
+-- GENERATE rst PULS ------------------
+process(pclk) begin
+  if(pclk'event and pclk='1') then
+    rst <= rstn(0);
+  end if;
+end process;
 
-int                    pg4_open (int id);
+process (clk) begin
+  if(clk'event and clk='1') then
+    rstn(0) <= start_r AND (NOT start);
+    start_r <= start;
+  end if;
+end process;
+---------------------------------------
 
-inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
-inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
-unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+-- GENERATE run --------------------------
+process(pclk,rst) begin
+  if(rst = '1') then
+    run <= '0';
+  elsif(pclk'event and pclk='1') then
+    if(mema_dc /= "000000000000000000") then
+      run <= '1';
+    else
+      run <= '0';
+    end if;
+  end if;
+end process;
 
-void                   pg4_set_pfpga_info (int devid, char *info);
+-- GENERATE mem_adr  ---------------------
+process(pclk,rst) begin
+  if(rst = '1') then
+    mema_dc <=  n(17 downto 0) ;
+  elsif(pclk'event and pclk='1') then
+    if(mema_dc /= "000000000000000000") then
+      mema_dc <= mema_dc - "000000000000000001";
+    end if;
+  end if;
+end process;
+--hoge
+  mem_adr <= "000000000000000" & mema_dc(15 downto 0) & "0";  -- G5
+--mem_adr <= "00000000000000" & mema_dc(15 downto 0) & "00";  -- SPH FirstStage
+--mem_adr <= "0000000000000" & mema_dc(15 downto 0) & "000";  -- SPH SecondStage
 
-inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
-inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
-
-
-
-// --- following are removed. ---
-int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void                   pg4_wait (int devid, int n);
-
-
+end rtl;
