@@ -1,40 +1,26 @@
-Wed Dec 23 19:55:17 JST 2009
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+Thu Jan  7 20:05:46 JST 2010
+#include <stdio.h>
+#include "nbodysim.h"
 
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
 
-entity WRITECOMB_CHECK is
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
 
-architecture rtl of WRITECOMB_CHECK is
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
 
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
+  fflush(fp);
+}
 
-begin
-
-  IS_ERR <= cnt;
-
-  cntr <= cnt;
-
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
-      end if;
-    end if;
-  end process;
-
-end rtl;
