@@ -1,74 +1,170 @@
-Wed Jan 13 19:44:47 JST 2010
-// gravity3.pgdl
-// Calculate Potential, Acceleration and Jerk
-// Author: Andreas Ernst, August 18, 2006
+Mon Jan 25 19:31:04 JST 2010
+#!/bin/sh
+#
+# Copyright (c) 2006, 2008 Junio C Hamano
+#
+# The "pre-rebase" hook is run just before "git rebase" starts doing
+# its job, and can prevent the command from running by exiting with
+# non-zero status.
+#
+# The hook is called with the following parameters:
+#
+# $1 -- the upstream the series was forked from.
+# $2 -- the branch being rebased (or empty when rebasing the current branch).
+#
+# This sample shows how to prevent topic branches that are already
+# merged to 'next' branch from getting rebased, because allowing it
+# would result in rebasing already published history.
 
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define NEXAD2 1
-#define FSHIFT pow(2.0,(double)NEXAD)
+publish=next
+basebranch="$1"
+if test "$#" = 2
+then
+	topic="refs/heads/$2"
+else
+	topic=`git symbolic-ref HEAD` ||
+	exit 0 ;# we do not interrupt rebasing detached HEAD
+fi
 
-/MEM xj[3] <= x[][]  : float(NFLO, NMAN);
-/MEM vj[3] <= v[][]  : float(NFLO, NMAN);
-/MEM mj    <= m[]    : float(NFLO, NMAN);
-/REG xi[3] <= x[][]  : float(NFLO, NMAN);
-/REG vi[3] <= v[][]  : float(NFLO, NMAN);
-/REG rx    => p[]    : fix(NACC);
-/REG sx[3] => a[][]  : fix(NACC);
-/REG tx[3] => jk[][] : fix(NACC);
+case "$topic" in
+refs/heads/??/*)
+	;;
+*)
+	exit 0 ;# we do not interrupt others.
+	;;
+esac
 
-/SCALE rx    : (1.0/FSHIFT);
-/SCALE sx[3] : (1.0/FSHIFT);
-/SCALE tx[3] : (1.0/FSHIFT);
+# Now we are dealing with a topic branch being rebased
+# on top of master.  Is it OK to rebase it?
 
-/NVMP 1;
-/NPIPE 1;
+# Does the topic really exist?
+git show-ref -q "$topic" || {
+	echo >&2 "No such branch $topic"
+	exit 1
+}
 
-// Acceleration, 1st part
+# Is topic fully merged to master?
+not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
+if test -z "$not_in_master"
+then
+	echo >&2 "$topic is fully merged to master; better remove it."
+	exit 1 ;# we could allow it, but there is no point.
+fi
 
-pg_float_sub           (xj,xi,dx,              NFLO,NMAN, 4);     // (1)
-pg_float_mult          (dx,dx,dx2,             NFLO,NMAN, 2);     // (2)
-pg_float_unsigned_add  (dx2[0],dx2[1],x2y2,    NFLO,NMAN, 4);     // (3)
-pg_float_unsigned_add  (dx2[2],x2y2,r2,        NFLO,NMAN, 4);     // (4)
-pg_float_sqrt          (r2,r1,                 NFLO,NMAN, 3);     // (5)
-pg_float_mult          (r2,r1,r3,              NFLO,NMAN, 2);     // (6)
-pg_float_mult          (r3,r2,r5,              NFLO,NMAN, 2);     // (7)
-pg_float_recipro       (r5,r5i,                NFLO,NMAN, 2);     // (8)
-pg_float_mult          (r5i,mj,mr5i,           NFLO,NMAN, 2);     // (9)
-pg_float_mult          (mr5i,r2,mf,            NFLO,NMAN, 2);     // (10)
+# Is topic ever merged to next?  If so you should not be rebasing it.
+only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
+only_next_2=`git rev-list ^master           ${publish} | sort`
+if test "$only_next_1" = "$only_next_2"
+then
+	not_in_topic=`git rev-list "^$topic" master`
+	if test -z "$not_in_topic"
+	then
+		echo >&2 "$topic is already up-to-date with master"
+		exit 1 ;# we could allow it, but there is no point.
+	else
+		exit 0
+	fi
+else
+	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
+	/usr/bin/perl -e '
+		my $topic = $ARGV[0];
+		my $msg = "* $topic has commits already merged to public branch:\n";
+		my (%not_in_next) = map {
+			/^([0-9a-f]+) /;
+			($1 => 1);
+		} split(/\n/, $ARGV[1]);
+		for my $elem (map {
+				/^([0-9a-f]+) (.*)$/;
+				[$1 => $2];
+			} split(/\n/, $ARGV[2])) {
+			if (!exists $not_in_next{$elem->[0]}) {
+				if ($msg) {
+					print STDERR $msg;
+					undef $msg;
+				}
+				print STDERR " $elem->[1]\n";
+			}
+		}
+	' "$topic" "$not_in_next" "$not_in_master"
+	exit 1
+fi
 
-// Potential
+exit 0
 
-pg_float_mult          (mf,r2,mp,              NFLO,NMAN, 2);      // (11)
-pg_float_expadd        (mp,ps,                 NEXAD,NFLO,NMAN,1); // (12)
-pg_float_fixaccum      (ps,rx,                 NFLO,NMAN, NFIX, NACC, 2);  // (13)
+################################################################
 
-// Acceleration, 2nd part
+This sample hook safeguards topic branches that have been
+published from being rewound.
 
-pg_float_expadd        (mf,fs,                 NEXAD,NFLO,NMAN,1);// (14)
-pg_float_mult          (fs,dx,fx,              NFLO,NMAN, 2);     // (15)
-pg_float_fixaccum      (fx,sx,                 NFLO,NMAN, NFIX, NACC, 2);  // (16)
+The workflow assumed here is:
 
-// Jerk, 1st term
+ * Once a topic branch forks from "master", "master" is never
+   merged into it again (either directly or indirectly).
 
-pg_float_sub           (vj,vi,dv,              NFLO,NMAN, 4);     // (17)
-pg_float_mult          (fs,dv,jk1,             NFLO,NMAN, 2);     // (18)
+ * Once a topic branch is fully cooked and merged into "master",
+   it is deleted.  If you need to build on top of it to correct
+   earlier mistakes, a new topic branch is created by forking at
+   the tip of the "master".  This is not strictly necessary, but
+   it makes it easier to keep your history simple.
 
-// Jerk, 2nd term
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
 
-pg_float_mult          (dx,dv,xv,              NFLO,NMAN, 2);      // (19)
-pg_float_unsigned_add  (xv[0],xv[1],xv1,       NFLO,NMAN, 4);      // (20)
-pg_float_unsigned_add  (xv[2],xv1,xv2,         NFLO,NMAN, 4);      // (21)
-pg_float_expadd        (xv2,xv2x2,             NEXAD2,NFLO,NMAN,1);// (22)
-pg_float_unsigned_add  (xv2x2,xv2,xv2x3,       NFLO,NMAN, 4);      // (23)
-pg_float_mult          (mr5i,xv2x3,jk2a,       NFLO,NMAN, 2);      // (24)
-pg_float_expadd        (jk2a,jk2s,             NEXAD,NFLO,NMAN,1); // (25)
-pg_float_mult          (jk2s,dx,jk2,           NFLO,NMAN, 2);      // (26)
+The script, being an example, hardcodes the publish branch name
+to be "next", but it is trivial to make it configurable via
+$GIT_DIR/config mechanism.
 
-// Jerk, 1st - 2nd term
+With this workflow, you would want to know:
 
-pg_float_sub           (jk1,jk2,jk0,           NFLO,NMAN, 4);      // (27)
-pg_float_fixaccum      (jk0,tx,                NFLO,NMAN, NFIX, NACC, 2);  // (28)
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up before publishing, and things that have not been
+    merged into other branches can be easily rebased without
+    affecting other people.  But once it is published, you would
+    not want to rewind it.
+
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you should not
+    build on top of it -- other people may already want to
+    change things related to the topic as patches against your
+    "master", so if you need further changes, it is better to
+    fork the topic (perhaps with the same name) afresh from the
+    tip of "master".
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
+
+
+A, B and C are topic branches.
+
+ * A has one fix since it was merged up to "next".
+
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
+
+ * C has not merged to "next" at all.
+
+We would want to allow C to be rebased, refuse A, and encourage
+B to be deleted.
+
+To compute (1):
+
+	git rev-list ^master ^topic next
+	git rev-list ^master        next
+
+	if these match, topic has not merged in next at all.
+
+To compute (2):
+
+	git rev-list master..topic
+
+	if this is empty, it is fully merged to "master".
