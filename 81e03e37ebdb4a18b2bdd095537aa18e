@@ -1,50 +1,144 @@
-Thu Jan 21 19:53:35 JST 2010
-/EQNINJ
-/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
-/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
-/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/NPIPE 1
-/NVMP 1
-void force(double x[][3], double m[], double eps2, double a[][3], int n){
-  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
-  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
-  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
-  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
-  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
-  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
-  pg_log_shift(1,dx_0,x2_0,17)
-  pg_log_shift(1,dx_1,x2_1,17)
-  pg_log_shift(1,dx_2,x2_2,17)
-  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
-  pg_log_shift(-1,r2,r1,17)
-  pg_log_muldiv(MUL,r2,r1,r3,17,2)
-  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
-  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
-  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
-  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
-  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
-  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
-  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
-  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
-  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
-  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
-  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
-  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
-  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
-  pg_pdelay(ieps2,ieps2r,17,7)
-  pg_pdelay(mj,mjr,17,27)
-  pg_pdelay(dx_0,dx_0r,17,22)
-  pg_pdelay(dx_1,dx_1r,17,22)
-  pg_pdelay(dx_2,dx_2r,17,22)
-  pg_rundelay(41)
-}
+Sat Jan 30 19:55:36 JST 2010
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Sun Jan 02 23:10:52 2005
+
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
+
+ENTITY local_write IS
+END local_write;
+
+ARCHITECTURE testbench_arch OF local_write IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\local_write.ano";
+	COMPONENT local_write
+		PORT (
+			MEM_AD : In  std_logic_vector (16 DOWNTO 0);
+			MEM_WE : In  std_logic;
+			MEM_DTI : In  std_logic_vector (63 DOWNTO 0);
+			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
+
+	SIGNAL MEM_AD : std_logic_vector (16 DOWNTO 0);
+	SIGNAL MEM_WE : std_logic;
+	SIGNAL MEM_DTI : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
+
+BEGIN
+	UUT : local_write
+	PORT MAP (
+		MEM_AD => MEM_AD,
+		MEM_WE => MEM_WE,
+		MEM_DTI => MEM_DTI,
+		DMAW_ENABLE => DMAW_ENABLE,
+		DBUS_Port => DBUS_Port,
+		RST => RST,
+		CLK => CLK
+	);
+
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
+
+		PROCEDURE ANNOTATE_DMAW_ENABLE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DMAW_ENABLE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_DBUS_Port(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		TX_TIME := TX_TIME + 5;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		TX_TIME := TX_TIME + 50;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		TX_TIME := TX_TIME + 35;
+		ANNOTATE_DMAW_ENABLE(TX_TIME);
+		ANNOTATE_DBUS_Port(TX_TIME);
+		WAIT FOR 10 ns;
+		TX_TIME := TX_TIME + 10;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
+
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
+
+		BEGIN
+		-- --------------------
+		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
+		MEM_WE <= transport '0';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 300 ns; -- Time=300 ns
+		MEM_AD <= transport std_logic_vector'("00000010100000000"); --500
+		MEM_WE <= transport '1';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000001000100010001"); --1111
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=400 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000010001000100010"); --2222
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=500 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000011001100110011"); --3333
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=600 ns
+		MEM_WE <= transport '0';
+		-- --------------------
+		WAIT FOR 3505 ns; -- Time=4105 ns
+		-- --------------------
+
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
+
+CONFIGURATION local_write_cfg OF local_write IS
+	FOR testbench_arch
+	END FOR;
+END local_write_cfg;
