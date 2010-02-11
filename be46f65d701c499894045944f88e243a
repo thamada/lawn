@@ -1,71 +1,113 @@
-Wed Feb 10 20:19:20 JST 2010
--- 2004/05/13 16:30
--- for matsubayashi simulation
+Thu Feb 11 19:41:54 JST 2010
+-- LOCAL WRITE ( ifpga -> pfpga )
+-- by Tsuyoshi Hamada
+--
+-- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
+-- MEM_WE            __/~~~~~~~~~~\_____ 
+-- MEM_AD              < a0 >< a1 >
+-- MEM_DTI             < d0 >< d1 >
+-- DMAW_ENABLE                      __/~~~~~~~~~~\___  
+-- DBUS_Port                     < a0 >< d0 >< d1 >
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-#define DELAY_SUB 2     /* A */
-#define DELAY_FL  4     /* B */
-#define DELAY_X2Y2 5    /* C */
-#define DELAY_R2   5    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   2    /* I */
-#define DELAY_AC   3    /* J */
+entity LOCAL_WRITE is
+  port (
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
 
-#define DELAY_EPS  6    /* A+B */
-#define DELAY_DX   12   /* C+D+E+F */
-#define DELAY_M    17   /* A+B+C+D+E */
-#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  25   /* (DELAY_CLE) + J */
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_WRITE;
+
+architecture rtl of LOCAL_WRITE is
+
+  signal we0  : std_logic := '0';
+  signal we1  : std_logic := '0';
+  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
+  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
+  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
+
+begin
+  ------------------------------
+  --- we0,1                  ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      we0 <= '0';
+    elsif(CLK'event and CLK='1') then
+      we0 <= MEM_WE;
+    end if;
+  end process;
+
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      we1 <= we0;
+    end if;
+  end process;
+  
+  ------------------------------
+  --- adr                    ---
+  ------------------------------
+  process (RST,CLK,MEM_WE,we0) begin
+    if(RST='1') then
+      adr <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if((MEM_WE = '1') and (we0 = '0')) then
+        adr(18 downto 0) <= MEM_AD(19 downto 1);
+      end if;
+      adr(63 downto 19) <= (others=>'0');
+    end if;
+  end process;
+
+  ------------------------------
+  --- data delay             ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      data1 <= (others=>'0');
+      data0 <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      data1 <= data0;
+      data0 <= MEM_DTI;
+    end if;
+  end process;
+
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (RST,CLK,we0,we1) begin
+    if(RST='1') then
+      DBUS_Port <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(we0 = '1' and we1 = '0') then
+        DBUS_Port <= adr;
+      else
+        DBUS_Port <= data1;
+      end if;
+    end if;
+  end process;
+
+  --- DMAW_ENABLE
+  process (RST,CLK) begin
+    if(RST='1') then
+      DMAW_ENABLE    <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      DMAW_ENABLE(0) <= we1;
+      DMAW_ENABLE(1) <= we1;
+      DMAW_ENABLE(2) <= we1;
+      DMAW_ENABLE(3) <= we1;
+    end if;
+  end process;
 
 
-
-
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
-
-/NPIPE 1
-/NVMP 1
-
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
-
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-}
+end rtl;
