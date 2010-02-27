@@ -1,5 +1,6 @@
-Sat Feb 27 19:29:10 JST 2010
--- ProjNav VHDL simulation template: sim_local_read_cnt.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+Sat Feb 27 20:00:22 JST 2010
+3
+0
+1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
+1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
+1 0 0 0 -0.93240737 -0.86473146 -0
