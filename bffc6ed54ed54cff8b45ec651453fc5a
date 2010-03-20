@@ -1,32 +1,34 @@
-Wed Feb 24 19:45:44 JST 2010
-/*
- * pfpga_info.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+Sat Mar 20 19:30:44 JST 2010
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+--mem_we                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-#define MAXBD 8
-#include "pg4.h"
+entity dmaw_mem_we is
+  port (
+    CLK       : in std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    MEM_WE    : out std_logic );
+end dmaw_mem_we;
 
-int main(int argc, char* argv[])
-{
-  int devid=0;
-  char info[1024];
+architecture rtl of dmaw_mem_we is
 
-  pg4_open(devid);
-  pg4_get_pfpga_info(devid, info);
-  pg4_close(devid);
+begin
 
-  printf("%s\n", info);
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="10") then
+        MEM_WE <= '1';
+      else
+        MEM_WE <= '0';
+      end if;
+    end if;
+  end process;
 
-  return 1;
-}
+end rtl;
