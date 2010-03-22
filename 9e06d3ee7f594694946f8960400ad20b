@@ -1,2 +1,5 @@
-Tue Feb 23 19:50:06 JST 2010
-work	c:\cygwin\home\administrator\fkit\pci64\rtl\local_io.vhd
+Mon Mar 22 19:38:31 JST 2010
+-- ProjNav VHDL simulation template: sim_local_read_if.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
