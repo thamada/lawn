@@ -1,147 +1,114 @@
-Sat Mar 13 19:50:23 JST 2010
-Release 6.2.03i - Bitgen G.31a
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+Wed Mar 31 19:29:24 JST 2010
+-- multiple clock generator
+-- by Tsuyoshi Hamada
+-- Last Modified at 2004/01/11
+-- ===== COMPONENT SAMPLE =======================================
+--component CLK_MULDIV
+--  generic (CLKFX_MULTIPLY : integer :=3;
+--           CLKFX_DIVIDE : integer := 2);
+--  port (ICLK : in std_logic;
+--        OCLK : out std_logic;
+--        OCLK_FX : out std_logic;
+--        LOCKED : out std_logic);
+--end component;
+--
+-- ===== INSTANCIATION SAMPLE ====================================
+--dcm0 : CLK_MULDIV
+----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
+----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
+----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
+----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
+----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
+----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
+----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
+----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
+--  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
+--  port map (
+--	ICLK=>SYS_CLK,
+--	OCLK=>clk,
+--	OCLK_FX=>pclk,
+--	LOCKED=>dcm_locked);
 
-Loading device database for application Bitgen from file "top.ncd".
-   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
-Loading device for application Bitgen from file '2vp70.nph' in environment
-/export/home/opt/xilinx.
-Opened constraints file top.pcf.
 
-Mon Jun 13 23:42:26 2005
+library ieee;
+LIBRARY UNISIM;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+USE UNISIM.Vcomponents.ALL;
 
-bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
+entity CLK_MULDIV is
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end CLK_MULDIV;
 
-Summary of Bitgen Options:
-+----------------------+----------------------+
-| Option Name          | Current Setting      |
-+----------------------+----------------------+
-| Compress             | (Not Specified)*     |
-+----------------------+----------------------+
-| Readback             | (Not Specified)*     |
-+----------------------+----------------------+
-| CRC                  | Enable**             |
-+----------------------+----------------------+
-| DebugBitstream       | No**                 |
-+----------------------+----------------------+
-| ConfigRate           | 4**                  |
-+----------------------+----------------------+
-| StartupClk           | Cclk**               |
-+----------------------+----------------------+
-| DCMShutdown          | Disable**            |
-+----------------------+----------------------+
-| DisableBandgap       | No**                 |
-+----------------------+----------------------+
-| CclkPin              | Pullup**             |
-+----------------------+----------------------+
-| DonePin              | Pullup**             |
-+----------------------+----------------------+
-| HswapenPin           | Pullup*              |
-+----------------------+----------------------+
-| M0Pin                | Pullup**             |
-+----------------------+----------------------+
-| M1Pin                | Pullup**             |
-+----------------------+----------------------+
-| M2Pin                | Pullup**             |
-+----------------------+----------------------+
-| PowerdownPin         | Pullup**             |
-+----------------------+----------------------+
-| ProgPin              | Pullup**             |
-+----------------------+----------------------+
-| TckPin               | Pullup**             |
-+----------------------+----------------------+
-| TdiPin               | Pullup**             |
-+----------------------+----------------------+
-| TdoPin               | Pullup**             |
-+----------------------+----------------------+
-| TmsPin               | Pullup**             |
-+----------------------+----------------------+
-| UnusedPin            | Pulldown**           |
-+----------------------+----------------------+
-| GWE_cycle            | 6**                  |
-+----------------------+----------------------+
-| GTS_cycle            | 5**                  |
-+----------------------+----------------------+
-| LCK_cycle            | NoWait**             |
-+----------------------+----------------------+
-| Match_cycle          | Auto**               |
-+----------------------+----------------------+
-| DONE_cycle           | 4**                  |
-+----------------------+----------------------+
-| Persist              | No*                  |
-+----------------------+----------------------+
-| DriveDone            | No**                 |
-+----------------------+----------------------+
-| DonePipe             | No**                 |
-+----------------------+----------------------+
-| Security             | None**               |
-+----------------------+----------------------+
-| UserID               | 0xFFFFFFFF**         |
-+----------------------+----------------------+
-| ActivateGclk         | No*                  |
-+----------------------+----------------------+
-| ActiveReconfig       | No*                  |
-+----------------------+----------------------+
-| PartialMask0         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask1         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask2         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialGclk          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialLeft          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialRight         | (Not Specified)*     |
-+----------------------+----------------------+
-| Encrypt              | No**                 |
-+----------------------+----------------------+
-| Key0                 | pick*                |
-+----------------------+----------------------+
-| Key1                 | pick*                |
-+----------------------+----------------------+
-| Key2                 | pick*                |
-+----------------------+----------------------+
-| Key3                 | pick*                |
-+----------------------+----------------------+
-| Key4                 | pick*                |
-+----------------------+----------------------+
-| Key5                 | pick*                |
-+----------------------+----------------------+
-| Keyseq0              | M*                   |
-+----------------------+----------------------+
-| Keyseq1              | M*                   |
-+----------------------+----------------------+
-| Keyseq2              | M*                   |
-+----------------------+----------------------+
-| Keyseq3              | M*                   |
-+----------------------+----------------------+
-| Keyseq4              | M*                   |
-+----------------------+----------------------+
-| Keyseq5              | M*                   |
-+----------------------+----------------------+
-| KeyFile              | (Not Specified)*     |
-+----------------------+----------------------+
-| StartKey             | 0*                   |
-+----------------------+----------------------+
-| StartCBC             | pick*                |
-+----------------------+----------------------+
-| FreezeDCI            | No*                  |
-+----------------------+----------------------+
-| DCIUpdateMode        | AsRequired**         |
-+----------------------+----------------------+
-| IEEE1532             | No*                  |
-+----------------------+----------------------+
-| Binary               | No**                 |
-+----------------------+----------------------+
- *  Default setting.
- ** The specified setting matches the default setting.
+architecture rtl of CLK_MULDIV is
+component BUFG port (I: in  std_logic;  O: out  std_logic); 
+end component;
+component IBUFG port(I: in std_logic; O: out std_logic);
+end component;
+component DCM
+  generic ( 
+       CLKFX_MULTIPLY : integer := 3;
+       CLKFX_DIVIDE : integer := 2;
+       CLKIN_PERIOD : real := 15.000000;
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "FIXED";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+  port ( CLKIN   : in  std_logic;
+       CLKFB   : in  std_logic;
+       DSSEN   : in  std_logic;
+       PSINCDEC   : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK   : in  std_logic;
+       RST     : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90   : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X   : out std_logic;
+       CLK2X180   : out std_logic;
+       CLKDV   : out std_logic;
+       CLKFX   : out std_logic;
+       CLKFX180   : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
 
-Running DRC.
-INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
-   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
-   consult the Virtex-II Interactive Data Sheet.
-DRC detected 0 errors and 0 warnings.
-Creating bit map...
-Saving bit stream in "top.bit".
-Bitstream generation is complete.
+signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
+
+begin
+
+dcm0 : DCM
+  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
+	CLKFX_DIVIDE=>CLKFX_DIVIDE,
+        CLKIN_PERIOD => 15.000000,
+	DUTY_CYCLE_CORRECTION=>TRUE)
+  port map(
+    RST          => '0',         -- リセット
+    CLKIN        => dcm_in,      -- PHASE SHIFT入力クロック
+    CLKFB        => dcm_fb,         -- FB入力
+    DSSEN        => '0',
+    PSINCDEC     => '0',
+    PSEN         => '0',         -- 位相シフトイネーブル
+    PSCLK        => '0',         -- 位相シフトクロック
+    LOCKED       => LOCKED,
+    CLKFX        => dcm_fx,      -- ICLK x N
+    CLK0         => dcm_out      -- PHASE SHIFT出力クロック
+  );
+
+U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
+U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
+U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
+OCLK <= dcm_fb;
+end rtl;
+
