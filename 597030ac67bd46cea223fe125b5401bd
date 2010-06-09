@@ -1,82 +1,91 @@
-Wed May  5 20:23:49 JST 2010
------------------------------------------------
---  pgpg-b3 dual port RAM module (for IMEM)
---      32 bits
---   16384 entries
---  Copyright(c) 2004- by Tsuyoshi Hamada
---  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
---  2004/10/29 : for Jmem by Tsuyoshi Hamada
------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
+Wed Jun  9 20:00:22 JST 2010
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
-entity dp32b16384w is
+--  ena0      _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--  ena1           _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+-- acnt                0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_ADR                   0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                     <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--MEM_WE                   ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity dmaw is
   port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(13 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    MEM_WE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : out std_logic_vector(63 downto 0)   );
+end dmaw;
 
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(13 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0));
+architecture rtl of dmaw is
 
-end dp32b16384w;
-
-architecture rtl of dp32b16384w is
-
-component RAMB16_S1_S1
-  generic (
-         INIT_A : bit_vector := X"0";
-         INIT_B : bit_vector := X"0";
-         SRVAL_A : bit_vector := X"0";
-         SRVAL_B : bit_vector := X"0";
-         WRITE_MODE_A : string :="WRITE_FIRST";
-         WRITE_MODE_B : string :="WRITE_FIRST");
-  port ( doa   : out std_logic_vector(0 downto 0);
-         addra : in std_logic_vector(13 downto 0);
-         clka  : in std_logic;
-         dia   : in std_logic_vector(0 downto 0);
-         ena   : in std_logic;
-         ssra  : in std_logic;
-         wea   : in std_logic;
-
-         dob   : out std_logic_vector(0 downto 0);
-         addrb : in std_logic_vector(13 downto 0);
-         clkb  : in std_logic;
-         dib   : in std_logic_vector(0 downto 0);
-         enb   : in std_logic;
-         ssrb  : in std_logic;
-         web   : in std_logic);
-end component;
+signal ena0,ena1,ena2,ena3,ena4 : std_logic :='0';
+signal acnt,acntr : std_logic_vector(18 downto 0) :=(others=>'0');
+signal we : std_logic :='0';
 
 begin
 
-  forgen1: for i in 0 to 31 generate
-    uraml: RAMB16_S1_S1 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
-	      PORT MAP(-- FIFO SIDE --
-                       clka=>clka,
-                       addra=>addra,
-                       dia=>dina(i downto i),
-                       doa=>douta(i downto i),
-                       ena=>'1',
-                       ssra=>'0',
-                       wea=>wea,
-                       -- LOCAL SIDE --
-                       clkb=>clkb,
-                       addrb=>addrb,
-                       dib=>dinb(i downto i),
-                       dob=>doutb(i downto i),
-                       enb=>'1',
-                       ssrb=>'0',
-                       web=>web);
-  end generate forgen1;
+  -- MEM_DATA --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_DATA <= DBUS;
+    end if;
+  end process;
+
+  -- MEM_WE --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_WE <= ena1;
+    end if;
+  end process;
+
+  -- MEM_ADR --
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      MEM_ADR <= acnt;
+    end if;
+  end process;
+
+  -- acnt
+  acntr <= acnt;
+  process (RST,CLK,ena0,ena1) begin
+    if(RST = '1') then
+      acnt  <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((ena0='1') AND (ena1='0')) then
+        acnt <= DBUS(18 downto 0);
+      elsif((ena0='1') AND (ena1='1')) then
+        acnt <= acntr + "0000000000000000001";
+      else
+        acnt <= (others=>'0');
+      end if;
+    end if;
+  end process;
+
+
+
+  -- ENABLE delays
+  ena0 <= ENABLE;
+  process (CLK) begin
+    if(CLK'event and CLK = '1') then
+      ena4 <= ena3;
+      ena3 <= ena2;
+      ena2 <= ena1;
+      ena1 <= ena0;
+    end if;
+  end process;
 
 
 end rtl;
-
