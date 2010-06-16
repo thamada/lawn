@@ -1,74 +1,91 @@
-Sun Jun 13 19:45:45 JST 2010
-// gravity3.pgdl
-// Calculate Potential, Acceleration and Jerk
-// Author: Andreas Ernst, August 18, 2006
+Wed Jun 16 19:51:20 JST 2010
+#include <stdio.h>
+#include <math.h>
+#ifndef LONG
+#define LONG unsigned long long int
+#endif
+#ifndef PGINT
+#define PGINT unsigned long long int
+#endif
 
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define NEXAD2 1
-#define FSHIFT pow(2.0,(double)NEXAD)
 
-/MEM xj[3] <= x[][]  : float(NFLO, NMAN);
-/MEM vj[3] <= v[][]  : float(NFLO, NMAN);
-/MEM mj    <= m[]    : float(NFLO, NMAN);
-/REG xi[3] <= x[][]  : float(NFLO, NMAN);
-/REG vi[3] <= v[][]  : float(NFLO, NMAN);
-/REG rx    => p[]    : fix(NACC);
-/REG sx[3] => a[][]  : fix(NACC);
-/REG tx[3] => jk[][] : fix(NACC);
+void
+force_double(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    int             i, j;
+    double          sx_0;
+    double          sx_1;
+    double          sx_2;
+    double          xi_0;
+    double          xj_0;
+    double          xi_1;
+    double          xj_1;
+    double          xi_2;
+    double          xj_2;
+    double          dx2_0;
+    double          dx2_1;
+    double          dx2_2;
+    double          ieps2;
+    double          x2y2;
+    double          z2e2;
+    double          r2;
+    double          r1;
+    double          r3;
+    double          r3i;
+    double          mj;
+    double          mf;
+    double          dx_0;
+    double          dx_1;
+    double          fs;
+    double          dx_2;
+    double          fx_0;
+    double          fx_1;
+    double          fx_2;
 
-/SCALE rx    : (1.0/FSHIFT);
-/SCALE sx[3] : (1.0/FSHIFT);
-/SCALE tx[3] : (1.0/FSHIFT);
 
-/NVMP 1;
-/NPIPE 1;
+    for (i = 0; i < n; i++) {
+	xi_0 = x[i][0];
+	xi_1 = x[i][1];
+	xi_2 = x[i][2];
+	ieps2 = eps2;
 
-// Acceleration, 1st part
+	sx_0 = 0.0;
+	sx_1 = 0.0;
+	sx_2 = 0.0;
 
-pg_float_sub           (xj,xi,dx,              NFLO,NMAN, 4);     // (1)
-pg_float_mult          (dx,dx,dx2,             NFLO,NMAN, 2);     // (2)
-pg_float_unsigned_add  (dx2[0],dx2[1],x2y2,    NFLO,NMAN, 4);     // (3)
-pg_float_unsigned_add  (dx2[2],x2y2,r2,        NFLO,NMAN, 4);     // (4)
-pg_float_sqrt          (r2,r1,                 NFLO,NMAN, 3);     // (5)
-pg_float_mult          (r2,r1,r3,              NFLO,NMAN, 2);     // (6)
-pg_float_mult          (r3,r2,r5,              NFLO,NMAN, 2);     // (7)
-pg_float_recipro       (r5,r5i,                NFLO,NMAN, 2);     // (8)
-pg_float_mult          (r5i,mj,mr5i,           NFLO,NMAN, 2);     // (9)
-pg_float_mult          (mr5i,r2,mf,            NFLO,NMAN, 2);     // (10)
+	for (j = n - 1; j >= 0; j--) {
+	    xj_0 = x[j][0];
+	    xj_1 = x[j][1];
+	    xj_2 = x[j][2];
+	    mj = m[j];
 
-// Potential
-
-pg_float_mult          (mf,r2,mp,              NFLO,NMAN, 2);      // (11)
-pg_float_expadd        (mp,ps,                 NEXAD,NFLO,NMAN,1); // (12)
-pg_float_fixaccum      (ps,rx,                 NFLO,NMAN, NFIX, NACC, 2);  // (13)
-
-// Acceleration, 2nd part
-
-pg_float_expadd        (mf,fs,                 NEXAD,NFLO,NMAN,1);// (14)
-pg_float_mult          (fs,dx,fx,              NFLO,NMAN, 2);     // (15)
-pg_float_fixaccum      (fx,sx,                 NFLO,NMAN, NFIX, NACC, 2);  // (16)
-
-// Jerk, 1st term
-
-pg_float_sub           (vj,vi,dv,              NFLO,NMAN, 4);     // (17)
-pg_float_mult          (fs,dv,jk1,             NFLO,NMAN, 2);     // (18)
-
-// Jerk, 2nd term
-
-pg_float_mult          (dx,dv,xv,              NFLO,NMAN, 2);      // (19)
-pg_float_unsigned_add  (xv[0],xv[1],xv1,       NFLO,NMAN, 4);      // (20)
-pg_float_unsigned_add  (xv[2],xv1,xv2,         NFLO,NMAN, 4);      // (21)
-pg_float_expadd        (xv2,xv2x2,             NEXAD2,NFLO,NMAN,1);// (22)
-pg_float_unsigned_add  (xv2x2,xv2,xv2x3,       NFLO,NMAN, 4);      // (23)
-pg_float_mult          (mr5i,xv2x3,jk2a,       NFLO,NMAN, 2);      // (24)
-pg_float_expadd        (jk2a,jk2s,             NEXAD,NFLO,NMAN,1); // (25)
-pg_float_mult          (jk2s,dx,jk2,           NFLO,NMAN, 2);      // (26)
-
-// Jerk, 1st - 2nd term
-
-pg_float_sub           (jk1,jk2,jk0,           NFLO,NMAN, 4);      // (27)
-pg_float_fixaccum      (jk0,tx,                NFLO,NMAN, NFIX, NACC, 2);  // (28)
+	    dx_0 = xi_0 - xj_0;
+	    dx_1 = xi_1 - xj_1;
+	    dx_2 = xi_2 - xj_2;
+	    dx2_0 = dx_0 * dx_0;
+	    dx2_1 = dx_1 * dx_1;
+	    dx2_2 = dx_2 * dx_2;
+	    x2y2 = dx2_0 + dx2_1;
+	    z2e2 = dx2_2 + ieps2;
+	    r2 = x2y2 + z2e2;
+	    r1 = sqrt(r2);
+	    r3 = r2 * r1;
+	    if (r3 != 0.0) {
+		r3i = 1.0 / r3;
+	    } else {
+		r3i = 0.0;
+	    }
+	    mf = r3i * mj;
+	    fs = mf * pow(2.0, (double) 31);
+	    fx_0 = fs * dx_0;
+	    fx_1 = fs * dx_1;
+	    fx_2 = fs * dx_2;
+	    sx_0 += fx_0;
+	    sx_1 += fx_1;
+	    sx_2 += fx_2;
+	}
+	a[i][0] = sx_0 * (-1.0 / pow(2.0, (double) 31));
+	a[i][1] = sx_1 * (-1.0 / pow(2.0, (double) 31));
+	a[i][2] = sx_2 * (-1.0 / pow(2.0, (double) 31));
+    }
+}
