@@ -1,29 +1,41 @@
-Sun Jun 13 20:01:54 JST 2010
-//Time-stamp: "2006-11-21 00:17:47 hamada"
+Sat Jun 19 19:26:27 JST 2010
+// Time-stamp: <2006-09-04 13:41:34 hamada>
+// by T.Hamada
+//
+// <2006-09-04 13:33:47 hamada>
 
-#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
-#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
-#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-int pgr_open(int);
-void pgr_close(int);
+#include "pg4.h"
 
-void pgr_reset(int devid);
-int  pgr_get_writecomb_err(int devid);
+void rst(int devid, int d, int msec)
+{
+  d = 0xff & d;
+  WriteBase0(devid, 0x4, d);
+  usleep(msec*1000);
+}
 
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  int i;
 
-void pgr_setipset(int devid, unsigned int *idata, int num);
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
+  pg4_open(devid);
+  
+  for(i=0;i<16;i++){
+    int x;
+    x = 0xff&(1<<(i%8));
+    rst(devid, x, 100);
+    rst(devid, 0, 1);
+  }
 
-void pgr_start_calc(int devid, unsigned int n);
-void pgr_calc_start(int devid, unsigned int n);
-void pgr_calc_finish(int devid);
+  rst(devid, 0xff, 1000);
+  rst(devid, 0x0, 0);
 
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+  pg4_close(devid);
 
-void pgr_set_npipe_per_chip(int devid, int n);
-void pgr_set_jwidth(int devid, int n);
-void pgr_set_nchip(int nchip);
+  return 0;
+}
