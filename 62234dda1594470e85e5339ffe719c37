@@ -1,147 +1,74 @@
-Wed Jul 21 20:13:42 JST 2010
-Release 6.2.03i - Bitgen G.31a
+Thu Jul 29 19:29:08 JST 2010
+--------------------------------------------------------------------------------
+Release 6.2.03i Trace G.28
 Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-Loading device database for application Bitgen from file "top.ncd".
-   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
-Loading device for application Bitgen from file '2vp70.nph' in environment
-/export/home/opt/xilinx.
-Opened constraints file top.pcf.
+trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
 
-Mon Jun 13 23:42:26 2005
 
-bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
+Design file:              top.ncd
+Physical constraint file: top.pcf
+Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
+Report level:             error report
 
-Summary of Bitgen Options:
-+----------------------+----------------------+
-| Option Name          | Current Setting      |
-+----------------------+----------------------+
-| Compress             | (Not Specified)*     |
-+----------------------+----------------------+
-| Readback             | (Not Specified)*     |
-+----------------------+----------------------+
-| CRC                  | Enable**             |
-+----------------------+----------------------+
-| DebugBitstream       | No**                 |
-+----------------------+----------------------+
-| ConfigRate           | 4**                  |
-+----------------------+----------------------+
-| StartupClk           | Cclk**               |
-+----------------------+----------------------+
-| DCMShutdown          | Disable**            |
-+----------------------+----------------------+
-| DisableBandgap       | No**                 |
-+----------------------+----------------------+
-| CclkPin              | Pullup**             |
-+----------------------+----------------------+
-| DonePin              | Pullup**             |
-+----------------------+----------------------+
-| HswapenPin           | Pullup*              |
-+----------------------+----------------------+
-| M0Pin                | Pullup**             |
-+----------------------+----------------------+
-| M1Pin                | Pullup**             |
-+----------------------+----------------------+
-| M2Pin                | Pullup**             |
-+----------------------+----------------------+
-| PowerdownPin         | Pullup**             |
-+----------------------+----------------------+
-| ProgPin              | Pullup**             |
-+----------------------+----------------------+
-| TckPin               | Pullup**             |
-+----------------------+----------------------+
-| TdiPin               | Pullup**             |
-+----------------------+----------------------+
-| TdoPin               | Pullup**             |
-+----------------------+----------------------+
-| TmsPin               | Pullup**             |
-+----------------------+----------------------+
-| UnusedPin            | Pulldown**           |
-+----------------------+----------------------+
-| GWE_cycle            | 6**                  |
-+----------------------+----------------------+
-| GTS_cycle            | 5**                  |
-+----------------------+----------------------+
-| LCK_cycle            | NoWait**             |
-+----------------------+----------------------+
-| Match_cycle          | Auto**               |
-+----------------------+----------------------+
-| DONE_cycle           | 4**                  |
-+----------------------+----------------------+
-| Persist              | No*                  |
-+----------------------+----------------------+
-| DriveDone            | No**                 |
-+----------------------+----------------------+
-| DonePipe             | No**                 |
-+----------------------+----------------------+
-| Security             | None**               |
-+----------------------+----------------------+
-| UserID               | 0xFFFFFFFF**         |
-+----------------------+----------------------+
-| ActivateGclk         | No*                  |
-+----------------------+----------------------+
-| ActiveReconfig       | No*                  |
-+----------------------+----------------------+
-| PartialMask0         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask1         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask2         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialGclk          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialLeft          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialRight         | (Not Specified)*     |
-+----------------------+----------------------+
-| Encrypt              | No**                 |
-+----------------------+----------------------+
-| Key0                 | pick*                |
-+----------------------+----------------------+
-| Key1                 | pick*                |
-+----------------------+----------------------+
-| Key2                 | pick*                |
-+----------------------+----------------------+
-| Key3                 | pick*                |
-+----------------------+----------------------+
-| Key4                 | pick*                |
-+----------------------+----------------------+
-| Key5                 | pick*                |
-+----------------------+----------------------+
-| Keyseq0              | M*                   |
-+----------------------+----------------------+
-| Keyseq1              | M*                   |
-+----------------------+----------------------+
-| Keyseq2              | M*                   |
-+----------------------+----------------------+
-| Keyseq3              | M*                   |
-+----------------------+----------------------+
-| Keyseq4              | M*                   |
-+----------------------+----------------------+
-| Keyseq5              | M*                   |
-+----------------------+----------------------+
-| KeyFile              | (Not Specified)*     |
-+----------------------+----------------------+
-| StartKey             | 0*                   |
-+----------------------+----------------------+
-| StartCBC             | pick*                |
-+----------------------+----------------------+
-| FreezeDCI            | No*                  |
-+----------------------+----------------------+
-| DCIUpdateMode        | AsRequired**         |
-+----------------------+----------------------+
-| IEEE1532             | No*                  |
-+----------------------+----------------------+
-| Binary               | No**                 |
-+----------------------+----------------------+
- *  Default setting.
- ** The specified setting matches the default setting.
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
 
-Running DRC.
-INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
-   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
-   consult the Virtex-II Interactive Data Sheet.
-DRC detected 0 errors and 0 warnings.
-Creating bit map...
-Saving bit stream in "top.bit".
-Bitstream generation is complete.
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
+   option. All paths that are not constrained will be reported in the
+   unconstrained paths section(s) of the report.
+
+================================================================================
+Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
+
+ 0 items analyzed, 0 timing errors detected.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  19.569ns.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  14.739ns.
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Clock to Setup on destination clock CK66
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+CK66           |   19.959|         |         |         |
+---------------+---------+---------+---------+---------+
+
+
+Timing summary:
+---------------
+
+Timing errors: 0  Score: 0
+
+Constraints cover 1709651 paths, 0 nets, and 63904 connections
+
+Design statistics:
+   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
+
+
+Analysis completed Mon Jun 13 23:42:18 2005
+--------------------------------------------------------------------------------
+
+Peak Memory Usage: 279 MB
