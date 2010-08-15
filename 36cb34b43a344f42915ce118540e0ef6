@@ -1,15 +1,36 @@
-Wed Jul  7 19:28:32 JST 2010
-#!/usr/bin/perl
+Sun Aug 15 19:28:28 JST 2010
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--
+-- DMAR_STATE is used only 
+--                dmar_mem_adr.vhd  
+--                dmar_mem_re.vhd
+--                dmar_start_adr.vhd
+-- dmar_dbus_hiz and dma_mem_data do not used DMAR_STATE.
 
-my $nloop = 16;
-my $logbase = "log.GTX";
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-for(my $ni=2; $ni<131073; $ni = $ni*2){
-    my $bin = "\$\(BIN\)";
-    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
-    my $log = "\$LOG";
-    my $cmd = "$bin $ifile $nloop >> $log";
-    print "\t".$cmd ."\n";
-}
+entity dmar_state is
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmar_state;
 
-1;
+architecture rtl of dmar_state is
+
+component dmaw_state
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end component;
+
+begin
+  u0 : dmaw_state port map(RST=>RST, CLK=>CLK, ENABLE=>ENABLE, STATE=>STATE);
+end rtl;
