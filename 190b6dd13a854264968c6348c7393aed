@@ -1,16 +1,5 @@
-Thu Aug 12 19:27:53 JST 2010
-/** 
-# vを1/2ステップ進める
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
-
-#include <stdio.h>
-#include "nbodysim.h"
-
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
-}
+Mon Aug 23 19:27:32 JST 2010
+-- ProjNav VHDL simulation template: sim_pfpga_dma.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
