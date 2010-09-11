@@ -1,28 +1,53 @@
-Thu Aug 12 20:22:19 JST 2010
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define FSHIFT pow(2.0,(double)NEXAD)
+Sat Sep 11 19:57:42 JST 2010
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-/JPSET xj[3],  x[][],  float, NFLO, NMAN;
-/JPSET mj,     m[],    float, NFLO, NMAN;
-/IPSET xi[3],  x[][],  float, NFLO, NMAN;
-/IPSET ieps2,  eps2,   float, NFLO, NMAN;
-/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
-/NVMP 1;
-/NPIPE 1;
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
-pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
-pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
-pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
-pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
-pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
-pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
-pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
-pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
-pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
-pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
-pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
+void                   pg4_close (int id);
+
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
+
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
+
+int                    pg4_open (int id);
+
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+
+void                   pg4_set_pfpga_info (int devid, char *info);
+
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
+
+
+
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
+
+
