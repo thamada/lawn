@@ -1,25 +1,26 @@
-Sat Sep 11 20:20:37 JST 2010
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+Thu Sep 23 19:33:36 JST 2010
+#include <stdio.h>
+#include "nbodysim.h"
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
+
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
+
+  fflush(fp);
+}
+
