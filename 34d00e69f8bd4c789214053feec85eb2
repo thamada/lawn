@@ -1,127 +1,153 @@
-Mon Nov 22 19:56:10 JST 2010
-//-------------------------
-#define NMAX (1<<17)
-#include <cstdio>
-#include <cstdlib>
-#define USE_CUDA_MALLOC_HOST (yes)
-#define IDIM (4)
-#define JDIM (4)
-#define FDIM (3)
-#define NJ_SHMEM (NTHRE)
+Tue Nov 30 19:28:06 JST 2010
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+-- LOCAL IO (READ & WRITE)
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-float4* h_xj;
-float* h_xi;
-float* h_fo;
-float4* d_xj;
-float* d_xi;
-float* d_fo;
+entity LOCAL_IO is
+  generic (NBIT_L_ADRO : integer := 3);
+  port (
+    
+    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
+    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
+    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
 
-extern "C" void 
-force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
-{
-  static bool is_open = false;
-  int devid = 0;
-  int ndev;
-  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
 
-  if( ni > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" ni > %d : ni=%d\n",ni, NMAX);
-    exit(-1);
-  }
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-  if( nj > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" nj > %d : nj=%d\n",nj, NMAX);
-    exit(-1);
-  }
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
 
-  unsigned int ip_size = sizeof(float) * ni * IDIM;
-  unsigned int jp_size = sizeof(float4) * nj1;
-  unsigned int fo_size = sizeof(float) * ni * FDIM;
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_IO;
+architecture rtl of LOCAL_IO is
 
-  if(is_open == false){
-    char gpu_name[256];
-    CUDA_SAFE_CALL(cudaSetDevice(devid));
-    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
-    if(ndev == 0){
-      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
-      exit(-1);
-    }else{
-      int dev = devid;
-      cudaDeviceProp deviceProp;
-      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
-      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
-	printf("There is no device supporting CUDA.\n");
-      }
-      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
-      sprintf(gpu_name,"%s", deviceProp.name);
-    }
+component LOCAL_WRITE
+  port (
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
 
-    unsigned int _nmax = NMAX;
-    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
-    unsigned int _jp_size = sizeof(float4) * _nmax;
-    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-#if defined(USE_CUDA_MALLOC_HOST)
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
-#else
-    h_xj = (float4*) malloc(_jp_size);
-    h_xi = (float*)  malloc(_ip_size);
-    h_fo = (float*)  malloc(_fo_size);
-#endif
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
-    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
-    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
-    is_open = true;
-  }
-  for(int i = 0; i < nj; i++){
-    h_xj[i].x = (float) xj[i][0];
-    h_xj[i].y = (float) xj[i][1];
-    h_xj[i].z = (float) xj[i][2];
-    h_xj[i].w = (float) mj[i];
-    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-  }
-  if(nj < nj1){
-    for(int i = nj; i < nj1; i++){
-      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-    }
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
-  for(int i = 0; i < ni; i++){
-    h_xi[i     ] = (float) xi[i][0];
-    h_xi[i+ni  ] = (float) xi[i][1];
-    h_xi[i+ni*2] = (float) xi[i][2];
-    h_xi[i+ni*3] = (float) eps2;
-    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
+component LOCAL_READ
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='0'; -- to GPREG0
 
-  //  printf("Nj=%d\n",nj1);
-  /*
-  dim3 grid((ni+NTHRE)/NTHRE);
-  dim3 threads  (NTHRE);
-  */
-  //  printf("------------------------ %d, %d\n",ni, nj1);
-  dim3 grid(ni/128);
-  dim3 threads  (128);
-  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
-  CUT_CHECK_ERROR("Kernel execution failed");
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
 
-  for(int i=0;i<ni; i++){
-    a[i][0] = (double)h_fo[i];
-    a[i][1] = (double)h_fo[i+ni];
-    a[i][2] = (double)h_fo[i+ni*2];
-    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
-  }
-}
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
+-- DMAW
+  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+-- DMAR
+  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+  signal busy_dmar    : std_logic;
+
+begin
+
+  -- DMA BUSY or IDLE
+  process (CLK,busy_dmar,CALC_STS) begin
+    if(CLK'event and CLK='1') then
+      if   (CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '0';
+      elsif(CALC_STS='1' AND busy_dmar='1') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='0') then
+        BUSY_LOCAL_READ <= '1';
+      end if;
+    end if;
+  end process;
+
+
+
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      DBUS_Port <= dbus_port0;
+    end if;
+  end process;
+
+  with busy_dmar select
+    dbus_port0 <= dmar_dbus_o when '1',
+                  dmaw_dbus_o when others;
+
+-------------------------------------------------------------------------------
+-- Write : IFPGA --> PFPGAs
+-------------------------------------------------------------------------------
+u0 : LOCAL_WRITE
+  port map (MEM_AD      => MEM_ADA,
+            MEM_WE      => MEM_WELA,
+            MEM_DTI     => MEM_DTIA,
+            DMAW_ENABLE => DMAW_ENABLE,
+            DBUS_Port   => dmaw_dbus_o,
+            RST         => RST,
+            CLK         => CLK);
+
+-------------------------------------------------------------------------------
+-- Read : IFPGA <-- PFPGAs
+-------------------------------------------------------------------------------
+u1 : LOCAL_READ
+  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
+  port map (NPIPE       => NPIPE,
+            CALC_STS    => CALC_STS,
+            BUSY        => busy_dmar,
+            DMAR_ENABLE => DMAR_ENABLE,
+            DBUS_Port   => dmar_dbus_o,
+            DBUS_idata  => DBUS_idata,
+            DBUS_HiZ    => DBUS_HiZ,
+            MEM_ADB     => MEM_ADB,
+            MEM_WEHB    => MEM_WEHB,
+            MEM_WELB    => MEM_WELB,
+            MEM_DTIB    => MEM_DTIB,
+            RST         => RST,
+            CLK         => CLK);
+
+end rtl;
