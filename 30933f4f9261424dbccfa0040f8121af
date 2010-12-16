@@ -1,4 +1,4 @@
-Wed Oct 27 19:28:09 JST 2010
+Thu Dec 16 19:28:24 JST 2010
 #include "cutil.h"
 
 __device__ float4
