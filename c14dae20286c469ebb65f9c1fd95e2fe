@@ -1,131 +1,147 @@
-Sun Dec  5 19:27:23 JST 2010
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+Thu Jan  6 19:32:50 JST 2011
+Release 6.2.03i - Bitgen G.31a
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-entity USER is
-  port (
-    RST         : in  std_logic;                     -- PCI Bus Reset
-    CLK         : in  std_logic;                     -- PCI bus Clock
-    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
-    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
-    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
-    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
-    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
-    );
-end USER;
+Loading device database for application Bitgen from file "top.ncd".
+   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
+Loading device for application Bitgen from file '2vp70.nph' in environment
+/export/home/opt/xilinx.
+Opened constraints file top.pcf.
 
+Mon Jun 13 23:42:26 2005
 
-architecture USER_rtl of USER is
+bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
 
---------------------------------------------------
--- signals
---------------------------------------------------
+Summary of Bitgen Options:
++----------------------+----------------------+
+| Option Name          | Current Setting      |
++----------------------+----------------------+
+| Compress             | (Not Specified)*     |
++----------------------+----------------------+
+| Readback             | (Not Specified)*     |
++----------------------+----------------------+
+| CRC                  | Enable**             |
++----------------------+----------------------+
+| DebugBitstream       | No**                 |
++----------------------+----------------------+
+| ConfigRate           | 4**                  |
++----------------------+----------------------+
+| StartupClk           | Cclk**               |
++----------------------+----------------------+
+| DCMShutdown          | Disable**            |
++----------------------+----------------------+
+| DisableBandgap       | No**                 |
++----------------------+----------------------+
+| CclkPin              | Pullup**             |
++----------------------+----------------------+
+| DonePin              | Pullup**             |
++----------------------+----------------------+
+| HswapenPin           | Pullup*              |
++----------------------+----------------------+
+| M0Pin                | Pullup**             |
++----------------------+----------------------+
+| M1Pin                | Pullup**             |
++----------------------+----------------------+
+| M2Pin                | Pullup**             |
++----------------------+----------------------+
+| PowerdownPin         | Pullup**             |
++----------------------+----------------------+
+| ProgPin              | Pullup**             |
++----------------------+----------------------+
+| TckPin               | Pullup**             |
++----------------------+----------------------+
+| TdiPin               | Pullup**             |
++----------------------+----------------------+
+| TdoPin               | Pullup**             |
++----------------------+----------------------+
+| TmsPin               | Pullup**             |
++----------------------+----------------------+
+| UnusedPin            | Pulldown**           |
++----------------------+----------------------+
+| GWE_cycle            | 6**                  |
++----------------------+----------------------+
+| GTS_cycle            | 5**                  |
++----------------------+----------------------+
+| LCK_cycle            | NoWait**             |
++----------------------+----------------------+
+| Match_cycle          | Auto**               |
++----------------------+----------------------+
+| DONE_cycle           | 4**                  |
++----------------------+----------------------+
+| Persist              | No*                  |
++----------------------+----------------------+
+| DriveDone            | No**                 |
++----------------------+----------------------+
+| DonePipe             | No**                 |
++----------------------+----------------------+
+| Security             | None**               |
++----------------------+----------------------+
+| UserID               | 0xFFFFFFFF**         |
++----------------------+----------------------+
+| ActivateGclk         | No*                  |
++----------------------+----------------------+
+| ActiveReconfig       | No*                  |
++----------------------+----------------------+
+| PartialMask0         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask1         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask2         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialGclk          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialLeft          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialRight         | (Not Specified)*     |
++----------------------+----------------------+
+| Encrypt              | No**                 |
++----------------------+----------------------+
+| Key0                 | pick*                |
++----------------------+----------------------+
+| Key1                 | pick*                |
++----------------------+----------------------+
+| Key2                 | pick*                |
++----------------------+----------------------+
+| Key3                 | pick*                |
++----------------------+----------------------+
+| Key4                 | pick*                |
++----------------------+----------------------+
+| Key5                 | pick*                |
++----------------------+----------------------+
+| Keyseq0              | M*                   |
++----------------------+----------------------+
+| Keyseq1              | M*                   |
++----------------------+----------------------+
+| Keyseq2              | M*                   |
++----------------------+----------------------+
+| Keyseq3              | M*                   |
++----------------------+----------------------+
+| Keyseq4              | M*                   |
++----------------------+----------------------+
+| Keyseq5              | M*                   |
++----------------------+----------------------+
+| KeyFile              | (Not Specified)*     |
++----------------------+----------------------+
+| StartKey             | 0*                   |
++----------------------+----------------------+
+| StartCBC             | pick*                |
++----------------------+----------------------+
+| FreezeDCI            | No*                  |
++----------------------+----------------------+
+| DCIUpdateMode        | AsRequired**         |
++----------------------+----------------------+
+| IEEE1532             | No*                  |
++----------------------+----------------------+
+| Binary               | No**                 |
++----------------------+----------------------+
+ *  Default setting.
+ ** The specified setting matches the default setting.
 
-  signal DIPSWi      : std_logic_vector( 3 downto 0);          ------ Internal DIPSW Data
-  signal SWCHK_CUNT  : std_logic_vector( 7 downto 0);          ------ Push SW Check Counter
-  signal PSWCHK_CNT0 : std_logic_vector( 2 downto 0);          ------ Push SW 0 Check
-  signal PSWCHK_CNT1 : std_logic_vector( 2 downto 0);          ------ Push SW 1 Check
-  signal PSW_ON0i    : std_logic;                      ------ User Interrupt 0 On Request
-  signal PSW_ON1i    : std_logic;                      ------ User Interrupt 1 On Request
-
-begin
-
-
---------------------------------------------------------------------------------
--- DIPSW Input Signal Output Control Process
---------------------------------------------------------------------------------
-    DIPSWi <= (others=>'0');  -- 2004/11/11 by T.Hamada
-    DIPSW <= DIPSWi;
-
---------------------------------------------------------------------------------
--- Push SW Check Counter Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       SWCHK_CUNT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-       SWCHK_CUNT <= SWCHK_CUNT+1;                  ------ Counter Increment
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 0 Check Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT0 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT0 <= PSWCHK_CNT0(1 downto 0) & PSW_IN(0);    ------ PSW_IN(0) Sampling
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 0 On Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON0i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON0i <= PSWCHK_CNT0(2) and (not PSWCHK_CNT0(1));    ------ SW Check Signal Set
-      else
-        PSW_ON0i <= '0';
-      end if;
-    end if;
-  end process;
-
-    PSW_ON0 <= PSW_ON0i;
-
---------------------------------------------------------------------------------
--- Push SW 1 Check Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT1 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT1 <= PSWCHK_CNT1(1 downto 0) & PSW_IN(1);    ------ PSW_IN(1) Sampling
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 1 On Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON1i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON1i <= PSWCHK_CNT1(2) and (not PSWCHK_CNT1(1));    ------ SW Check Signal Set
-      else
-        PSW_ON1i <= '0';
-      end if;
-    end if;
-  end process;
-
-    PSW_ON1 <= PSW_ON1i;
-
---------------------------------------------------------------------------------
--- User Interrupt 2 Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT2_ON <= '0';
-    elsif (CLK'event and CLK='1') then
-      USERINT2_ON <=  RST and DIPSWi(0) and (not PSWCHK_CNT1(2))
-                            and PSWCHK_CNT1(1);
-    end if;
-  end process;
-
-end USER_rtl;
+Running DRC.
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
+Creating bit map...
+Saving bit stream in "top.bit".
+Bitstream generation is complete.
