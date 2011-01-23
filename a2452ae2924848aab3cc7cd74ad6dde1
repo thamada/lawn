@@ -1,25 +1,28 @@
-Fri Jan  7 19:30:00 JST 2011
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+Sun Jan 23 20:11:15 JST 2011
+#define NFLO 26
+#define NMAN 16
+#define NFIX 57
+#define NACC 64
+#define NEXAD 31
+#define FSHIFT pow(2.0,(double)NEXAD)
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
+/JPSET xj[3],  x[][],  float, NFLO, NMAN;
+/JPSET mj,     m[],    float, NFLO, NMAN;
+/IPSET xi[3],  x[][],  float, NFLO, NMAN;
+/IPSET ieps2,  eps2,   float, NFLO, NMAN;
+/FOSET sx[3],  a[][],  fix,   NACC, (-1.0/FSHIFT);
+/NVMP 1;
+/NPIPE 1;
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+pg_float_sub      (xi,xj, dx,              NFLO,NMAN, 4);
+pg_float_mult     (dx,dx, dx2,             NFLO,NMAN, 2);
+pg_float_unsigned_add(dx2[0],dx2[1], x2y2, NFLO,NMAN, 4);
+pg_float_unsigned_add(dx2[2],ieps2,  z2e2, NFLO,NMAN, 4);
+pg_float_unsigned_add(x2y2,z2e2,r2,        NFLO,NMAN, 4);
+pg_float_sqrt     (r2,r1,                  NFLO,NMAN, 3);
+pg_float_mult     (r2,r1,r3,               NFLO,NMAN, 2);
+pg_float_recipro  (r3,r3i,                 NFLO,NMAN, 2);
+pg_float_mult     (r3i,mj,mf,              NFLO,NMAN, 2);
+pg_float_expadd   (mf,fs,                  NEXAD,NFLO,NMAN,1);
+pg_float_mult     (fs,dx,fx,               NFLO,NMAN, 2);
+pg_float_fixaccum (fx,sx,                  NFLO,NMAN, NFIX, NACC, 4);
