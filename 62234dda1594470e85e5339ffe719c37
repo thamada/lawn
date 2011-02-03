@@ -1,3 +1,2 @@
-Sun Jan 30 19:28:49 JST 2011
-MODULE local_write
-SUBMODULE local_write
+Thu Feb  3 19:27:19 JST 2011
+set AD {../rtl/ifpga.ucf}
