@@ -1,47 +1,30 @@
-Tue Nov 23 19:40:28 JST 2010
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-void b3_init(int devid);
-void b3_init_config(int devid, char* fpga_conf_file);
+Fri Feb  4 19:35:55 JST 2011
+#!/usr/bin/perl
 
 
+my $is_stop = 0;
+my $nboard = 0;
 
-void b3_set_idata(unsigned int devid,      // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int ireg_index, // iregister index
-                  unsigned int data);      // data
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
 
-void b3_reset_jmem_adr();
-void b3_reset_jmem_adr_n(int nchip);
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
 
-void b3_set_jdata(unsigned int devid,      // device id
-                  unsigned int nword,      // number of jdata
-                  unsigned int jdata[] );  // 
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
 
-void b3_set_jdata_n_chip(unsigned int devid,    // device id
-			 unsigned int nchip,    // 0, 1, 2, 3
-			 unsigned int nword,    // number of jdata
-			 unsigned int jdata[]);
+print $nbuf ." buffers exists\n";
 
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
 
-void b3_get_jdata(unsigned int devid,      // device id
-                  unsigned int chip_sel,   // chip_sel
-		  unsigned int jmem_adr,   // mem adr
-                  unsigned int* data );    // data 
-
-void b3_start_calc(unsigned int n,
-		   unsigned int chip_sel);
-
-void b3_start_calc_sepa4jM(unsigned int nrun[]);
-
-unsigned int b3_get_calcsts(unsigned int chip_sel);
-
-
-void b3_get_fodata(unsigned int devid,     // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int fo_index,   // iregister index
-                  unsigned int* data);     // data
+1;
