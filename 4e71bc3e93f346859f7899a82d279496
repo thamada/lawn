@@ -1,17 +1,2 @@
-Thu Feb  3 20:21:13 JST 2011
-#!/usr/bin/perl
-
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
-
-srand(12345);
-
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
-}
+Sat Feb 12 19:37:09 JST 2011
+EN pfpga_config NULL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd sub00/vhpl00
