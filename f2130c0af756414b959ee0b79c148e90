@@ -1,91 +1,86 @@
-Wed Feb  9 19:44:18 JST 2011
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
---MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
---MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+Fri Feb 18 19:38:31 JST 2011
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
 
-entity dmar is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_RE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
-end dmar;
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
 
-architecture rtl of dmar is
-
-component dmar_dbus_hiz
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic);
-end component;
-
-component dmar_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-component dmar_start_adr
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end component;
-
-component dmar_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end component;
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
 
-component dmar_mem_re
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end component;
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
-signal state : std_logic_vector(1 downto 0);
-signal start_adr : std_logic_vector(18 downto 0);
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
 
-begin
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
 
--- DBUSのトライステート処理は上位で行う
--- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
 
- u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
- u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
- u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
- u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
-
- u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
- DBUS_Port <= MEM_DATA;
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
 
 
-end rtl;
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
+
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
+
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
+
+
+
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
+
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
+
