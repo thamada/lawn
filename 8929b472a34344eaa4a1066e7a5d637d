@@ -1,91 +1,51 @@
-Sun Feb  6 20:00:09 JST 2011
-//-----------------------------------------------------------------------------
-// Output Pair-Wise Error
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+Sat Feb 19 19:27:00 JST 2011
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+-- 0->1 : if((state==0)&&(dma_we==1))
+-- 1->2 : if (state==1)
+-- 2->3 : if((state==2) &&(dma_we==0))
+-- 3->0 : if (state==3)
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-#define NMAX 1024
+entity dmaw_state is
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmaw_state;
 
-double rsv[65536][3];
+architecture rtl of dmaw_state is
 
-int main(int argc, char *argv[]) {
-  int index;
-  int n = 2;
+signal state_ff : std_logic_vector(1 downto 0);
+begin
 
-  double m[NMAX];
-  double r[NMAX][3];
-  double v[NMAX][3];
+  STATE <= state_ff;
 
-  double p[NMAX];
-  double a[NMAX][3];
-  double jk[NMAX][3];
+  process (RST,CLK,ENABLE,state_ff) begin
+    if(RST='1') then
+      state_ff <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((state_ff="00") AND (ENABLE='1')) then
+        state_ff <= "01";
+      elsif(state_ff = "01") then
+        state_ff <= "10";
+      elsif((state_ff = "10") AND (ENABLE='0')) then
+        state_ff <= "11";
+      elsif((state_ff = "10") AND (ENABLE='1')) then
+        state_ff <= "10";
+      else -- if(state_ff = "11") then
+        state_ff <= "00";
+      end if;
+    end if;
+  end process;
 
-  double _p[NMAX];
-  double _a[NMAX][3];
-  double _jk[NMAX][3];
-
-  m[0] = m[1] = 1.0;
-
-  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
-
-  index=0;
-  srand(0x12345);
-
-  for (int t = 0; t < 1000 ; t++){
-    
-
-    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
-
-
-
-    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
-
-    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
-    index++;
-
-
-    _force(r, v, m, _p, _a, _jk, n);
-     force(r, v, m,  p,  a,  jk, n);
-
-     double err_p, err_a[3], err_jk[3];
-     double rad;
-     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
-     err_p = fabs(p[0]-_p[0])/_p[0];
-
-    
-     for (int k = 0; k < 3; k++){
-       double host  = _a[0][k];
-       double pipe  =  a[0][k];
-       double err = sqrt((host - pipe)*(host - pipe))/host;
-
-       cout << setw(8);
-       cout.precision(6);
-       cout << rad  << "\t";
-       cout.precision(6);
-       cout << err  << "\t";
-       cout.precision(6);
-       cout << host << "\t";
-       cout.precision(6);
-       cout << pipe << endl;
-
-     }
-
-  }
-  
-
-  debug_position_snap(rsv, 123.456, index, 10);
-
-  return 0;
-}
+end rtl;
