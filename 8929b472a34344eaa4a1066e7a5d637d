@@ -1,44 +1,42 @@
-Sat Mar  5 20:06:39 JST 2011
-// Time-stamp: " "
-#include <stdio.h> 
-#include <string.h>
-#include <stdlib.h>
+Mon Mar 14 20:13:56 JST 2011
+/**
+   # ハードウェア化する部分 
+   #     1.加速度a[][]の初期化
+   #     2.加速度a[][]の計算
+*/
 
-void read_data(char* fname, int* nbody, double posi[][2])
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
+
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
 {
-  int idx,n;
-  char line[2560];
-  FILE *fp;
-  fp = fopen(fname,"r");
-  idx=0;
+  int i,j,d;
+  double dx[3];
 
-  { // get N (number of particles)
-    char* p;
-    fgets(line,100,fp);
-    p = (char* )strtok(line,"\n");
-    sscanf(p,"%d",&n);
-    *nbody = n;
-  }
+  /* a[][]の初期化 */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
 
-  // get all data
-  for(idx=0;idx<n;idx++){
-    char* p;
-    char col[10][400];
-    int i=0;
-    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
-    p = (char* )strtok(line,"\t");
-    strcpy(col[i],p);
-    i++;
-    while((p = (char* )strtok(NULL, "\t"))!=NULL){
-      strcpy(col[i],p);
-      i++;
+  /* 相互作用の計算  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
     }
-    //--- for debug ---
-    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
-    //    printf("\n");
-
-    posi[idx][0]=atof(col[0]);
-    posi[idx][1]=atof(col[1]);
   }
-  fclose(fp);
+
+
 }
