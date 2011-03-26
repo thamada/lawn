@@ -1,8 +1,8 @@
-Sat Mar 26 19:30:11 JST 2011
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\TMP2
+Sat Mar 26 20:00:19 JST 2011
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
 -- VHDL Test Bench created by
 -- HDL Bencher 6.1i
--- Wed Nov 10 11:38:24 2004
+-- Sun Jan 02 23:14:58 2005
 -- 
 -- Notes:
 -- 1) This testbench has been automatically generated from
@@ -14,93 +14,69 @@ Sat Mar 26 19:30:11 JST 2011
 
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_TEXTIO.ALL;
 USE STD.TEXTIO.ALL;
 
-ENTITY sim IS
-END sim;
+ENTITY sim_local_write IS
+END sim_local_write;
 
-ARCHITECTURE testbench_arch OF sim IS
+ARCHITECTURE testbench_arch OF sim_local_write IS
 -- If you get a compiler error on the following line,
 -- from the menu do Options->Configuration select VHDL 87
 FILE RESULTS: TEXT OPEN WRITE_MODE IS "results.txt";
-	COMPONENT pfpga_config
+	COMPONENT local_write
 		PORT (
-			clk : In  std_logic;
-			rst_n : In  std_logic;
-			cmd_reg : In  std_logic_vector (8 DOWNTO 0);
-			data_reg : In  std_logic_vector (31 DOWNTO 0);
-			CFG_D : Out  std_logic_vector (7 DOWNTO 0);
-			CFG_CCLK : Out  std_logic;
-			CFG_PROG_B0 : Out  std_logic;
-			CFG_PROG_B1 : Out  std_logic;
-			CFG_PROG_B2 : Out  std_logic;
-			CFG_PROG_B3 : Out  std_logic;
-			CFG_CS_B0 : Out  std_logic;
-			CFG_CS_B1 : Out  std_logic;
-			CFG_CS_B2 : Out  std_logic;
-			CFG_CS_B3 : Out  std_logic;
-			CFG_RDWR_B : Out  std_logic
+			MEM_AD : In  std_logic_vector (16 DOWNTO 0);
+			MEM_WE : In  std_logic;
+			MEM_DTI : In  std_logic_vector (63 DOWNTO 0);
+			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
 		);
 	END COMPONENT;
 
-	SIGNAL clk : std_logic;
-	SIGNAL rst_n : std_logic;
-	SIGNAL cmd_reg : std_logic_vector (8 DOWNTO 0);
-	SIGNAL data_reg : std_logic_vector (31 DOWNTO 0);
-	SIGNAL CFG_D : std_logic_vector (7 DOWNTO 0);
-	SIGNAL CFG_CCLK : std_logic;
-	SIGNAL CFG_PROG_B0 : std_logic;
-	SIGNAL CFG_PROG_B1 : std_logic;
-	SIGNAL CFG_PROG_B2 : std_logic;
-	SIGNAL CFG_PROG_B3 : std_logic;
-	SIGNAL CFG_CS_B0 : std_logic;
-	SIGNAL CFG_CS_B1 : std_logic;
-	SIGNAL CFG_CS_B2 : std_logic;
-	SIGNAL CFG_CS_B3 : std_logic;
-	SIGNAL CFG_RDWR_B : std_logic;
+	SIGNAL MEM_AD : std_logic_vector (16 DOWNTO 0);
+	SIGNAL MEM_WE : std_logic;
+	SIGNAL MEM_DTI : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
 BEGIN
-	UUT : pfpga_config
+	UUT : local_write
 	PORT MAP (
-		clk => clk,
-		rst_n => rst_n,
-		cmd_reg => cmd_reg,
-		data_reg => data_reg,
-		CFG_D => CFG_D,
-		CFG_CCLK => CFG_CCLK,
-		CFG_PROG_B0 => CFG_PROG_B0,
-		CFG_PROG_B1 => CFG_PROG_B1,
-		CFG_PROG_B2 => CFG_PROG_B2,
-		CFG_PROG_B3 => CFG_PROG_B3,
-		CFG_CS_B0 => CFG_CS_B0,
-		CFG_CS_B1 => CFG_CS_B1,
-		CFG_CS_B2 => CFG_CS_B2,
-		CFG_CS_B3 => CFG_CS_B3,
-		CFG_RDWR_B => CFG_RDWR_B
+		MEM_AD => MEM_AD,
+		MEM_WE => MEM_WE,
+		MEM_DTI => MEM_DTI,
+		DMAW_ENABLE => DMAW_ENABLE,
+		DBUS_Port => DBUS_Port,
+		RST => RST,
+		CLK => CLK
 	);
 
-	PROCESS -- clock process for clk,
+	PROCESS -- clock process for CLK,
 	BEGIN
 		CLOCK_LOOP : LOOP
-		clk <= transport '0';
-		WAIT FOR 5 us;
-		clk <= transport '1';
-		WAIT FOR 5 us;
-		WAIT FOR 45 us;
-		clk <= transport '0';
-		WAIT FOR 45 us;
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		WAIT FOR 10 ns;
 		END LOOP CLOCK_LOOP;
 	END PROCESS;
 
-	PROCESS   -- Process for clk
+	PROCESS   -- Process for CLK
 		VARIABLE TX_OUT : LINE;
 		VARIABLE TX_ERROR : INTEGER := 0;
 
-		PROCEDURE CHECK_CFG_D(
-			next_CFG_D : std_logic_vector (7 DOWNTO 0);
+		PROCEDURE CHECK_DMAW_ENABLE(
+			next_DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
 			TX_TIME : INTEGER
 		) IS
 			VARIABLE TX_STR : String(1 to 4096);
@@ -108,13 +84,13 @@ BEGIN
 		BEGIN
 			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
 			-- change compiler settings to use explicit declarations only
-			IF (CFG_D /= next_CFG_D) THEN 
+			IF (DMAW_ENABLE /= next_DMAW_ENABLE) THEN 
 				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
 				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_D="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_D);
+				STD.TEXTIO.write(TX_LOC,string'("ns DMAW_ENABLE="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
 				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_D);
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DMAW_ENABLE);
 				STD.TEXTIO.write(TX_LOC, string'(" "));
 				TX_STR(TX_LOC.all'range) := TX_LOC.all;
 				STD.TEXTIO.writeline(results, TX_LOC);
@@ -124,8 +100,8 @@ BEGIN
 			END IF;
 		END;
 
-		PROCEDURE CHECK_CFG_CCLK(
-			next_CFG_CCLK : std_logic;
+		PROCEDURE CHECK_DBUS_Port(
+			next_DBUS_Port : std_logic_vector (63 DOWNTO 0);
 			TX_TIME : INTEGER
 		) IS
 			VARIABLE TX_STR : String(1 to 4096);
@@ -133,238 +109,13 @@ BEGIN
 		BEGIN
 			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
 			-- change compiler settings to use explicit declarations only
-			IF (CFG_CCLK /= next_CFG_CCLK) THEN 
+			IF (DBUS_Port /= next_DBUS_Port) THEN 
 				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
 				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_CCLK="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CCLK);
+				STD.TEXTIO.write(TX_LOC,string'("ns DBUS_Port="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
 				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_CCLK);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_PROG_B0(
-			next_CFG_PROG_B0 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_PROG_B0 /= next_CFG_PROG_B0) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_PROG_B0="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B0);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_PROG_B0);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_PROG_B1(
-			next_CFG_PROG_B1 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_PROG_B1 /= next_CFG_PROG_B1) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_PROG_B1="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B1);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_PROG_B1);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_PROG_B2(
-			next_CFG_PROG_B2 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_PROG_B2 /= next_CFG_PROG_B2) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_PROG_B2="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B2);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_PROG_B2);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_PROG_B3(
-			next_CFG_PROG_B3 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_PROG_B3 /= next_CFG_PROG_B3) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_PROG_B3="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B3);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_PROG_B3);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_CS_B0(
-			next_CFG_CS_B0 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_CS_B0 /= next_CFG_CS_B0) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_CS_B0="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B0);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_CS_B0);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_CS_B1(
-			next_CFG_CS_B1 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_CS_B1 /= next_CFG_CS_B1) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_CS_B1="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B1);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_CS_B1);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_CS_B2(
-			next_CFG_CS_B2 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_CS_B2 /= next_CFG_CS_B2) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_CS_B2="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B2);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_CS_B2);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_CS_B3(
-			next_CFG_CS_B3 : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_CS_B3 /= next_CFG_CS_B3) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_CS_B3="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B3);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_CS_B3);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
-
-		PROCEDURE CHECK_CFG_RDWR_B(
-			next_CFG_RDWR_B : std_logic;
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (CFG_RDWR_B /= next_CFG_RDWR_B) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("us CFG_RDWR_B="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_RDWR_B);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_CFG_RDWR_B);
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DBUS_Port);
 				STD.TEXTIO.write(TX_LOC, string'(" "));
 				TX_STR(TX_LOC.all'range) := TX_LOC.all;
 				STD.TEXTIO.writeline(results, TX_LOC);
@@ -376,29 +127,39 @@ BEGIN
 
 		BEGIN
 		-- --------------------
-		rst_n <= transport '0';
-		cmd_reg <= transport std_logic_vector'("000000000"); --0
-		data_reg <= transport std_logic_vector'("00000000000000000000000000000000"); --0
+		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
+		MEM_WE <= transport '0';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
 		-- --------------------
-		WAIT FOR 300 us; -- Time=300 us
-		rst_n <= transport '1';
+		WAIT FOR 500 ns; -- Time=500 ns
+		MEM_AD <= transport std_logic_vector'("01100000000000000"); --C000
+		MEM_WE <= transport '1';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000001000100010001"); --1111
 		-- --------------------
-		WAIT FOR 500 us; -- Time=800 us
-		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		WAIT FOR 100 ns; -- Time=600 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000010001000100010"); --2222
 		-- --------------------
-		WAIT FOR 400 us; -- Time=1200 us
-		cmd_reg <= transport std_logic_vector'("011100001"); --E1
+		WAIT FOR 100 ns; -- Time=700 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000011001100110011"); --3333
 		-- --------------------
-		WAIT FOR 400 us; -- Time=1600 us
-		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		WAIT FOR 100 ns; -- Time=800 ns
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000100010001000100"); --4444
 		-- --------------------
-		WAIT FOR 800 us; -- Time=2400 us
-		data_reg <= transport std_logic_vector'("10000000100000001000000011111111"); --808080FF
+		WAIT FOR 100 ns; -- Time=900 ns
+		MEM_WE <= transport '0';
 		-- --------------------
-		WAIT FOR 700 us; -- Time=3100 us
-		cmd_reg <= transport std_logic_vector'("111110001"); --1F1
+		WAIT FOR 800 ns; -- Time=1700 ns
+		MEM_AD <= transport std_logic_vector'("01000000000000000"); --8000
+		MEM_WE <= transport '1';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000101010111100110111101111"); --ABCDEF
 		-- --------------------
-		WAIT FOR 3355 us; -- Time=6455 us
+		WAIT FOR 100 ns; -- Time=1800 ns
+		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
+		MEM_WE <= transport '0';
+		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		-- --------------------
+		WAIT FOR 1205 ns; -- Time=3005 ns
 		-- --------------------
 
 		IF (TX_ERROR = 0) THEN 
@@ -419,7 +180,7 @@ BEGIN
 	END PROCESS;
 END testbench_arch;
 
-CONFIGURATION pfpga_config_cfg OF sim IS
+CONFIGURATION local_write_cfg OF sim_local_write IS
 	FOR testbench_arch
 	END FOR;
-END pfpga_config_cfg;
+END local_write_cfg;
