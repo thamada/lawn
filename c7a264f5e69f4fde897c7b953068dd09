@@ -1,96 +1,91 @@
-Mon Apr  4 19:43:35 JST 2011
-//-----------------------------------------------------------------------------
-// hermite.C
-// Code: Standard 4th order Hermite integrator with constant time step
-// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
-// Author: Andreas Ernst Jan, 2006
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+Thu Apr  7 19:37:50 JST 2011
+-- Copyright 2004-2005 Tsuyoshi Hamada
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--MEM_WEHA         _______/~~~~\__________
+--MEM_WELA    _______/~~~~\__________
+--MEM_DTIA[L]        < L  >              
+--MEM_DTIA[H]             < H  >              
+--wait             _______/~~~~~~~~~\__________
+--dtl
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
-// Calculate energy
+entity FIFOFIFO is
+  port (
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
+    -- output
+    MEM_AD     : out std_logic_vector(31 downto 0);
+    MEM_WE     : out std_logic;
+    MEM_DTI    : out std_logic_vector(63 downto 0);
 
-double energy(double m[], double r[][3], double v[][3], double p[], int n) {
-  double ekin = 0, epot = 0;
-  for (int i = 0; i < n; i++) {
-    epot -= 0.5 * m[i] * p[i];
-    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
-  }
-  return ekin + epot;
-}
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end FIFOFIFO;
 
-int main(int argc, char *argv[]) {
+architecture rtl of FIFOFIFO is
+  signal we   : std_logic :='0'; 
+  signal adr  : std_logic_vector(19 downto 0) := (others=>'0'); 
+  signal data : std_logic_vector(63 downto 0) := (others=>'0'); 
+begin
 
-// Read initial conditions from stdin, declaration of variables
+  MEM_AD(31 downto 20) <= (others=>'0');
+  MEM_AD(19 downto 0) <= adr;
 
-  if (argc < 3 ) {
-    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
-    return 0;
-  }
-
-  double dt = atof(argv[1]); // time step
-  double dt2 = dt*dt;
-  double dt3 = dt2*dt;
-  double dt4 = dt2*dt2;
-  double dt5 = dt4*dt;
-  double t_end = atof(argv[2]);
-  double dt_opt = atof(argv[3]);
-  double t_opt = 0.0;
-
-  int n;
-  cin >> n;
-
-  double t;
-  cin >> t;
-
-  double * m = new double[n];
-  double (* r)[3] = new double[n][3];
-  double (* v)[3] = new double[n][3];
-
-  double * p = new double[n];
-  double (* a)[3] = new double[n][3];
-  double (* jk)[3] = new double[n][3];
-
-  double * _p = new double[n];
-  double (* _a)[3] = new double[n][3];
-  double (* _jk)[3] = new double[n][3];
+  MEM_WE <= we;
+  MEM_DTI <= data;
 
 
-  for (int i = 0; i < n ; i++){
-    cin >> m[i];
-    for (int k = 0; k < 3; k++) cin >> r[i][k];
-    for (int k = 0; k < 3; k++) cin >> v[i][k];
-  }
-  
-  _force(r, v, m, _p, _a, _jk, n);
-   force(r, v, m,  p,  a,  jk, n);
+  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
+    if(RST='1') then
+      adr <= (others=>'0');
+    elsif (CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='1') then
+        adr <= MEM_ADA(19 downto 0);
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        adr <= MEM_ADA(19 downto 0);
+      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
+        adr <= MEM_ADA(19 downto 0);
+      end if;
+    end if;
+  end process;
 
+  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
+    if(RST='1') then
+      we <= '0';
+    elsif (CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='1') then
+        we <= '1';
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        we <= '0';
+      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
+        we <= '1';
+      else
+        we <= '0';
+      end if;
+    end if;
+  end process;
 
-  for (int i = 0; i < n ; i++){
-    double err_p, err_a[3], err_jk[3];
-    double rad;
-    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
+  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
+    if(RST='1') then
+      data <= (others=>'0');
+    elsif (CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='1') then
+        data <= MEM_DTIA;
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        data(31 downto 0) <= MEM_DTIA(31 downto 0);
+      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
+        data(63 downto 32) <= MEM_DTIA(63 downto 32);
+      end if;
+    end if;
+  end process;
 
-    err_p = fabs(p[i]-_p[i])/_p[i];
-
-    for (int k = 0; k < 3; k++){
-      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
-      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
-    }
-    
-    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
-
-  }
-  
-  return 0;
-}
+end rtl;
