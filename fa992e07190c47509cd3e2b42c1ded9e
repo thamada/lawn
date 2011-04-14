@@ -1,13 +1,26 @@
-Tue Apr  5 19:59:56 JST 2011
-#include <stdio.h>
-#include "nbodysim.h"
+Thu Apr 14 19:40:52 JST 2011
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-void debug_position(double x[][DIM], double time,int n)
-{
-    int i;
-    for(i=0;i<n;i++){
-      //        printf("%d,%e,%1.8e,%1.8e,%1.8e\n",i,t,x[i][0],x[i][1],x[i][2]);
-        printf("%1.8e\t%1.8e\t%1.8e\t%1.1e\n",x[i][0],x[i][1],x[i][2],time);
-    }
-}
+entity dmar_start_adr is
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmar_start_adr;
 
+architecture rtl of dmar_start_adr is
+component dmaw_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+begin
+  u0 : dmaw_start_adr port map(CLK=>CLK, DBUS=>DBUS, STATE=>STATE, START_ADR=>START_ADR);
+end rtl;
