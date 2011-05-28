@@ -1,220 +1,170 @@
-Thu May 26 19:58:30 JST 2011
-/*
- * pfpga_conf.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+Sat May 28 19:57:14 JST 2011
+#!/bin/sh
+#
+# Copyright (c) 2006, 2008 Junio C Hamano
+#
+# The "pre-rebase" hook is run just before "git rebase" starts doing
+# its job, and can prevent the command from running by exiting with
+# non-zero status.
+#
+# The hook is called with the following parameters:
+#
+# $1 -- the upstream the series was forked from.
+# $2 -- the branch being rebased (or empty when rebasing the current branch).
+#
+# This sample shows how to prevent topic branches that are already
+# merged to 'next' branch from getting rebased, because allowing it
+# would result in rebasing already published history.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>     // usleep
-#include "pg4.h"
+publish=next
+basebranch="$1"
+if test "$#" = 2
+then
+	topic="refs/heads/$2"
+else
+	topic=`git symbolic-ref HEAD` ||
+	exit 0 ;# we do not interrupt rebasing detached HEAD
+fi
 
-static char pfpga_info[256];
-#define CNF_CMD_ADR 0x80
-#define CNF_DAT_ADR 0x84
+case "$topic" in
+refs/heads/??/*)
+	;;
+*)
+	exit 0 ;# we do not interrupt others.
+	;;
+esac
 
-static unsigned int *data;
+# Now we are dealing with a topic branch being rebased
+# on top of master.  Is it OK to rebase it?
 
-void get_header(char* bitfile, char* header)
-{
-  int index=0, x;
-  char buf[128];
-  
-  index += 2 + (((0xff&bitfile[index])<<8) | (0xff&bitfile[index+1]));
-  index += 2 + (((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]));
-
-  // --- NCD file name ---
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-  // --- device ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- data ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- time ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- key ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-
+# Does the topic really exist?
+git show-ref -q "$topic" || {
+	echo >&2 "No such branch $topic"
+	exit 1
 }
 
+# Is topic fully merged to master?
+not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
+if test -z "$not_in_master"
+then
+	echo >&2 "$topic is fully merged to master; better remove it."
+	exit 1 ;# we could allow it, but there is no point.
+fi
+
+# Is topic ever merged to next?  If so you should not be rebasing it.
+only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
+only_next_2=`git rev-list ^master           ${publish} | sort`
+if test "$only_next_1" = "$only_next_2"
+then
+	not_in_topic=`git rev-list "^$topic" master`
+	if test -z "$not_in_topic"
+	then
+		echo >&2 "$topic is already up-to-date with master"
+		exit 1 ;# we could allow it, but there is no point.
+	else
+		exit 0
+	fi
+else
+	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
+	/usr/bin/perl -e '
+		my $topic = $ARGV[0];
+		my $msg = "* $topic has commits already merged to public branch:\n";
+		my (%not_in_next) = map {
+			/^([0-9a-f]+) /;
+			($1 => 1);
+		} split(/\n/, $ARGV[1]);
+		for my $elem (map {
+				/^([0-9a-f]+) (.*)$/;
+				[$1 => $2];
+			} split(/\n/, $ARGV[2])) {
+			if (!exists $not_in_next{$elem->[0]}) {
+				if ($msg) {
+					print STDERR $msg;
+					undef $msg;
+				}
+				print STDERR " $elem->[1]\n";
+			}
+		}
+	' "$topic" "$not_in_next" "$not_in_master"
+	exit 1
+fi
+
+exit 0
+
+################################################################
+
+This sample hook safeguards topic branches that have been
+published from being rewound.
+
+The workflow assumed here is:
+
+ * Once a topic branch forks from "master", "master" is never
+   merged into it again (either directly or indirectly).
+
+ * Once a topic branch is fully cooked and merged into "master",
+   it is deleted.  If you need to build on top of it to correct
+   earlier mistakes, a new topic branch is created by forking at
+   the tip of the "master".  This is not strictly necessary, but
+   it makes it easier to keep your history simple.
+
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
+
+The script, being an example, hardcodes the publish branch name
+to be "next", but it is trivial to make it configurable via
+$GIT_DIR/config mechanism.
+
+With this workflow, you would want to know:
+
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up before publishing, and things that have not been
+    merged into other branches can be easily rebased without
+    affecting other people.  But once it is published, you would
+    not want to rewind it.
+
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you should not
+    build on top of it -- other people may already want to
+    change things related to the topic as patches against your
+    "master", so if you need further changes, it is better to
+    fork the topic (perhaps with the same name) afresh from the
+    tip of "master".
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
 
 
-int fread_config_data(char* fname, unsigned int *size)
-{
-  // -- Read Config File to 'config_bit_data'---
-  FILE* fin;
-  int ndata;
-  int i;
+A, B and C are topic branches.
 
-  struct stat buf;
-  int fsize;
+ * A has one fix since it was merged up to "next".
 
-  // read file status
-  if (stat(fname, &buf) == -1) {
-    fprintf(stderr, "fread_config_data: can't open bit file!!! %s\n", fname);
-    exit(-1);
-  }
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
 
-  fsize = buf.st_size;
-  if (data != NULL) {
-    free(data);
-  }
-  data = (unsigned int*)malloc(fsize);
-  if (data == NULL) {
-    fprintf(stderr, "fread_config_data: memory allocation error!\n");
-    exit(-1);
-  }
-  
-  fin = fopen(fname, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "fread_config_data: cannot open %s!\n", fname);
-    exit(-1);
-  }
-  fread(data,fsize,1,fin);
-  fclose(fin);
-  fprintf(stderr, "fread_config_data: read %i bytes.\n", fsize);
+ * C has not merged to "next" at all.
 
-  get_header((char*)data, pfpga_info);
+We would want to allow C to be rebased, refuse A, and encourage
+B to be deleted.
 
-  
-  ndata = fsize/sizeof(unsigned int);
+To compute (1):
 
-  // CHANGE ENDIAN (LittleEndian -> BigEndian)
-  for(i = 0;i < ndata; i++){
-    unsigned int byte[8];
-    byte[0] = 0xFF&(data[i]>>24);
-    byte[1] = 0xFF&(data[i]>>16);
-    byte[2] = 0xFF&(data[i]>>8);
-    byte[3] = 0xFF&(data[i]);
-    data[i]=0x0;
-    data[i]= (byte[3]<<24)|(byte[2]<<16)|(byte[1]<<8)|byte[0];
-  }
+	git rev-list ^master ^topic next
+	git rev-list ^master        next
 
-  *size = (unsigned int)ndata;
+	if these match, topic has not merged in next at all.
 
-  return fsize;
-}
+To compute (2):
 
-void config_onechip(int devid, unsigned int nfp, unsigned int ncfgdata)
-{
-  unsigned int i, d;
-  unsigned int *p;
+	git rev-list master..topic
 
-  if (data == NULL) return;
-  if (nfp > 0x8) {
-    fprintf(stderr, "nfp err\n");
-    exit(-1);
-  } 
-
-  // ---------------------------------------- SETUP CONFIGURATION
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(  ((0xF^nfp)<<4)   |nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  usleep(15000);
-
-  // ---------------------------------------- SEND CONFIGURATION DATA
-  p = data;
-  for(i = 0; i < ncfgdata; i++){
-    WriteBase0(devid, CNF_DAT_ADR, *(p++));
-    d = (unsigned int)(0x1f0|nfp);
-    WriteBase0(devid, CNF_CMD_ADR,      d);
-    WriteBase0(devid, CNF_CMD_ADR, 0xff&d);
-  }
-
-  // ---------------------------------------- STOP CFG_CCLK
-  d = (unsigned int)(0xf0);
-  WriteBase0(devid, CNF_CMD_ADR,d);
-}
-
-void config_pfpga_all(int devid, char* fname)
-{
-  unsigned int i, nfp, ncfgdata;
-
-  data = NULL;
-  fread_config_data(fname, &ncfgdata);
-
-  for(i = 0; i < 4; i++) {
-    nfp = 0xf&(0x1<<i);
-    fprintf(stderr, "configuring chip%i ...\n", i);
-    config_onechip(devid, nfp, ncfgdata);
-  }
-
-  free(data);
-}
-
-int main(int argc, char* argv[])
-{
-  int devid;
-
-  if (argc < 2) {
-    fprintf(stderr, "%s <bitfile> <devid>\n", argv[0]);
-    exit(-1);
-  }
-  if (argv[2] == NULL) {
-    devid = 0;
-  } else {
-    devid = atoi(argv[2]);
-    if (devid > 2) {
-      fprintf(stderr, "%s : invalid argument <devid>%s:%d\n", argv[0], __FILE__, __LINE__);
-      exit(-1);
-    }
-  }
-  fprintf(stderr, "%s configures all PFPGAs on progrape%i ...\n", argv[0], devid);
-
-  pg4_open(devid);
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Previous config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  {
-    sprintf(pfpga_info, "%s",argv[1]);
-    config_pfpga_all(devid, argv[1]);
-    pg4_set_pfpga_info(devid, pfpga_info);
-  }
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Current config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  pg4_close(devid);
-
-  return 0;
-}
+	if this is empty, it is fully merged to "master".
