@@ -1,52 +1,51 @@
-Sun May  1 19:27:13 JST 2011
-set -tmpdir __projnav
-set -xsthdpdir ./xst
-run
--ifn top.prj
--ifmt mixed
--ofn top
--ofmt NGC
--p xc2vp70-5-ff1517
--top top
--opt_mode Speed
--opt_level 1
--iuc NO
--lso top.lso
--keep_hierarchy NO
--glob_opt AllClockNets
--rtlview Yes
--read_cores YES
--write_timing_constraints NO
--cross_clock_analysis NO
--hierarchy_separator _
--bus_delimiter <>
--case maintain
--slice_utilization_ratio 100
--verilog2001 YES
--vlgincdir 
--fsm_extract YES -fsm_encoding Auto
--fsm_style lut
--ram_extract Yes
--ram_style Auto
--rom_extract Yes
--rom_style Auto
--mux_extract YES
--mux_style Auto
--decoder_extract YES
--priority_extract YES
--shreg_extract YES
--shift_extract YES
--xor_collapse YES
--resource_sharing YES
--mult_style auto
--iobuf YES
--max_fanout 500
--bufg 16
--register_duplication YES
--equivalent_register_removal YES
--register_balancing No
--slice_packing YES
--optimize_primitives NO
--tristate2logic No
--iob auto
--slice_utilization_ratio_maxmargin 5
+Wed Jun  8 19:28:45 JST 2011
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+
+-- 0->1 : if((state==0)&&(dma_we==1))
+-- 1->2 : if (state==1)
+-- 2->3 : if((state==2) &&(dma_we==0))
+-- 3->0 : if (state==3)
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity dmaw_state is
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmaw_state;
+
+architecture rtl of dmaw_state is
+
+signal state_ff : std_logic_vector(1 downto 0);
+begin
+
+  STATE <= state_ff;
+
+  process (RST,CLK,ENABLE,state_ff) begin
+    if(RST='1') then
+      state_ff <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((state_ff="00") AND (ENABLE='1')) then
+        state_ff <= "01";
+      elsif(state_ff = "01") then
+        state_ff <= "10";
+      elsif((state_ff = "10") AND (ENABLE='0')) then
+        state_ff <= "11";
+      elsif((state_ff = "10") AND (ENABLE='1')) then
+        state_ff <= "10";
+      else -- if(state_ff = "11") then
+        state_ff <= "00";
+      end if;
+    end if;
+  end process;
+
+end rtl;
