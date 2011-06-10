@@ -1,26 +1,47 @@
-Tue May 31 19:29:36 JST 2011
+Fri Jun 10 19:26:19 JST 2011
 #include <stdio.h>
-#include "nbodysim.h"
+#include <stdlib.h>
+#include <string.h>
 
-void debug(double x[][DIM],double a[][DIM], int n, int nstep)
-{
-  int i;
-  static int flag=0;
-  static FILE* fp;
+void b3_init(int devid);
+void b3_init_config(int devid, char* fpga_conf_file);
 
-  if(flag==0){
-    fp = fopen("aaa.log","w");
-    flag = 1;
-  }else{
-    rewind(fp);
-  }
 
-  for(i=0;i<n;i++){
-    fprintf(fp,"%d\t",nstep);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
-  }
 
-  fflush(fp);
-}
+void b3_set_idata(unsigned int devid,      // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int ireg_index, // iregister index
+                  unsigned int data);      // data
 
+void b3_reset_jmem_adr();
+void b3_reset_jmem_adr_n(int nchip);
+
+void b3_set_jdata(unsigned int devid,      // device id
+                  unsigned int nword,      // number of jdata
+                  unsigned int jdata[] );  // 
+
+void b3_set_jdata_n_chip(unsigned int devid,    // device id
+			 unsigned int nchip,    // 0, 1, 2, 3
+			 unsigned int nword,    // number of jdata
+			 unsigned int jdata[]);
+
+
+void b3_get_jdata(unsigned int devid,      // device id
+                  unsigned int chip_sel,   // chip_sel
+		  unsigned int jmem_adr,   // mem adr
+                  unsigned int* data );    // data 
+
+void b3_start_calc(unsigned int n,
+		   unsigned int chip_sel);
+
+void b3_start_calc_sepa4jM(unsigned int nrun[]);
+
+unsigned int b3_get_calcsts(unsigned int chip_sel);
+
+
+void b3_get_fodata(unsigned int devid,     // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int fo_index,   // iregister index
+                  unsigned int* data);     // data
