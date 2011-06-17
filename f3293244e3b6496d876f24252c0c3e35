@@ -1,68 +1,86 @@
-Fri May 27 19:31:16 JST 2011
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+Fri Jun 17 19:26:36 JST 2011
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
-{
-  int i,j,d;
-  double v2,r2;
-  double dx[3];
-  double Ep;        /* 各粒子の位置エネルギー */
-  double Em;        /* 各粒子の運動エネルギー */
-  double Ea;        /* 各粒子の全力学的エネルギー */
-  static double Ea_init;
-  static int flag=0;
-  //  double a[NMAX][DIM];
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
+
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
 
-  /******************************************************  FORCE
-  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] =  m[j]*dx[d]/r3;
-	a[j][d] = -m[i]*dx[d]/r3;
-      }
-    }
-  }
-  ***********************************************************/
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
-  Ea = 0.0;
-  for(i=0;i<n;i++){
-    Ep=0.0;     // Potential Energy
-    for(j=0;j<n;j++){
-      r2 = eps2;           /* 相対距離初期化 */
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
-    }
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
 
-    v2=0.0;    /* 絶対速度2乗値初期化 */
-    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
-    Em = 0.5 * m[i] * v2;
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
 
-    Ea += Em + Ep;
-    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
-    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
-    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
-  }
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
 
-  if(flag==0){
-    Ea_init = Ea;
-    flag = 1;
-  }
-  printf("Eall = %e\t",Ea);
-  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
-  printf("\n");
-  return;
-}
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+
+
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
+
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
+
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
+
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
+
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
+
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
+
+
+
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
+
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
+
