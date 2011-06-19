@@ -1,170 +1,150 @@
-Sat Jun 11 19:27:57 JST 2011
-#!/bin/sh
-#
-# Copyright (c) 2006, 2008 Junio C Hamano
-#
-# The "pre-rebase" hook is run just before "git rebase" starts doing
-# its job, and can prevent the command from running by exiting with
-# non-zero status.
-#
-# The hook is called with the following parameters:
-#
-# $1 -- the upstream the series was forked from.
-# $2 -- the branch being rebased (or empty when rebasing the current branch).
-#
-# This sample shows how to prevent topic branches that are already
-# merged to 'next' branch from getting rebased, because allowing it
-# would result in rebasing already published history.
+Sun Jun 19 19:56:42 JST 2011
+--###############################
+--# by T.Hamada for B3 Board    #
+--###############################
 
-publish=next
-basebranch="$1"
-if test "$#" = 2
-then
-	topic="refs/heads/$2"
-else
-	topic=`git symbolic-ref HEAD` ||
-	exit 0 ;# we do not interrupt rebasing detached HEAD
-fi
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-case "$topic" in
-refs/heads/??/*)
-	;;
-*)
-	exit 0 ;# we do not interrupt others.
-	;;
-esac
-
-# Now we are dealing with a topic branch being rebased
-# on top of master.  Is it OK to rebase it?
-
-# Does the topic really exist?
-git show-ref -q "$topic" || {
-	echo >&2 "No such branch $topic"
-	exit 1
-}
-
-# Is topic fully merged to master?
-not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
-if test -z "$not_in_master"
-then
-	echo >&2 "$topic is fully merged to master; better remove it."
-	exit 1 ;# we could allow it, but there is no point.
-fi
-
-# Is topic ever merged to next?  If so you should not be rebasing it.
-only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
-only_next_2=`git rev-list ^master           ${publish} | sort`
-if test "$only_next_1" = "$only_next_2"
-then
-	not_in_topic=`git rev-list "^$topic" master`
-	if test -z "$not_in_topic"
-	then
-		echo >&2 "$topic is already up-to-date with master"
-		exit 1 ;# we could allow it, but there is no point.
-	else
-		exit 0
-	fi
-else
-	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
-	/usr/bin/perl -e '
-		my $topic = $ARGV[0];
-		my $msg = "* $topic has commits already merged to public branch:\n";
-		my (%not_in_next) = map {
-			/^([0-9a-f]+) /;
-			($1 => 1);
-		} split(/\n/, $ARGV[1]);
-		for my $elem (map {
-				/^([0-9a-f]+) (.*)$/;
-				[$1 => $2];
-			} split(/\n/, $ARGV[2])) {
-			if (!exists $not_in_next{$elem->[0]}) {
-				if ($msg) {
-					print STDERR $msg;
-					undef $msg;
-				}
-				print STDERR " $elem->[1]\n";
-			}
-		}
-	' "$topic" "$not_in_next" "$not_in_master"
-	exit 1
-fi
-
-exit 0
-
-################################################################
-
-This sample hook safeguards topic branches that have been
-published from being rewound.
-
-The workflow assumed here is:
-
- * Once a topic branch forks from "master", "master" is never
-   merged into it again (either directly or indirectly).
-
- * Once a topic branch is fully cooked and merged into "master",
-   it is deleted.  If you need to build on top of it to correct
-   earlier mistakes, a new topic branch is created by forking at
-   the tip of the "master".  This is not strictly necessary, but
-   it makes it easier to keep your history simple.
-
- * Whenever you need to test or publish your changes to topic
-   branches, merge them into "next" branch.
-
-The script, being an example, hardcodes the publish branch name
-to be "next", but it is trivial to make it configurable via
-$GIT_DIR/config mechanism.
-
-With this workflow, you would want to know:
-
-(1) ... if a topic branch has ever been merged to "next".  Young
-    topic branches can have stupid mistakes you would rather
-    clean up before publishing, and things that have not been
-    merged into other branches can be easily rebased without
-    affecting other people.  But once it is published, you would
-    not want to rewind it.
-
-(2) ... if a topic branch has been fully merged to "master".
-    Then you can delete it.  More importantly, you should not
-    build on top of it -- other people may already want to
-    change things related to the topic as patches against your
-    "master", so if you need further changes, it is better to
-    fork the topic (perhaps with the same name) afresh from the
-    tip of "master".
-
-Let's look at this example:
-
-		   o---o---o---o---o---o---o---o---o---o "next"
-		  /       /           /           /
-		 /   a---a---b A     /           /
-		/   /               /           /
-	       /   /   c---c---c---c B         /
-	      /   /   /             \         /
-	     /   /   /   b---b C     \       /
-	    /   /   /   /             \     /
-    ---o---o---o---o---o---o---o---o---o---o---o "master"
+entity DPRAM is
+  port (
+    RST         : in  std_logic;                        -- PCI Bus Reset
+    CLK         : in  std_logic;                        -- PCI bus Clock
+    CLKB        : in   std_logic;                       -- Port B Clock
+    -- PCI R/W ports
+    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
+    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
+    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
+    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
+    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
+    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
+    -- USER Application R/W ports
+    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
+    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
+    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
+    );
+end DPRAM;
 
 
-A, B and C are topic branches.
+architecture DPRAM_rtl of DPRAM is
 
- * A has one fix since it was merged up to "next".
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+--component dp32b512w
+--  port (
+--    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
+--    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
+--    clka       : in  std_logic;                        -- Port A Clock
+--    clkb       : in  std_logic;                        -- Port A Clock
+--    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
+--    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
+--    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
+--    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
+--    wea        : in  std_logic;                        -- Port A Write Enable
+--    web        : in  std_logic                         -- Port A Write Enable
+--    );
+--end component;
 
- * B has finished.  It has been fully merged up to "master" and "next",
-   and is ready to be deleted.
+component dp32b8192w
+  port (
+    clka  : in std_logic;
+    wea   : in std_logic;
+    addra : in std_logic_vector(12 downto 0);
+    dina  : in std_logic_vector(31 downto 0);
+    douta : out std_logic_vector(31 downto 0);
 
- * C has not merged to "next" at all.
+    clkb  : in std_logic;
+    web   : in std_logic;
+    addrb : in std_logic_vector(12 downto 0);
+    dinb  : in std_logic_vector(31 downto 0);
+    doutb : out std_logic_vector(31 downto 0)
+  );
+end component;
 
-We would want to allow C to be rebased, refuse A, and encourage
-B to be deleted.
+  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
+  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
+begin
 
-To compute (1):
 
-	git rev-list ^master ^topic next
-	git rev-list ^master        next
+--***************************************************************
+--* instantiate sub-blocks
+--***************************************************************
 
-	if these match, topic has not merged in next at all.
+-- Low Word (32 bit)
 
-To compute (2):
+  dp0 : dp32b8192w port map (
+    addra      => MEM_ADA(13 downto  1),          -- Port A Address
+    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
+    clka       => CLK,                            -- Port A Clock
+    clkb       => CLKB,                           -- Port B Clock
+    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
+    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
+    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
+    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
+    wea        => MEM_WELA,                       -- Port A Write Enable
+    web        => MEM_WELB                        -- Port A Write Enable
+  );
 
-	git rev-list master..topic
+-- High Word (32 bit)
 
-	if this is empty, it is fully merged to "master".
+  dp1 : dp32b8192w port map (
+    addra      => MEM_ADA(13 downto  1),          -- Port A Address
+    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
+    clka       => CLK,                            -- Port A Clock
+    clkb       => CLKB,                           -- Port A Clock
+    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
+    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
+    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
+    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
+    wea        => MEM_WEHA,                       -- Port A Write Enable
+    web        => MEM_WEHB                        -- Port A Write Enable
+  );
+
+
+--***************************************************************
+--*
+--*  PORT A Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- Port A Read Data Select Flag Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+      MEM_RDTFLG <= '0';
+    elsif (CLK'event and CLK='1') then
+      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Port A Read Data Output Control Process
+--------------------------------------------------------------------------------
+
+  process (MEM_RDTFLG,MEM_RDDT) begin
+    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
+      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
+    else
+      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Port A Read Data Enable Signal Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+      MEM_DTOEN <= '0';
+    elsif (CLK'event and CLK='1') then
+      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
+    end if;
+  end process;
+
+end DPRAM_rtl;
