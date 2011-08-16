@@ -1,48 +1,65 @@
-Sat Jul 30 19:59:35 JST 2011
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+Tue Aug 16 20:00:16 JST 2011
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+-- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+-- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+-- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
+-- START_ADR                    < n                                    >
+-- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
+-- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
 
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
-{
-    int i,j,d;
-    double v2,r2;
-    double dx[3];
-    double Ep;  /* 系の位置エネルギー */
-    double Em;  /* 系の運動エネルギー */
-    double Ea;  /* 系の全力学的エネルギー */
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+entity dmaw_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmaw_mem_adr;
 
-    /* 系の位置エネルギー Ep を計算する。 */ 
-    Ep=0.0;
-    for(i=0;i<n-1;i++){
-        for(j=i+1;j<n;j++){
-            r2 = eps2;           /* 相対距離初期化 */
-            for(d=0;d<3;d++){
-                dx[d] = x[j][d] - x[i][d];
-                r2 += dx[d] * dx[d];
-            }
-            Ep -= m[i] * m[j] * ( 1/sqrt(r2)  );
-        }
-    }
+architecture rtl of dmaw_mem_adr is
 
+signal mem_adr_inc : std_logic_vector(18 downto 0);
+signal   x,z : std_logic_vector(18 downto 0);
+constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
 
-    /* 系の運動エネルギー Em を計算する。 */ 
-    Em=0.0;
-    for(i=0;i<n;i++){
-        v2=0.0;    /* 絶対速度2乗値初期化 */
-        for(d=0;d<3;d++){
-            v2 += v[i][d]*v[i][d];
-        }
-        Em += 0.5 * m[i] * v2;
-    }
+begin
 
-    /* 系の全力学的エネルギー Ea を計算する。 */ 
-    Ea=0.0;
-    Ea = Em + Ep;
+  z <= x + one;
 
-/*    printf("Emove=%1.6e,   Epot=%1.3e,   Eall=%1.25e\n",Em,Ep,Ea);*/
-/*    printf("%e\n",Ea);*/
+  -----------------
+  -- mem_adr_inc
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE = "10") then
+        mem_adr_inc <= z;
+      else
+        mem_adr_inc <= (others=>'0');
+      end if;
+    end if;
+  end process;
 
-    return Ea;
-}
+  x <= mem_adr_inc;
+
+  -----------------
+  -- MEM_ADR
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE="10") then
+        MEM_ADR <= mem_adr_inc + START_ADR;
+      else
+        MEM_ADR <= (others=>'0');
+      end if;
+    end if;
+  end process;
+
+end rtl;
