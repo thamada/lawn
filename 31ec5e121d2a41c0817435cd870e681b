@@ -1,9 +1,5 @@
-Wed Aug 10 20:00:23 JST 2011
-V1 3
-FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd 2004/11/10.11:36:20
-EN work/PFPGA_CONFIG \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      PB ieee/STD_LOGIC_1164 PB ieee/STD_LOGIC_ARITH PB ieee/STD_LOGIC_UNSIGNED
-AR work/PFPGA_CONFIG/RTL \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      EN work/PFPGA_CONFIG
+Tue Aug 23 20:05:29 JST 2011
+SETPROJECT .
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
