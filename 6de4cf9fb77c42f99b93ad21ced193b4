@@ -1,211 +1,138 @@
-Wed Oct 19 19:38:15 JST 2011
-
--- **************************************
---               INREVIUM                
--- **************************************
-
+Tue Oct 25 19:27:01 JST 2011
 --------------------------------------------------------------------------------
--- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
 --------------------------------------------------------------------------------
--- PCI_RDTFIFO MODEL
---------------------------------------------------------------------------------
--- PCI_RDTFIFO (64 bit X 4 word) Module
---------------------------------------------------------------------------------
--- File                      : PCI_RDTFIFO.vhd
--- Entity                    : PCI_RDTFIFO
--- Architecture              : PCI_RDTFIFO_rtl
---------------------------------------------------------------------------------
--- Project Navigator version : ISE6.2.03i
--- Design Flow               : XST
---------------------------------------------------------------------------------
--- Ver.     Data        Coded by        Contents
--- 01.00    2004/08/10  TED)DDC         新規
---------------------------------------------------------------------------------
-
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
 
-entity PCI_RDTFIFO is
-	port (
-		RST 			: in	std_logic;							-- PCI Bus Reset
-		CLK 			: in	std_logic;							-- PCI bus Clock
-
-		FIFO_ENB		: in	std_logic;							-- FIFO Enable Signal
-
-		-- FIFO Data Write ports
-		FIFO_WRDT		: in	std_logic_vector(63 downto 0);		-- FIFO Write Data
-		FIFO_WE			: in	std_logic;					  		-- FIFO Write Enable
-
-		-- FIFO Data Read ports
-		FIFO_RE			: in	std_logic;							-- FIFO Read Enable
-		FIFO_RDDT		: out	std_logic_vector(63 downto 0);		-- FIFO Read Data
-		FIFO_RDTEN		: out	std_logic							-- FIFO Read Data Enable
-		);
-end PCI_RDTFIFO;
-
-
-architecture PCI_RDTFIFO_rtl of PCI_RDTFIFO is
-
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- リセット
+    CLK_IN        : in  std_logic;             -- クロック入力
+    CLK_FB_IN      : in  std_logic;            -- クロックFB入力
+    CLK_OUT        : out  std_logic            -- クロック出力
+  );
+end dcm_ps_f;
 
 --------------------------------------------------
--- signals
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
+
+--------------------------------------------------
+-- Components
 --------------------------------------------------
 
---	type FIFO_TYPE is array (0 to 3) of std_logic_vector(64 downto 0);		------ Define Data Buffer Type (65bit X 4)
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
+end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
 
-	signal FIFO_DATA0	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 0
-	signal FIFO_DATA1	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 1
-	signal FIFO_DATA2	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 2
-	signal FIFO_DATA3	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 3
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
 
-	signal FIFO_WRADRS	: std_logic_vector( 1 downto 0);					------ FIFO Write Address
-	signal FIFO_RDADRS	: std_logic_vector( 1 downto 0);					------ FIFO Read Address
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
 
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0固定信号
+signal  CLK0_OUT      : std_logic;       -- DCM出力クロック
 
 begin
 
-
---***************************************************************
---*
---*  FIFO Data Write Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- FIFO_DATA0 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA0 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA0 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="00" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA0 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA1 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA1 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA1 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="01" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA1 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA2 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA2 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA2 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="10" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA2 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA3 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA3 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA3 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="11" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA3 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO Write Address Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_WRADRS <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_WRADRS <= (others=>'0');								------ FIFO Write Address Clear
-			elsif (FIFO_WE='1') then										------ FIFO Data Write ?
-				FIFO_WRADRS <= FIFO_WRADRS+1;								------ FIFO Write Address Increment
-			end if;
-		end if;
-	end process;
+-- *********************************************************************
+-- 固定信号
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0固定信号
 
 
---***************************************************************
---*
---*  FIFO Data Read Control Block
---*
---***************************************************************
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- リセット
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFT入力クロック
+    CLKFB        => CLK_FB_IN  ,    -- FB入力
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- 位相シフトの増分/減分
+    PSEN         => logic_0    ,    -- 位相シフトイネーブル
+    PSCLK        => logic_0    ,    -- 位相シフトクロック
+    CLK0         => CLK0_OUT        -- PHASE SHIFT出力クロック
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
 
---------------------------------------------------------------------------------
--- FIFO Read Data Select Control Process
---------------------------------------------------------------------------------
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCM出力クロック
+    O  => CLK_OUT                   -- DCM出力クロック(BUFG後)
+  );
 
-	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
-		case FIFO_RDADRS is
-			when "00"	=> FIFO_RDDT <= FIFO_DATA0(63 downto 0);			------ Buffer0 Read
-			when "01"	=> FIFO_RDDT <= FIFO_DATA1(63 downto 0);			------ Buffer1 Read
-			when "10"	=> FIFO_RDDT <= FIFO_DATA2(63 downto 0);			------ Buffer2 Read
-			when "11"	=> FIFO_RDDT <= FIFO_DATA3(63 downto 0);			------ Buffer3 Read
-			when others => FIFO_RDDT <= (others=>'0');
-		end case;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO Read Data Enable Signal Select Control Process
---------------------------------------------------------------------------------
-
-	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
-		case FIFO_RDADRS is
-			when "00"	=> FIFO_RDTEN <= FIFO_DATA0(64);					------ Buffer0 Read Enable Signal
-			when "01"	=> FIFO_RDTEN <= FIFO_DATA1(64);					------ Buffer1 Read Enable Signal
-			when "10"	=> FIFO_RDTEN <= FIFO_DATA2(64);					------ Buffer2 Read Enable Signal
-			when "11"	=> FIFO_RDTEN <= FIFO_DATA3(64);					------ Buffer3 Read Enable Signal
-			when others => FIFO_RDTEN <= '0';
-		end case;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO Read Address Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_RDADRS <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_RDADRS <= (others=>'0');								------ FIFO Read Address Clear
-			elsif (FIFO_RE='1') then										------ FIFO Data Read ?
-				FIFO_RDADRS <= FIFO_RDADRS+1;								------ FIFO Read Address Increment
-			end if;
-		end if;
-	end process;
-
-
-
-end PCI_RDTFIFO_rtl;
+end rtl;
