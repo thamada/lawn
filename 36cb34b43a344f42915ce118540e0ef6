@@ -1,25 +1,50 @@
-Thu Sep 29 19:43:33 JST 2011
-#!/bin/sh
-#
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "commit-msg".
+Mon Oct 31 19:28:17 JST 2011
+#include <math.h>
+#define DIM (3)              /* éüå≥êî */
+#define NMAX (65536)         /* ç≈ëÂó±éqêî */
+//#define NTOTAL 1000      /* ó±éqêî (NTOTAL <= NMAX) */
 
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
-#
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+//b3_force_sepaj4.c
+void b3_force_sepaj4(double x[][3],
+		     double m[],
+		     double eps2,
+		     double a[][3],
+		     int n);
 
-# This example catches duplicate Signed-off-by lines.
+//pg_pipe.c
+void force_gravity_on_emulator(double x[][3],
+			       double m[],
+			       double eps2,
+			       double a[][3],
+			       int n);
 
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
-	exit 1
-}
+//force_gravity_on_b3.c
+void force(double x[][3],
+	   double m[],
+	   double eps2,
+	   double a[][3],
+	   int n);
+
+
+//check_pg2emu.c
+void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+
+
+//
+void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
+void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
+
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
+void debug_position(double x[][DIM], double dt, int n);
+
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void init_particles(char* fname,
+		    int* npar,
+		    double mass[],
+		    double posi[][DIM],
+		    double veloc[][DIM]);
