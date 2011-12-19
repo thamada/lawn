@@ -1,237 +1,517 @@
-Sun Dec  4 20:03:05 JST 2011
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE twReport [
-<!ELEMENT twReport (twHead, (twWarn | twDebug | twInfo)*, twBody, twSum?, twFoot, twClientInfo?)>
-<!ELEMENT twHead (twExecVer?, twCopyright, twCmdLine?, twDesign?, twPCF?, twDevInfo, twRptInfo, twEnvVar*)>
-<!ELEMENT twExecVer (#PCDATA)>
-<!ELEMENT twCopyright (#PCDATA)>
-<!ELEMENT twCmdLine (#PCDATA)>
-<!ELEMENT twDesign (#PCDATA)>
-<!ELEMENT twPCF (#PCDATA)>
-<!ELEMENT twDevInfo (twDevName, twSpeedGrade, twSpeedVer?)>
-<!ELEMENT twDevName (#PCDATA)>
-<!ATTLIST twDevInfo arch CDATA #IMPLIED>
-<!ELEMENT twSpeedGrade (#PCDATA)>
-<!ELEMENT twSpeedVer (#PCDATA)>
-<!ELEMENT twRptInfo (twItemLimit?, (twUnconst, twUnconstLimit?)?)>
-<!ATTLIST twRptInfo twRptLvl (twErr | twVerbose | twTerseErr | twSum | twTimeGrp) #REQUIRED>
-<!ATTLIST twRptInfo twAdvRpt  (TRUE | FALSE) "FALSE">
-<!ATTLIST twRptInfo twTimeUnits (twPsec | twNsec | twUsec | twMsec | twSec) "twNsec">
-<!ATTLIST twRptInfo twFreqUnits (twGHz | twMHz | twHz) "twMHz">
-<!ELEMENT twItemLimit (#PCDATA)>
-<!ELEMENT twUnconst EMPTY>
-<!ELEMENT twUnconstLimit (#PCDATA)>
-<!ELEMENT twEnvVar EMPTY>
-<!ATTLIST twEnvVar name CDATA #REQUIRED>
-<!ATTLIST twEnvVar description CDATA #REQUIRED>
-<!ELEMENT twWarn (#PCDATA)>
-<!ELEMENT twInfo (#PCDATA)>
-<!ELEMENT twDebug (#PCDATA)>
-<!ELEMENT twBody (twDerating?, (twSumRpt | twVerboseRpt | twErrRpt | twTerseErrRpt | twTimeGrpRpt), twNonDedClks?)>
-<!ATTLIST twBody twFastPaths CDATA #IMPLIED>
-<!ELEMENT twDerating (twProc?, twTemp?, twVolt?)>
-<!ELEMENT twProc (#PCDATA)>
-<!ELEMENT twTemp (#PCDATA)>
-<!ELEMENT twVolt (#PCDATA)>
-<!ELEMENT twSumRpt (twConstList?, twUnmetConstCnt?, twDebug*, twDataSheet?, twClkTbl?)>
-<!ELEMENT twErrRpt (twCycles?, (twConst | twTIG)*, twUnmetConstCnt?, twDataSheet?, twClkTbl?, twTimeGrp*)>
-<!ELEMENT twTerseErrRpt (twConstList, twUnmetConstCnt?, twDataSheet?, twClkTbl?)>
-<!ELEMENT twVerboseRpt (twCycles?, (twConst | twTIG)*, twUnmetConstCnt?, twDataSheet?, twClkTbl?, twTimeGrp*)>
-<!ELEMENT twCycles (twSigConn+)>
-<!ATTLIST twCycles twNum CDATA #REQUIRED>
-<!ELEMENT twSigConn (twSig, twDriver, twLoad)>
-<!ELEMENT twSig (#PCDATA)>
-<!ELEMENT twDriver (#PCDATA)>
-<!ELEMENT twLoad (#PCDATA)> 
-<!ELEMENT twConst (twConstHead, ((twPathRpt*, twPathRptBanner, twPathRpt*) |  (twPathRpt*, twRacePathRpt?) |  (twNetRpt*)))>
-<!ATTLIST twConst twConstType (twPathConst | twNetConst) "twPathConst">
-<!ELEMENT twConstHead (twConstName, twItemCnt, twErrCntSetup, twErrCntHold, twMinPer?, twMaxDel?, twMaxFreq?, twMaxNetDel?, twMaxNetSkew?, twMinOff?, twMaxOff?)>
-<!ELEMENT twConstName (#PCDATA)>
-<!ELEMENT twItemCnt (#PCDATA)>
-<!ELEMENT twErrCnt (#PCDATA)>
-<!ELEMENT twErrCntSetup (#PCDATA)>
-<!ELEMENT twErrCntHold (#PCDATA)>
-<!ATTLIST twErrCntHold twRaceChecked (TRUE | FALSE) "FALSE">
-<!ELEMENT twMinPer (#PCDATA)>
-<!ELEMENT twMaxDel (#PCDATA)>
-<!ELEMENT twMaxFreq (#PCDATA)>
-<!ELEMENT twMinOff (#PCDATA)>
-<!ELEMENT twMaxOff (#PCDATA)>
-<!ELEMENT twTIG (twTIGHead, (twPathRpt*,twRacePathRpt?))>
-<!ELEMENT twTIGHead (twTIGName, twInstantiated, twBlocked)>
-<!ELEMENT twTIGName (#PCDATA)>
-<!ELEMENT twInstantiated (#PCDATA)>
-<!ELEMENT twBlocked (#PCDATA)>
-<!ELEMENT twRacePathRpt (twRacePath+)>
-<!ELEMENT twPathRpt (twUnconstPath | twConstPath | twUnconstOffIn | twConstOffIn | twUnconstOffOut | twConstOffOut | twModOffOut)>
-<!ELEMENT twUnconstPath (twTotDel, twSrc, twDest,  (twDel, twSUTime)?, twTotPathDel?, twClkSkew?, tw2Phase?, twClkUncert?, twDetPath?)>
-<!ELEMENT twTotDel (#PCDATA)>
-<!ELEMENT twSrc (#PCDATA)>
-<!ATTLIST twSrc BELType CDATA #IMPLIED>
-<!ELEMENT twDest (#PCDATA)>
-<!ATTLIST twDest BELType CDATA #IMPLIED>
-<!ELEMENT twDel (#PCDATA)>
-<!ELEMENT twSUTime (#PCDATA)>
-<!ELEMENT twTotPathDel (#PCDATA)>
-<!ELEMENT twClkSkew (#PCDATA)>
-<!ELEMENT twClkSkew (#PCDATA)>
-<!ELEMENT twConstPath (twSlack, twSrc, twDest, twTotPathDel?, twClkSkew?, twDelConst, tw2Phase?, twClkUncert?, twDetPath?)>
-<!ATTLIST twConstPath twDataPathType CDATA "twDataPathMaxDelay">
-<!ATTLIST twConstPath constType (period | fromto | unknown) "unknown">
-<!ELEMENT twSlack (#PCDATA)>
-<!ELEMENT twDelConst (#PCDATA)>
-<!ELEMENT tw2Phase EMPTY>
-<!ELEMENT twRacePath (twSlack, twSrc, twDest, twClkSkew, twDelConst?, twClkUncert?, twDetPath)>
-<!ELEMENT twPathRptBanner (#PCDATA)>
-<!ELEMENT twUnconstOffIn (twOff, twSrc, twDest, twGuaranteed?, twClkUncert?, (twDataPath, twClkPath)?)>
-<!ELEMENT twOff (#PCDATA)>
-<!ELEMENT twGuaranteed EMPTY>
-<!ELEMENT twConstOffIn (twSlack, twSrc, twDest, ((twClkDel, twClkSrc, twClkDest) | twGuarInSetup), twOff, twOffSrc, twOffDest, twClkUncert?, (twDataPath, twClkPath)?)>
-<!ATTLIST twConstOffIn twDataPathType CDATA "twDataPathMaxDelay">
-<!ATTLIST twConstOffIn twDurationNotSpecified CDATA #IMPLIED>
-<!ELEMENT twClkDel (#PCDATA)>
-<!ELEMENT twClkSrc (#PCDATA)>
-<!ELEMENT twClkDest (#PCDATA)>
-<!ELEMENT twGuarInSetup (#PCDATA)>
-<!ELEMENT twOffSrc (#PCDATA)>
-<!ELEMENT twOffDest (#PCDATA)>
-<!ELEMENT twUnconstOffOut (twOff, twSrc, twDest, twClkUncert?, (twClkPath, twDataPath)?)>
-<!ELEMENT twConstOffOut (twSlack, twSrc, twDest, twClkDel, twClkSrc, twClkDest, twDataDel, twDataSrc, twDataDest, twOff, twOffSrc, twOffDest, twClkUncert?, (twClkPath, twDataPath)?)>
-<!ATTLIST twConstOffOut twDataPathType CDATA "twDataPathMaxDelay">
-<!ELEMENT twDataDel (#PCDATA)>
-<!ELEMENT twDataSrc (#PCDATA)>
-<!ELEMENT twDataDest (#PCDATA)>
-<!ELEMENT twModOffOut (twSlack, twDest, twDataDel, twDataSrc, twDataDest, twClkUncert?, twDataPath?)>
-<!ELEMENT twDetPath (twSrc, twDest, twLogLvls, twSrcSite, twSrcClk?, twPathDel*, (twLogDel, twRouteDel, twTotDel)?, twDestClk?, (twPctLog, twPctRoute)?)>
-<!ATTLIST twDetPath maxSiteLen CDATA #IMPLIED>
-<!ELEMENT twDataPath (twSrc, twDest, twLogLvls, twSrcSite, twSrcClk?, twPathDel*, (twLogDel, twRouteDel, twTotDel)?, twDestClk?, (twPctLog, twPctRoute)?)>
-<!ATTLIST twDataPath maxSiteLen CDATA #IMPLIED>
-<!ELEMENT twClkPath (twSrc, twDest, twLogLvls, twSrcSite, twSrcClk?, twPathDel*, (twLogDel, twRouteDel, twTotDel)?, twDestClk?, (twPctLog, twPctRoute)?)>
-<!ATTLIST twClkPath maxSiteLen CDATA #IMPLIED>
-<!ELEMENT twLogLvls (#PCDATA)>
-<!ELEMENT twSrcSite (#PCDATA)>
-<!ELEMENT twSrcClk (#PCDATA)>
-<!ATTLIST twSrcClk twEdge (twRising | twFalling) "twRising">
-<!ATTLIST twSrcClk twArriveTime CDATA #IMPLIED>
-<!ATTLIST twSrcClk twClkRes CDATA #IMPLIED>
-<!ELEMENT twPathDel (twSite, twDelType, twFanCnt?, twDelInfo?, twComp, twNet?, twBEL*)>
-<!ATTLIST twPathDel twHoldTime (TRUE | FALSE) "FALSE">
-<!ELEMENT twDelInfo (#PCDATA)>
-<!ATTLIST twDelInfo twEdge (twRising | twFalling | twIndet) #REQUIRED>
-<!ATTLIST twDelInfo twAcc (twRouted | twEst | twApprox) "twRouted">
-<!ELEMENT twSite (#PCDATA)>
-<!ELEMENT twDelType (#PCDATA)>
-<!ELEMENT twFanCnt (#PCDATA)>
-<!ELEMENT twComp (#PCDATA)>
-<!ELEMENT twNet (#PCDATA)>
-<!ELEMENT twBEL (#PCDATA)>
-<!ELEMENT twLogDel (#PCDATA)>
-<!ELEMENT twRouteDel (#PCDATA)>
-<!ELEMENT twDestClk (#PCDATA)>
-<!ATTLIST twDestClk twEdge (twRising | twFalling) "twRising">
-<!ATTLIST twDestClk twArriveTime CDATA #IMPLIED>
-<!ATTLIST twDestClk twClkRes CDATA #IMPLIED>
-<!ELEMENT twPctLog (#PCDATA)>
-<!ELEMENT twPctRoute (#PCDATA)>
-<!ELEMENT twNetRpt (twDelNet | twSlackNet | twSkewNet)>
-<!ELEMENT twDelNet (twDel, twNet, twDetNet?)>
-<!ELEMENT twSlackNet (twSlack, twNet, twDel, twNotMet?, twTimeConst, twAbsSlack, twDetNet?)>
-<!ELEMENT twTimeConst (#PCDATA)>
-<!ELEMENT twAbsSlack (#PCDATA)>
-<!ELEMENT twSkewNet (twSlack, twNet, twSkew, twNotMet?, twTimeConst, twAbsSlack, twDetSkewNet?)>
-<!ELEMENT twSkew (#PCDATA)>
-<!ELEMENT twDetNet (twNetDel*)>
-<!ELEMENT twNetDel (twSrc, twDest, twNetDelInfo)>
-<!ELEMENT twNetDelInfo (#PCDATA)>
-<!ATTLIST twNetDelInfo twAcc (twRouted | twEst | twApprox) "twRouted">
-<!ELEMENT twDetSkewNet (twNetSkew*)>
-<!ELEMENT twNetSkew (twSrc, twDest, twNetDelInfo, twSkew)>
-<!ELEMENT twConstList (twConstListItem)*>
-<!ELEMENT twConstListItem (twConstName, twNotMet?, twReqVal?, twActVal?, twLogLvls?)> 
-<!ATTLIST twConstListItem twUnits (twTime | twFreq) "twTime">
-<!ELEMENT twNotMet EMPTY>
-<!ELEMENT twReqVal (#PCDATA)>
-<!ELEMENT twActVal (#PCDATA)>
-<!ELEMENT twTimeGrp (twTimeGrpName, twCompList?, twSigList?, twBELList?, twMacList?, twPinList?)>
-<!ELEMENT twTimeGrpName (#PCDATA)>
-<!ELEMENT twCompList (twCompName+)>
-<!ELEMENT twCompName (#PCDATA)>
-<!ELEMENT twSigList (twSigName+)>
-<!ELEMENT twSigName (#PCDATA)>
-<!ELEMENT twBELList (twBELName+)>
-<!ELEMENT twBELName (#PCDATA)>
-<!ELEMENT twMacList (twMacName+)>
-<!ELEMENT twMacName (#PCDATA)>
-<!ELEMENT twPinList (twPinName+)>
-<!ELEMENT twPinName (#PCDATA)>
-<!ELEMENT twUnmetConstCnt (#PCDATA)>
-<!ELEMENT twDataSheet (twSUH2ClkList*, (twClk2PadList|twClk2OutList)*, twClk2SUList*, twPad2PadList?)>
-<!ATTLIST twDataSheet twNameLen CDATA #REQUIRED>
-<!ELEMENT twSUH2ClkList (twDest, twSUH2Clk+)>
-<!ATTLIST twSUH2ClkList twDestWidth CDATA #IMPLIED>
-<!ATTLIST twSUH2ClkList twPhaseWidth CDATA #IMPLIED>
-<!ELEMENT twSUH2Clk (twSrc, twSUHTime, twSUHTime?)>
-<!ELEMENT twSUHTime (twSU2ClkTime?,twH2ClkTime?)>
-<!ATTLIST twSUHTime twInternalClk CDATA #IMPLIED>
-<!ATTLIST twSUHTime twClkPhase CDATA #IMPLIED>
-<!ELEMENT twSU2ClkTime (#PCDATA)>
-<!ATTLIST twSU2ClkTime twEdge (twRising | twFalling | twIndet) #REQUIRED>
-<!ELEMENT twH2ClkTime (#PCDATA)>
-<!ATTLIST twH2ClkTime twEdge (twRising | twFalling | twIndet) #REQUIRED>
-<!ELEMENT twClk2PadList (twSrc, twClk2Pad+)>
-<!ELEMENT twClk2Pad (twDest, twTime)>
-<!ELEMENT twTime (#PCDATA)>
-<!ATTLIST twTime twEdge (twRising | twFalling | twIndet) #REQUIRED>
-<!ELEMENT twClk2OutList (twSrc, twClk2Out+)>
-<!ATTLIST twClk2OutList twDestWidth CDATA #REQUIRED>
-<!ATTLIST twClk2OutList twPhaseWidth CDATA #REQUIRED>
-<!ELEMENT twClk2Out EMPTY>
-<!ATTLIST twClk2Out twOutPad CDATA #REQUIRED>
-<!ATTLIST twClk2Out twMinTime CDATA #REQUIRED>
-<!ATTLIST twClk2Out twMinEdge CDATA #REQUIRED>
-<!ATTLIST twClk2Out twMaxTime CDATA #REQUIRED>
-<!ATTLIST twClk2Out twMaxEdge CDATA #REQUIRED>
-<!ATTLIST twClk2Out twInternalClk CDATA #REQUIRED>
-<!ATTLIST twClk2Out twClkPhase CDATA #REQUIRED>
-<!ELEMENT twClk2SUList (twDest, twClk2SU+)>
-<!ATTLIST twClk2SUList twDestWidth CDATA #IMPLIED>
-<!ELEMENT twClk2SU (twSrc, twRiseRise?, twFallRise?, twRiseFall?, twFallFall?)>
-<!ELEMENT twRiseRise (#PCDATA)>
-<!ELEMENT twFallRise (#PCDATA)>
-<!ELEMENT twRiseFall (#PCDATA)>
-<!ELEMENT twFallFall (#PCDATA)>
-<!ELEMENT twPad2PadList (twPad2Pad+)>
-<!ATTLIST twPad2PadList twSrcWidth CDATA #IMPLIED>
-<!ATTLIST twPad2PadList twDestWidth CDATA #IMPLIED>
-<!ELEMENT twPad2Pad (twSrc, twDest, twDel)>
-<!ELEMENT twNonDedClks ((twWarn | twInfo), twNonDedClk+)>
-<!ELEMENT twNonDedClk (#PCDATA)>
-<!ELEMENT twSum ( twErrCnt, twScore, twConstCov, twStats)>
-<!ELEMENT twScore (#PCDATA)>
-<!ELEMENT twConstCov (twPathCnt, twNetCnt, twConnCnt, twPct?)>
-<!ELEMENT twPathCnt (#PCDATA)>
-<!ELEMENT twNetCnt (#PCDATA)>
-<!ELEMENT twConnCnt (#PCDATA)>
-<!ELEMENT twPct (#PCDATA)>
-<!ELEMENT twStats ( twMinPer?, twMaxFreq?, twMaxCombDel?, twMaxFromToDel?, twMaxNetDel?, twMaxNetSkew?, twMaxInAfterClk?, twMinInBeforeClk?, twMaxOutBeforeClk?, twMinOutAfterClk?, (twInfo | twWarn)*)>
-<!ELEMENT twMaxCombDel (#PCDATA)>
-<!ELEMENT twMaxFromToDel (#PCDATA)>
-<!ELEMENT twMaxNetDel (#PCDATA)>
-<!ELEMENT twMaxNetSkew (#PCDATA)>
-<!ELEMENT twMaxInAfterClk (#PCDATA)>
-<!ELEMENT twMinInBeforeClk (#PCDATA)>
-<!ELEMENT twMaxOutBeforeClk (#PCDATA)>
-<!ELEMENT twMinOutAfterClk (#PCDATA)>
-<!ELEMENT twFoot (twTimestamp)>
-<!ELEMENT twTimestamp (#PCDATA)>
-<!ELEMENT twClientInfo (twClientName, twAttrList?)>
-<!ELEMENT twClientName (#PCDATA)>
-<!ELEMENT twAttrList (twAttrListItem)*>
-<!ELEMENT twAttrListItem (twName, twValue*)>
-<!ELEMENT twName (#PCDATA)>
-<!ELEMENT twValue (#PCDATA)>
-]>
-<twReport><twHead><twExecVer>Release 6.2.03i Trace G.28</twExecVer><twCopyright>Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.</twCopyright><twCmdLine>trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-
-</twCmdLine><twDesign>top.ncd</twDesign><twPCF>top.pcf</twPCF><twDevInfo arch="virtex2p"><twDevName>xc2vp70</twDevName><twSpeedGrade>-5</twSpeedGrade><twSpeedVer>PRODUCTION 1.86 2004-05-01</twSpeedVer></twDevInfo><twRptInfo twRptLvl="twErr"></twRptInfo><twEnvVar name="NONE" description="No environment variables were set" /></twHead><twInfo>INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths option. All paths that are not constrained will be reported in the unconstrained paths section(s) of the report.</twInfo><twBody><twErrRpt><twConst twConstType="twPathConst"><twConstHead><twConstName>TS_CK66 = PERIOD TIMEGRP &quot;CK66&quot;  20 nS   HIGH 50.000000 % ;</twConstName><twItemCnt>0</twItemCnt><twErrCntSetup>0</twErrCntSetup><twErrCntHold twRaceChecked="FALSE">0</twErrCntHold></twConstHead></twConst><twConst twConstType="twPathConst"><twConstHead><twConstName>TS_dcm0_dcm_out = PERIOD TIMEGRP &quot;dcm0_dcm_out&quot; TS_CK66 * 1.000000  HIGH 50.000 % ;</twConstName><twItemCnt>43997</twItemCnt><twErrCntSetup>0</twErrCntSetup><twErrCntHold twRaceChecked="TRUE">0</twErrCntHold><twMinPer>19.569</twMinPer></twConstHead></twConst><twConst twConstType="twPathConst"><twConstHead><twConstName>TS_dcm0_dcm_fx = PERIOD TIMEGRP &quot;dcm0_dcm_fx&quot; TS_CK66 * 1.000000  HIGH 50.000 % ;</twConstName><twItemCnt>1665654</twItemCnt><twErrCntSetup>0</twErrCntSetup><twErrCntHold twRaceChecked="TRUE">0</twErrCntHold><twMinPer>14.739</twMinPer></twConstHead></twConst><twUnmetConstCnt>0</twUnmetConstCnt><twDataSheet twNameLen="15"><twClk2SUList twDestWidth = "4"><twDest>CK66</twDest><twClk2SU><twSrc>CK66</twSrc><twRiseRise>19.959</twRiseRise></twClk2SU></twClk2SUList></twDataSheet></twErrRpt></twBody><twSum><twErrCnt>0</twErrCnt><twScore>0</twScore><twConstCov><twPathCnt>1709651</twPathCnt><twNetCnt>0</twNetCnt><twConnCnt>63904</twConnCnt></twConstCov><twStats><twMinPer>19.569</twMinPer><twMaxFreq>51.101</twMaxFreq></twStats></twSum><twFoot><twTimestamp>Mon Jun 13 23:42:18 2005</twTimestamp></twFoot><twClientInfo><twClientName>Trace</twClientName><twAttrList><twAttrListItem><twName>Trace Settings</twName><twValue>Peak Memory Usage: 279 MB
-</twValue></twAttrListItem></twAttrList></twClientInfo></twReport>
+Mon Dec 19 20:13:55 JST 2011
+DEFAULT_DEVICE_OPTIONS
+{
+	RESERVE_PIN = "AS INPUT TRI-STATED";
+	RESERVE_ALL_UNUSED_PINS = "AS OUTPUT DRIVING GROUND";
+	HEXOUT_FILE_COUNT_DIRECTION = UP;
+	HEXOUT_FILE_START_ADDRESS = 0;
+	GENERATE_HEX_FILE = OFF;
+	GENERATE_RBF_FILE = OFF;
+	GENERATE_TTF_FILE = OFF;
+	RESERVE_DATA7_THROUGH_DATA1_AFTER_CONFIGURATION = OFF;
+	RESERVE_RDYNBUSY_AFTER_CONFIGURATION = OFF;
+	RESERVE_NWS_NRS_NCS_CS_AFTER_CONFIGURATION = OFF;
+	DISABLE_CONF_DONE_AND_NSTATUS_PULLUPS_ON_CONFIG_DEVICE = OFF;
+	AUTO_INCREMENT_CONFIG_DEVICE_JTAG_USER_CODE = ON;
+	APEX20K_CONFIG_DEVICE_JTAG_USER_CODE = FFFFFFFF;
+	APEX20K_CONFIGURATION_DEVICE = EPC2LC20;
+	USE_CONFIGURATION_DEVICE = ON;
+	ENABLE_INIT_DONE_OUTPUT = OFF;
+	ENABLE_LOCK_OUTPUT = OFF;
+	ENABLE_DEVICE_WIDE_OE = OFF;
+	ENABLE_COMPACT_PCI = OFF;
+	ENABLE_DEVICE_WIDE_RESET = OFF;
+	RELEASE_CLEARS_BEFORE_TRI_STATES = OFF;
+	AUTO_RESTART_CONFIGURATION = ON;
+	USER_START_UP_CLOCK = OFF;
+	APEX20K_CONFIGURATION_SCHEME = "PASSIVE SERIAL";
+	APEX20K_JTAG_USER_CODE = FFFFFFFF;
+	RESERVE_NCEO_AFTER_CONFIGURATION = "AS OUTPUT DRIVING GROUND";
+	RESERVE_CLKUSR_AFTER_CONFIGURATION = OFF;
+	ENABLE_LOW_VOLTAGE_MODE_ON_CONFIG_DEVICE = OFF;
+	ENABLE_JTAG_BST_SUPPORT = ON;
+}
+AUTO_INSERT_ELA_ENTITY(bc_ela)
+{
+	ELA_ENTITY_NAME = bc_ela;
+	AUTO_INSERT_ELA_ENTITY = DISABLE;
+	SOURCE_FILE = bc_ela.tdf;
+}
+REPORT_FOLDER_SETTINGS("||Compilation Report")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_FOLDER_SETTINGS("||Compilation Report||Project Settings")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TEXT_SETTINGS("||Compilation Report||Legal Notice")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Project Settings||General Settings")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Compiler Settings")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Device Options")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Resource Usage Summary")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Input Pins")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Output Pins")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Bidir Pins")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||All Package Pins")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Control Signals")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Global & Other Fast Signals")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Cascade Chains")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Non-Global High Fan-Out Signals")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Peripheral Signals")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||MegaLAB Usage Summary")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Row Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||LAB Column Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||ESB Column Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||ClockLock")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Timing Settings")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Clock Requirement: 'altclklock:upll|pll' ( 25.0 MHz, -1.5 ns )")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Clock Requirement: 'altclklock:upll|pll~CLK1' ( 50.0 MHz, -1.5 ns )")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Processing Time")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_CMP_SUMMARY_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Summary")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Hierarchy")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Floorplan View")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Messages")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Equations")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Pin File")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+}
+REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Carry Chains")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	REPORT_CHART_TYPE = BAR;
+}
+REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Local Routing Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	REPORT_CHART_TYPE = BAR;
+}
+REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||MegaLAB Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	REPORT_CHART_TYPE = BAR;
+}
+REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||LAB External Interconnect")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	REPORT_CHART_TYPE = BAR;
+}
+REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||tsu (Input Setup Times)")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	NODE_LIMIT = "-1";
+}
+REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||th (Input Hold Times)")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	NODE_LIMIT = "-1";
+}
+REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||tco (Clock to Output Delays)")
+{
+	REPORT_OUTPUT_SECTION = ON;
+	PAGE_ORIENTATION = PORTRAIT;
+	NODE_LIMIT = "-1";
+}
+REPORT_SETTINGS(general)
+{
+	ALWAYS_USE_PORTRAIT_HEADER_FOOTER = OFF;
+	RIGHT_MARGIN = 1.000000;
+	LEFT_MARGIN = 1.000000;
+	BOTTOM_MARGIN = 1.000000;
+	TOP_MARGIN = 1.000000;
+}
+CHIP(pgfpga)
+{
+	"altclklock:upll|pll" : LOCATION = PLL_1;
+	"altclklock:upll|pll~1" : LOCATION = PLL_1;
+	"altclklock:upll|pll~CLK1" : LOCATION = PLL_1;
+	e_active : LOCATION = Pin_K8;
+	e_clk : LOCATION = Pin_N8;
+	e_fod[0] : LOCATION = Pin_J5;
+	e_fod[10] : LOCATION = Pin_F5;
+	e_fod[11] : LOCATION = Pin_F6;
+	e_fod[12] : LOCATION = Pin_F7;
+	e_fod[13] : LOCATION = Pin_E5;
+	e_fod[14] : LOCATION = Pin_E6;
+	e_fod[15] : LOCATION = Pin_E7;
+	e_fod[16] : LOCATION = Pin_G8;
+	e_fod[17] : LOCATION = Pin_F8;
+	e_fod[18] : LOCATION = Pin_E8;
+	e_fod[19] : LOCATION = Pin_H9;
+	e_fod[1] : LOCATION = Pin_J6;
+	e_fod[20] : LOCATION = Pin_D9;
+	e_fod[21] : LOCATION = Pin_D8;
+	e_fod[22] : LOCATION = Pin_E9;
+	e_fod[23] : LOCATION = Pin_H10;
+	e_fod[24] : LOCATION = Pin_G10;
+	e_fod[25] : LOCATION = Pin_D10;
+	e_fod[26] : LOCATION = Pin_F10;
+	e_fod[27] : LOCATION = Pin_H11;
+	e_fod[28] : LOCATION = Pin_G11;
+	e_fod[29] : LOCATION = Pin_F11;
+	e_fod[2] : LOCATION = Pin_J7;
+	e_fod[30] : LOCATION = Pin_E11;
+	e_fod[31] : LOCATION = Pin_H12;
+	e_fod[32] : LOCATION = Pin_G12;
+	e_fod[33] : LOCATION = Pin_E12;
+	e_fod[34] : LOCATION = Pin_H13;
+	e_fod[35] : LOCATION = Pin_E13;
+	e_fod[3] : LOCATION = Pin_J8;
+	e_fod[4] : LOCATION = Pin_H5;
+	e_fod[5] : LOCATION = Pin_H6;
+	e_fod[6] : LOCATION = Pin_H7;
+	e_fod[7] : LOCATION = Pin_G5;
+	e_fod[8] : LOCATION = Pin_G6;
+	e_fod[9] : LOCATION = Pin_G7;
+	e_ipd[0] : LOCATION = Pin_AB15;
+	e_ipd[10] : LOCATION = Pin_W12;
+	e_ipd[11] : LOCATION = Pin_K6;
+	e_ipd[12] : LOCATION = Pin_AA11;
+	e_ipd[13] : LOCATION = Pin_Y11;
+	e_ipd[14] : LOCATION = Pin_W11;
+	e_ipd[15] : LOCATION = Pin_AB10;
+	e_ipd[16] : LOCATION = Pin_Y10;
+	e_ipd[17] : LOCATION = Pin_W10;
+	e_ipd[18] : LOCATION = Pin_AB9;
+	e_ipd[19] : LOCATION = Pin_W9;
+	e_ipd[1] : LOCATION = Pin_V15;
+	e_ipd[20] : LOCATION = Pin_AB8;
+	e_ipd[21] : LOCATION = Pin_AA8;
+	e_ipd[22] : LOCATION = Pin_Y8;
+	e_ipd[23] : LOCATION = Pin_AB7;
+	e_ipd[24] : LOCATION = Pin_AA7;
+	e_ipd[25] : LOCATION = Pin_Y7;
+	e_ipd[26] : LOCATION = Pin_W7;
+	e_ipd[27] : LOCATION = Pin_AB6;
+	e_ipd[28] : LOCATION = Pin_Y6;
+	e_ipd[29] : LOCATION = Pin_W6;
+	e_ipd[2] : LOCATION = Pin_Y15;
+	e_ipd[30] : LOCATION = Pin_V6;
+	e_ipd[31] : LOCATION = Pin_AB5;
+	e_ipd[32] : LOCATION = Pin_AA5;
+	e_ipd[33] : LOCATION = Pin_Y5;
+	e_ipd[34] : LOCATION = Pin_W5;
+	e_ipd[35] : LOCATION = Pin_V5;
+	e_ipd[3] : LOCATION = Pin_W15;
+	e_ipd[4] : LOCATION = Pin_AB14;
+	e_ipd[5] : LOCATION = Pin_AB13;
+	e_ipd[6] : LOCATION = Pin_W13;
+	e_ipd[7] : LOCATION = Pin_AB12;
+	e_ipd[8] : LOCATION = Pin_V12;
+	e_ipd[9] : LOCATION = Pin_Y12;
+	e_ipwe : LOCATION = Pin_V7;
+	e_jpwe : LOCATION = Pin_L9;
+	e_nd : LOCATION = Pin_L5;
+	e_pid[0] : LOCATION = Pin_V8;
+	e_pid[1] : LOCATION = Pin_U5;
+	e_pid[2] : LOCATION = Pin_U6;
+	e_pid[3] : LOCATION = Pin_U7;
+	e_pid[4] : LOCATION = Pin_U8;
+	e_pid[5] : LOCATION = Pin_T5;
+	e_pid[6] : LOCATION = Pin_T6;
+	e_pid[7] : LOCATION = Pin_T7;
+	e_pid[8] : LOCATION = Pin_T8;
+	e_pid[9] : LOCATION = Pin_T9;
+	e_rst : LOCATION = Pin_H14;
+	e_sts : LOCATION = Pin_K7;
+	e_sysclk : LOCATION = Pin_F13;
+	e_vd : LOCATION = Pin_K5;
+	e_wd : LOCATION = Pin_L7;
+	m_ah[0] : LOCATION = Pin_H24;
+	m_ah[10] : LOCATION = Pin_F25;
+	m_ah[11] : LOCATION = Pin_F26;
+	m_ah[12] : LOCATION = Pin_H20;
+	m_ah[13] : LOCATION = Pin_H25;
+	m_ah[14] : LOCATION = Pin_H26;
+	m_ah[15] : LOCATION = Pin_K23;
+	m_ah[16] : LOCATION = Pin_K24;
+	m_ah[17] : LOCATION = Pin_H21;
+	m_ah[18] : LOCATION = Pin_H22;
+	m_ah[1] : LOCATION = Pin_H23;
+	m_ah[2] : LOCATION = Pin_K26;
+	m_ah[3] : LOCATION = Pin_K25;
+	m_ah[4] : LOCATION = Pin_F20;
+	m_ah[5] : LOCATION = Pin_D26;
+	m_ah[6] : LOCATION = Pin_F21;
+	m_ah[7] : LOCATION = Pin_F22;
+	m_ah[8] : LOCATION = Pin_G24;
+	m_ah[9] : LOCATION = Pin_F24;
+	m_al[0] : LOCATION = Pin_AA21;
+	m_al[10] : LOCATION = Pin_W22;
+	m_al[11] : LOCATION = Pin_W23;
+	m_al[12] : LOCATION = Pin_W24;
+	m_al[13] : LOCATION = Pin_AA22;
+	m_al[14] : LOCATION = Pin_AA23;
+	m_al[15] : LOCATION = Pin_AA24;
+	m_al[16] : LOCATION = Pin_AA25;
+	m_al[17] : LOCATION = Pin_W25;
+	m_al[18] : LOCATION = Pin_W26;
+	m_al[1] : LOCATION = Pin_AA20;
+	m_al[2] : LOCATION = Pin_AC26;
+	m_al[3] : LOCATION = Pin_AA26;
+	m_al[4] : LOCATION = Pin_U24;
+	m_al[5] : LOCATION = Pin_U23;
+	m_al[6] : LOCATION = Pin_V26;
+	m_al[7] : LOCATION = Pin_U26;
+	m_al[8] : LOCATION = Pin_W20;
+	m_al[9] : LOCATION = Pin_W21;
+	m_clk[0] : LOCATION = Pin_T26;
+	m_clk[1] : LOCATION = Pin_M26;
+	m_dh[0] : LOCATION = Pin_L18;
+	m_dh[10] : LOCATION = Pin_E15;
+	m_dh[11] : LOCATION = Pin_E14;
+	m_dh[12] : LOCATION = Pin_M22;
+	m_dh[13] : LOCATION = Pin_L20;
+	m_dh[14] : LOCATION = Pin_G15;
+	m_dh[15] : LOCATION = Pin_J14;
+	m_dh[16] : LOCATION = Pin_M20;
+	m_dh[17] : LOCATION = Pin_N22;
+	m_dh[18] : LOCATION = Pin_J15;
+	m_dh[19] : LOCATION = Pin_H15;
+	m_dh[1] : LOCATION = Pin_K20;
+	m_dh[20] : LOCATION = Pin_M18;
+	m_dh[21] : LOCATION = Pin_M21;
+	m_dh[22] : LOCATION = Pin_E16;
+	m_dh[23] : LOCATION = Pin_M19;
+	m_dh[24] : LOCATION = Pin_G16;
+	m_dh[25] : LOCATION = Pin_N19;
+	m_dh[26] : LOCATION = Pin_F16;
+	m_dh[27] : LOCATION = Pin_J16;
+	m_dh[28] : LOCATION = Pin_H16;
+	m_dh[29] : LOCATION = Pin_G17;
+	m_dh[2] : LOCATION = Pin_K22;
+	m_dh[30] : LOCATION = Pin_F17;
+	m_dh[31] : LOCATION = Pin_E17;
+	m_dh[32] : LOCATION = Pin_G18;
+	m_dh[33] : LOCATION = Pin_N18;
+	m_dh[34] : LOCATION = Pin_H17;
+	m_dh[35] : LOCATION = Pin_H18;
+	m_dh[3] : LOCATION = Pin_L21;
+	m_dh[4] : LOCATION = Pin_L19;
+	m_dh[5] : LOCATION = Pin_L22;
+	m_dh[6] : LOCATION = Pin_J19;
+	m_dh[7] : LOCATION = Pin_K21;
+	m_dh[8] : LOCATION = Pin_D14;
+	m_dh[9] : LOCATION = Pin_K19;
+	m_dl[0] : LOCATION = Pin_W17;
+	m_dl[10] : LOCATION = Pin_R22;
+	m_dl[11] : LOCATION = Pin_P22;
+	m_dl[12] : LOCATION = Pin_Y17;
+	m_dl[13] : LOCATION = Pin_AB18;
+	m_dl[14] : LOCATION = Pin_R21;
+	m_dl[15] : LOCATION = Pin_L14;
+	m_dl[16] : LOCATION = Pin_AB17;
+	m_dl[17] : LOCATION = Pin_Y16;
+	m_dl[18] : LOCATION = Pin_D15;
+	m_dl[19] : LOCATION = Pin_R20;
+	m_dl[1] : LOCATION = Pin_AA19;
+	m_dl[20] : LOCATION = Pin_W16;
+	m_dl[21] : LOCATION = Pin_AA17;
+	m_dl[22] : LOCATION = Pin_R18;
+	m_dl[23] : LOCATION = Pin_V16;
+	m_dl[24] : LOCATION = Pin_T21;
+	m_dl[25] : LOCATION = Pin_AA16;
+	m_dl[26] : LOCATION = Pin_T22;
+	m_dl[27] : LOCATION = Pin_T19;
+	m_dl[28] : LOCATION = Pin_T20;
+	m_dl[29] : LOCATION = Pin_U20;
+	m_dl[2] : LOCATION = Pin_Y19;
+	m_dl[30] : LOCATION = Pin_U22;
+	m_dl[31] : LOCATION = Pin_T18;
+	m_dl[32] : LOCATION = Pin_U21;
+	m_dl[33] : LOCATION = Pin_AB16;
+	m_dl[34] : LOCATION = Pin_V19;
+	m_dl[35] : LOCATION = Pin_U19;
+	m_dl[3] : LOCATION = Pin_AB19;
+	m_dl[4] : LOCATION = Pin_R17;
+	m_dl[5] : LOCATION = Pin_AB20;
+	m_dl[6] : LOCATION = Pin_W18;
+	m_dl[7] : LOCATION = Pin_Y18;
+	m_dl[8] : LOCATION = Pin_P19;
+	m_dl[9] : LOCATION = Pin_AA18;
+	m_oe[0] : LOCATION = Pin_R24;
+	m_oe[1] : LOCATION = Pin_M24;
+	m_we[0] : LOCATION = Pin_R23;
+	m_we[1] : LOCATION = Pin_L23;
+	RESERVE_ALL_UNUSED_PINS = "AS OUTPUT DRIVING GROUND";
+	HEXOUT_FILE_COUNT_DIRECTION = UP;
+	HEXOUT_FILE_START_ADDRESS = 0;
+	GENERATE_HEX_FILE = OFF;
+	GENERATE_RBF_FILE = OFF;
+	GENERATE_TTF_FILE = ON;
+	RESERVE_DATA7_THROUGH_DATA1_AFTER_CONFIGURATION = OFF;
+	RESERVE_RDYNBUSY_AFTER_CONFIGURATION = OFF;
+	RESERVE_NWS_NRS_NCS_CS_AFTER_CONFIGURATION = OFF;
+	DISABLE_CONF_DONE_AND_NSTATUS_PULLUPS_ON_CONFIG_DEVICE = OFF;
+	AUTO_INCREMENT_CONFIG_DEVICE_JTAG_USER_CODE = ON;
+	APEX20K_CONFIG_DEVICE_JTAG_USER_CODE = FFFFFFFF;
+	APEX20K_CONFIGURATION_DEVICE = EPC2LC20;
+	USE_CONFIGURATION_DEVICE = ON;
+	ENABLE_INIT_DONE_OUTPUT = OFF;
+	ENABLE_LOCK_OUTPUT = OFF;
+	ENABLE_DEVICE_WIDE_OE = OFF;
+	ENABLE_DEVICE_WIDE_RESET = OFF;
+	RELEASE_CLEARS_BEFORE_TRI_STATES = OFF;
+	AUTO_RESTART_CONFIGURATION = ON;
+	USER_START_UP_CLOCK = OFF;
+	APEX20K_CONFIGURATION_SCHEME = "PASSIVE SERIAL";
+	APEX20K_JTAG_USER_CODE = FFFFFFFF;
+	RESERVE_NCEO_AFTER_CONFIGURATION = "AS OUTPUT DRIVING GROUND";
+	RESERVE_CLKUSR_AFTER_CONFIGURATION = OFF;
+	ENABLE_LOW_VOLTAGE_MODE_ON_CONFIG_DEVICE = OFF;
+	ENABLE_JTAG_BST_SUPPORT = ON;
+	DEVICE_FILTER_SPEED_GRADE = "-2X";
+	DEVICE_FILTER_PIN_COUNT = 672;
+	DEVICE_FILTER_PACKAGE = FBGA;
+	BASE_PIN_OUT_FILE_ON_SAMEFRAME_DEVICE = OFF;
+	DEVICE = "EP20K400FC672-2X";
+}
+COMPILER_SETTINGS
+{
+	FOCUS_ENTITY_NAME = |pgfpga;
+	RUN_TIMING_ANALYSES = ON;
+	FAMILY = APEX20K;
+	APEX_FITTER_TYPE = ADVANCED;
+	OPTIMIZE_IO_TIMING = OFF;
+	OPTIMIZE_INTERNAL_TIMING = NORMAL_COMPILATION;
+	COMPILATION_LEVEL = FULL;
+	SAVE_DISK_SPACE = ON;
+	SPEED_DISK_USAGE_TRADEOFF = NORMAL;
+}
