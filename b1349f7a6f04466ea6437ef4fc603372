@@ -1,16 +1,16 @@
-Mon Dec  5 19:29:45 JST 2011
-#include<stdio.h>
-#define LONG long long int 
-// bit level check between emulator and hardware(pg2)
-void check_pg2emu(LONG accel[][3],LONG accel_pg2[][3],int n)
-{
-  int i,j;
-  for(i=0;i<n;i++){
-    for(j=0;i<3;j++){
-      LONG a_emu,a_pg2;
-      a_emu = accel[i][j];
-      a_pg2 = accel_pg2[i][j];
-      if(a_emu != a_pg2){fprintf(stderr,"error\n");}
-    }
-  }
-}
+Mon Dec 26 19:30:12 JST 2011
+#!/bin/sh
+#
+# An example hook script to check the commit log message taken by
+# applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.  The hook is
+# allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "applypatch-msg".
+
+. git-sh-setup
+test -x "$GIT_DIR/hooks/commit-msg" &&
+	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
+:
