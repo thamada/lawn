@@ -1,17 +1,5 @@
-Sun Feb 12 19:29:56 JST 2012
-#!/usr/bin/perl
-
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
-
-srand(12345);
-
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
-}
+Sun Feb 12 19:39:50 JST 2012
+-- ProjNav VHDL simulation template: sim_pfpga_dma.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
