@@ -1,227 +1,206 @@
-Fri Mar 30 20:06:43 JST 2012
-//Time-stamp: "2007-01-24 01:31:34 hamada"
-//
-// API for the PGR system for PROGRAPE-4
-//
-// by T.Hamada
-//
-
+Tue Apr  3 19:40:10 JST 2012
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include "pg4.h"
-#include "pg4reg.h"
-#include "pgrapi.h"
+#include <GL/glut.h>
+#include <string.h> // strtok(),strcpy()
+#include <stdlib.h> // atof()
+#include <math.h>
+#define NMAX 210000
+#define XSCALE 2.0
+#define YSCALE 2.0
+//#define IS_PRESET 0
+#define IS_PRESET 1
+#define PRESET_NBODY 4096
+//#define PRESET_NBODY 16384
+//#define PRESET_NBODY 3
 
-unsigned int *bar1[8];
+#define PRESET_NWRITE 1
+#define PRESET_NSKIP 1
 
-static unsigned int *ptr[] = {
-  NULL, NULL, NULL, NULL
-};
+static char ifile[256];
+static int istep;
+static FILE *fp;
 
-static int npipe_per_chip[] = {1,1,1,1};
-static int jwidth[] = {JDIM, JDIM, JDIM, JDIM};
+int imax;
+double x[NMAX];
+double y[NMAX];
+int NBODY;
+int SKIP_STEP;
 
-static int NCHIP = 4;                               // NCHIP variable
-void pgr_set_nchip(int n){   NCHIP = n; }           // NCHIP variable
-
-void pgr_reset(int devid)
+void reset_fp()
 {
-  // allocate DMA buffer
-  if (ptr[devid] == NULL) {
-    ptr[devid] = pg4_get_dmarptr(devid);
+    printf("restart\n");
+    fclose(fp);
+    fp = fopen(ifile,"r");
+    istep=0;
+}
 
-    if (ptr[devid] == NULL) {
-      fprintf(stderr, "mmap error!!!!!\n fatal error, now exiting....\n");
-      exit(-1);
+void skip_step()
+{
+  int i;
+  char line[101];
+  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
+}
+
+void myidle()
+{
+  istep++;
+  if((istep%SKIP_STEP) != 0){
+    skip_step();
+  }else{
+    glutPostRedisplay();
+  }
+  //  printf("%d step\n",(istep*SKIP_STEP));
+}
+
+void display();
+
+void init()
+{
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glColor3f(1.0,1.0,1.0);
+}
+
+
+int main(int argc, char** argv)
+{
+
+  if(IS_PRESET){
+    NBODY = PRESET_NBODY*PRESET_NWRITE;
+    SKIP_STEP=PRESET_NSKIP;
+  }else{
+    int nb,nw;
+    printf("enter NBODY:");  scanf("%d",&nb);  //粒子数を指定
+    printf("enter Nwrite:");  scanf("%d",&nw);  //連続書込みコマ数
+    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
+    NBODY = (int)(nb * nw);
+    SKIP_STEP=1; // Fixed
+  }
+  istep=0;
+  if(argc <2){printf("no inputfile.\n"); exit(0); }
+  strcpy(ifile,argv[1]);
+  fp = fopen(ifile,"r");
+
+  glutInit(&argc,argv);
+  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
+  glutInitWindowSize(400,400);
+  glutInitWindowPosition(600,0);
+  glutCreateWindow("NBODYH-2003/11/08");
+  glutDisplayFunc(display);
+  glutIdleFunc(myidle);
+  init();
+  glutMainLoop();
+
+  fclose(fp);
+  return 0;
+}
+
+
+
+
+void display()
+{
+  static int flag=0;
+  void display_set_GL_LINES();
+  void display_get_position();
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPointSize(1.0);
+
+  { //--- TIME METER ---
+    char p[10];
+    int i,nketa;
+    nketa = 6;
+    sprintf(p,"%06d",istep);
+    glColor3f(0.1 ,0.2,0.3);
+    for(i=0;i<nketa;i++){
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
+      glRasterPos2f(-0.70-0.06*i, -0.95);
     }
   }
 
-  WriteBase0(devid, PIPE_RST, 0xf);   // send RST<="1111" ( 4 chips )
-  WriteBase0(devid, PIPE_RST, 0x0);   // send RST<="0000" ( 4 chips )
+  display_set_GL_LINES();
+  glBegin(GL_POINTS);
+  //  glColor3f(1.0 ,0.8,0.0);
+  if(flag != 0){
+    int n;
+    display_get_position();
+    for(n=0;n<NBODY;n++){
+      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
+      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
+    }
+  }
+  flag=1;
+  glEnd();
+  glutSwapBuffers();
 }
 
-int pgr_get_writecomb_err(int devid)
-{
-  int rtn;
-  rtn = pg4_readbase0(devid, 0);
-  rtn >>= 6;
-  return (rtn);
+
+/* display関数用 */
+void display_set_GL_LINES()
+{ // --- MEMORI ---
+
+  glBegin(GL_LINES);
+
+  glColor3f(0.7,0.0,0.0);
+  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
+  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
+
+  glColor3f(0.0,0.2,0.5);
+  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
+  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
+  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
+  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
+
+  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
+  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
+  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
+  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
+
+  {
+    double tiny=0.04;
+    double small=0.04;
+    glColor3f(0.9,0.4,0.8);
+    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
+    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
+    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
+    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
+
+    glColor3f(0.38, 0.01, 0.8);
+    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
+    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
+    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
+    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
+    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
+    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
+    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
+    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
+
+    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
+    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
+    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
+    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
+    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
+    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
+    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
+    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
+  }
+  glEnd(); // --- End GL_LINES;
 }
 
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM])
-{
-  unsigned int offset = (ADR_JPSET<<1) + ((j*JDIM*sizeof(unsigned int))>>2);
-  memcpy(bar1[devid]+offset, jdata, jwidth[devid]*sizeof(unsigned int));
-}
-
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj)
-{
-  unsigned int offset = (ADR_JPSET<<1);     // BroadCast
-  // nj <= 8192 !!
-  memcpy(bar1[devid]+offset, jdata, JDIM*sizeof(unsigned int)*nj);
-}
-
-void pgr_setipset(int devid, unsigned int *idata, int ni)
-{
-  unsigned int offset = (ADR_IPSET<<1);
-  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*ni);
-}
-
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
+void display_get_position()
 {
   int i;
-  int num = number_of_pipelines << XI_AWIDTH;
-  //  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11);
-  //  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*num);
-
-  for(i = 0; i < num; i++) {
-    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
+  char line[1024];
+  char* p;
+  double _x,_y,_z;
+  for(i=0;i<NBODY;i++){
+    if(fgets(line,100,fp)!=NULL){
+      p = (char* )strtok(line,"\t"); _x = atof(p);
+      p = (char* )strtok(NULL,"\t"); _y = atof(p);
+      p = (char* )strtok(NULL,"\t"); _z = atof(p);
+      x[i] = _x;
+      y[i] = _y;
+    }else{
+      reset_fp();
+    }
   }
 }
-
-/*
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
-{
-  int i;
-  int num = number_of_pipelines << XI_AWIDTH;
-  for(i = 0; i < num; i++) {
-    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
-  }
-}
-*/
-
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim)
-{
-  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11) | (ipipe<<XI_AWIDTH);
-  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*idim);
-}
-
-void pgr_start_calc(int devid, unsigned int n)
-{
-  unsigned int offset = ADR_SETN<<1;
-  int i;
-  volatile int j;
-  // SETN
-  pg4_writebase1(devid, offset, n);
-  pg4_writebase1(devid, offset+1, 0xffffffff);
-  j = pg4_readbase1(devid, offset+1); // flash cache
-  
-  // RUN
-  pg4_writebase1(devid, offset+6, 0xffffffff);
-  pg4_writebase1(devid, offset+7, 0xffffffff);
-  j = pg4_readbase1(devid, offset+1); // flash cache
-
-
-  // -------------------------- change 2005/01/04 by T.H
-  //                            wait until runret return
-  //                                 and prepare all foset(for 4chips) to ifpga RAM.
-  //  i=0;
-  while( (0x1 & pg4_readbase0(devid,0)) == 1){
-    //    i++;
-    //    fprintf(stderr,"%d ",i);
-    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
-  }
-  //  fprintf(stderr,"%d\n",i);
-}
-
-void pgr_calc_start(int devid, unsigned int n)
-{
-  unsigned int offset = ADR_SETN<<1;
-  int i;
-  // -------------------------- SETN(i==0) & RUN(i==2)
-  for(i = 0; i < 16; i++){
-    pg4_writebase1(devid, offset+i, n);
-  }
-}
-
-void pgr_calc_finish(int devid)
-{
-  while( (0x1 & pg4_readbase0(devid,0)) == 1){
-    //    i++;
-    //    fprintf(stderr,"%d ",i);
-    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
-  }
-}
-
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM])
-{
-  int ret;
-  int npc = npipe_per_chip[devid];
-  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
-
-  AGAIN:
-  ret = pg4_DMAget(devid, size);
-  if (pg4_DMAretry(devid) > 0) {
-    //    fprintf(stderr, "possible DMA failure\n");
-    //    pg4_DMAcheck(devid);
-    goto AGAIN;
-  }
-  memcpy(fodata, &ptr[devid][0], size);
-
-  //  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
-}
-
-void pgr_getfoset2(int devid, unsigned long long int fodata[][FDIM], unsigned int size, unsigned int offset)
-{
-  int ret;
-
-  AGAIN2:
-  ret = pg4_DMAget_offset(devid, size, offset);
-  if (pg4_DMAretry(devid) > 0) {
-    //    fprintf(stderr, "possible DMA failure\n");
-    //    pg4_DMAcheck(devid);
-    goto AGAIN2;
-  }
-  memcpy(fodata, &ptr[devid][0], size);
-}
-
-//PIO version
-void pgr_getfoset3(int devid, unsigned long long int fodata[][FDIM])
-{
-  int npc = npipe_per_chip[devid];
-  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
-  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
-}
-
-void pgr_set_jwidth(int devid, int n)
-{
- if(n < 1) {
-    fprintf(stderr,"pgr api error, JWIDTH be > 0.\n");
-    exit(-1);
-  }
-  jwidth[devid] = n;
-}
-
-void pgr_set_npipe_per_chip(int devid, int n){
-  if(n>256){
-    fprintf(stderr,"pgr api error, NPIPE/chip must be < 257.\n");
-    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
-    exit(-1);
-  }else if(n<1){
-    fprintf(stderr,"pgr api error, NPIPE/chip must be > 0.\n");
-    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
-    exit(-1);
-  }
-  npipe_per_chip[devid] = n; // this is used in pgr_getfoset().
-  WriteBase0(devid, NPIPE_IFPGA, n);
-}
-
-int pgr_open(int id)
-{
-  int rtn;
-  rtn = pg4_open(id);
-  bar1[id] = pg4_get_bar1ptr(id);
-
-  return rtn;
-}
-
-void pgr_close(int devid)
-{
-  pg4_close(devid);
-}
-
-
