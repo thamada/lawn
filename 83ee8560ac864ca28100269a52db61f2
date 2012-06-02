@@ -1,2682 +1,641 @@
-Mon Mar 26 19:41:33 JST 2012
-library ieee;
-use ieee.std_logic_1164.all;
-LIBRARY altera_mf;
-USE altera_mf.altera_mf_components.all;
-LIBRARY altera;
-USE altera.maxplus2.all;
-
-entity pgfpga is 
-  port(
--- for IO 
-      e_clk,e_sysclk,e_rst: in std_logic;
-      e_jpwe : in std_logic;
-      e_pid: in std_logic_vector(9 downto 0);
-      e_ipd : in std_logic_vector(35 downto 0);
-      e_ipwe : in std_logic;
-      e_fod: out std_logic_vector(35 downto 0);
-      e_nd,e_vd,e_sts: out std_logic;
-      e_wd : in std_logic;
-      e_active : out std_logic;
-
--- for memory
-      m_oe : out std_logic_vector(1 downto 0);
-      m_we : out std_logic_vector(1 downto 0);
-      m_al : out std_logic_vector(18 downto 0);
-      m_ah : out std_logic_vector(18 downto 0);
-      m_dl : inout std_logic_vector(35 downto 0);
-      m_dh : inout std_logic_vector(35 downto 0);
-      m_clk : out std_logic_vector(1 downto 0)
-  );
-end pgfpga;
-
-architecture hierarchy of pgfpga is
-
-  component ipw
-    port( 
-      i_ipwe: in std_logic;
-      i_ipd : in std_logic_vector(35 downto 0);
-      i_weca,i_wejp,i_wefo,i_wei: out std_logic;
-      i_adri : out std_logic_vector(11 downto 0);
-      i_adr : out std_logic_vector(3 downto 0);
-      i_data: out std_logic_vector(31 downto 0);
-      i_perr: out std_logic;
-      clk,sysclk,rst : in std_logic );
-  end component;
-
-  component jpw
-    port( 
-      j_jpwe: in std_logic;
-      j_jpd : in std_logic_vector(35 downto 0);
-      j_physid : in std_logic_vector(9 downto 0);
-      j_wejp: in std_logic;
-      j_data: in std_logic_vector(19 downto 0);
-      j_adr : in std_logic_vector(3 downto 0);
-      j_mdl : out std_logic_vector(35 downto 0);
-      j_mdh : out std_logic_vector(35 downto 0);
-      j_mwe,j_moe : out std_logic_vector(1 downto 0);
-      j_mal : out std_logic_vector(18 downto 0);
-      j_mah : out std_logic_vector(18 downto 0);
-      j_oel,j_oeh : out std_logic;
-      j_clma : in std_logic_vector(18 downto 0);
-      j_vcido : out std_logic_vector(9 downto 0);
-      j_perr : out std_logic;
-      clk,sysclk,rst : in std_logic);
-  end component;
-
-  component calc
-    port(
-      c_md : in std_logic_vector(71 downto 0);
-      c_ma : out std_logic_vector(18 downto 0);
-      c_weca: in std_logic;
-      c_data: in std_logic_vector(19 downto 0);
-      c_adr : in std_logic_vector(3 downto 0);
-      c_jdata : out std_logic_vector(71 downto 0); 	        
-      c_run : out std_logic;
-      rst,clk : in std_logic);
-  end component;
-
-  component fo
-    port(
-      f_wefo : in std_logic;
-      f_data: in std_logic_vector(31 downto 0);
-      f_adr : in std_logic_vector(3 downto 0);
-      f_pd : in std_logic_vector(31 downto 0);      
-      f_pa : out std_logic_vector(11 downto 0);
-      f_csts : in std_logic;
-      f_fodata : out std_logic_vector(35 downto 0);
-      f_sts,f_vd,f_nd : out std_logic;
-      f_wd : in std_logic;
-      f_active : out std_logic;
-      f_vcid : in std_logic_vector(9 downto 0);
-      rst,clk,sysclk : in std_logic );
-  end component;
-
-  component pg_pipe
-    port(
-      p_jdata: in std_logic_vector(71 downto 0);
-      p_run : in std_logic;
-      p_we : in std_logic;
-      p_adri : in std_logic_vector(11 downto 0);      
-      p_datai : in std_logic_vector(31 downto 0);
-      p_adro : in std_logic_vector(11 downto 0);      
-      p_datao : out std_logic_vector(31 downto 0);
-      p_runret : out std_logic;
-      rst,clk : in std_logic );
-  end component;
-
- signal clk, iclk0, iclk1, iclk2, clk0, clk1:  std_logic;
- signal weca,wejp,wefo,wei: std_logic;
- signal adr: std_logic_vector(3 downto 0);
- signal adri: std_logic_vector(11 downto 0);
- signal data: std_logic_vector(31 downto 0);
- signal clma: std_logic_vector(18 downto 0);
- signal clsts: std_logic;
- signal jdata: std_logic_vector(71 downto 0);
- signal run: std_logic;
- signal padr: std_logic_vector(11 downto 0);
- signal pdata: std_logic_vector(31 downto 0);
- signal mdlh: std_logic_vector(71 downto 0);
- signal iperr,jperr: std_logic; 
- signal vcid: std_logic_vector(9 downto 0);
-
- signal mdoel,mdoeh: std_logic;
- signal m_dl0 : std_logic_vector(35 downto 0);
- signal m_dh0 : std_logic_vector(35 downto 0);
-
- signal sysclk0,sysclk1:  std_logic; 
-
-begin
-
---  upll: altclklock generic map(inclock_period => 58823,
---                              clock0_boost => 1,clock1_boost => 2)
---                  port map(inclock=>e_clk, clock0=>clk, clock1=>iclk0);
- 
---  process(iclk0) begin
---    if(iclk0'event and iclk0='1') then 
---      iclk1 <= not iclk1;
---    end if;
---  end process;
-
---  m_clk(1) <= iclk1;
---  m_clk(0) <= iclk1;
-
---  ulcell0: lcell PORT MAP(a_in=>e_sysclk, a_out=>sysclk0);
---  ulcell1: lcell PORT MAP(a_in=>sysclk0, a_out=>sysclk1);
-
-  clk <= e_clk;
-  m_clk(1) <= e_sysclk;
-  m_clk(0) <= e_sysclk;
-
-  uipw: ipw PORT MAP(i_ipwe=>e_ipwe,i_ipd=>e_ipd,
-		   i_weca=>weca, i_wejp=>wejp, i_wefo=>wefo, i_wei=>wei, 
-		   i_adr=>adr, i_adri=>adri, i_data=>data, i_perr=>iperr,
-                   clk=>clk,sysclk=>e_sysclk,rst=>e_rst);
-
-  ujpw: jpw PORT MAP(j_jpwe=>e_jpwe, j_jpd=>e_ipd, j_physid=>e_pid, 
-                    j_wejp=>wejp, j_data=>data(19 downto 0), j_adr=>adr(3 downto 0), 
-	            j_mdl=>m_dl0, j_mdh=>m_dh0, j_mwe=>m_we, j_moe=>m_oe,
-                    j_oel=>mdoel, j_oeh=>mdoeh, 
-	            j_mal=>m_al, j_mah=>m_ah,j_clma=>clma, j_perr=>jperr,
-                    j_vcido=>vcid, clk=>clk,sysclk=>e_sysclk,rst=>e_rst);
-
-   
-  with mdoel select
-    m_dl <= m_dl0 when '1',
-            "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ" when others;
-
-  with mdoeh select
-    m_dh <= m_dh0 when '1',
-            "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ" when others;
-
-  mdlh <= m_dh & m_dl;
-  ucalc: calc PORT MAP(c_md=>mdlh, c_ma=>clma, 
-                     c_weca=>weca, c_data=>data(19 downto 0), c_adr=>adr(3 downto 0), 
-	             c_jdata=>jdata, c_run=>run, 
-                     clk=>clk,rst=>e_rst);
-
-  ufo: fo PORT MAP(f_wefo=>wefo,f_data=>data, f_adr=>adr(3 downto 0),
-                   f_pd=>pdata, f_pa=>padr, f_csts=>clsts,
-		   f_fodata=>e_fod, f_sts=>e_sts,
-	           f_vd=>e_vd, f_nd=>e_nd, f_wd=>e_wd, 
-	           f_active=>e_active, f_vcid=>vcid,
-                   rst=>e_rst,clk=>clk,sysclk=>e_sysclk);
-
-
-  upipeline: pg_pipe PORT MAP(p_jdata=>jdata, p_run=>run,
-	                p_we=>wei,p_adri=>adri,p_datai=>data,
-	                p_adro=>padr,p_datao=>pdata, p_runret=>clsts,
-                        rst=>e_rst,clk=>clk);
-	                  
-end hierarchy;
-  
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity parity_check is
-port(
-   data: in std_logic_vector(35 downto 0);
-   clk,rst,vd : in std_logic;
-   perr: out std_logic
-);
-end parity_check;
-
-architecture RTL of parity_check is
-  signal perr0 : std_logic;
-begin
-
-  process(clk)
-    variable tmp: std_logic_vector(3 downto 0);  
-  begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then 
-        perr0 <= '0';
-      else
-	if(vd = '1') then 
-          tmp := "0000";
-          for i in 0 to 7 loop
-            tmp(0) := tmp(0) xor data(i);
-            tmp(1) := tmp(1) xor data(i+8);
-            tmp(2) := tmp(2) xor data(i+16);
-            tmp(3) := tmp(3) xor data(i+24);
-          end loop;
-          if((tmp(0) /= data(32)) or (tmp(1) /= data(33)) 
-            or (tmp(2) /= data(34)) or (tmp(3) /= data(35))) then 
-            perr0 <= perr0 or '1';
-          end if;
-        end if;
-      end if;
-    end if;
-  end process;
-  perr <= perr0;
-
-end RTL;
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-
-entity ipw is
-    port( 
-      i_ipwe: in std_logic;
-      i_ipd : in std_logic_vector(35 downto 0);
-      i_weca,i_wejp,i_wefo,i_wei: out std_logic;
-      i_adri : out std_logic_vector(11 downto 0);
-      i_adr : out std_logic_vector(3 downto 0);
-      i_data: out std_logic_vector(31 downto 0);
-      i_perr: out std_logic;
-      clk,sysclk,rst : in std_logic );
-end ipw;
-
-architecture rtl of ipw is
-
-  component parity_check
-  port(
-    data: in std_logic_vector(35 downto 0);
-    clk,rst,vd: in std_logic;
-    perr: out std_logic  );
-  end component;
-
-  signal ipd0,ipd1 : std_logic_vector(35 downto 0);
-  signal sysclk0,sysclk1 : std_logic;
-  signal ipwe0,ipwe1 : std_logic;
-  signal vd : std_logic;
-  signal cefp0,weiprg0,wejp0,wefo0,wecalc0 : std_logic;
-  signal diprg: std_logic_vector(31 downto 0);
-  signal aiprg : std_logic_vector(5 downto 0);
-  signal com_dc : std_logic_vector(1 downto 0);
-  signal word_dc : std_logic_vector(10 downto 0);
-  signal adrdec : std_logic_vector(14 downto 0);
-  signal radr_uc : std_logic_vector(3 downto 0);
-  signal fadr_uc : std_logic_vector(11 downto 0);
-
-begin
-
--- data latch at input port
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      sysclk1 <= sysclk0;
-      sysclk0 <= sysclk;
-      ipwe1 <= ipwe0;
-      ipwe0 <= i_ipwe;
-      ipd1 <= ipd0;
-      ipd0 <= i_ipd;	
-    end if;
-  end process;
-
--- check write enable
-
-  process(sysclk0,sysclk1,ipwe1) begin
---    if(sysclk0='1' and sysclk1='0' and ipwe1='0') then  
-    if(ipwe1='0') then  
-      vd <= '1';
-    else 
-      vd <= '0';
-    end if;
-  end process;
-
--- command counter
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst='1') then 
-        com_dc <= "00";
-      elsif(vd='1') then
-        if(com_dc = "00" and word_dc = "00000000000") then 
-          com_dc <= "10";
-	elsif(com_dc /=  "00") then 
-          com_dc <= com_dc - "01";
-        end if;
-      end if;
-    end if;
-  end process;
-
--- word counter
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(rst = '1') then 
-        word_dc <= "00000000000";
-      elsif(vd = '1') then 
-        if(com_dc = "10") then 
-           word_dc <= ipd1(10 downto 0);
-        elsif(word_dc /= "00000000000") then
-           word_dc <= word_dc - "00000000001";
-        end if;
-      end if;
-    end if;
-  end process;
-
--- address latch and decoder
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(vd = '1') then 
-        if(com_dc = "00" and word_dc = "00000000000") then 
-          adrdec <= ipd1(14 downto 0);
-        end if;
-      end if;
-    end if;
-  end process;
-
-  with adrdec(14 downto 12) select
-    cefp0 <= '1' when "000",
-             '0' when others;
-
-  with adrdec(14 downto 12) select
-    weiprg0 <= '1' when "001",
-               '0' when others;
-
-  with adrdec(14 downto 12) select
-    wejp0 <= '1' when "010",
-             '0' when others;
-
-  with adrdec(14 downto 12) select
-    wefo0 <= '1' when "011",
-             '0' when others;
-
-  with adrdec(14 downto 12) select
-    wecalc0 <= '1' when "100",
-               '0' when others;
-
--- register address counter 
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(vd ='1') then 
-        if(com_dc = "00" and word_dc = "00000000000") then
-          radr_uc <= ipd1(3 downto 0);
-        elsif(word_dc /= "00000000000" and cefp0 = '0') then 
-          radr_uc <=  radr_uc + "0001";
-	end if;
-      end if;
-    end if;
-  end process;
-
--- pipeline address counter 
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(vd ='1') then 
-        if(com_dc = "00" and word_dc = "00000000000") then
-          fadr_uc <= ipd1(11 downto 0);
-        elsif(word_dc /= "00000000000" and cefp0 = '1') then 
-          fadr_uc <=  fadr_uc + "000000000001";
-	end if;
-      end if;
-    end if;
-  end process;
-
--- parity checker
-
-   pcheck: parity_check PORT MAP(data=>ipd1,clk=>clk,rst=>rst,vd=>vd,
-				perr=>i_perr);
-
--- write enable signal
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(vd='1' and word_dc /= "00000000000") then
-	i_adr <= radr_uc;
-        i_data <= ipd1(31 downto 0);
-        i_adri <= fadr_uc;
-        i_wejp <= wejp0;
-        i_weca <= wecalc0;
-        i_wefo <= wefo0;
-        i_wei <= cefp0;
-      else
-        i_wejp <= '0';
-        i_wefo <= '0';
-        i_weca <= '0';
-        i_wei <= '0';
-      end if;
-    end if;
-  end process;
-
--- write to command register in ipw
-
---  diprg <= ipd1(31 downto 0); 
---  aiprg <= radr_uc;
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(weiprg0='1') then 
-      end if;	
-    end if;
-  end process;
-     
-end RTL;
-  
-
-
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-
-entity jpw is
-    port( 
-      j_jpwe: in std_logic;
-      j_jpd : in std_logic_vector(35 downto 0);
-      j_physid : in std_logic_vector(9 downto 0);
-      j_wejp: in std_logic;
-      j_data: in std_logic_vector(19 downto 0);
-      j_adr : in std_logic_vector(3 downto 0);
-      j_mdl : out std_logic_vector(35 downto 0);
-      j_mdh : out std_logic_vector(35 downto 0);
-      j_mwe,j_moe : out std_logic_vector(1 downto 0);
-      j_mal : out std_logic_vector(18 downto 0);
-      j_mah : out std_logic_vector(18 downto 0);
-      j_oel,j_oeh : out std_logic;
-      j_clma : in std_logic_vector(18 downto 0);
-      j_vcido : out std_logic_vector(9 downto 0);
-      j_perr : out std_logic;
-      clk,sysclk,rst : in std_logic);
-end jpw;
-
-architecture RTL of jpw is
-
-  component parity_check
-  port(
-    data: in std_logic_vector(35 downto 0);
-    clk,rst,vd: in std_logic;
-    perr: out std_logic  );
-  end component;
-
-  signal sysclk0,sysclk1,jpwe0,jpwe1: std_logic;
-  signal jpd0,jpd1: std_logic_vector(35 downto 0);
-  signal vd : std_logic;
-  signal com_dc: std_logic_vector(1 downto 0);
-  signal word_dc: std_logic_vector(4 downto 0);
-  signal word_uc: std_logic_vector(3 downto 0);
-  signal selid : std_logic;
-  signal reg1: std_logic_vector(31 downto 0);
-  signal memadr0,memadr1,memadr2: std_logic_vector(18 downto 0);
-  signal weregl,weregh: std_logic;
-  signal nd : std_logic_vector(4 downto 0);
-  signal vcid : std_logic_vector(9 downto 0);
-
-begin
-
--- data latch at input port
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      sysclk1 <= sysclk0;
-      sysclk0 <= sysclk;
-      jpwe1 <= jpwe0;
-      jpwe0 <= j_jpwe;
-      jpd1 <= jpd0;
-      jpd0 <= j_jpd;	
-    end if;
-  end process;
-
--- check write enable (asyn)
-
-  process(sysclk0,sysclk1,jpwe1) begin
---    if(sysclk0='1' and sysclk1='0' and jpwe1='0') then  
-    if(jpwe1='0') then  
-      vd <= '1';
-    else 
-      vd <= '0';
-    end if;
-  end process;
-
--- parity checker
-
-  pcheck: parity_check PORT MAP(data=>jpd1,clk=>clk,rst=>rst,perr=>j_perr,vd=>vd);
-
--- command counter
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then 
-         com_dc <= "00"; 
-      elsif(vd='1') then
-        if(com_dc = "00" and word_dc = "00000") then
-          com_dc <= "10";
-	elsif(com_dc /= "00") then 
-          com_dc <= com_dc -"01";
-        end if;
-      end if;
-    end if;
-  end process;
-
--- word counter 
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(rst = '1') then 
-        word_dc <= "00000";
-      elsif(vd = '1') then 
-        if(com_dc="10") then 
-          word_dc <= nd;
-          word_uc <= "0000";
-        elsif(word_dc /= "00000") then
-          word_dc <= word_dc - "00001";
-          word_uc <= word_uc + "0001";
-        end if;
-      end if;
-    end if;
-  end process;
-
--- check ID
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(vd='1') then 
-        if(com_dc = "00" and word_dc="00000") then
-          if((jpd1(9 downto 0) and jpd1(19 downto 10)) = (vcid and jpd1(19 downto 10))) then 
-            selid <= '1';
-          else
-            selid <= '0';
-	  end if;
-        end if;
-      end if;
-    end if;
-  end process;
-
--- write to register 0 
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(vd='1') then 
-        reg1 <= jpd1(31 downto 0);
-      end if;
-    end if;
-  end process;
-
--- memory address latch and counter
- 
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(vd ='1') then 
-        if(com_dc = "10") then
-          memadr0 <= jpd1(18 downto 0);
-	else
-          if(word_uc(0) = '1') then 
-            memadr0 <= memadr0 + "000000000000000001";
-          end if;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      memadr1 <= memadr0;
---      memadr2 <= memadr1;
-    end if;
-  end process;
-
--- memory control timing signal
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(word_dc /= "00000" and selid = '1' and word_uc(0) = '0') then 
-        weregl <= '1';
-      else 
-	weregl <= '0';
-      end if;	
-    end if;
-  end process;
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(word_dc /= "00000" and selid = '1' and word_uc(0) = '1') then 
-        weregh <= '1';
-      else 
-	weregh <= '0';
-      end if;	
-    end if;
-  end process;
-
--- mema signal
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(weregl = '1') then 
-	j_mal <= memadr1;
-      else 
-	j_mal <= j_clma;
-      end if;	
-    end if;
-  end process;
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      if(weregh = '1') then 
---	j_mah <= memadr2;
-	j_mah <= memadr1;
-      else
-	j_mah <= j_clma;
-      end if;	
-    end if;
-  end process;
-
--- memd signal
-
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      j_mdl <= "0000" & reg1;
-      j_mdh <= "0000" & reg1;
-      j_oel <= weregl;	
-      j_oeh <= weregh;	
-    end if;
-  end process;
-
---  process(clk) begin   
---    if(clk'event and clk='1') then
---      if(weregl = '1') then 	
---        j_mdl <= "0000" & reg1;
---      else
---        j_mdl <= "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
---      end if;	
---    end if;
---  end process;
---
---  process(clk) begin   
---    if(clk'event and clk='1') then
---      if(weregh = '1') then 	
---        j_mdh <= "0000" & reg1;
---      else
---        j_mdh <= "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
---      end if;	
---    end if;
---  end process;
-
--- memwe signal
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      j_mwe(0) <= not weregl;
-      j_mwe(1) <= not weregh;
-    end if;
-  end process;
-
--- memoe signal
-
-  process(clk) begin   
-    if(clk'event and clk='1') then
-      j_moe(0) <= weregl;
-      j_moe(1) <= weregh;
-    end if;
-  end process;
-
--- write to command register in jpw
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(j_wejp='1') then 
-        if(j_adr(3 downto 0) = "0000") then 
-          nd <= j_data(4 downto 0);
-        elsif(j_adr(3 downto 0)= "0001") then            
-	  if(j_data(19 downto 10)=j_physid) then 
-            vcid <= j_data(9 downto 0);
- 	  end if;
-        end if; 
-      end if;	
-    end if;
-  end process;
-  j_vcido <= vcid;
-     
-end RTL;
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-
-entity calc is
-    port(
-      c_md : in std_logic_vector(71 downto 0);
-      c_ma : out std_logic_vector(18 downto 0);
-      c_weca: in std_logic;
-      c_data: in std_logic_vector(19 downto 0);
-      c_adr : in std_logic_vector(3 downto 0);
-      c_jdata : out std_logic_vector(71 downto 0);             
-      c_run : out std_logic;
-      rst,clk : in std_logic);
-end calc;
-
-architecture RTL of calc is
-
-  signal mema_dc: std_logic_vector(19 downto 0);
-  signal adrvd00: std_logic;
-  signal adrvd: std_logic_vector(5 downto 0);
-  signal n: std_logic_vector(19 downto 0);
-  signal start: std_logic;
-
-begin
-
--- generate memory address 
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then 
-        mema_dc <= "00000000000000000000";
-      else
-        if(start='1') then 
-          mema_dc <= n ;
-        elsif(mema_dc /= "00000000000000000000") then 
-          mema_dc <= mema_dc - "00000000000000000001";
-        end if;	
-      end if;
-    end if;
-  end process;
-
-  c_ma <= mema_dc(18 downto 0);
-
--- address and data valid signal
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then
-        adrvd00 <= '0';
-      elsif(start = '1') then 
-	adrvd00 <= '1';
-      elsif(mema_dc = "0000000000000000000001") then 
-	adrvd00 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then  
-        adrvd <= "000000";
-      else
-        adrvd(1) <= adrvd00;        
-        adrvd(2) <= adrvd(1);        
-        adrvd(3) <= adrvd(2);        
-        adrvd(4) <= adrvd(3);        
-        adrvd(5) <= adrvd(4);        
-      end if; 
-    end if;
-  end process;
-
-  c_run <= adrvd(4);
-
--- data from memory
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      c_jdata <= c_md(71 downto 68) & c_md(35 downto 32) & c_md(67 downto 36) & c_md(31 downto 0);
-    end if;
-  end process;
-
--- write to command register in calc
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(c_weca='1') then 
-        if(c_adr = "0000") then 
-	  n <= c_data;
-        end if;
-      end if;	
-    end if;
-  end process;
-     
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(rst = '1') then 
-        start <=  '0';
-      elsif(c_weca='1' and c_adr = "0000") then 
-        start <=  '1';
-      else
-	start <= '0';
-      end if;	
-    end if;
-  end process;
-
-end RTL;
-
-
-
-  
-
-
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-
-entity fo is
-    port(
-      f_wefo : in std_logic;
-      f_data: in std_logic_vector(31 downto 0);
-      f_adr : in std_logic_vector(3 downto 0);
-      f_pd : in std_logic_vector(31 downto 0);      
-      f_pa : out std_logic_vector(11 downto 0);
-      f_csts : in std_logic;
-      f_fodata : out std_logic_vector(35 downto 0);
-      f_sts,f_vd,f_nd : out std_logic;
-      f_wd : in std_logic;
-      f_active : out std_logic;
-      f_vcid : in std_logic_vector(9 downto 0);	
-      rst,clk,sysclk : in std_logic );
-end fo;
-
-architecture RTL of fo is
-
-  signal sysclk0,sysclk1 : std_logic;
-  signal scphase : std_logic;
-  signal calcsts1 : std_logic;
-  signal plstart_flag,rdstart_flag: std_logic;
-  signal select_code: std_logic_vector(1 downto 0);
-  signal al_dc,al_uc: std_logic_vector(3 downto 0);
-  signal ah_dc,ah_uc: std_logic_vector(7 downto 0);
-  signal address_pl : std_logic_vector(11 downto 0);
-  signal vdflag_pl: std_logic;
-  signal random_dc : std_logic_vector(1 downto 0);
-  signal random_uc : std_logic_vector(11 downto 0);
-  signal address_rd : std_logic_vector(11 downto 0);
-  signal fodata0: std_logic_vector(31 downto 0);
-  signal vdflag_rd: std_logic;
-  signal vd0,vd1: std_logic;
-  signal com0,com1: std_logic_vector(31 downto 0);
-  signal ni : std_logic_vector(5 downto 0);
-  signal ndata : std_logic_vector(3 downto 0);
-  signal comstart: std_logic;
-
-begin
-
-  f_active <= '1';
-
--- make phase and wd from sysclk 
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      sysclk1 <= sysclk0;
-      sysclk0 <= sysclk;
-    end if;
-  end process;
-
-  scphase <= '1';
-	 
--- triger logic
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(scphase = '1') then 
-	calcsts1 <= f_csts;
-      end if;	
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(scphase = '1') then 
-        if((f_csts = '0') and (calcsts1 = '1')) then 
-          plstart_flag <= '1';
-        else 
-          plstart_flag <= '0';	
-	end if;
-      end if;
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(scphase = '1') then 
-        if((comstart = '1') and (com0(31 downto 30) = "00") 
- 	    and ((com0(9 downto 0) and com0(19 downto 10)) 
-		= (f_vcid and com0(19 downto 10))) and (ah_dc = "000000")) then 	
-          rdstart_flag <= '1';
-        else
-          rdstart_flag <= '0';
-	end if;
-      end if;
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(plstart_flag = '1') then 
-        select_code <= "00";
-      elsif(rdstart_flag = '1') then 
-        select_code <= "10";
-      end if;	
-    end if;
-  end process;
-
--- pipeline read counter
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(scphase = '1') then 
-        if(plstart_flag = '1' or (al_dc = "0001" and ah_dc /= "00000001")) then 
-	  al_dc <= ndata;
-	  al_uc <= "0000";
-        elsif(al_dc /= "0000") then 
-	  al_dc <= al_dc - "0001";
-	  al_uc <= al_uc + "0001";
-	end if;
-      end if;
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(rst='1') then  
-	  ah_dc <= "00000000";
-      elsif(scphase = '1') then 
-        if(plstart_flag = '1') then 
-	  ah_dc <= "00" & ni;
-	  ah_uc <= "00000000";
-        elsif(ah_dc /= "00000000" and al_dc = "0001") then 
-	  ah_dc <= ah_dc - "00000001";
-	  ah_uc <= ah_uc + "00000001";
-	end if;
-      end if;
-    end if;
-  end process;
-
-  address_pl <= ah_uc & al_uc;
-
-  with ah_dc select
-    vdflag_pl <= '0' when "00000000",
-                 '1' when others;
-
--- ramdom read counter
-
-  process(clk) begin
-    if(clk'event and clk='1') then
-      if(rst = '1') then  
-        random_dc <= "00";
-      elsif(scphase = '1') then 
-        if(rdstart_flag = '1') then 
-          random_uc <= com1(11 downto 0); 
-          random_dc <= "10";
-        elsif(random_dc /= "00") then 
-          random_uc <= random_uc + "000000000001";
-          random_dc <= random_dc - "01";
-	end if;
-      end if;
-    end if;
-  end process;
-
-  address_rd <= random_uc;
- 
-  with random_dc select 
-    vdflag_rd <= '0' when "00",
-	         '1' when others;
-
--- address selector
-
-  with select_code select
-    f_pa <= address_rd when "10",
-	    address_pl when others;
-
--- data selector
-
-   fodata0 <= f_pd;
-
--- add parity
-
-  process(clk) 
-    variable tmp: std_logic_vector(3 downto 0);  
-  begin
-    if(clk'event and clk='1') then
-      if(scphase = '1') then 
-        tmp := "0000";
-        for i in 0 to 7 loop
-          tmp(0) := tmp(0) xor fodata0(i);
-          tmp(1) := tmp(1) xor fodata0(i+8);
-          tmp(2) := tmp(2) xor fodata0(i+16);
-          tmp(3) := tmp(3) xor fodata0(i+24);
-        end loop;
-        f_fodata <= tmp & fodata0;
-      end if;
-    end if;
-  end process;
- 
--- output logic
-
-  with select_code select
-    vd0 <= vdflag_rd when "10",
-	   vdflag_pl when others;
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(scphase = '1') then 
-	vd1 <= vd0;
-        f_vd <= not vd1;
-        f_sts <= not f_csts;
-        f_nd <= not vd1;
-      end if;      	      
-    end if;
-  end process;
-
--- write to command register in fo
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(f_wefo='1') then 
-        if(f_adr = "0000") then 
-          com0 <= f_data;
-        elsif(f_adr = "0001") then 
-          com1 <= f_data;
-        elsif(f_adr = "0010") then            
-          ni <= f_data(5 downto 0);
-        elsif(f_adr = "0011") then            
-          ndata <= f_data(3 downto 0);
-        end if; 
-      end if;	
-    end if;
-  end process;
-
-  process(clk) begin
-    if(clk'event and clk='1') then 
-      if(f_wefo='1' and f_adr = "0001") then 
-        comstart <= '1';
-      elsif(scphase = '1') then 
-	comstart <= '0';	
-      end if;
-    end if;
-  end process;
-    
-end RTL;
---
--- pgpg1.0 by Hamada Tsuyoshi 
--- Generated from 'list.g5.bio3.cpp'
--- NPIPE : 1
--- NVMP  : 1
-library ieee;                                                  
-use ieee.std_logic_1164.all;                                   
-                                                               
-entity pg_pipe is                                              
-  generic(JDATA_WIDTH : integer := 113);                        
-  port(                                                        
-    p_jdata : in std_logic_vector(JDATA_WIDTH-1 downto 0);     
-    p_run : in std_logic;                                      
-    p_we :  in std_logic;                                      
-    p_adri : in std_logic_vector(11 downto 0);                 
-    p_datai : in std_logic_vector(31 downto 0);                
-    p_adro : in std_logic_vector(11 downto 0);                 
-    p_datao : out std_logic_vector(31 downto 0);               
-    p_runret : out std_logic;                                  
-    rst,clk : in std_logic                                     
-  );                                                           
-end pg_pipe;                                                   
-                                                               
-architecture std of pg_pipe is                                 
-                                                               
-  component pipe                                               
-    generic(JDATA_WIDTH : integer );                           
-    port(                                                      
-      p_jdata: in std_logic_vector(JDATA_WIDTH-1 downto 0);    
-      p_run : in std_logic;                                    
-      p_we : in std_logic;                                     
-      p_adri : in std_logic_vector(3 downto 0);                
-      p_adrivp : in std_logic_vector(3 downto 0);              
-      p_datai : in std_logic_vector(31 downto 0);              
-      p_adro : in std_logic_vector(3 downto 0);                
-      p_adrovp : in std_logic_vector(3 downto 0);              
-      p_datao : out std_logic_vector(31 downto 0);             
-      p_runret : out std_logic;                                
-      rst,pclk : in std_logic );                                
-  end component;                                               
-                                                               
-  signal u_adri,u_adro: std_logic_vector(7 downto 0);          
-  signal adrivp,adrovp: std_logic_vector(3 downto 0);          
-  signal we,runret: std_logic_vector(0 downto 0);
-  signal datao: std_logic_vector(31 downto 0);
-  signal l_adro: std_logic_vector(3 downto 0);                 
-                                                               
-begin                                                          
-                                                               
-  u_adri <= p_adri(11 downto 4);                               
-                                                               
-  u_adro <= p_adro(11 downto 4);                               
-  l_adro <= p_adro(3 downto 0);                                
-                                                               
-  process(u_adri,p_we) begin                                 
-    if(p_we = '1') then                                      
-     if(u_adri = "00000000" ) then
-        we(0) <= '1';                                    
-      else                                                   
-        we(0) <= '0';                                    
-      end if;                                                
-    else                                                     
-      we(0) <= '0';                                      
-    end if;                                                  
-  end process;                                               
-                                                             
-  with u_adri select                                           
-    adrivp <= "0000" when "00000000", 
-              "0000" when others;                            
-                                                               
-  with u_adro select                                           
-    adrovp <= "0000" when "00000000", 
-              "0000" when others;                            
-                                                               
-  forgen1: for i in 0 to 0 generate           
-    upipe: pipe GENERIC MAP(JDATA_WIDTH=>JDATA_WIDTH)          
-	      PORT MAP(p_jdata=>p_jdata, p_run=>p_run,               
-                 p_we=>we(i),p_adri=>p_adri(3 downto 0),p_adrivp=>adrivp,
-	               p_datai=>p_datai,p_adro=>l_adro,p_adrovp=>adrovp, 
-	               p_datao=>datao(32*(i+1)-1 downto 32*i), p_runret=>runret(i), 
-		       rst=>rst,pclk=>clk);                           
-  end generate forgen1;                                        
-                                                               
-  p_runret <= runret(0);                                       
-                                                               
-  with u_adro select                                           
-    p_datao <= datao(31 downto 0) when "00000000", 
-               datao(31 downto 0) when others;                  
-                                                               
-end std;                                               
-
-library ieee;                                                       
-use ieee.std_logic_1164.all;                                        
-                                                                    
-entity pipe is                                                      
-  generic(JDATA_WIDTH : integer :=72);
-port(p_jdata : in std_logic_vector(JDATA_WIDTH-1 downto 0);         
-     p_run : in std_logic;                                          
-     p_we :  in std_logic;                                          
-     p_adri : in std_logic_vector(3 downto 0);                      
-     p_adrivp : in std_logic_vector(3 downto 0);                    
-     p_datai : in std_logic_vector(31 downto 0);                    
-     p_adro : in std_logic_vector(3 downto 0);                      
-     p_adrovp : in std_logic_vector(3 downto 0);                    
-     p_datao : out std_logic_vector(31 downto 0);                   
-     p_runret : out std_logic;                                      
-     rst,pclk : in std_logic);                                      
-end pipe;                                                           
-                                                                    
-architecture std of pipe is                                         
-                                                                    
-  component pg_conv_ftol_32_17_8_4
-    port(fixdata : in std_logic_vector(31 downto 0);
-         logdata : out std_logic_vector(16 downto 0);
-         clk : in std_logic);
-  end component;
-
-  signal xij: std_logic_vector(31 downto 0);
-                                                                    
-begin                                                               
-                                                                    
-  fx_ofst(16 downto 0) <= "01001011100000000";
-  fy_ofst(16 downto 0) <= "01001011100000000";
-  fz_ofst(16 downto 0) <= "01001011100000000";
-
-  xj(31 downto 0) <= p_jdata(31 downto 0);
-  yj(31 downto 0) <= p_jdata(63 downto 32);
-  zj(31 downto 0) <= p_jdata(95 downto 64);
-  mj(16 downto 0) <= p_jdata(112 downto 96);
-
-  process(pclk) begin
-    if(pclk'event and pclk='1') then
-      if(p_we ='1') then
-        if(p_adri = "0000") then
-          xi <=  p_datai(31 downto 0);
-        elsif(p_adri = "0001") then
-          yi <=  p_datai(31 downto 0);
-        elsif(p_adri = "0010") then
-          zi <=  p_datai(31 downto 0);
-        elsif(p_adri = "0011") then
-          ieps2 <=  p_datai(16 downto 0);
-        end if;
-      end if;
-    end if;
-  end process;
-
-  u0: pg_conv_ftol_32_17_8_4 port map (fixdata=>xij,logdata=>dx,clk=>pclk);
-
-  process(pclk) begin
-    if(pclk'event and pclk='1') then
-      if(p_adro = "0000") then
-        p_datao <=  sx(31 downto 0);
-      elsif(p_adro = "0001") then
-        p_datao <=  sx(63 downto 32);
-      elsif(p_adro = "0010") then
-        p_datao <=  sy(31 downto 0);
-      elsif(p_adro = "0011") then
-        p_datao <=  sy(63 downto 32);
-      elsif(p_adro = "0100") then
-        p_datao <=  sz(31 downto 0);
-      elsif(p_adro = "0101") then
-        p_datao <=  sz(63 downto 32);
-      else
-        p_datao <= "00000000000000000000000000000000";
-      end if;
-    end if;
-  end process;
-
-end std;                                                            
-                                                                    
--- *************************************************************** 
--- * PGPG FIXED-POINT TO LOGARITHMIC FORMAT CONVERTER            * 
--- *  For Xilinx Devices                                         * 
--- *  AUTHOR: Tsuyoshi Hamada                                    * 
--- *  VERSION: 2.01                                              * 
--- *  LAST MODIFIED AT Fri Feb 06 20:04:00 JST 2004              * 
--- *************************************************************** 
-library ieee;                                                      
-use ieee.std_logic_1164.all;                                       
-                                                                   
-entity pg_conv_ftol_32_17_8_4 is         
-  port(fixdata : in std_logic_vector(31 downto 0);      
-       logdata : out std_logic_vector(16 downto 0);     
-       clk : in std_logic);                                        
-end pg_conv_ftol_32_17_8_4;              
-                                                                   
-architecture rtl of pg_conv_ftol_32_17_8_4 is 
-                                                                   
-  component bram_rom_8408_10_8_1                      
-   port (indata: in std_logic_vector(9 downto 0);    
-         clk: in std_logic;                           
-         outdata: out std_logic_vector(7 downto 0)); 
-  end component;                                      
-
-  component unreg_add_sub
-    generic (WIDTH: integer;
-             DIRECTION: string);
-    port (dataa,datab: in std_logic_vector(WIDTH-1 downto 0);
-          result: out std_logic_vector(WIDTH-1 downto 0));
-  end component;
-
-  component penc_31_5                        
-    port( a : in std_logic_vector(30 downto 0);        
-          c : out std_logic_vector(4 downto 0));      
-  end component;                                                   
-                                                                   
-  component unreg_shift_ftol_30_10
-    port( indata : in std_logic_vector(29 downto 0);   
-          control : in std_logic_vector(4 downto 0);  
-          outdata : out std_logic_vector(9 downto 0));
-  end component;
-
-  signal d1,d0: std_logic_vector(30 downto 0);         
-  signal d2: std_logic_vector(30 downto 0);            
-  signal d3,d3r: std_logic_vector(30 downto 0);        
-  signal one: std_logic_vector(30 downto 0);           
-  signal sign: std_logic;                                          
-  signal c1: std_logic_vector(4 downto 0);            
-  signal d4: std_logic_vector(29 downto 0);            
-  signal c2,c3,c4,add: std_logic_vector(4 downto 0);  
-  signal d5,d6: std_logic_vector(9 downto 0);         
-  signal sign0,sign0r,sign1,sign2,sign3: std_logic;                
-  signal nz0,nz1,nz2: std_logic;                                   
-                                                                   
-begin                                                              
-                                                                   
-  d1 <=  NOT fixdata(30 downto 0);                     
-  one <= "0000000000000000000000000000001";                                              
-  u1: unreg_add_sub generic map (WIDTH=>31,DIRECTION=>"ADD")
-                  port map(result=>d2,dataa=>d1,datab=>one);
-  d0 <= fixdata(30 downto 0);                        
-  sign0 <= fixdata(31);                              
-                                                                 
-  with sign0 select                                              
-    d3 <= d0 when '0',                                           
-    d2 when others;                                              
-                                                                 
-  process(clk) begin                                             
-    if(clk'event and clk='1') then                               
-      d3r <= d3;                                                 
-      sign1 <= sign0;                                            
-    end if;                                                      
-  end process;                                                   
-                                                                 
-  u2: penc_31_5 port map (a=>d3r,c=>c1);   
-  with d3r select                                                
-    nz0 <= '0' when "0000000000000000000000000000000",                                  
-           '1' when others;                                      
-                                                                 
-  process(clk) begin                                             
-    if(clk'event and clk='1') then                               
-      d4 <= d3r(29 downto 0);                        
-      c2 <= c1;                                                  
-      sign2 <= sign1;                                            
-      nz1 <= nz0;                                                
-    end if;                                                      
-  end process;                                                   
-                                                                 
-  u3: unreg_shift_ftol_30_10
-            port map (indata=>d4,control=>c2,outdata=>d5);
-
-  process(clk) begin                                             
-    if(clk'event and clk='1') then                               
-      d6 <= d5;                                                  
-      sign3 <= sign2;                                            
-      nz2 <= nz1;                                                
-      c3 <= c2;                                                  
-    end if;                                                      
-  end process;                                                   
-                                                                 
-  u4: bram_rom_8408_10_8_1
-            port map(indata=>d6,outdata=>logdata(7 downto 0),clk=>clk);
-
-  with d6 select                                                 
-    add <= "00001" when "1111111111",                          
-           "00001" when "1111111110",                        
-           "00001" when "1111111101",                        
-           "00000" when others;                               
-                                                                 
-  u5: unreg_add_sub generic map (WIDTH=>5,DIRECTION=>"ADD")
-                  port map(result=>c4,dataa=>c3,datab=>add);
-
-  logdata(14 downto 13) <= "00";                    
-                                                                 
-  process(clk) begin                                             
-    if(clk'event and clk='1') then                               
-      logdata(16) <= sign3 ;                          
-      logdata(15) <= nz2;                             
-      logdata(12 downto 8) <= c4;                    
-    end if;                                                      
-  end process;                                                   
-
-end rtl;
-
--- The Unregisterd Add/Sub
--- For Xilinx devices
--- Author: Tsuyoshi Hamada
--- Last Modified at Feb 06,2004
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
-
-entity unreg_add_sub is
-  generic(WIDTH : integer :=4; DIRECTION: string :="ADD");
-    port (dataa,datab: in std_logic_vector(WIDTH-1 downto 0);
-          result: out std_logic_vector(WIDTH-1 downto 0));
-end unreg_add_sub;
-architecture rtl of unreg_add_sub is
-begin
-ifgen0 : if (DIRECTION="ADD") generate
-  result <= dataa + datab;
-end generate;
-ifgen1 : if (DIRECTION="SUB") generate
-  result <= dataa - datab;
-end generate;
-end rtl;
-
-                                                                    
-library ieee;                                                       
-use ieee.std_logic_1164.all;                                        
-                                                                    
-entity penc_31_5 is                             
-port( a : in std_logic_vector(30 downto 0);              
-      c : out std_logic_vector(4 downto 0));           
-end penc_31_5;                                  
-                                                                    
-architecture rtl of penc_31_5 is                
-begin                                                               
-                                                                    
-  process(a) begin                                                  
-    if(a(30)='1') then                                    
-      c <= "11110";                                              
-    elsif(a(29)='1') then                                      
-      c <= "11101";                                             
-    elsif(a(28)='1') then                                      
-      c <= "11100";                                             
-    elsif(a(27)='1') then                                      
-      c <= "11011";                                             
-    elsif(a(26)='1') then                                      
-      c <= "11010";                                             
-    elsif(a(25)='1') then                                      
-      c <= "11001";                                             
-    elsif(a(24)='1') then                                      
-      c <= "11000";                                             
-    elsif(a(23)='1') then                                      
-      c <= "10111";                                             
-    elsif(a(22)='1') then                                      
-      c <= "10110";                                             
-    elsif(a(21)='1') then                                      
-      c <= "10101";                                             
-    elsif(a(20)='1') then                                      
-      c <= "10100";                                             
-    elsif(a(19)='1') then                                      
-      c <= "10011";                                             
-    elsif(a(18)='1') then                                      
-      c <= "10010";                                             
-    elsif(a(17)='1') then                                      
-      c <= "10001";                                             
-    elsif(a(16)='1') then                                      
-      c <= "10000";                                             
-    elsif(a(15)='1') then                                      
-      c <= "01111";                                             
-    elsif(a(14)='1') then                                      
-      c <= "01110";                                             
-    elsif(a(13)='1') then                                      
-      c <= "01101";                                             
-    elsif(a(12)='1') then                                      
-      c <= "01100";                                             
-    elsif(a(11)='1') then                                      
-      c <= "01011";                                             
-    elsif(a(10)='1') then                                      
-      c <= "01010";                                             
-    elsif(a(9)='1') then                                      
-      c <= "01001";                                             
-    elsif(a(8)='1') then                                      
-      c <= "01000";                                             
-    elsif(a(7)='1') then                                      
-      c <= "00111";                                             
-    elsif(a(6)='1') then                                      
-      c <= "00110";                                             
-    elsif(a(5)='1') then                                      
-      c <= "00101";                                             
-    elsif(a(4)='1') then                                      
-      c <= "00100";                                             
-    elsif(a(3)='1') then                                      
-      c <= "00011";                                             
-    elsif(a(2)='1') then                                      
-      c <= "00010";                                             
-    elsif(a(1)='1') then                                      
-      c <= "00001";                                             
-    else                                                            
-      c <= "00000";                                               
-    end if;                                                         
-  end process;                                                      
-                                                                    
-end rtl;                                                            
-
--- The barrel shifter for Fix to Log Converter
--- Author: Tsuyoshi Hamada
--- Last Modified at Feb 6,2003
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity unreg_shift_ftol_30_10 is
-  port( indata : in std_logic_vector(29 downto 0);
-        control : in std_logic_vector(4 downto 0);
-        outdata : out std_logic_vector(9 downto 0));
-end unreg_shift_ftol_30_10;
-
-architecture rtl of unreg_shift_ftol_30_10 is
-
-  signal cntd_4 : std_logic;
-  signal d0 : std_logic_vector(39 downto 0);
-  signal s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27,s28,s29,s30,s31 : std_logic_vector(9 downto 0);
-  signal c0xxxx, c1xxxx : std_logic_vector(9 downto 0);
-  signal c0xxxxd,c1xxxxd : std_logic_vector(9 downto 0);
-
-begin
-
-  with cntd_4 select               
-    outdata <= c0xxxxd when '0',   
-               c1xxxxd when others;
-
-  cntd_4 <= control(4);
-  c0xxxxd <= c0xxxx;
-  c1xxxxd <= c1xxxx;
-
-  d0 <= indata & "0000000000";
-
-  s0 <= d0(9 downto 0);
-  s1 <= d0(10 downto 1);
-  s2 <= d0(11 downto 2);
-  s3 <= d0(12 downto 3);
-  s4 <= d0(13 downto 4);
-  s5 <= d0(14 downto 5);
-  s6 <= d0(15 downto 6);
-  s7 <= d0(16 downto 7);
-  s8 <= d0(17 downto 8);
-  s9 <= d0(18 downto 9);
-  s10 <= d0(19 downto 10);
-  s11 <= d0(20 downto 11);
-  s12 <= d0(21 downto 12);
-  s13 <= d0(22 downto 13);
-  s14 <= d0(23 downto 14);
-  s15 <= d0(24 downto 15);
-  s16 <= d0(25 downto 16);
-  s17 <= d0(26 downto 17);
-  s18 <= d0(27 downto 18);
-  s19 <= d0(28 downto 19);
-  s20 <= d0(29 downto 20);
-  s21 <= d0(30 downto 21);
-  s22 <= d0(31 downto 22);
-  s23 <= d0(32 downto 23);
-  s24 <= d0(33 downto 24);
-  s25 <= d0(34 downto 25);
-  s26 <= d0(35 downto 26);
-  s27 <= d0(36 downto 27);
-  s28 <= d0(37 downto 28);
-  s29 <= d0(38 downto 29);
-  s30 <= d0(39 downto 30);
-  s31 <= '0' & d0(39 downto 31);
-
--- Specified to LCELL 4-bit inputs.
-  with control(3 downto 0) select
-    c0xxxx <= s0 when "0000",  
-           s1 when "0001",     
-           s2 when "0010",     
-           s3 when "0011",     
-           s4 when "0100",     
-           s5 when "0101",     
-           s6 when "0110",     
-           s7 when "0111",     
-           s8 when "1000",     
-           s9 when "1001",     
-           s10 when "1010",    
-           s11 when "1011",    
-           s12 when "1100",    
-           s13 when "1101",    
-           s14 when "1110",    
-           s15 when others;      
-
-  with control(3 downto 0) select
-    c1xxxx <= s16 when "0000", 
-           s17 when "0001",    
-           s18 when "0010",    
-           s19 when "0011",    
-           s20 when "0100",    
-           s21 when "0101",    
-           s22 when "0110",    
-           s23 when "0111",    
-           s24 when "1000",    
-           s25 when "1001",    
-           s26 when "1010",    
-           s27 when "1011",    
-           s28 when "1100",    
-           s29 when "1101",    
-           s30 when "1110",    
-           s31 when others;      
-
-end rtl;
-
--- ROM using Xilinx BlockRAM       
--- Author: Tsuyoshi Hamada         
--- Last Modified at Jun 2, 2004    
--- In 10 Out 8 Stage 1 Type"8408"
-library ieee;                      
-use ieee.std_logic_1164.all;       
-use ieee.std_logic_arith.all;      
-use ieee.std_logic_unsigned.all;   
-
-entity bram_rom_8408_10_8_1 is
-  port( indata : in std_logic_vector(9 downto 0);
-        clk : in std_logic;
-        outdata : out std_logic_vector(7 downto 0));
-end bram_rom_8408_10_8_1;
-
-architecture rtl of bram_rom_8408_10_8_1 is
-
-  type romarray is array(0 to 1023) of std_logic_vector(7 downto 0);
-  signal brom : romarray :=(
-    "00000000",   -- 0x0 : 0x0
-    "00000001",   -- 0x1 : 0x1
-    "00000001",   -- 0x2 : 0x1
-    "00000001",   -- 0x3 : 0x1
-    "00000010",   -- 0x4 : 0x2
-    "00000010",   -- 0x5 : 0x2
-    "00000010",   -- 0x6 : 0x2
-    "00000011",   -- 0x7 : 0x3
-    "00000011",   -- 0x8 : 0x3
-    "00000011",   -- 0x9 : 0x3
-    "00000100",   -- 0xA : 0x4
-    "00000100",   -- 0xB : 0x4
-    "00000100",   -- 0xC : 0x4
-    "00000101",   -- 0xD : 0x5
-    "00000101",   -- 0xE : 0x5
-    "00000110",   -- 0xF : 0x6
-    "00000110",   -- 0x10 : 0x6
-    "00000110",   -- 0x11 : 0x6
-    "00000111",   -- 0x12 : 0x7
-    "00000111",   -- 0x13 : 0x7
-    "00000111",   -- 0x14 : 0x7
-    "00001000",   -- 0x15 : 0x8
-    "00001000",   -- 0x16 : 0x8
-    "00001000",   -- 0x17 : 0x8
-    "00001001",   -- 0x18 : 0x9
-    "00001001",   -- 0x19 : 0x9
-    "00001001",   -- 0x1A : 0x9
-    "00001010",   -- 0x1B : 0xA
-    "00001010",   -- 0x1C : 0xA
-    "00001010",   -- 0x1D : 0xA
-    "00001011",   -- 0x1E : 0xB
-    "00001011",   -- 0x1F : 0xB
-    "00001100",   -- 0x20 : 0xC
-    "00001100",   -- 0x21 : 0xC
-    "00001100",   -- 0x22 : 0xC
-    "00001101",   -- 0x23 : 0xD
-    "00001101",   -- 0x24 : 0xD
-    "00001101",   -- 0x25 : 0xD
-    "00001110",   -- 0x26 : 0xE
-    "00001110",   -- 0x27 : 0xE
-    "00001110",   -- 0x28 : 0xE
-    "00001111",   -- 0x29 : 0xF
-    "00001111",   -- 0x2A : 0xF
-    "00001111",   -- 0x2B : 0xF
-    "00010000",   -- 0x2C : 0x10
-    "00010000",   -- 0x2D : 0x10
-    "00010000",   -- 0x2E : 0x10
-    "00010001",   -- 0x2F : 0x11
-    "00010001",   -- 0x30 : 0x11
-    "00010001",   -- 0x31 : 0x11
-    "00010010",   -- 0x32 : 0x12
-    "00010010",   -- 0x33 : 0x12
-    "00010010",   -- 0x34 : 0x12
-    "00010011",   -- 0x35 : 0x13
-    "00010011",   -- 0x36 : 0x13
-    "00010011",   -- 0x37 : 0x13
-    "00010100",   -- 0x38 : 0x14
-    "00010100",   -- 0x39 : 0x14
-    "00010101",   -- 0x3A : 0x15
-    "00010101",   -- 0x3B : 0x15
-    "00010101",   -- 0x3C : 0x15
-    "00010110",   -- 0x3D : 0x16
-    "00010110",   -- 0x3E : 0x16
-    "00010110",   -- 0x3F : 0x16
-    "00010111",   -- 0x40 : 0x17
-    "00010111",   -- 0x41 : 0x17
-    "00010111",   -- 0x42 : 0x17
-    "00011000",   -- 0x43 : 0x18
-    "00011000",   -- 0x44 : 0x18
-    "00011000",   -- 0x45 : 0x18
-    "00011001",   -- 0x46 : 0x19
-    "00011001",   -- 0x47 : 0x19
-    "00011001",   -- 0x48 : 0x19
-    "00011010",   -- 0x49 : 0x1A
-    "00011010",   -- 0x4A : 0x1A
-    "00011010",   -- 0x4B : 0x1A
-    "00011011",   -- 0x4C : 0x1B
-    "00011011",   -- 0x4D : 0x1B
-    "00011011",   -- 0x4E : 0x1B
-    "00011100",   -- 0x4F : 0x1C
-    "00011100",   -- 0x50 : 0x1C
-    "00011100",   -- 0x51 : 0x1C
-    "00011101",   -- 0x52 : 0x1D
-    "00011101",   -- 0x53 : 0x1D
-    "00011101",   -- 0x54 : 0x1D
-    "00011110",   -- 0x55 : 0x1E
-    "00011110",   -- 0x56 : 0x1E
-    "00011110",   -- 0x57 : 0x1E
-    "00011111",   -- 0x58 : 0x1F
-    "00011111",   -- 0x59 : 0x1F
-    "00011111",   -- 0x5A : 0x1F
-    "00100000",   -- 0x5B : 0x20
-    "00100000",   -- 0x5C : 0x20
-    "00100000",   -- 0x5D : 0x20
-    "00100001",   -- 0x5E : 0x21
-    "00100001",   -- 0x5F : 0x21
-    "00100001",   -- 0x60 : 0x21
-    "00100010",   -- 0x61 : 0x22
-    "00100010",   -- 0x62 : 0x22
-    "00100010",   -- 0x63 : 0x22
-    "00100011",   -- 0x64 : 0x23
-    "00100011",   -- 0x65 : 0x23
-    "00100011",   -- 0x66 : 0x23
-    "00100100",   -- 0x67 : 0x24
-    "00100100",   -- 0x68 : 0x24
-    "00100100",   -- 0x69 : 0x24
-    "00100101",   -- 0x6A : 0x25
-    "00100101",   -- 0x6B : 0x25
-    "00100101",   -- 0x6C : 0x25
-    "00100110",   -- 0x6D : 0x26
-    "00100110",   -- 0x6E : 0x26
-    "00100110",   -- 0x6F : 0x26
-    "00100110",   -- 0x70 : 0x26
-    "00100111",   -- 0x71 : 0x27
-    "00100111",   -- 0x72 : 0x27
-    "00100111",   -- 0x73 : 0x27
-    "00101000",   -- 0x74 : 0x28
-    "00101000",   -- 0x75 : 0x28
-    "00101000",   -- 0x76 : 0x28
-    "00101001",   -- 0x77 : 0x29
-    "00101001",   -- 0x78 : 0x29
-    "00101001",   -- 0x79 : 0x29
-    "00101010",   -- 0x7A : 0x2A
-    "00101010",   -- 0x7B : 0x2A
-    "00101010",   -- 0x7C : 0x2A
-    "00101011",   -- 0x7D : 0x2B
-    "00101011",   -- 0x7E : 0x2B
-    "00101011",   -- 0x7F : 0x2B
-    "00101100",   -- 0x80 : 0x2C
-    "00101100",   -- 0x81 : 0x2C
-    "00101100",   -- 0x82 : 0x2C
-    "00101101",   -- 0x83 : 0x2D
-    "00101101",   -- 0x84 : 0x2D
-    "00101101",   -- 0x85 : 0x2D
-    "00101110",   -- 0x86 : 0x2E
-    "00101110",   -- 0x87 : 0x2E
-    "00101110",   -- 0x88 : 0x2E
-    "00101111",   -- 0x89 : 0x2F
-    "00101111",   -- 0x8A : 0x2F
-    "00101111",   -- 0x8B : 0x2F
-    "00101111",   -- 0x8C : 0x2F
-    "00110000",   -- 0x8D : 0x30
-    "00110000",   -- 0x8E : 0x30
-    "00110000",   -- 0x8F : 0x30
-    "00110001",   -- 0x90 : 0x31
-    "00110001",   -- 0x91 : 0x31
-    "00110001",   -- 0x92 : 0x31
-    "00110010",   -- 0x93 : 0x32
-    "00110010",   -- 0x94 : 0x32
-    "00110010",   -- 0x95 : 0x32
-    "00110011",   -- 0x96 : 0x33
-    "00110011",   -- 0x97 : 0x33
-    "00110011",   -- 0x98 : 0x33
-    "00110100",   -- 0x99 : 0x34
-    "00110100",   -- 0x9A : 0x34
-    "00110100",   -- 0x9B : 0x34
-    "00110101",   -- 0x9C : 0x35
-    "00110101",   -- 0x9D : 0x35
-    "00110101",   -- 0x9E : 0x35
-    "00110101",   -- 0x9F : 0x35
-    "00110110",   -- 0xA0 : 0x36
-    "00110110",   -- 0xA1 : 0x36
-    "00110110",   -- 0xA2 : 0x36
-    "00110111",   -- 0xA3 : 0x37
-    "00110111",   -- 0xA4 : 0x37
-    "00110111",   -- 0xA5 : 0x37
-    "00111000",   -- 0xA6 : 0x38
-    "00111000",   -- 0xA7 : 0x38
-    "00111000",   -- 0xA8 : 0x38
-    "00111001",   -- 0xA9 : 0x39
-    "00111001",   -- 0xAA : 0x39
-    "00111001",   -- 0xAB : 0x39
-    "00111001",   -- 0xAC : 0x39
-    "00111010",   -- 0xAD : 0x3A
-    "00111010",   -- 0xAE : 0x3A
-    "00111010",   -- 0xAF : 0x3A
-    "00111011",   -- 0xB0 : 0x3B
-    "00111011",   -- 0xB1 : 0x3B
-    "00111011",   -- 0xB2 : 0x3B
-    "00111100",   -- 0xB3 : 0x3C
-    "00111100",   -- 0xB4 : 0x3C
-    "00111100",   -- 0xB5 : 0x3C
-    "00111101",   -- 0xB6 : 0x3D
-    "00111101",   -- 0xB7 : 0x3D
-    "00111101",   -- 0xB8 : 0x3D
-    "00111101",   -- 0xB9 : 0x3D
-    "00111110",   -- 0xBA : 0x3E
-    "00111110",   -- 0xBB : 0x3E
-    "00111110",   -- 0xBC : 0x3E
-    "00111111",   -- 0xBD : 0x3F
-    "00111111",   -- 0xBE : 0x3F
-    "00111111",   -- 0xBF : 0x3F
-    "01000000",   -- 0xC0 : 0x40
-    "01000000",   -- 0xC1 : 0x40
-    "01000000",   -- 0xC2 : 0x40
-    "01000001",   -- 0xC3 : 0x41
-    "01000001",   -- 0xC4 : 0x41
-    "01000001",   -- 0xC5 : 0x41
-    "01000001",   -- 0xC6 : 0x41
-    "01000010",   -- 0xC7 : 0x42
-    "01000010",   -- 0xC8 : 0x42
-    "01000010",   -- 0xC9 : 0x42
-    "01000011",   -- 0xCA : 0x43
-    "01000011",   -- 0xCB : 0x43
-    "01000011",   -- 0xCC : 0x43
-    "01000100",   -- 0xCD : 0x44
-    "01000100",   -- 0xCE : 0x44
-    "01000100",   -- 0xCF : 0x44
-    "01000100",   -- 0xD0 : 0x44
-    "01000101",   -- 0xD1 : 0x45
-    "01000101",   -- 0xD2 : 0x45
-    "01000101",   -- 0xD3 : 0x45
-    "01000110",   -- 0xD4 : 0x46
-    "01000110",   -- 0xD5 : 0x46
-    "01000110",   -- 0xD6 : 0x46
-    "01000111",   -- 0xD7 : 0x47
-    "01000111",   -- 0xD8 : 0x47
-    "01000111",   -- 0xD9 : 0x47
-    "01000111",   -- 0xDA : 0x47
-    "01001000",   -- 0xDB : 0x48
-    "01001000",   -- 0xDC : 0x48
-    "01001000",   -- 0xDD : 0x48
-    "01001001",   -- 0xDE : 0x49
-    "01001001",   -- 0xDF : 0x49
-    "01001001",   -- 0xE0 : 0x49
-    "01001010",   -- 0xE1 : 0x4A
-    "01001010",   -- 0xE2 : 0x4A
-    "01001010",   -- 0xE3 : 0x4A
-    "01001010",   -- 0xE4 : 0x4A
-    "01001011",   -- 0xE5 : 0x4B
-    "01001011",   -- 0xE6 : 0x4B
-    "01001011",   -- 0xE7 : 0x4B
-    "01001100",   -- 0xE8 : 0x4C
-    "01001100",   -- 0xE9 : 0x4C
-    "01001100",   -- 0xEA : 0x4C
-    "01001100",   -- 0xEB : 0x4C
-    "01001101",   -- 0xEC : 0x4D
-    "01001101",   -- 0xED : 0x4D
-    "01001101",   -- 0xEE : 0x4D
-    "01001110",   -- 0xEF : 0x4E
-    "01001110",   -- 0xF0 : 0x4E
-    "01001110",   -- 0xF1 : 0x4E
-    "01001110",   -- 0xF2 : 0x4E
-    "01001111",   -- 0xF3 : 0x4F
-    "01001111",   -- 0xF4 : 0x4F
-    "01001111",   -- 0xF5 : 0x4F
-    "01010000",   -- 0xF6 : 0x50
-    "01010000",   -- 0xF7 : 0x50
-    "01010000",   -- 0xF8 : 0x50
-    "01010001",   -- 0xF9 : 0x51
-    "01010001",   -- 0xFA : 0x51
-    "01010001",   -- 0xFB : 0x51
-    "01010001",   -- 0xFC : 0x51
-    "01010010",   -- 0xFD : 0x52
-    "01010010",   -- 0xFE : 0x52
-    "01010010",   -- 0xFF : 0x52
-    "01010011",   -- 0x100 : 0x53
-    "01010011",   -- 0x101 : 0x53
-    "01010011",   -- 0x102 : 0x53
-    "01010011",   -- 0x103 : 0x53
-    "01010100",   -- 0x104 : 0x54
-    "01010100",   -- 0x105 : 0x54
-    "01010100",   -- 0x106 : 0x54
-    "01010101",   -- 0x107 : 0x55
-    "01010101",   -- 0x108 : 0x55
-    "01010101",   -- 0x109 : 0x55
-    "01010101",   -- 0x10A : 0x55
-    "01010110",   -- 0x10B : 0x56
-    "01010110",   -- 0x10C : 0x56
-    "01010110",   -- 0x10D : 0x56
-    "01010111",   -- 0x10E : 0x57
-    "01010111",   -- 0x10F : 0x57
-    "01010111",   -- 0x110 : 0x57
-    "01010111",   -- 0x111 : 0x57
-    "01011000",   -- 0x112 : 0x58
-    "01011000",   -- 0x113 : 0x58
-    "01011000",   -- 0x114 : 0x58
-    "01011001",   -- 0x115 : 0x59
-    "01011001",   -- 0x116 : 0x59
-    "01011001",   -- 0x117 : 0x59
-    "01011001",   -- 0x118 : 0x59
-    "01011010",   -- 0x119 : 0x5A
-    "01011010",   -- 0x11A : 0x5A
-    "01011010",   -- 0x11B : 0x5A
-    "01011011",   -- 0x11C : 0x5B
-    "01011011",   -- 0x11D : 0x5B
-    "01011011",   -- 0x11E : 0x5B
-    "01011011",   -- 0x11F : 0x5B
-    "01011100",   -- 0x120 : 0x5C
-    "01011100",   -- 0x121 : 0x5C
-    "01011100",   -- 0x122 : 0x5C
-    "01011101",   -- 0x123 : 0x5D
-    "01011101",   -- 0x124 : 0x5D
-    "01011101",   -- 0x125 : 0x5D
-    "01011101",   -- 0x126 : 0x5D
-    "01011110",   -- 0x127 : 0x5E
-    "01011110",   -- 0x128 : 0x5E
-    "01011110",   -- 0x129 : 0x5E
-    "01011110",   -- 0x12A : 0x5E
-    "01011111",   -- 0x12B : 0x5F
-    "01011111",   -- 0x12C : 0x5F
-    "01011111",   -- 0x12D : 0x5F
-    "01100000",   -- 0x12E : 0x60
-    "01100000",   -- 0x12F : 0x60
-    "01100000",   -- 0x130 : 0x60
-    "01100000",   -- 0x131 : 0x60
-    "01100001",   -- 0x132 : 0x61
-    "01100001",   -- 0x133 : 0x61
-    "01100001",   -- 0x134 : 0x61
-    "01100010",   -- 0x135 : 0x62
-    "01100010",   -- 0x136 : 0x62
-    "01100010",   -- 0x137 : 0x62
-    "01100010",   -- 0x138 : 0x62
-    "01100011",   -- 0x139 : 0x63
-    "01100011",   -- 0x13A : 0x63
-    "01100011",   -- 0x13B : 0x63
-    "01100011",   -- 0x13C : 0x63
-    "01100100",   -- 0x13D : 0x64
-    "01100100",   -- 0x13E : 0x64
-    "01100100",   -- 0x13F : 0x64
-    "01100101",   -- 0x140 : 0x65
-    "01100101",   -- 0x141 : 0x65
-    "01100101",   -- 0x142 : 0x65
-    "01100101",   -- 0x143 : 0x65
-    "01100110",   -- 0x144 : 0x66
-    "01100110",   -- 0x145 : 0x66
-    "01100110",   -- 0x146 : 0x66
-    "01100110",   -- 0x147 : 0x66
-    "01100111",   -- 0x148 : 0x67
-    "01100111",   -- 0x149 : 0x67
-    "01100111",   -- 0x14A : 0x67
-    "01101000",   -- 0x14B : 0x68
-    "01101000",   -- 0x14C : 0x68
-    "01101000",   -- 0x14D : 0x68
-    "01101000",   -- 0x14E : 0x68
-    "01101001",   -- 0x14F : 0x69
-    "01101001",   -- 0x150 : 0x69
-    "01101001",   -- 0x151 : 0x69
-    "01101001",   -- 0x152 : 0x69
-    "01101010",   -- 0x153 : 0x6A
-    "01101010",   -- 0x154 : 0x6A
-    "01101010",   -- 0x155 : 0x6A
-    "01101011",   -- 0x156 : 0x6B
-    "01101011",   -- 0x157 : 0x6B
-    "01101011",   -- 0x158 : 0x6B
-    "01101011",   -- 0x159 : 0x6B
-    "01101100",   -- 0x15A : 0x6C
-    "01101100",   -- 0x15B : 0x6C
-    "01101100",   -- 0x15C : 0x6C
-    "01101100",   -- 0x15D : 0x6C
-    "01101101",   -- 0x15E : 0x6D
-    "01101101",   -- 0x15F : 0x6D
-    "01101101",   -- 0x160 : 0x6D
-    "01101110",   -- 0x161 : 0x6E
-    "01101110",   -- 0x162 : 0x6E
-    "01101110",   -- 0x163 : 0x6E
-    "01101110",   -- 0x164 : 0x6E
-    "01101111",   -- 0x165 : 0x6F
-    "01101111",   -- 0x166 : 0x6F
-    "01101111",   -- 0x167 : 0x6F
-    "01101111",   -- 0x168 : 0x6F
-    "01110000",   -- 0x169 : 0x70
-    "01110000",   -- 0x16A : 0x70
-    "01110000",   -- 0x16B : 0x70
-    "01110000",   -- 0x16C : 0x70
-    "01110001",   -- 0x16D : 0x71
-    "01110001",   -- 0x16E : 0x71
-    "01110001",   -- 0x16F : 0x71
-    "01110010",   -- 0x170 : 0x72
-    "01110010",   -- 0x171 : 0x72
-    "01110010",   -- 0x172 : 0x72
-    "01110010",   -- 0x173 : 0x72
-    "01110011",   -- 0x174 : 0x73
-    "01110011",   -- 0x175 : 0x73
-    "01110011",   -- 0x176 : 0x73
-    "01110011",   -- 0x177 : 0x73
-    "01110100",   -- 0x178 : 0x74
-    "01110100",   -- 0x179 : 0x74
-    "01110100",   -- 0x17A : 0x74
-    "01110100",   -- 0x17B : 0x74
-    "01110101",   -- 0x17C : 0x75
-    "01110101",   -- 0x17D : 0x75
-    "01110101",   -- 0x17E : 0x75
-    "01110101",   -- 0x17F : 0x75
-    "01110110",   -- 0x180 : 0x76
-    "01110110",   -- 0x181 : 0x76
-    "01110110",   -- 0x182 : 0x76
-    "01110111",   -- 0x183 : 0x77
-    "01110111",   -- 0x184 : 0x77
-    "01110111",   -- 0x185 : 0x77
-    "01110111",   -- 0x186 : 0x77
-    "01111000",   -- 0x187 : 0x78
-    "01111000",   -- 0x188 : 0x78
-    "01111000",   -- 0x189 : 0x78
-    "01111000",   -- 0x18A : 0x78
-    "01111001",   -- 0x18B : 0x79
-    "01111001",   -- 0x18C : 0x79
-    "01111001",   -- 0x18D : 0x79
-    "01111001",   -- 0x18E : 0x79
-    "01111010",   -- 0x18F : 0x7A
-    "01111010",   -- 0x190 : 0x7A
-    "01111010",   -- 0x191 : 0x7A
-    "01111010",   -- 0x192 : 0x7A
-    "01111011",   -- 0x193 : 0x7B
-    "01111011",   -- 0x194 : 0x7B
-    "01111011",   -- 0x195 : 0x7B
-    "01111011",   -- 0x196 : 0x7B
-    "01111100",   -- 0x197 : 0x7C
-    "01111100",   -- 0x198 : 0x7C
-    "01111100",   -- 0x199 : 0x7C
-    "01111101",   -- 0x19A : 0x7D
-    "01111101",   -- 0x19B : 0x7D
-    "01111101",   -- 0x19C : 0x7D
-    "01111101",   -- 0x19D : 0x7D
-    "01111110",   -- 0x19E : 0x7E
-    "01111110",   -- 0x19F : 0x7E
-    "01111110",   -- 0x1A0 : 0x7E
-    "01111110",   -- 0x1A1 : 0x7E
-    "01111111",   -- 0x1A2 : 0x7F
-    "01111111",   -- 0x1A3 : 0x7F
-    "01111111",   -- 0x1A4 : 0x7F
-    "01111111",   -- 0x1A5 : 0x7F
-    "10000000",   -- 0x1A6 : 0x80
-    "10000000",   -- 0x1A7 : 0x80
-    "10000000",   -- 0x1A8 : 0x80
-    "10000000",   -- 0x1A9 : 0x80
-    "10000001",   -- 0x1AA : 0x81
-    "10000001",   -- 0x1AB : 0x81
-    "10000001",   -- 0x1AC : 0x81
-    "10000001",   -- 0x1AD : 0x81
-    "10000010",   -- 0x1AE : 0x82
-    "10000010",   -- 0x1AF : 0x82
-    "10000010",   -- 0x1B0 : 0x82
-    "10000010",   -- 0x1B1 : 0x82
-    "10000011",   -- 0x1B2 : 0x83
-    "10000011",   -- 0x1B3 : 0x83
-    "10000011",   -- 0x1B4 : 0x83
-    "10000011",   -- 0x1B5 : 0x83
-    "10000100",   -- 0x1B6 : 0x84
-    "10000100",   -- 0x1B7 : 0x84
-    "10000100",   -- 0x1B8 : 0x84
-    "10000100",   -- 0x1B9 : 0x84
-    "10000101",   -- 0x1BA : 0x85
-    "10000101",   -- 0x1BB : 0x85
-    "10000101",   -- 0x1BC : 0x85
-    "10000101",   -- 0x1BD : 0x85
-    "10000110",   -- 0x1BE : 0x86
-    "10000110",   -- 0x1BF : 0x86
-    "10000110",   -- 0x1C0 : 0x86
-    "10000110",   -- 0x1C1 : 0x86
-    "10000111",   -- 0x1C2 : 0x87
-    "10000111",   -- 0x1C3 : 0x87
-    "10000111",   -- 0x1C4 : 0x87
-    "10000111",   -- 0x1C5 : 0x87
-    "10001000",   -- 0x1C6 : 0x88
-    "10001000",   -- 0x1C7 : 0x88
-    "10001000",   -- 0x1C8 : 0x88
-    "10001000",   -- 0x1C9 : 0x88
-    "10001001",   -- 0x1CA : 0x89
-    "10001001",   -- 0x1CB : 0x89
-    "10001001",   -- 0x1CC : 0x89
-    "10001001",   -- 0x1CD : 0x89
-    "10001010",   -- 0x1CE : 0x8A
-    "10001010",   -- 0x1CF : 0x8A
-    "10001010",   -- 0x1D0 : 0x8A
-    "10001010",   -- 0x1D1 : 0x8A
-    "10001011",   -- 0x1D2 : 0x8B
-    "10001011",   -- 0x1D3 : 0x8B
-    "10001011",   -- 0x1D4 : 0x8B
-    "10001011",   -- 0x1D5 : 0x8B
-    "10001100",   -- 0x1D6 : 0x8C
-    "10001100",   -- 0x1D7 : 0x8C
-    "10001100",   -- 0x1D8 : 0x8C
-    "10001100",   -- 0x1D9 : 0x8C
-    "10001101",   -- 0x1DA : 0x8D
-    "10001101",   -- 0x1DB : 0x8D
-    "10001101",   -- 0x1DC : 0x8D
-    "10001101",   -- 0x1DD : 0x8D
-    "10001110",   -- 0x1DE : 0x8E
-    "10001110",   -- 0x1DF : 0x8E
-    "10001110",   -- 0x1E0 : 0x8E
-    "10001110",   -- 0x1E1 : 0x8E
-    "10001111",   -- 0x1E2 : 0x8F
-    "10001111",   -- 0x1E3 : 0x8F
-    "10001111",   -- 0x1E4 : 0x8F
-    "10001111",   -- 0x1E5 : 0x8F
-    "10010000",   -- 0x1E6 : 0x90
-    "10010000",   -- 0x1E7 : 0x90
-    "10010000",   -- 0x1E8 : 0x90
-    "10010000",   -- 0x1E9 : 0x90
-    "10010001",   -- 0x1EA : 0x91
-    "10010001",   -- 0x1EB : 0x91
-    "10010001",   -- 0x1EC : 0x91
-    "10010001",   -- 0x1ED : 0x91
-    "10010010",   -- 0x1EE : 0x92
-    "10010010",   -- 0x1EF : 0x92
-    "10010010",   -- 0x1F0 : 0x92
-    "10010010",   -- 0x1F1 : 0x92
-    "10010010",   -- 0x1F2 : 0x92
-    "10010011",   -- 0x1F3 : 0x93
-    "10010011",   -- 0x1F4 : 0x93
-    "10010011",   -- 0x1F5 : 0x93
-    "10010011",   -- 0x1F6 : 0x93
-    "10010100",   -- 0x1F7 : 0x94
-    "10010100",   -- 0x1F8 : 0x94
-    "10010100",   -- 0x1F9 : 0x94
-    "10010100",   -- 0x1FA : 0x94
-    "10010101",   -- 0x1FB : 0x95
-    "10010101",   -- 0x1FC : 0x95
-    "10010101",   -- 0x1FD : 0x95
-    "10010101",   -- 0x1FE : 0x95
-    "10010110",   -- 0x1FF : 0x96
-    "10010110",   -- 0x200 : 0x96
-    "10010110",   -- 0x201 : 0x96
-    "10010110",   -- 0x202 : 0x96
-    "10010111",   -- 0x203 : 0x97
-    "10010111",   -- 0x204 : 0x97
-    "10010111",   -- 0x205 : 0x97
-    "10010111",   -- 0x206 : 0x97
-    "10011000",   -- 0x207 : 0x98
-    "10011000",   -- 0x208 : 0x98
-    "10011000",   -- 0x209 : 0x98
-    "10011000",   -- 0x20A : 0x98
-    "10011001",   -- 0x20B : 0x99
-    "10011001",   -- 0x20C : 0x99
-    "10011001",   -- 0x20D : 0x99
-    "10011001",   -- 0x20E : 0x99
-    "10011001",   -- 0x20F : 0x99
-    "10011010",   -- 0x210 : 0x9A
-    "10011010",   -- 0x211 : 0x9A
-    "10011010",   -- 0x212 : 0x9A
-    "10011010",   -- 0x213 : 0x9A
-    "10011011",   -- 0x214 : 0x9B
-    "10011011",   -- 0x215 : 0x9B
-    "10011011",   -- 0x216 : 0x9B
-    "10011011",   -- 0x217 : 0x9B
-    "10011100",   -- 0x218 : 0x9C
-    "10011100",   -- 0x219 : 0x9C
-    "10011100",   -- 0x21A : 0x9C
-    "10011100",   -- 0x21B : 0x9C
-    "10011101",   -- 0x21C : 0x9D
-    "10011101",   -- 0x21D : 0x9D
-    "10011101",   -- 0x21E : 0x9D
-    "10011101",   -- 0x21F : 0x9D
-    "10011101",   -- 0x220 : 0x9D
-    "10011110",   -- 0x221 : 0x9E
-    "10011110",   -- 0x222 : 0x9E
-    "10011110",   -- 0x223 : 0x9E
-    "10011110",   -- 0x224 : 0x9E
-    "10011111",   -- 0x225 : 0x9F
-    "10011111",   -- 0x226 : 0x9F
-    "10011111",   -- 0x227 : 0x9F
-    "10011111",   -- 0x228 : 0x9F
-    "10100000",   -- 0x229 : 0xA0
-    "10100000",   -- 0x22A : 0xA0
-    "10100000",   -- 0x22B : 0xA0
-    "10100000",   -- 0x22C : 0xA0
-    "10100001",   -- 0x22D : 0xA1
-    "10100001",   -- 0x22E : 0xA1
-    "10100001",   -- 0x22F : 0xA1
-    "10100001",   -- 0x230 : 0xA1
-    "10100001",   -- 0x231 : 0xA1
-    "10100010",   -- 0x232 : 0xA2
-    "10100010",   -- 0x233 : 0xA2
-    "10100010",   -- 0x234 : 0xA2
-    "10100010",   -- 0x235 : 0xA2
-    "10100011",   -- 0x236 : 0xA3
-    "10100011",   -- 0x237 : 0xA3
-    "10100011",   -- 0x238 : 0xA3
-    "10100011",   -- 0x239 : 0xA3
-    "10100100",   -- 0x23A : 0xA4
-    "10100100",   -- 0x23B : 0xA4
-    "10100100",   -- 0x23C : 0xA4
-    "10100100",   -- 0x23D : 0xA4
-    "10100100",   -- 0x23E : 0xA4
-    "10100101",   -- 0x23F : 0xA5
-    "10100101",   -- 0x240 : 0xA5
-    "10100101",   -- 0x241 : 0xA5
-    "10100101",   -- 0x242 : 0xA5
-    "10100110",   -- 0x243 : 0xA6
-    "10100110",   -- 0x244 : 0xA6
-    "10100110",   -- 0x245 : 0xA6
-    "10100110",   -- 0x246 : 0xA6
-    "10100111",   -- 0x247 : 0xA7
-    "10100111",   -- 0x248 : 0xA7
-    "10100111",   -- 0x249 : 0xA7
-    "10100111",   -- 0x24A : 0xA7
-    "10100111",   -- 0x24B : 0xA7
-    "10101000",   -- 0x24C : 0xA8
-    "10101000",   -- 0x24D : 0xA8
-    "10101000",   -- 0x24E : 0xA8
-    "10101000",   -- 0x24F : 0xA8
-    "10101001",   -- 0x250 : 0xA9
-    "10101001",   -- 0x251 : 0xA9
-    "10101001",   -- 0x252 : 0xA9
-    "10101001",   -- 0x253 : 0xA9
-    "10101010",   -- 0x254 : 0xAA
-    "10101010",   -- 0x255 : 0xAA
-    "10101010",   -- 0x256 : 0xAA
-    "10101010",   -- 0x257 : 0xAA
-    "10101010",   -- 0x258 : 0xAA
-    "10101011",   -- 0x259 : 0xAB
-    "10101011",   -- 0x25A : 0xAB
-    "10101011",   -- 0x25B : 0xAB
-    "10101011",   -- 0x25C : 0xAB
-    "10101100",   -- 0x25D : 0xAC
-    "10101100",   -- 0x25E : 0xAC
-    "10101100",   -- 0x25F : 0xAC
-    "10101100",   -- 0x260 : 0xAC
-    "10101100",   -- 0x261 : 0xAC
-    "10101101",   -- 0x262 : 0xAD
-    "10101101",   -- 0x263 : 0xAD
-    "10101101",   -- 0x264 : 0xAD
-    "10101101",   -- 0x265 : 0xAD
-    "10101110",   -- 0x266 : 0xAE
-    "10101110",   -- 0x267 : 0xAE
-    "10101110",   -- 0x268 : 0xAE
-    "10101110",   -- 0x269 : 0xAE
-    "10101111",   -- 0x26A : 0xAF
-    "10101111",   -- 0x26B : 0xAF
-    "10101111",   -- 0x26C : 0xAF
-    "10101111",   -- 0x26D : 0xAF
-    "10101111",   -- 0x26E : 0xAF
-    "10110000",   -- 0x26F : 0xB0
-    "10110000",   -- 0x270 : 0xB0
-    "10110000",   -- 0x271 : 0xB0
-    "10110000",   -- 0x272 : 0xB0
-    "10110001",   -- 0x273 : 0xB1
-    "10110001",   -- 0x274 : 0xB1
-    "10110001",   -- 0x275 : 0xB1
-    "10110001",   -- 0x276 : 0xB1
-    "10110001",   -- 0x277 : 0xB1
-    "10110010",   -- 0x278 : 0xB2
-    "10110010",   -- 0x279 : 0xB2
-    "10110010",   -- 0x27A : 0xB2
-    "10110010",   -- 0x27B : 0xB2
-    "10110011",   -- 0x27C : 0xB3
-    "10110011",   -- 0x27D : 0xB3
-    "10110011",   -- 0x27E : 0xB3
-    "10110011",   -- 0x27F : 0xB3
-    "10110011",   -- 0x280 : 0xB3
-    "10110100",   -- 0x281 : 0xB4
-    "10110100",   -- 0x282 : 0xB4
-    "10110100",   -- 0x283 : 0xB4
-    "10110100",   -- 0x284 : 0xB4
-    "10110101",   -- 0x285 : 0xB5
-    "10110101",   -- 0x286 : 0xB5
-    "10110101",   -- 0x287 : 0xB5
-    "10110101",   -- 0x288 : 0xB5
-    "10110101",   -- 0x289 : 0xB5
-    "10110110",   -- 0x28A : 0xB6
-    "10110110",   -- 0x28B : 0xB6
-    "10110110",   -- 0x28C : 0xB6
-    "10110110",   -- 0x28D : 0xB6
-    "10110111",   -- 0x28E : 0xB7
-    "10110111",   -- 0x28F : 0xB7
-    "10110111",   -- 0x290 : 0xB7
-    "10110111",   -- 0x291 : 0xB7
-    "10110111",   -- 0x292 : 0xB7
-    "10111000",   -- 0x293 : 0xB8
-    "10111000",   -- 0x294 : 0xB8
-    "10111000",   -- 0x295 : 0xB8
-    "10111000",   -- 0x296 : 0xB8
-    "10111000",   -- 0x297 : 0xB8
-    "10111001",   -- 0x298 : 0xB9
-    "10111001",   -- 0x299 : 0xB9
-    "10111001",   -- 0x29A : 0xB9
-    "10111001",   -- 0x29B : 0xB9
-    "10111010",   -- 0x29C : 0xBA
-    "10111010",   -- 0x29D : 0xBA
-    "10111010",   -- 0x29E : 0xBA
-    "10111010",   -- 0x29F : 0xBA
-    "10111010",   -- 0x2A0 : 0xBA
-    "10111011",   -- 0x2A1 : 0xBB
-    "10111011",   -- 0x2A2 : 0xBB
-    "10111011",   -- 0x2A3 : 0xBB
-    "10111011",   -- 0x2A4 : 0xBB
-    "10111100",   -- 0x2A5 : 0xBC
-    "10111100",   -- 0x2A6 : 0xBC
-    "10111100",   -- 0x2A7 : 0xBC
-    "10111100",   -- 0x2A8 : 0xBC
-    "10111100",   -- 0x2A9 : 0xBC
-    "10111101",   -- 0x2AA : 0xBD
-    "10111101",   -- 0x2AB : 0xBD
-    "10111101",   -- 0x2AC : 0xBD
-    "10111101",   -- 0x2AD : 0xBD
-    "10111101",   -- 0x2AE : 0xBD
-    "10111110",   -- 0x2AF : 0xBE
-    "10111110",   -- 0x2B0 : 0xBE
-    "10111110",   -- 0x2B1 : 0xBE
-    "10111110",   -- 0x2B2 : 0xBE
-    "10111111",   -- 0x2B3 : 0xBF
-    "10111111",   -- 0x2B4 : 0xBF
-    "10111111",   -- 0x2B5 : 0xBF
-    "10111111",   -- 0x2B6 : 0xBF
-    "10111111",   -- 0x2B7 : 0xBF
-    "11000000",   -- 0x2B8 : 0xC0
-    "11000000",   -- 0x2B9 : 0xC0
-    "11000000",   -- 0x2BA : 0xC0
-    "11000000",   -- 0x2BB : 0xC0
-    "11000001",   -- 0x2BC : 0xC1
-    "11000001",   -- 0x2BD : 0xC1
-    "11000001",   -- 0x2BE : 0xC1
-    "11000001",   -- 0x2BF : 0xC1
-    "11000001",   -- 0x2C0 : 0xC1
-    "11000010",   -- 0x2C1 : 0xC2
-    "11000010",   -- 0x2C2 : 0xC2
-    "11000010",   -- 0x2C3 : 0xC2
-    "11000010",   -- 0x2C4 : 0xC2
-    "11000010",   -- 0x2C5 : 0xC2
-    "11000011",   -- 0x2C6 : 0xC3
-    "11000011",   -- 0x2C7 : 0xC3
-    "11000011",   -- 0x2C8 : 0xC3
-    "11000011",   -- 0x2C9 : 0xC3
-    "11000011",   -- 0x2CA : 0xC3
-    "11000100",   -- 0x2CB : 0xC4
-    "11000100",   -- 0x2CC : 0xC4
-    "11000100",   -- 0x2CD : 0xC4
-    "11000100",   -- 0x2CE : 0xC4
-    "11000101",   -- 0x2CF : 0xC5
-    "11000101",   -- 0x2D0 : 0xC5
-    "11000101",   -- 0x2D1 : 0xC5
-    "11000101",   -- 0x2D2 : 0xC5
-    "11000101",   -- 0x2D3 : 0xC5
-    "11000110",   -- 0x2D4 : 0xC6
-    "11000110",   -- 0x2D5 : 0xC6
-    "11000110",   -- 0x2D6 : 0xC6
-    "11000110",   -- 0x2D7 : 0xC6
-    "11000110",   -- 0x2D8 : 0xC6
-    "11000111",   -- 0x2D9 : 0xC7
-    "11000111",   -- 0x2DA : 0xC7
-    "11000111",   -- 0x2DB : 0xC7
-    "11000111",   -- 0x2DC : 0xC7
-    "11001000",   -- 0x2DD : 0xC8
-    "11001000",   -- 0x2DE : 0xC8
-    "11001000",   -- 0x2DF : 0xC8
-    "11001000",   -- 0x2E0 : 0xC8
-    "11001000",   -- 0x2E1 : 0xC8
-    "11001001",   -- 0x2E2 : 0xC9
-    "11001001",   -- 0x2E3 : 0xC9
-    "11001001",   -- 0x2E4 : 0xC9
-    "11001001",   -- 0x2E5 : 0xC9
-    "11001001",   -- 0x2E6 : 0xC9
-    "11001010",   -- 0x2E7 : 0xCA
-    "11001010",   -- 0x2E8 : 0xCA
-    "11001010",   -- 0x2E9 : 0xCA
-    "11001010",   -- 0x2EA : 0xCA
-    "11001010",   -- 0x2EB : 0xCA
-    "11001011",   -- 0x2EC : 0xCB
-    "11001011",   -- 0x2ED : 0xCB
-    "11001011",   -- 0x2EE : 0xCB
-    "11001011",   -- 0x2EF : 0xCB
-    "11001011",   -- 0x2F0 : 0xCB
-    "11001100",   -- 0x2F1 : 0xCC
-    "11001100",   -- 0x2F2 : 0xCC
-    "11001100",   -- 0x2F3 : 0xCC
-    "11001100",   -- 0x2F4 : 0xCC
-    "11001101",   -- 0x2F5 : 0xCD
-    "11001101",   -- 0x2F6 : 0xCD
-    "11001101",   -- 0x2F7 : 0xCD
-    "11001101",   -- 0x2F8 : 0xCD
-    "11001101",   -- 0x2F9 : 0xCD
-    "11001110",   -- 0x2FA : 0xCE
-    "11001110",   -- 0x2FB : 0xCE
-    "11001110",   -- 0x2FC : 0xCE
-    "11001110",   -- 0x2FD : 0xCE
-    "11001110",   -- 0x2FE : 0xCE
-    "11001111",   -- 0x2FF : 0xCF
-    "11001111",   -- 0x300 : 0xCF
-    "11001111",   -- 0x301 : 0xCF
-    "11001111",   -- 0x302 : 0xCF
-    "11001111",   -- 0x303 : 0xCF
-    "11010000",   -- 0x304 : 0xD0
-    "11010000",   -- 0x305 : 0xD0
-    "11010000",   -- 0x306 : 0xD0
-    "11010000",   -- 0x307 : 0xD0
-    "11010000",   -- 0x308 : 0xD0
-    "11010001",   -- 0x309 : 0xD1
-    "11010001",   -- 0x30A : 0xD1
-    "11010001",   -- 0x30B : 0xD1
-    "11010001",   -- 0x30C : 0xD1
-    "11010001",   -- 0x30D : 0xD1
-    "11010010",   -- 0x30E : 0xD2
-    "11010010",   -- 0x30F : 0xD2
-    "11010010",   -- 0x310 : 0xD2
-    "11010010",   -- 0x311 : 0xD2
-    "11010010",   -- 0x312 : 0xD2
-    "11010011",   -- 0x313 : 0xD3
-    "11010011",   -- 0x314 : 0xD3
-    "11010011",   -- 0x315 : 0xD3
-    "11010011",   -- 0x316 : 0xD3
-    "11010011",   -- 0x317 : 0xD3
-    "11010100",   -- 0x318 : 0xD4
-    "11010100",   -- 0x319 : 0xD4
-    "11010100",   -- 0x31A : 0xD4
-    "11010100",   -- 0x31B : 0xD4
-    "11010101",   -- 0x31C : 0xD5
-    "11010101",   -- 0x31D : 0xD5
-    "11010101",   -- 0x31E : 0xD5
-    "11010101",   -- 0x31F : 0xD5
-    "11010101",   -- 0x320 : 0xD5
-    "11010110",   -- 0x321 : 0xD6
-    "11010110",   -- 0x322 : 0xD6
-    "11010110",   -- 0x323 : 0xD6
-    "11010110",   -- 0x324 : 0xD6
-    "11010110",   -- 0x325 : 0xD6
-    "11010111",   -- 0x326 : 0xD7
-    "11010111",   -- 0x327 : 0xD7
-    "11010111",   -- 0x328 : 0xD7
-    "11010111",   -- 0x329 : 0xD7
-    "11010111",   -- 0x32A : 0xD7
-    "11011000",   -- 0x32B : 0xD8
-    "11011000",   -- 0x32C : 0xD8
-    "11011000",   -- 0x32D : 0xD8
-    "11011000",   -- 0x32E : 0xD8
-    "11011000",   -- 0x32F : 0xD8
-    "11011001",   -- 0x330 : 0xD9
-    "11011001",   -- 0x331 : 0xD9
-    "11011001",   -- 0x332 : 0xD9
-    "11011001",   -- 0x333 : 0xD9
-    "11011001",   -- 0x334 : 0xD9
-    "11011010",   -- 0x335 : 0xDA
-    "11011010",   -- 0x336 : 0xDA
-    "11011010",   -- 0x337 : 0xDA
-    "11011010",   -- 0x338 : 0xDA
-    "11011010",   -- 0x339 : 0xDA
-    "11011011",   -- 0x33A : 0xDB
-    "11011011",   -- 0x33B : 0xDB
-    "11011011",   -- 0x33C : 0xDB
-    "11011011",   -- 0x33D : 0xDB
-    "11011011",   -- 0x33E : 0xDB
-    "11011100",   -- 0x33F : 0xDC
-    "11011100",   -- 0x340 : 0xDC
-    "11011100",   -- 0x341 : 0xDC
-    "11011100",   -- 0x342 : 0xDC
-    "11011100",   -- 0x343 : 0xDC
-    "11011101",   -- 0x344 : 0xDD
-    "11011101",   -- 0x345 : 0xDD
-    "11011101",   -- 0x346 : 0xDD
-    "11011101",   -- 0x347 : 0xDD
-    "11011101",   -- 0x348 : 0xDD
-    "11011110",   -- 0x349 : 0xDE
-    "11011110",   -- 0x34A : 0xDE
-    "11011110",   -- 0x34B : 0xDE
-    "11011110",   -- 0x34C : 0xDE
-    "11011110",   -- 0x34D : 0xDE
-    "11011111",   -- 0x34E : 0xDF
-    "11011111",   -- 0x34F : 0xDF
-    "11011111",   -- 0x350 : 0xDF
-    "11011111",   -- 0x351 : 0xDF
-    "11011111",   -- 0x352 : 0xDF
-    "11100000",   -- 0x353 : 0xE0
-    "11100000",   -- 0x354 : 0xE0
-    "11100000",   -- 0x355 : 0xE0
-    "11100000",   -- 0x356 : 0xE0
-    "11100000",   -- 0x357 : 0xE0
-    "11100000",   -- 0x358 : 0xE0
-    "11100001",   -- 0x359 : 0xE1
-    "11100001",   -- 0x35A : 0xE1
-    "11100001",   -- 0x35B : 0xE1
-    "11100001",   -- 0x35C : 0xE1
-    "11100001",   -- 0x35D : 0xE1
-    "11100010",   -- 0x35E : 0xE2
-    "11100010",   -- 0x35F : 0xE2
-    "11100010",   -- 0x360 : 0xE2
-    "11100010",   -- 0x361 : 0xE2
-    "11100010",   -- 0x362 : 0xE2
-    "11100011",   -- 0x363 : 0xE3
-    "11100011",   -- 0x364 : 0xE3
-    "11100011",   -- 0x365 : 0xE3
-    "11100011",   -- 0x366 : 0xE3
-    "11100011",   -- 0x367 : 0xE3
-    "11100100",   -- 0x368 : 0xE4
-    "11100100",   -- 0x369 : 0xE4
-    "11100100",   -- 0x36A : 0xE4
-    "11100100",   -- 0x36B : 0xE4
-    "11100100",   -- 0x36C : 0xE4
-    "11100101",   -- 0x36D : 0xE5
-    "11100101",   -- 0x36E : 0xE5
-    "11100101",   -- 0x36F : 0xE5
-    "11100101",   -- 0x370 : 0xE5
-    "11100101",   -- 0x371 : 0xE5
-    "11100110",   -- 0x372 : 0xE6
-    "11100110",   -- 0x373 : 0xE6
-    "11100110",   -- 0x374 : 0xE6
-    "11100110",   -- 0x375 : 0xE6
-    "11100110",   -- 0x376 : 0xE6
-    "11100111",   -- 0x377 : 0xE7
-    "11100111",   -- 0x378 : 0xE7
-    "11100111",   -- 0x379 : 0xE7
-    "11100111",   -- 0x37A : 0xE7
-    "11100111",   -- 0x37B : 0xE7
-    "11100111",   -- 0x37C : 0xE7
-    "11101000",   -- 0x37D : 0xE8
-    "11101000",   -- 0x37E : 0xE8
-    "11101000",   -- 0x37F : 0xE8
-    "11101000",   -- 0x380 : 0xE8
-    "11101000",   -- 0x381 : 0xE8
-    "11101001",   -- 0x382 : 0xE9
-    "11101001",   -- 0x383 : 0xE9
-    "11101001",   -- 0x384 : 0xE9
-    "11101001",   -- 0x385 : 0xE9
-    "11101001",   -- 0x386 : 0xE9
-    "11101010",   -- 0x387 : 0xEA
-    "11101010",   -- 0x388 : 0xEA
-    "11101010",   -- 0x389 : 0xEA
-    "11101010",   -- 0x38A : 0xEA
-    "11101010",   -- 0x38B : 0xEA
-    "11101011",   -- 0x38C : 0xEB
-    "11101011",   -- 0x38D : 0xEB
-    "11101011",   -- 0x38E : 0xEB
-    "11101011",   -- 0x38F : 0xEB
-    "11101011",   -- 0x390 : 0xEB
-    "11101100",   -- 0x391 : 0xEC
-    "11101100",   -- 0x392 : 0xEC
-    "11101100",   -- 0x393 : 0xEC
-    "11101100",   -- 0x394 : 0xEC
-    "11101100",   -- 0x395 : 0xEC
-    "11101100",   -- 0x396 : 0xEC
-    "11101101",   -- 0x397 : 0xED
-    "11101101",   -- 0x398 : 0xED
-    "11101101",   -- 0x399 : 0xED
-    "11101101",   -- 0x39A : 0xED
-    "11101101",   -- 0x39B : 0xED
-    "11101110",   -- 0x39C : 0xEE
-    "11101110",   -- 0x39D : 0xEE
-    "11101110",   -- 0x39E : 0xEE
-    "11101110",   -- 0x39F : 0xEE
-    "11101110",   -- 0x3A0 : 0xEE
-    "11101111",   -- 0x3A1 : 0xEF
-    "11101111",   -- 0x3A2 : 0xEF
-    "11101111",   -- 0x3A3 : 0xEF
-    "11101111",   -- 0x3A4 : 0xEF
-    "11101111",   -- 0x3A5 : 0xEF
-    "11101111",   -- 0x3A6 : 0xEF
-    "11110000",   -- 0x3A7 : 0xF0
-    "11110000",   -- 0x3A8 : 0xF0
-    "11110000",   -- 0x3A9 : 0xF0
-    "11110000",   -- 0x3AA : 0xF0
-    "11110000",   -- 0x3AB : 0xF0
-    "11110001",   -- 0x3AC : 0xF1
-    "11110001",   -- 0x3AD : 0xF1
-    "11110001",   -- 0x3AE : 0xF1
-    "11110001",   -- 0x3AF : 0xF1
-    "11110001",   -- 0x3B0 : 0xF1
-    "11110010",   -- 0x3B1 : 0xF2
-    "11110010",   -- 0x3B2 : 0xF2
-    "11110010",   -- 0x3B3 : 0xF2
-    "11110010",   -- 0x3B4 : 0xF2
-    "11110010",   -- 0x3B5 : 0xF2
-    "11110011",   -- 0x3B6 : 0xF3
-    "11110011",   -- 0x3B7 : 0xF3
-    "11110011",   -- 0x3B8 : 0xF3
-    "11110011",   -- 0x3B9 : 0xF3
-    "11110011",   -- 0x3BA : 0xF3
-    "11110011",   -- 0x3BB : 0xF3
-    "11110100",   -- 0x3BC : 0xF4
-    "11110100",   -- 0x3BD : 0xF4
-    "11110100",   -- 0x3BE : 0xF4
-    "11110100",   -- 0x3BF : 0xF4
-    "11110100",   -- 0x3C0 : 0xF4
-    "11110101",   -- 0x3C1 : 0xF5
-    "11110101",   -- 0x3C2 : 0xF5
-    "11110101",   -- 0x3C3 : 0xF5
-    "11110101",   -- 0x3C4 : 0xF5
-    "11110101",   -- 0x3C5 : 0xF5
-    "11110101",   -- 0x3C6 : 0xF5
-    "11110110",   -- 0x3C7 : 0xF6
-    "11110110",   -- 0x3C8 : 0xF6
-    "11110110",   -- 0x3C9 : 0xF6
-    "11110110",   -- 0x3CA : 0xF6
-    "11110110",   -- 0x3CB : 0xF6
-    "11110111",   -- 0x3CC : 0xF7
-    "11110111",   -- 0x3CD : 0xF7
-    "11110111",   -- 0x3CE : 0xF7
-    "11110111",   -- 0x3CF : 0xF7
-    "11110111",   -- 0x3D0 : 0xF7
-    "11111000",   -- 0x3D1 : 0xF8
-    "11111000",   -- 0x3D2 : 0xF8
-    "11111000",   -- 0x3D3 : 0xF8
-    "11111000",   -- 0x3D4 : 0xF8
-    "11111000",   -- 0x3D5 : 0xF8
-    "11111000",   -- 0x3D6 : 0xF8
-    "11111001",   -- 0x3D7 : 0xF9
-    "11111001",   -- 0x3D8 : 0xF9
-    "11111001",   -- 0x3D9 : 0xF9
-    "11111001",   -- 0x3DA : 0xF9
-    "11111001",   -- 0x3DB : 0xF9
-    "11111010",   -- 0x3DC : 0xFA
-    "11111010",   -- 0x3DD : 0xFA
-    "11111010",   -- 0x3DE : 0xFA
-    "11111010",   -- 0x3DF : 0xFA
-    "11111010",   -- 0x3E0 : 0xFA
-    "11111010",   -- 0x3E1 : 0xFA
-    "11111011",   -- 0x3E2 : 0xFB
-    "11111011",   -- 0x3E3 : 0xFB
-    "11111011",   -- 0x3E4 : 0xFB
-    "11111011",   -- 0x3E5 : 0xFB
-    "11111011",   -- 0x3E6 : 0xFB
-    "11111100",   -- 0x3E7 : 0xFC
-    "11111100",   -- 0x3E8 : 0xFC
-    "11111100",   -- 0x3E9 : 0xFC
-    "11111100",   -- 0x3EA : 0xFC
-    "11111100",   -- 0x3EB : 0xFC
-    "11111100",   -- 0x3EC : 0xFC
-    "11111101",   -- 0x3ED : 0xFD
-    "11111101",   -- 0x3EE : 0xFD
-    "11111101",   -- 0x3EF : 0xFD
-    "11111101",   -- 0x3F0 : 0xFD
-    "11111101",   -- 0x3F1 : 0xFD
-    "11111110",   -- 0x3F2 : 0xFE
-    "11111110",   -- 0x3F3 : 0xFE
-    "11111110",   -- 0x3F4 : 0xFE
-    "11111110",   -- 0x3F5 : 0xFE
-    "11111110",   -- 0x3F6 : 0xFE
-    "11111110",   -- 0x3F7 : 0xFE
-    "11111111",   -- 0x3F8 : 0xFF
-    "11111111",   -- 0x3F9 : 0xFF
-    "11111111",   -- 0x3FA : 0xFF
-    "11111111",   -- 0x3FB : 0xFF
-    "11111111",   -- 0x3FC : 0xFF
-    "00000000",   -- 0x3FD : 0x0
-    "00000000",   -- 0x3FE : 0x0
-    "00000000");  -- 0x3FF : 0x0
-
-begin
-  process(clk) begin
-    if(clk'event and clk='1') then
-      outdata <= brom(CONV_INTEGER(indata));
-    end if;
-  end process;
-enc rtl
-
---+-------------------------------+
---| PG_LCELL/PG_LCELL_ARI         |
---| For Xilinx Devices            |
---| Multidevice Logic Cell Module |.GKey:hYj8zgUkjgdkfhB3ozXM
---| 2004/02/06                    |
---|            by Tsuyoshi Hamada |
---+-------------------------------+
---+-------------+----------+
---| x3,x2,x1,x0 |    z     |
---+-------------+----------+
---|  0, 0, 0, 0 | MASK(0)  |
---|  0, 0, 0, 1 | MASK(1)  |
---|  0, 0, 1, 0 | MASK(2)  |
---|  0, 0, 1, 1 | MASK(3)  |
---|  0, 1, 0, 0 | MASK(4)  |
---|  0, 1, 0, 1 | MASK(5)  |
---|  .......... | .......  |
---|  1, 1, 1, 1 | MASK(16) |
---+-------------+----------+
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
-USE ieee.numeric_std.ALL;
-LIBRARY UNISIM;
-USE UNISIM.Vcomponents.ALL;
-entity pg_lcell is
-  generic(MASK: bit_vector  := X"ffff";
-            FF: integer := 0);
-    port(x : in std_logic_vector(3 downto 0);
-         z : out std_logic;
-         clk : in std_logic);
-end pg_lcell;
-
-architecture schematic of pg_lcell is
-   ATTRIBUTE BOX_TYPE : STRING;
-   ATTRIBUTE INIT : STRING ;
-   COMPONENT LUT4
-   GENERIC( INIT : BIT_VECTOR := X"0000");
-      PORT ( I0	:	IN	STD_LOGIC;
-             I1	:	IN	STD_LOGIC;
-             I2	:	IN	STD_LOGIC;
-             I3	:	IN	STD_LOGIC;
-             O	:	OUT	STD_LOGIC);
-   END COMPONENT;
-   ATTRIBUTE BOX_TYPE OF LUT4 : COMPONENT IS "BLACK_BOX";
-
-   signal z0 : std_logic;
-
-BEGIN
-
-   xlcell : LUT4 GENERIC MAP (INIT => MASK)
-      PORT MAP (I0=>x(0), I1=>x(1), I2=>x(2), I3=>x(3), O=>z0);
-
--- unreged output
-ifgen0: if (FF=0) generate
-  z <= z0;
-end generate;
-
--- reged output
-ifgen1: if (FF>0) generate
-  process(clk) begin
-    if(clk'event and clk='1') then
-      z <= z0;
-    end if;
-  end process;
-end generate;
-
-end schematic;
-
+Sat Jun  2 19:43:51 JST 2012
+-9.598970e+00	9.665237e-01	2.517851e-10	-2.279708e+06	-0.000000e+00	
+-9.583501e+00	9.383051e-01	2.609148e-10	8.974531e+06	-0.000000e+00	
+-9.568033e+00	9.184187e-01	2.703756e-10	1.849101e+07	-0.000000e+00	
+-9.552564e+00	9.042620e-01	2.801794e-10	-3.381331e+07	-5.827294e+07	
+-9.537095e+00	8.698627e-01	2.903387e-10	3.496421e+07	5.827294e+07	
+-9.521626e+00	8.382530e-01	3.008664e-10	3.560311e+07	5.827294e+07	
+-9.506158e+00	8.198765e-01	3.117759e-10	7.200306e+06	-0.000000e+00	
+-9.490689e+00	7.745067e-01	3.230809e-10	-3.064213e+07	-5.827294e+07	
+-9.475220e+00	7.455241e-01	3.347958e-10	1.506696e+07	-0.000000e+00	
+-9.459751e+00	6.934260e-01	3.469355e-10	-9.452827e+06	-0.000000e+00	
+-9.444283e+00	6.537810e-01	3.595154e-10	-1.376844e+07	-0.000000e+00	
+-9.428814e+00	6.523060e-01	3.725514e-10	-1.872946e+05	-0.000000e+00	
+-9.413345e+00	6.077051e-01	3.860602e-10	-2.275408e+06	-0.000000e+00	
+-9.397876e+00	5.842309e-01	4.000587e-10	-6.317689e+06	-0.000000e+00	
+-9.382408e+00	5.641729e-01	4.145649e-10	3.314113e+07	5.827294e+07	
+-9.366939e+00	5.227841e-01	4.295970e-10	5.299129e+06	-0.000000e+00	
+-9.351470e+00	4.924952e-01	4.451742e-10	-8.934908e+06	-0.000000e+00	
+-9.336001e+00	4.680865e-01	4.613162e-10	-2.339745e+06	-0.000000e+00	
+-9.320533e+00	4.406407e-01	4.780436e-10	4.013674e+07	5.827294e+07	
+-9.305064e+00	4.126275e-01	4.953775e-10	-2.127461e+07	-0.000000e+00	
+-9.289595e+00	4.124440e-01	5.133399e-10	-5.033368e+07	-5.827294e+07	
+-9.274126e+00	3.927708e-01	5.319536e-10	4.957131e+06	-0.000000e+00	
+-9.258658e+00	3.678175e-01	5.512422e-10	3.975096e+07	5.827294e+07	
+-9.243189e+00	3.557560e-01	5.712303e-10	1.870655e+07	-0.000000e+00	
+-9.227720e+00	3.541523e-01	5.919431e-10	4.487647e+07	5.827294e+07	
+-9.212251e+00	3.380107e-01	6.134070e-10	2.167298e+06	-0.000000e+00	
+-9.196783e+00	3.352248e-01	6.356492e-10	7.291583e+06	-0.000000e+00	
+-9.181314e+00	3.429764e-01	6.586978e-10	6.834317e+07	5.827294e+07	
+-9.165845e+00	3.308763e-01	6.825823e-10	5.988554e+07	5.827294e+07	
+-9.150376e+00	3.376368e-01	7.073327e-10	4.048502e+07	5.827294e+07	
+-9.134908e+00	3.406724e-01	7.329806e-10	1.942400e+07	-0.000000e+00	
+-9.119439e+00	3.235748e-01	7.595585e-10	2.390262e+07	-0.000000e+00	
+-9.103970e+00	3.102564e-01	7.871002e-10	-2.600478e+07	-0.000000e+00	
+-9.088501e+00	2.935231e-01	8.156404e-10	-1.659865e+07	-0.000000e+00	
+-9.073033e+00	2.793805e-01	8.452156e-10	-7.760770e+07	-5.827294e+07	
+-9.057564e+00	2.646785e-01	8.758631e-10	-1.058932e+08	-1.165459e+08	
+-9.042095e+00	2.419559e-01	9.076220e-10	-1.118175e+07	-0.000000e+00	
+-9.026626e+00	2.388588e-01	9.405324e-10	-1.595792e+06	-0.000000e+00	
+-9.011158e+00	2.203932e-01	9.746361e-10	7.911674e+07	5.827294e+07	
+-8.995689e+00	2.101242e-01	1.009976e-09	-1.250006e+08	-1.165459e+08	
+-8.980220e+00	2.060374e-01	1.046598e-09	5.286819e+07	5.827294e+07	
+-8.964751e+00	2.035774e-01	1.084548e-09	1.958738e+07	-0.000000e+00	
+-8.949283e+00	2.020317e-01	1.123874e-09	1.179144e+08	1.165459e+08	
+-8.933814e+00	2.045634e-01	1.164625e-09	3.548864e+07	5.827294e+07	
+-8.918345e+00	2.007334e-01	1.206855e-09	1.056693e+08	1.165459e+08	
+-8.902876e+00	1.950014e-01	1.250615e-09	7.491756e+07	5.827294e+07	
+-8.887408e+00	1.799023e-01	1.295963e-09	-1.161654e+08	-1.165459e+08	
+-8.871939e+00	1.688414e-01	1.342954e-09	-1.354574e+08	-1.165459e+08	
+-8.856470e+00	1.627758e-01	1.391650e-09	-9.224466e+07	-1.165459e+08	
+-8.841001e+00	1.545449e-01	1.442111e-09	-2.400218e+07	-0.000000e+00	
+-8.825533e+00	1.463969e-01	1.494402e-09	1.577414e+08	1.748188e+08	
+-8.810064e+00	1.433360e-01	1.548589e-09	3.206987e+07	5.827294e+07	
+-8.794595e+00	1.419578e-01	1.604741e-09	-3.777452e+07	-5.827294e+07	
+-8.779126e+00	1.466167e-01	1.662929e-09	-1.034226e+08	-1.165459e+08	
+-8.763658e+00	1.387767e-01	1.723227e-09	-1.827909e+08	-1.748188e+08	
+-8.748189e+00	1.308677e-01	1.785711e-09	-2.285683e+06	-0.000000e+00	
+-8.732720e+00	1.195712e-01	1.850461e-09	3.927416e+07	5.827294e+07	
+-8.717251e+00	1.143828e-01	1.917559e-09	-2.033879e+07	-0.000000e+00	
+-8.701783e+00	1.140379e-01	1.987090e-09	-9.631483e+06	-0.000000e+00	
+-8.686314e+00	1.127946e-01	2.059142e-09	1.819614e+08	1.748188e+08	
+-8.670845e+00	1.125196e-01	2.133806e-09	-3.053885e+06	-0.000000e+00	
+-8.655376e+00	1.092156e-01	2.211178e-09	-6.927848e+07	-5.827294e+07	
+-8.639908e+00	1.013528e-01	2.291356e-09	1.357449e+08	1.165459e+08	
+-8.624439e+00	9.398428e-02	2.374440e-09	2.342476e+08	2.330918e+08	
+-8.608970e+00	9.270150e-02	2.460538e-09	1.662789e+07	-0.000000e+00	
+-8.593501e+00	9.143301e-02	2.549757e-09	1.958741e+08	1.748188e+08	
+-8.578033e+00	8.871612e-02	2.642211e-09	4.368301e+07	5.827294e+07	
+-8.562564e+00	8.697137e-02	2.738018e-09	-1.277076e+07	-0.000000e+00	
+-8.547095e+00	7.791557e-02	2.837298e-09	-2.027057e+08	-1.748188e+08	
+-8.531626e+00	7.564019e-02	2.940179e-09	-1.871823e+08	-1.748188e+08	
+-8.516158e+00	7.951468e-02	3.046790e-09	-5.244197e+06	-0.000000e+00	
+-8.500689e+00	7.486715e-02	3.157267e-09	-3.891366e+08	-4.084263e+08	
+-8.485220e+00	7.143126e-02	3.271749e-09	-3.044352e+08	-2.918804e+08	
+-8.469751e+00	6.665708e-02	3.390383e-09	2.390701e+08	2.330918e+08	
+-8.454283e+00	6.834534e-02	3.513318e-09	-1.076679e+08	-1.165459e+08	
+-8.438814e+00	6.610478e-02	3.640711e-09	-2.096985e+08	-2.330918e+08	
+-8.423345e+00	5.948162e-02	3.772724e-09	-5.302688e+06	-0.000000e+00	
+-8.407876e+00	6.029589e-02	3.909523e-09	1.657995e+08	1.748188e+08	
+-8.392408e+00	5.935982e-02	4.051282e-09	3.197478e+06	-0.000000e+00	
+-8.376939e+00	5.524191e-02	4.198182e-09	-2.112442e+08	-2.330918e+08	
+-8.361470e+00	5.255022e-02	4.350408e-09	-2.589447e+08	-2.330918e+08	
+-8.346001e+00	5.276794e-02	4.508154e-09	-1.286279e+08	-1.165459e+08	
+-8.330533e+00	4.831635e-02	4.671620e-09	-2.567225e+07	-0.000000e+00	
+-8.315064e+00	4.782230e-02	4.841013e-09	5.503396e+08	5.249722e+08	
+-8.299595e+00	4.523068e-02	5.016548e-09	3.503427e+08	3.496376e+08	
+-8.284126e+00	4.456071e-02	5.198448e-09	-1.226437e+06	-0.000000e+00	
+-8.268658e+00	4.392462e-02	5.386944e-09	-9.168232e+07	-1.165459e+08	
+-8.253189e+00	3.984462e-02	5.582275e-09	8.157146e+07	5.827294e+07	
+-8.237720e+00	3.981674e-02	5.784689e-09	-1.875819e+08	-1.748188e+08	
+-8.222251e+00	3.891286e-02	5.994442e-09	-9.780356e+07	-1.165459e+08	
+-8.206783e+00	3.711292e-02	6.211800e-09	1.010428e+08	1.165459e+08	
+-8.191314e+00	3.780709e-02	6.437041e-09	-2.115806e+08	-2.330918e+08	
+-8.175845e+00	3.435627e-02	6.670448e-09	-6.408536e+08	-6.415180e+08	
+-8.160376e+00	3.320784e-02	6.912319e-09	2.276233e+08	2.330918e+08	
+-8.144908e+00	3.287690e-02	7.162960e-09	-8.660949e+07	-5.827294e+07	
+-8.129439e+00	3.074406e-02	7.422689e-09	-9.260272e+08	-9.323670e+08	
+-8.113970e+00	3.050388e-02	7.691836e-09	-5.094201e+08	-5.249722e+08	
+-8.098501e+00	2.874354e-02	7.970742e-09	-5.351521e+07	-5.827294e+07	
+-8.083033e+00	2.842764e-02	8.259761e-09	-1.214070e+08	-1.165459e+08	
+-8.067564e+00	2.713782e-02	8.559261e-09	-4.345394e+08	-4.084263e+08	
+-8.052095e+00	2.624535e-02	8.869620e-09	-2.802041e+08	-2.918804e+08	
+-8.036626e+00	2.620132e-02	9.191232e-09	-9.906689e+08	-9.921871e+08	
+-8.021158e+00	2.453454e-02	9.524507e-09	1.111393e+09	1.109764e+09	
+-8.005689e+00	2.351574e-02	9.869866e-09	-6.740681e+07	-5.827294e+07	
+-7.990220e+00	2.326270e-02	1.022775e-08	-6.279569e+07	-5.827294e+07	
+-7.974751e+00	2.223218e-02	1.059861e-08	4.451960e+08	4.661835e+08	
+-7.959283e+00	2.192699e-02	1.098291e-08	2.041100e+08	2.330918e+08	
+-7.943814e+00	2.100734e-02	1.138115e-08	-1.153854e+08	-1.165459e+08	
+-7.928345e+00	1.947951e-02	1.179383e-08	-1.382646e+09	-1.398551e+09	
+-7.912876e+00	1.871001e-02	1.222148e-08	-8.957672e+08	-8.746098e+08	
+-7.897408e+00	1.836766e-02	1.266463e-08	7.452065e+08	7.570325e+08	
+-7.881939e+00	1.772820e-02	1.312385e-08	1.518684e+09	1.514065e+09	
+-7.866470e+00	1.675324e-02	1.359972e-08	5.973036e+08	5.837608e+08	
+-7.851001e+00	1.615912e-02	1.409285e-08	-1.421851e+09	-1.398551e+09	
+-7.835533e+00	1.614791e-02	1.460385e-08	1.670817e+08	1.748188e+08	
+-7.820064e+00	1.541872e-02	1.513339e-08	1.831203e+09	1.806977e+09	
+-7.804595e+00	1.543283e-02	1.568213e-08	-3.580122e+07	-5.827294e+07	
+-7.789126e+00	1.409919e-02	1.625076e-08	8.090657e+08	8.168525e+08	
+-7.773658e+00	1.395656e-02	1.684002e-08	1.252111e+08	1.165459e+08	
+-7.758189e+00	1.345549e-02	1.745064e-08	3.811810e+08	4.084263e+08	
+-7.742720e+00	1.283151e-02	1.808340e-08	2.031506e+09	2.038006e+09	
+-7.727251e+00	1.264869e-02	1.873910e-08	2.292829e+09	2.269035e+09	
+-7.711783e+00	1.223677e-02	1.941858e-08	3.641860e+08	3.496376e+08	
+-7.696314e+00	1.197082e-02	2.012270e-08	-2.617505e+08	-2.330918e+08	
+-7.680845e+00	1.131079e-02	2.085235e-08	3.072610e+06	-0.000000e+00	
+-7.665376e+00	1.074812e-02	2.160846e-08	-4.219503e+08	-4.084263e+08	
+-7.649908e+00	1.073634e-02	2.239198e-08	8.450479e+08	8.746098e+08	
+-7.634439e+00	1.018300e-02	2.320391e-08	-2.780887e+09	-2.797101e+09	
+-7.618970e+00	1.004166e-02	2.404529e-08	-2.081552e+09	-2.099889e+09	
+-7.603501e+00	9.580360e-03	2.491717e-08	1.103419e+09	1.109764e+09	
+-7.588033e+00	9.333752e-03	2.582067e-08	1.386065e+09	1.398551e+09	
+-7.572564e+00	8.484406e-03	2.675693e-08	2.254646e+09	2.269035e+09	
+-7.557095e+00	8.817887e-03	2.772713e-08	-1.991104e+09	-1.984374e+09	
+-7.541626e+00	8.585820e-03	2.873252e-08	-5.262394e+08	-5.249722e+08	
+-7.526158e+00	7.778092e-03	2.977436e-08	2.686998e+09	2.681587e+09	
+-7.510689e+00	8.055520e-03	3.085398e-08	-3.319934e+09	-3.316916e+09	
+-7.495220e+00	7.672911e-03	3.197275e-08	1.360533e+09	1.340793e+09	
+-7.479751e+00	7.165177e-03	3.313208e-08	-2.691653e+08	-2.918804e+08	
+-7.464283e+00	7.366995e-03	3.433345e-08	1.764148e+09	1.749220e+09	
+-7.448814e+00	6.889448e-03	3.557839e-08	3.924924e+09	3.902740e+09	
+-7.433345e+00	6.785749e-03	3.686846e-08	1.300779e+09	1.283036e+09	
+-7.417876e+00	6.765819e-03	3.820531e-08	-1.213161e+07	-0.000000e+00	
+-7.402408e+00	6.260985e-03	3.959064e-08	9.342579e+07	1.165459e+08	
+-7.386939e+00	6.161998e-03	4.102620e-08	-2.483043e+09	-2.508315e+09	
+-7.371470e+00	6.042098e-03	4.251381e-08	-2.586165e+09	-2.566072e+09	
+-7.356001e+00	5.975983e-03	4.405536e-08	-6.818759e+08	-6.992753e+08	
+-7.340533e+00	5.683897e-03	4.565281e-08	5.616938e+09	5.660211e+09	
+-7.325064e+00	5.519165e-03	4.730818e-08	-2.084075e+09	-2.099889e+09	
+-7.309595e+00	5.541321e-03	4.902358e-08	-1.953145e+09	-1.984374e+09	
+-7.294126e+00	5.206360e-03	5.080117e-08	-3.839676e+09	-3.853234e+09	
+-7.278658e+00	5.046741e-03	5.264323e-08	-4.540533e+09	-4.538070e+09	
+-7.263189e+00	4.959374e-03	5.455207e-08	8.403129e+08	8.168525e+08	
+-7.247720e+00	4.796720e-03	5.653013e-08	-2.345705e+09	-2.335043e+09	
+-7.232251e+00	4.873164e-03	5.857992e-08	3.322203e+09	3.316916e+09	
+-7.216783e+00	4.572034e-03	6.070403e-08	2.905446e+09	2.912616e+09	
+-7.201314e+00	4.779488e-03	6.290516e-08	1.539811e+09	1.514065e+09	
+-7.185845e+00	4.866546e-03	6.518610e-08	-2.060520e+09	-2.038006e+09	
+-7.170376e+00	4.653446e-03	6.754975e-08	-7.366468e+08	-7.570325e+08	
+-7.154908e+00	4.844179e-03	6.999911e-08	-5.543370e+08	-5.837608e+08	
+-7.139439e+00	4.566901e-03	7.253728e-08	-6.623017e+09	-6.633833e+09	
+-7.123970e+00	5.015338e-03	7.516748e-08	-1.101432e+09	-1.109764e+09	
+-7.108501e+00	4.955619e-03	7.789306e-08	-7.595422e+08	-7.570325e+08	
+-7.093033e+00	5.122417e-03	8.071746e-08	-6.409635e+09	-6.402804e+09	
+-7.077564e+00	5.298644e-03	8.364428e-08	2.927481e+09	2.912616e+09	
+-7.062095e+00	5.318136e-03	8.667722e-08	5.967523e+09	6.006754e+09	
+-7.046626e+00	5.286576e-03	8.982014e-08	7.378590e+09	7.392928e+09	
+-7.031158e+00	5.459778e-03	9.307703e-08	-3.937155e+09	-3.968748e+09	
+-7.015689e+00	5.537961e-03	9.645200e-08	-1.230429e+09	-1.225279e+09	
+-7.000220e+00	4.998329e-03	9.994935e-08	-5.912075e+09	-5.940746e+09	
+-6.984751e+00	4.801065e-03	1.035735e-07	-7.968750e+09	-7.937496e+09	
+-6.969283e+00	4.746412e-03	1.073291e-07	-1.229299e+10	-1.227754e+10	
+-6.953814e+00	4.064684e-03	1.112209e-07	-1.101686e+10	-1.102338e+10	
+-6.938345e+00	3.810610e-03	1.152537e-07	9.683031e+08	9.859988e+08	
+-6.922876e+00	3.994255e-03	1.194328e-07	-7.469007e+09	-7.475438e+09	
+-6.907408e+00	3.972156e-03	1.237635e-07	4.558009e+09	4.587576e+09	
+-6.891939e+00	3.818018e-03	1.282511e-07	-7.289062e+09	-7.293916e+09	
+-6.876470e+00	3.692213e-03	1.329015e-07	-3.767987e+09	-3.770723e+09	
+-6.861001e+00	3.635336e-03	1.377205e-07	-5.105388e+09	-5.099140e+09	
+-6.845533e+00	3.553551e-03	1.427143e-07	3.989924e+09	4.001752e+09	
+-6.830064e+00	3.518842e-03	1.478891e-07	-1.451084e+09	-1.443931e+09	
+-6.814595e+00	3.890330e-03	1.532516e-07	-2.700371e+07	-0.000000e+00	
+-6.799126e+00	4.101029e-03	1.588085e-07	1.378632e+10	1.382874e+10	
+-6.783658e+00	4.253133e-03	1.645669e-07	-1.952246e+10	-1.960446e+10	
+-6.768189e+00	4.628720e-03	1.705341e-07	7.462151e+09	7.524945e+09	
+-6.752720e+00	5.090667e-03	1.767177e-07	4.392995e+09	4.406053e+09	
+-6.737251e+00	4.447794e-03	1.831255e-07	-2.025760e+10	-2.039656e+10	
+-6.721783e+00	4.016095e-03	1.897656e-07	3.481271e+09	3.506690e+09	
+-6.706314e+00	3.633135e-03	1.966465e-07	-3.352056e+09	-3.341669e+09	
+-6.690845e+00	3.485199e-03	2.037769e-07	9.211953e+08	9.179277e+08	
+-6.675376e+00	3.611638e-03	2.111659e-07	-1.985589e+09	-2.005002e+09	
+-6.659908e+00	3.924107e-03	2.188228e-07	-1.130970e+10	-1.135343e+10	
+-6.644439e+00	4.468755e-03	2.267573e-07	2.697572e+10	2.706340e+10	
+-6.628970e+00	4.162525e-03	2.349795e-07	-2.535227e+09	-2.508315e+09	
+-6.613501e+00	3.858334e-03	2.434999e-07	1.126781e+10	1.128742e+10	
+-6.598033e+00	3.365292e-03	2.523292e-07	1.564115e+10	1.570997e+10	
+-6.582564e+00	3.788603e-03	2.614787e-07	1.137659e+09	1.138643e+09	
+-6.567095e+00	4.628462e-03	2.709599e-07	-2.025384e+10	-2.039656e+10	
+-6.551626e+00	4.100750e-03	2.807849e-07	5.893761e+08	5.672587e+08	
+-6.536158e+00	3.306315e-03	2.909662e-07	2.489886e+10	2.495113e+10	
+-6.520689e+00	3.925426e-03	3.015166e-07	1.884153e+10	1.887837e+10	
+-6.505220e+00	4.253685e-03	3.124496e-07	-1.095363e+10	-1.102338e+10	
+-6.489751e+00	3.271938e-03	3.237791e-07	-9.380389e+09	-9.505193e+09	
+-6.474283e+00	3.888200e-03	3.355193e-07	3.636811e+10	3.656859e+10	
+-6.458814e+00	4.497937e-03	3.476852e-07	6.108424e+09	6.155273e+09	
+-6.443345e+00	3.384641e-03	3.602923e-07	-2.109917e+10	-2.112265e+10	
+-6.427876e+00	4.465506e-03	3.733565e-07	2.604638e+10	2.613928e+10	
+-6.412408e+00	3.218548e-03	3.868944e-07	-8.605442e+09	-8.614081e+09	
+-6.396939e+00	4.008712e-03	4.009233e-07	-2.528743e+09	-2.533068e+09	
+-6.381470e+00	2.941008e-03	4.154607e-07	2.577148e+10	2.587525e+10	
+-6.366001e+00	4.285341e-03	4.305254e-07	1.429359e+10	1.435680e+10	
+-6.350533e+00	3.443131e-03	4.461362e-07	-1.615469e+10	-1.623804e+10	
+-6.335064e+00	4.184214e-03	4.623131e-07	3.041598e+10	3.049583e+10	
+-6.319595e+00	4.301202e-03	4.790766e-07	-1.180499e+10	-1.188149e+10	
+-6.304126e+00	3.673415e-03	4.964480e-07	-2.966089e+10	-2.970373e+10	
+-6.288658e+00	2.885678e-03	5.144492e-07	9.385739e+09	9.439185e+09	
+-6.273189e+00	3.220095e-03	5.331031e-07	-1.977445e+10	-1.993450e+10	
+-6.257720e+00	4.079781e-03	5.524335e-07	3.595589e+09	3.597452e+09	
+-6.242251e+00	3.979272e-03	5.724647e-07	3.988546e+10	4.013304e+10	
+-6.226783e+00	3.914764e-03	5.932223e-07	-1.572908e+10	-1.574298e+10	
+-6.211314e+00	3.417413e-03	6.147326e-07	5.079299e+10	5.082638e+10	
+-6.195845e+00	3.173869e-03	6.370228e-07	6.073224e+09	6.089264e+09	
+-6.180376e+00	3.543774e-03	6.601213e-07	2.942970e+10	2.950570e+10	
+-6.164908e+00	3.990264e-03	6.840573e-07	2.162348e+10	2.165072e+10	
+-6.149439e+00	3.033108e-03	7.088613e-07	-3.321312e+10	-3.326818e+10	
+-6.133970e+00	4.252087e-03	7.345646e-07	5.303365e+10	5.320268e+10	
+-6.118501e+00	3.419888e-03	7.611999e-07	2.261346e+10	2.270685e+10	
+-6.103033e+00	3.013914e-03	7.888011e-07	-7.240958e+09	-7.277414e+09	
+-6.087564e+00	3.917370e-03	8.174030e-07	-3.197066e+10	-3.194801e+10	
+-6.072095e+00	4.224718e-03	8.470421e-07	-1.539426e+08	-1.371735e+08	
+-6.056626e+00	4.146180e-03	8.777559e-07	1.238555e+10	1.244256e+10	
+-6.041158e+00	3.003327e-03	9.095833e-07	7.717616e+10	7.736171e+10	
+-6.025689e+00	3.535253e-03	9.425649e-07	6.682390e+10	6.680039e+10	
+-6.010220e+00	4.252978e-03	9.767423e-07	8.181487e+10	8.237834e+10	
+-5.994751e+00	3.548514e-03	1.012159e-06	-7.418304e+10	-7.419331e+10	
+-5.979283e+00	2.821776e-03	1.048860e-06	8.069064e+09	8.119019e+09	
+-5.963814e+00	2.931289e-03	1.086892e-06	6.088384e+10	6.099166e+10	
+-5.948345e+00	3.028031e-03	1.126302e-06	6.870063e+10	6.864862e+10	
+-5.932876e+00	3.362689e-03	1.167142e-06	1.932809e+10	1.934043e+10	
+-5.917408e+00	3.815537e-03	1.209463e-06	7.092131e+09	7.128895e+09	
+-5.901939e+00	3.337975e-03	1.253318e-06	9.424834e+10	9.452387e+10	
+-5.886470e+00	3.124327e-03	1.298763e-06	-1.444870e+10	-1.448882e+10	
+-5.871001e+00	3.051222e-03	1.345856e-06	2.926529e+10	2.937369e+10	
+-5.855533e+00	3.330756e-03	1.394657e-06	5.707506e+09	5.742721e+09	
+-5.840064e+00	4.012232e-03	1.445228e-06	8.494319e+10	8.501867e+10	
+-5.824595e+00	3.585227e-03	1.497632e-06	1.882155e+10	1.887837e+10	
+-5.809126e+00	3.392537e-03	1.551936e-06	-5.428429e+10	-5.439083e+10	
+-5.793658e+00	3.316721e-03	1.608209e-06	-2.004893e+10	-2.006652e+10	
+-5.778189e+00	3.982154e-03	1.666523e-06	-2.651923e+10	-2.646932e+10	
+-5.762720e+00	3.112060e-03	1.726951e-06	7.738948e+09	7.772476e+09	
+-5.747251e+00	3.428803e-03	1.789570e-06	-2.704321e+10	-2.706340e+10	
+-5.731783e+00	4.133162e-03	1.854460e-06	5.464108e+10	5.478688e+10	
+-5.716314e+00	2.857762e-03	1.921703e-06	-5.841989e+10	-5.861536e+10	
+-5.700845e+00	3.766962e-03	1.991384e-06	2.226904e+09	2.244282e+09	
+-5.685376e+00	3.002791e-03	2.063592e-06	3.787256e+10	3.802077e+10	
+-5.669908e+00	2.982397e-03	2.138417e-06	-5.380112e+10	-5.399478e+10	
+-5.654439e+00	3.186066e-03	2.215957e-06	-1.038312e+09	-1.033442e+09	
+-5.638970e+00	3.881538e-03	2.296307e-06	2.739024e+10	2.752546e+10	
+-5.623501e+00	3.428809e-03	2.379571e-06	-6.268007e+09	-6.287289e+09	
+-5.608033e+00	3.360480e-03	2.465855e-06	-5.232578e+10	-5.241058e+10	
+-5.592564e+00	2.994603e-03	2.555267e-06	2.293064e+10	2.297088e+10	
+-5.577095e+00	3.144664e-03	2.647921e-06	-6.541911e+10	-6.561224e+10	
+-5.561626e+00	3.923062e-03	2.743935e-06	4.034607e+10	4.052909e+10	
+-5.546158e+00	3.657830e-03	2.843430e-06	5.062963e+10	5.069436e+10	
+-5.530689e+00	3.325188e-03	2.946533e-06	4.062287e+10	4.079312e+10	
+-5.515220e+00	3.449091e-03	3.053374e-06	-4.836220e+10	-4.858210e+10	
+-5.499751e+00	3.685544e-03	3.164089e-06	5.394025e+10	5.399478e+10	
+-5.484283e+00	3.049123e-03	3.278819e-06	3.237582e+10	3.247608e+10	
+-5.468814e+00	3.138652e-03	3.397710e-06	4.403396e+10	4.409354e+10	
+-5.453345e+00	3.665112e-03	3.520911e-06	6.967848e+09	6.963874e+09	
+-5.437876e+00	3.667907e-03	3.648579e-06	-2.729300e+10	-2.726142e+10	
+-5.422408e+00	3.215968e-03	3.780877e-06	1.936830e+10	1.940644e+10	
+-5.406939e+00	3.389881e-03	3.917971e-06	1.983240e+10	1.986849e+10	
+-5.391470e+00	3.436992e-03	4.060037e-06	8.709936e+09	8.713094e+09	
+-5.376001e+00	3.555933e-03	4.207254e-06	-9.043655e+09	-9.076139e+09	
+-5.360533e+00	3.319318e-03	4.359809e-06	9.544513e+09	9.571202e+09	
+-5.345064e+00	3.049541e-03	4.517896e-06	2.304031e+10	2.310290e+10	
+-5.329595e+00	3.469371e-03	4.681715e-06	3.672956e+08	3.671711e+08	
+-5.314126e+00	3.606659e-03	4.851474e-06	-1.976491e+10	-1.980249e+10	
+-5.298658e+00	3.799352e-03	5.027389e-06	9.087632e+09	9.076139e+09	
+-5.283189e+00	3.148863e-03	5.209682e-06	1.718863e+10	1.722816e+10	
+-5.267720e+00	3.801741e-03	5.398586e-06	1.993376e+10	2.006652e+10	
+-5.252251e+00	3.476729e-03	5.594339e-06	-9.364152e+07	-9.385553e+07	
+-5.236783e+00	3.285374e-03	5.797189e-06	1.747515e+10	1.749220e+10	
+-5.221314e+00	3.495206e-03	6.007396e-06	1.526776e+10	1.528092e+10	
+-5.205845e+00	3.670599e-03	6.225224e-06	1.013243e+10	1.013227e+10	
+-5.190376e+00	3.675220e-03	6.450951e-06	-6.057294e+09	-6.089264e+09	
+-5.174908e+00	3.917503e-03	6.684863e-06	-3.638444e+09	-3.638707e+09	
+-5.159439e+00	3.894076e-03	6.927256e-06	1.107533e+10	1.108939e+10	
+-5.143970e+00	3.250165e-03	7.178439e-06	-6.294032e+09	-6.303791e+09	
+-5.128501e+00	3.141759e-03	7.438729e-06	-7.387370e+09	-7.392928e+09	
+-5.113033e+00	3.651166e-03	7.708458e-06	4.533308e+09	4.554572e+09	
+-5.097564e+00	3.425097e-03	7.987967e-06	-8.719043e+09	-8.779102e+09	
+-5.082095e+00	3.094641e-03	8.277611e-06	7.254941e+09	7.260912e+09	
+-5.066626e+00	3.549426e-03	8.577757e-06	7.299392e+09	7.343422e+09	
+-5.051158e+00	3.271959e-03	8.888787e-06	-7.575719e+09	-7.607455e+09	
+-5.035689e+00	3.848866e-03	9.211095e-06	1.272067e+09	1.274785e+09	
+-5.020220e+00	3.465836e-03	9.545089e-06	7.794941e+09	7.838484e+09	
+-5.004751e+00	3.290468e-03	9.891195e-06	-1.579463e+09	-1.584199e+09	
+-4.989283e+00	3.690216e-03	1.024985e-05	5.706183e+09	5.709717e+09	
+-4.973814e+00	3.243321e-03	1.062151e-05	3.861377e+09	3.877987e+09	
+-4.958345e+00	3.024496e-03	1.100665e-05	4.638168e+09	4.653584e+09	
+-4.942876e+00	3.825513e-03	1.140575e-05	1.435721e+09	1.443931e+09	
+-4.927408e+00	3.836214e-03	1.181932e-05	1.811461e+09	1.811102e+09	
+-4.911939e+00	3.367160e-03	1.224789e-05	4.045863e+09	4.067761e+09	
+-4.896470e+00	3.181199e-03	1.269200e-05	-3.379724e+09	-3.382925e+09	
+-4.881001e+00	3.276921e-03	1.315221e-05	-2.241813e+09	-2.260784e+09	
+-4.865533e+00	3.590490e-03	1.362911e-05	-9.988620e+08	-1.000438e+09	
+-4.850064e+00	3.828685e-03	1.412330e-05	1.076234e+09	1.080886e+09	
+-4.834595e+00	3.471241e-03	1.463541e-05	6.766480e+06	6.784543e+06	
+-4.819126e+00	3.990748e-03	1.516609e-05	-2.838946e+09	-2.838356e+09	
+-4.803658e+00	3.673542e-03	1.571602e-05	-3.834623e+09	-3.828481e+09	
+-4.788189e+00	3.902890e-03	1.628588e-05	2.188747e+09	2.194776e+09	
+-4.772720e+00	3.715080e-03	1.687641e-05	-1.529547e+09	-1.534693e+09	
+-4.757251e+00	3.479931e-03	1.748835e-05	2.229914e+09	2.236031e+09	
+-4.741783e+00	3.794091e-03	1.812247e-05	-1.875009e+09	-1.881236e+09	
+-4.726314e+00	4.009484e-03	1.877960e-05	1.614309e+09	1.621329e+09	
+-4.710845e+00	3.513292e-03	1.946054e-05	1.308038e+09	1.311915e+09	
+-4.695376e+00	3.861371e-03	2.016618e-05	-4.885719e+08	-4.909366e+08	
+-4.679908e+00	3.954788e-03	2.089741e-05	-7.228967e+08	-7.219656e+08	
+-4.664439e+00	3.687649e-03	2.165515e-05	1.384496e+09	1.386174e+09	
+-4.648970e+00	3.716481e-03	2.244037e-05	1.045296e+09	1.049944e+09	
+-4.633501e+00	4.165789e-03	2.325406e-05	4.016414e+08	4.012066e+08	
+-4.618033e+00	3.984235e-03	2.409725e-05	2.796555e+08	2.815666e+08	
+-4.602564e+00	3.675318e-03	2.497102e-05	1.575845e+09	1.575948e+09	
+-4.587095e+00	4.004001e-03	2.587647e-05	-2.838450e+07	-2.862078e+07	
+-4.571626e+00	3.588093e-03	2.681475e-05	-1.997877e+08	-1.995719e+08	
+-4.556158e+00	3.046155e-03	2.778705e-05	1.247856e+08	1.250548e+08	
+-4.540689e+00	3.035197e-03	2.879461e-05	1.144873e+08	1.149988e+08	
+-4.525220e+00	3.391218e-03	2.983871e-05	8.366361e+08	8.395429e+08	
+-4.509751e+00	3.396140e-03	3.092066e-05	4.136863e+07	4.151302e+07	
+-4.494283e+00	3.667360e-03	3.204184e-05	-5.822145e+07	-5.853079e+07	
+-4.478814e+00	3.895326e-03	3.320368e-05	-1.314057e+08	-1.320166e+08	
+-4.463345e+00	3.781042e-03	3.440765e-05	8.372167e+08	8.374801e+08	
+-4.447876e+00	3.825834e-03	3.565527e-05	4.088158e+08	4.094577e+08	
+-4.432408e+00	3.872918e-03	3.694813e-05	6.498470e+08	6.497691e+08	
+-4.416939e+00	3.717953e-03	3.828787e-05	-4.076350e+07	-4.112626e+07	
+-4.401470e+00	3.101204e-03	3.967619e-05	-4.226358e+08	-4.228656e+08	
+-4.386001e+00	3.058899e-03	4.111485e-05	5.493995e+08	5.507566e+08	
+-4.370533e+00	3.670468e-03	4.260568e-05	1.226808e+08	1.229920e+08	
+-4.355064e+00	3.877504e-03	4.415056e-05	5.204334e+07	5.247143e+07	
+-4.339595e+00	4.132373e-03	4.575146e-05	-1.585414e+07	-1.598638e+07	
+-4.324126e+00	4.235773e-03	4.741041e-05	4.407661e+08	4.424618e+08	
+-4.308658e+00	3.886521e-03	4.912952e-05	3.291215e+08	3.300414e+08	
+-4.293189e+00	3.970542e-03	5.091096e-05	-1.795133e+08	-1.799757e+08	
+-4.277720e+00	3.641175e-03	5.275699e-05	8.019732e+07	8.044760e+07	
+-4.262251e+00	3.665107e-03	5.466996e-05	-2.838321e+08	-2.846607e+08	
+-4.246783e+00	3.830986e-03	5.665229e-05	-1.644674e+08	-1.655364e+08	
+-4.231314e+00	4.025251e-03	5.870651e-05	-2.185958e+08	-2.196838e+08	
+-4.215845e+00	3.983548e-03	6.083521e-05	7.047448e+07	7.090734e+07	
+-4.200376e+00	3.921959e-03	6.304109e-05	-5.666367e+07	-5.698372e+07	
+-4.184908e+00	3.942694e-03	6.532697e-05	9.957014e+07	1.003017e+08	
+-4.169439e+00	3.513119e-03	6.769573e-05	-7.913585e+07	-7.941622e+07	
+-4.153970e+00	3.477950e-03	7.015037e-05	-7.718671e+07	-7.735346e+07	
+-4.138501e+00	3.544788e-03	7.269403e-05	-1.682817e+08	-1.691462e+08	
+-4.123033e+00	3.844201e-03	7.532992e-05	4.496687e+07	4.525177e+07	
+-4.107564e+00	3.894298e-03	7.806138e-05	1.626729e+07	1.637315e+07	
+-4.092095e+00	3.435097e-03	8.089189e-05	6.659194e+07	6.652398e+07	
+-4.076626e+00	3.431773e-03	8.382504e-05	1.436249e+07	1.443931e+07	
+-4.061158e+00	3.152983e-03	8.686453e-05	-5.888728e+07	-5.891755e+07	
+-4.045689e+00	3.213209e-03	9.001425e-05	5.373308e+07	5.388958e+07	
+-4.030220e+00	3.649723e-03	9.327817e-05	-6.221130e+06	-6.236623e+06	
+-4.014751e+00	3.603451e-03	9.666044e-05	1.530276e+06	1.526925e+06	
+-3.999283e+00	3.577957e-03	1.001653e-04	-7.918360e+07	-7.967406e+07	
+-3.983814e+00	3.390598e-03	1.037973e-04	9.112504e+06	9.121262e+06	
+-3.968345e+00	3.192421e-03	1.075610e-04	7.233410e+06	7.219656e+06	
+-3.952876e+00	3.251295e-03	1.114612e-04	4.486499e+06	4.496170e+06	
+-3.937408e+00	3.448747e-03	1.155028e-04	1.458543e+07	1.460047e+07	
+-3.921939e+00	3.545647e-03	1.196909e-04	-2.069194e+07	-2.082097e+07	
+-3.906470e+00	3.446056e-03	1.240309e-04	-5.778544e+07	-5.775725e+07	
+-3.891001e+00	3.560538e-03	1.285283e-04	4.044500e+06	4.044941e+06	
+-3.875533e+00	3.315856e-03	1.331887e-04	2.145254e+07	2.146559e+07	
+-3.860064e+00	3.000334e-03	1.380182e-04	-2.483881e+07	-2.488203e+07	
+-3.844595e+00	3.031144e-03	1.430227e-04	3.598315e+07	3.609828e+07	
+-3.829126e+00	3.509744e-03	1.482087e-04	1.017327e+07	1.018487e+07	
+-3.813658e+00	3.500150e-03	1.535828e-04	-3.538403e+07	-3.545367e+07	
+-3.798189e+00	3.213693e-03	1.591517e-04	-8.088331e+06	-8.073767e+06	
+-3.782720e+00	3.150609e-03	1.649225e-04	-2.278780e+07	-2.281927e+07	
+-3.767251e+00	2.852245e-03	1.709026e-04	6.249533e+06	6.252738e+06	
+-3.751783e+00	2.954023e-03	1.770996e-04	-2.530567e+06	-2.530103e+06	
+-3.736314e+00	3.166099e-03	1.835212e-04	-9.114452e+05	-9.125291e+05	
+-3.720845e+00	3.340818e-03	1.901757e-04	1.464441e+07	1.460047e+07	
+-3.705376e+00	3.371303e-03	1.970715e-04	-4.759835e+06	-4.770130e+06	
+-3.689908e+00	3.166710e-03	2.042173e-04	-6.147202e+06	-6.172162e+06	
+-3.674439e+00	3.104554e-03	2.116222e-04	8.243404e+05	8.259093e+05	
+-3.658970e+00	3.101983e-03	2.192956e-04	5.462888e+06	5.463088e+06	
+-3.643501e+00	3.079872e-03	2.272473e-04	1.280937e+07	1.286001e+07	
+-3.628033e+00	3.449843e-03	2.354873e-04	-8.003673e+06	-7.993191e+06	
+-3.612564e+00	3.486478e-03	2.440261e-04	7.502909e+04	7.503689e+04	
+-3.597095e+00	3.433186e-03	2.528745e-04	-1.294630e+07	-1.298894e+07	
+-3.581626e+00	3.102090e-03	2.620437e-04	-9.898907e+06	-9.927027e+06	
+-3.566158e+00	2.696410e-03	2.715454e-04	9.180005e+06	9.185723e+06	
+-3.550689e+00	3.068290e-03	2.813917e-04	6.980772e+06	6.994042e+06	
+-3.535220e+00	3.137677e-03	2.915949e-04	-4.598159e+06	-4.608977e+06	
+-3.519751e+00	3.346927e-03	3.021682e-04	-1.861689e+06	-1.865346e+06	
+-3.504283e+00	3.403732e-03	3.131248e-04	2.362987e+06	2.377007e+06	
+-3.488814e+00	3.284582e-03	3.244787e-04	2.821804e+06	2.820178e+06	
+-3.473345e+00	3.267762e-03	3.362444e-04	3.809436e+06	3.811269e+06	
+-3.457876e+00	2.588828e-03	3.484366e-04	7.685454e+05	7.674914e+05	
+-3.442408e+00	2.923177e-03	3.610709e-04	2.095529e+05	2.105062e+05	
+-3.426939e+00	3.210294e-03	3.741634e-04	-2.369711e+05	-2.377007e+05	
+-3.411470e+00	3.420969e-03	3.877305e-04	6.455303e+06	6.478352e+06	
+-3.396001e+00	3.225368e-03	4.017897e-04	2.029989e+06	2.030528e+06	
+-3.380533e+00	3.182617e-03	4.163586e-04	-3.924464e+06	-3.932134e+06	
+-3.365064e+00	3.063403e-03	4.314557e-04	3.877089e+06	3.883788e+06	
+-3.349595e+00	2.642490e-03	4.471003e-04	-7.922486e+05	-7.936787e+05	
+-3.334126e+00	3.043590e-03	4.633122e-04	-5.530041e+05	-5.539636e+05	
+-3.318658e+00	3.276717e-03	4.801119e-04	-2.131000e+06	-2.143335e+06	
+-3.303189e+00	3.344987e-03	4.975208e-04	4.770517e+05	4.794303e+05	
+-3.287720e+00	3.339074e-03	5.155609e-04	-6.739829e+05	-6.748284e+05	
+-3.272251e+00	2.772153e-03	5.342552e-04	-2.696965e+06	-2.699313e+06	
+-3.256783e+00	2.753226e-03	5.536273e-04	-3.641003e+05	-3.646088e+05	
+-3.241314e+00	2.946888e-03	5.737018e-04	8.801226e+05	8.823129e+05	
+-3.225845e+00	3.124237e-03	5.945043e-04	-4.643776e+04	-4.633150e+04	
+-3.210376e+00	3.565812e-03	6.160610e-04	1.227014e+06	1.224763e+06	
+-3.194908e+00	3.355569e-03	6.383994e-04	2.692195e+05	2.709386e+05	
+-3.179439e+00	3.176207e-03	6.615478e-04	-1.184605e+04	-1.186615e+04	
+-3.163970e+00	2.945446e-03	6.855356e-04	-2.604096e+05	-2.608665e+05	
+-3.148501e+00	2.667090e-03	7.103931e-04	5.729928e+05	5.741077e+05	
+-3.133033e+00	3.025464e-03	7.361520e-04	3.546678e+05	3.555439e+05	
+-3.117564e+00	3.311272e-03	7.628449e-04	4.834383e+05	4.814447e+05	
+-3.102095e+00	3.405398e-03	7.905057e-04	4.656793e+05	4.673438e+05	
+-3.086626e+00	2.912878e-03	8.191694e-04	1.029355e+06	1.029365e+06	
+-3.071158e+00	2.985168e-03	8.488726e-04	7.791513e+05	7.795778e+05	
+-3.055689e+00	2.965765e-03	8.796527e-04	1.048504e+06	1.051524e+06	
+-3.040220e+00	3.098420e-03	9.115490e-04	2.073523e+05	2.074845e+05	
+-3.024751e+00	3.288211e-03	9.446017e-04	4.600672e+05	4.613006e+05	
+-3.009283e+00	3.223464e-03	9.788530e-04	-6.101609e+02	-6.137665e+02	
+-2.993814e+00	3.370353e-03	1.014346e-03	7.953637e+05	7.997220e+05	
+-2.978345e+00	3.210512e-03	1.051127e-03	5.383957e+04	5.388555e+04	
+-2.962876e+00	2.867485e-03	1.089240e-03	-2.131677e+04	-2.134019e+04	
+-2.947408e+00	2.968920e-03	1.128736e-03	4.940615e+04	4.947902e+04	
+-2.931939e+00	3.213278e-03	1.169664e-03	-2.719054e+04	-2.713163e+04	
+-2.916470e+00	3.359782e-03	1.212076e-03	-6.152150e+05	-6.184248e+05	
+-2.901001e+00	3.395244e-03	1.256026e-03	1.545544e+05	1.546062e+05	
+-2.885533e+00	3.266311e-03	1.301570e-03	-5.301662e+05	-5.318050e+05	
+-2.870064e+00	3.038123e-03	1.348765e-03	4.432679e+05	4.441781e+05	
+-2.854595e+00	2.751408e-03	1.397671e-03	3.763764e+05	3.777024e+05	
+-2.839126e+00	2.908644e-03	1.448351e-03	-5.452015e+04	-5.464095e+04	
+-2.823658e+00	3.345289e-03	1.500868e-03	-1.022954e+05	-1.029869e+05	
+-2.808189e+00	3.261298e-03	1.555290e-03	3.804878e+04	3.802205e+04	
+-2.792720e+00	3.273959e-03	1.611684e-03	-7.926254e+04	-7.956931e+04	
+-2.777251e+00	3.236631e-03	1.670124e-03	4.478766e+04	4.507249e+04	
+-2.761783e+00	2.837403e-03	1.730683e-03	1.485725e+04	1.485630e+04	
+-2.746314e+00	2.935725e-03	1.793437e-03	-2.030708e+05	-2.039593e+05	
+-2.730845e+00	3.210023e-03	1.858468e-03	-1.663771e+04	-1.674481e+04	
+-2.715376e+00	3.440927e-03	1.925856e-03	-2.137779e+05	-2.145350e+05	
+-2.699908e+00	3.294426e-03	1.995687e-03	-2.174815e+05	-2.175566e+05	
+-2.684439e+00	3.128190e-03	2.068051e-03	-1.333351e+05	-1.344621e+05	
+-2.668970e+00	2.772014e-03	2.143039e-03	-1.665069e+04	-1.661891e+04	
+-2.653501e+00	2.543964e-03	2.220745e-03	8.157687e+04	8.158373e+04	
+-2.638033e+00	3.097826e-03	2.301270e-03	-5.014935e+04	-5.023443e+04	
+-2.622564e+00	3.458030e-03	2.384714e-03	-1.533151e+04	-1.539137e+04	
+-2.607095e+00	3.485339e-03	2.471184e-03	-4.583781e+04	-4.582790e+04	
+-2.591626e+00	3.543455e-03	2.560789e-03	3.736098e+04	3.726664e+04	
+-2.576158e+00	3.003341e-03	2.653643e-03	-1.097668e+05	-1.097855e+05	
+-2.560689e+00	2.906639e-03	2.749864e-03	1.042795e+05	1.044977e+05	
+-2.545220e+00	2.973579e-03	2.849574e-03	2.665910e+04	2.675392e+04	
+-2.529751e+00	3.112719e-03	2.952900e-03	8.882474e+04	8.913778e+04	
+-2.514283e+00	3.439674e-03	3.059972e-03	8.020104e+03	8.010439e+03	
+-2.498814e+00	3.332662e-03	3.170927e-03	6.324013e+04	6.320221e+04	
+-2.483345e+00	3.129767e-03	3.285905e-03	-4.647483e+04	-4.670920e+04	
+-2.467876e+00	2.871048e-03	3.405052e-03	-5.914119e+04	-5.929928e+04	
+-2.452408e+00	2.850815e-03	3.528519e-03	-4.374788e+02	-4.386857e+02	
+-2.436939e+00	2.926823e-03	3.656464e-03	1.606340e+04	1.611530e+04	
+-2.421470e+00	3.342029e-03	3.789047e-03	9.858997e+03	9.883214e+03	
+-2.406001e+00	3.192796e-03	3.926438e-03	5.012337e+04	5.036033e+04	
+-2.390533e+00	3.388640e-03	4.068811e-03	2.716188e+03	2.714736e+03	
+-2.375064e+00	2.892358e-03	4.216346e-03	-1.877964e+04	-1.882217e+04	
+-2.359595e+00	2.859736e-03	4.369231e-03	8.904134e+03	8.938958e+03	
+-2.344126e+00	2.717464e-03	4.527659e-03	1.610530e+04	1.617825e+04	
+-2.328658e+00	3.199266e-03	4.691832e-03	4.247970e+04	4.255448e+04	
+-2.313189e+00	3.379814e-03	4.861958e-03	3.158222e+04	3.172701e+04	
+-2.297720e+00	3.421792e-03	5.038253e-03	1.309444e+04	1.309368e+04	
+-2.282251e+00	3.139459e-03	5.220941e-03	-1.732933e+04	-1.731136e+04	
+-2.266783e+00	2.994614e-03	5.410252e-03	1.947980e+03	1.943594e+03	
+-2.251314e+00	2.659256e-03	5.606428e-03	2.682430e+04	2.687982e+04	
+-2.235845e+00	3.157325e-03	5.809717e-03	9.232452e+03	9.190759e+03	
+-2.220376e+00	3.278496e-03	6.020378e-03	3.232278e+03	3.241946e+03	
+-2.204908e+00	3.287644e-03	6.238677e-03	-3.364225e+03	-3.359978e+03	
+-2.189439e+00	2.979964e-03	6.464892e-03	2.154740e+04	2.165494e+04	
+-2.173970e+00	2.906054e-03	6.699309e-03	-3.487974e+03	-3.493748e+03	
+-2.158501e+00	2.812740e-03	6.942226e-03	-1.179835e+01	-1.174173e+01	
+-2.143033e+00	2.926093e-03	7.193951e-03	-1.581294e+04	-1.586350e+04	
+-2.127564e+00	3.182432e-03	7.454804e-03	-1.201099e+04	-1.205500e+04	
+-2.112095e+00	3.289570e-03	7.725116e-03	-1.691838e+03	-1.699661e+03	
+-2.096626e+00	3.304370e-03	8.005229e-03	9.992353e+02	1.005239e+03	
+-2.081158e+00	3.318758e-03	8.295499e-03	1.174464e+04	1.177173e+04	
+-2.065689e+00	2.856892e-03	8.596294e-03	-7.488244e+02	-7.475361e+02	
+-2.050220e+00	2.516743e-03	8.907996e-03	-4.072989e+03	-4.076039e+03	
+-2.034751e+00	3.054752e-03	9.231000e-03	-5.277881e+03	-5.303572e+03	
+-2.019283e+00	3.434156e-03	9.565716e-03	-3.670682e+02	-3.678664e+02	
+-2.003814e+00	3.477688e-03	9.912570e-03	-1.143993e+03	-1.144911e+03	
+-1.988345e+00	3.251717e-03	1.027200e-02	7.238092e+03	7.255034e+03	
+-1.972876e+00	2.781396e-03	1.064446e-02	8.404321e+03	8.466830e+03	
+-1.957408e+00	2.867496e-03	1.103043e-02	2.311953e+03	2.329165e+03	
+-1.941939e+00	3.023669e-03	1.143040e-02	-5.314814e+03	-5.335047e+03	
+-1.926470e+00	3.162790e-03	1.184486e-02	4.017924e+03	4.028826e+03	
+-1.911001e+00	3.458111e-03	1.227436e-02	-2.747596e+02	-2.744244e+02	
+-1.895533e+00	3.349826e-03	1.271943e-02	-3.824721e+03	-3.847844e+03	
+-1.880064e+00	3.335601e-03	1.318063e-02	-4.239901e+03	-4.264890e+03	
+-1.864595e+00	2.882161e-03	1.365856e-02	4.277353e+03	4.280628e+03	
+-1.849126e+00	2.829177e-03	1.415382e-02	1.723327e+03	1.731136e+03	
+-1.833658e+00	3.266529e-03	1.466704e-02	3.993449e+03	4.005220e+03	
+-1.818189e+00	3.393745e-03	1.519887e-02	-4.434188e+02	-4.445873e+02	
+-1.802720e+00	3.216759e-03	1.574998e-02	2.553371e+03	2.565229e+03	
+-1.787251e+00	3.235326e-03	1.632107e-02	-2.967968e+02	-2.960636e+02	
+-1.771783e+00	3.059047e-03	1.691288e-02	8.596525e+02	8.616337e+02	
+-1.756314e+00	2.775955e-03	1.752614e-02	1.170196e+03	1.176386e+03	
+-1.740845e+00	2.784356e-03	1.816164e-02	8.140002e+01	8.163881e+01	
+-1.725376e+00	3.296226e-03	1.882018e-02	3.690192e+01	3.688500e+01	
+-1.709908e+00	3.315927e-03	1.950260e-02	9.517311e+02	9.521249e+02	
+-1.694439e+00	3.400761e-03	2.020976e-02	5.669671e+01	5.667996e+01	
+-1.678970e+00	3.234441e-03	2.094257e-02	8.882388e+02	8.931089e+02	
+-1.663501e+00	2.733786e-03	2.170195e-02	1.162609e+03	1.164583e+03	
+-1.648033e+00	2.816522e-03	2.248886e-02	-7.890305e+02	-7.888473e+02	
+-1.632564e+00	3.208477e-03	2.330431e-02	7.521075e+02	7.534377e+02	
+-1.617095e+00	3.295066e-03	2.414932e-02	-5.069888e+02	-5.095049e+02	
+-1.601626e+00	3.192471e-03	2.502498e-02	9.786607e+02	9.776985e+02	
+-1.586158e+00	3.376306e-03	2.593239e-02	5.253867e+01	5.249966e+01	
+-1.570689e+00	2.962747e-03	2.687270e-02	-5.917921e+02	-5.901601e+02	
+-1.555220e+00	2.762321e-03	2.784710e-02	6.307635e+02	6.314713e+02	
+-1.539751e+00	2.990406e-03	2.885684e-02	5.236474e+02	5.252425e+02	
+-1.524283e+00	3.253270e-03	2.990319e-02	-1.571621e+02	-1.578678e+02	
+-1.508814e+00	3.303366e-03	3.098748e-02	5.244075e+02	5.252425e+02	
+-1.493345e+00	3.367338e-03	3.211109e-02	7.036494e+01	7.081921e+01	
+-1.477876e+00	3.042992e-03	3.327544e-02	9.458190e+01	9.467151e+01	
+-1.462408e+00	2.674831e-03	3.448200e-02	-6.781609e+01	-6.786841e+01	
+-1.446939e+00	2.825865e-03	3.573232e-02	-2.288411e+02	-2.296706e+02	
+-1.431470e+00	3.155538e-03	3.702798e-02	-3.624893e+01	-3.639320e+01	
+-1.416001e+00	3.463498e-03	3.837061e-02	2.613596e+02	2.606540e+02	
+-1.400533e+00	3.141307e-03	3.976193e-02	-5.103141e+02	-5.095049e+02	
+-1.385064e+00	3.374937e-03	4.120370e-02	-1.091633e+02	-1.094255e+02	
+-1.369595e+00	2.874341e-03	4.269775e-02	-3.605533e+02	-3.609812e+02	
+-1.354126e+00	2.874975e-03	4.424597e-02	3.413286e+02	3.422928e+02	
+-1.338658e+00	3.106237e-03	4.585033e-02	5.654606e+01	5.631111e+01	
+-1.323189e+00	3.410712e-03	4.751287e-02	-1.149808e+02	-1.155730e+02	
+-1.307720e+00	3.382854e-03	4.923569e-02	-7.908964e+01	-7.893391e+01	
+-1.292251e+00	3.252793e-03	5.102097e-02	-7.129916e+01	-7.131101e+01	
+-1.276783e+00	3.197671e-03	5.287100e-02	-2.959312e+02	-2.960636e+02	
+-1.261314e+00	2.714842e-03	5.478810e-02	-1.906959e+02	-1.908184e+02	
+-1.245845e+00	2.861756e-03	5.677472e-02	-6.257538e+01	-6.258156e+01	
+-1.230376e+00	3.299271e-03	5.883337e-02	-5.523119e+01	-5.545046e+01	
+-1.214908e+00	3.262707e-03	6.096667e-02	2.703966e+01	2.711048e+01	
+-1.199439e+00	3.480525e-03	6.317733e-02	-1.444499e+01	-1.444663e+01	
+-1.183970e+00	2.938826e-03	6.546814e-02	-6.319652e+01	-6.319631e+01	
+-1.168501e+00	3.280623e-03	6.784202e-02	1.720242e+01	1.727448e+01	
+-1.153033e+00	2.652473e-03	7.030197e-02	1.948580e+02	1.942610e+02	
+-1.137564e+00	3.045277e-03	7.285112e-02	4.437601e+01	4.463086e+01	
+-1.122095e+00	3.185299e-03	7.549271e-02	2.668340e+01	2.680310e+01	
+-1.106626e+00	3.500103e-03	7.823007e-02	1.200666e+02	1.204910e+02	
+-1.091158e+00	3.371707e-03	8.106670e-02	-3.105966e+01	-3.104488e+01	
+-1.075689e+00	2.997786e-03	8.400618e-02	-9.533248e+01	-9.540921e+01	
+-1.060220e+00	2.717127e-03	8.705225e-02	-2.411542e+00	-2.412894e+00	
+-1.044751e+00	2.880512e-03	9.020877e-02	5.771632e+01	5.778651e+01	
+-1.029283e+00	3.282566e-03	9.347974e-02	-6.429134e+00	-6.439507e+00	
+-1.013814e+00	3.424112e-03	9.686932e-02	9.525978e+01	9.565511e+01	
+-9.983450e-01	3.276454e-03	1.003818e-01	7.510053e+01	7.499951e+01	
+-9.828763e-01	3.258391e-03	1.040217e-01	-4.554793e+01	-4.561446e+01	
+-9.674075e-01	2.924107e-03	1.077935e-01	-4.358484e+00	-4.395463e+00	
+-9.519388e-01	2.857821e-03	1.117021e-01	3.933555e+01	3.946695e+01	
+-9.364700e-01	3.146239e-03	1.157524e-01	-5.666777e+01	-5.680291e+01	
+-9.210013e-01	3.247435e-03	1.199496e-01	-6.560212e+01	-6.590121e+01	
+-9.055325e-01	3.479805e-03	1.242990e-01	1.695445e+01	1.690563e+01	
+-8.900638e-01	3.268279e-03	1.288060e-01	-3.249373e+00	-3.273544e+00	
+-8.745950e-01	3.034970e-03	1.334766e-01	-1.150802e+00	-1.152656e+00	
+-8.591263e-01	2.511336e-03	1.383164e-01	-1.394178e+01	-1.404704e+01	
+-8.436575e-01	2.990383e-03	1.433318e-01	1.873001e+00	1.878830e+00	
+-8.281888e-01	3.356321e-03	1.485290e-01	-2.841618e+00	-2.850903e+00	
+-8.127200e-01	3.283540e-03	1.539147e-01	-1.007152e+01	-1.008190e+01	
+-7.972513e-01	3.408666e-03	1.594956e-01	1.008244e+01	1.011264e+01	
+-7.817825e-01	3.224037e-03	1.652789e-01	6.193155e+00	6.193607e+00	
+-7.663138e-01	2.570205e-03	1.712720e-01	2.961966e+01	2.975390e+01	
+-7.508450e-01	2.715888e-03	1.774823e-01	-9.890489e+00	-9.928214e+00	
+-7.353763e-01	3.048828e-03	1.839178e-01	-6.646587e-01	-6.627774e-01	
+-7.199075e-01	3.421029e-03	1.905867e-01	-2.376780e+01	-2.379083e+01	
+-7.044388e-01	3.268768e-03	1.974973e-01	2.871411e+00	2.866272e+00	
+-6.889700e-01	3.519297e-03	2.046586e-01	6.567356e+00	6.593195e+00	
+-6.735013e-01	2.907027e-03	2.120795e-01	-4.183400e+00	-4.180300e+00	
+-6.580325e-01	2.975103e-03	2.197695e-01	-1.389119e+01	-1.389335e+01	
+-6.425638e-01	3.029153e-03	2.277384e-01	-1.645730e+01	-1.647530e+01	
+-6.270950e-01	3.296885e-03	2.359962e-01	3.996002e+00	3.980507e+00	
+-6.116263e-01	3.341063e-03	2.445534e-01	-1.705971e+00	-1.713616e+00	
+-5.961575e-01	3.338554e-03	2.534209e-01	6.489099e+00	6.485613e+00	
+-5.806888e-01	2.912990e-03	2.626100e-01	5.893254e+00	5.901601e+00	
+-5.652200e-01	2.531744e-03	2.721322e-01	1.891112e+00	1.894199e+00	
+-5.497513e-01	2.817982e-03	2.819998e-01	3.000430e+00	3.012275e+00	
+-5.342825e-01	3.135309e-03	2.922251e-01	7.615121e+00	7.638270e+00	
+-5.188138e-01	3.376870e-03	3.028212e-01	-9.768921e+00	-9.805264e+00	
+-5.033450e-01	3.317156e-03	3.138015e-01	-5.804716e+00	-5.824757e+00	
+-4.878763e-01	3.346302e-03	3.251799e-01	8.421824e-03	7.684376e-03	
+-4.724075e-01	2.976594e-03	3.369710e-01	1.376052e+00	1.375503e+00	
+-4.569388e-01	2.665087e-03	3.491896e-01	3.701070e+00	3.703869e+00	
+-4.414700e-01	3.028904e-03	3.618512e-01	2.164958e+00	2.166994e+00	
+-4.260013e-01	3.284959e-03	3.749719e-01	4.563970e+00	4.579888e+00	
+-4.105325e-01	3.487738e-03	3.885684e-01	-1.666032e+00	-1.663667e+00	
+-3.950638e-01	3.183561e-03	4.026579e-01	-1.346692e+00	-1.344766e+00	
+-3.795950e-01	3.291886e-03	4.172583e-01	3.538824e+00	3.557866e+00	
+-3.641263e-01	2.816111e-03	4.323881e-01	2.678679e+00	2.689532e+00	
+-3.486575e-01	2.984468e-03	4.480665e-01	2.226607e-01	2.228469e-01	
+-3.331888e-01	3.292721e-03	4.643134e-01	-1.677685e+00	-1.682878e+00	
+-3.177200e-01	3.344102e-03	4.811495e-01	-9.828533e-01	-9.874423e-01	
+-3.022513e-01	3.322948e-03	4.985959e-01	1.488282e+00	1.486927e+00	
+-2.867825e-01	3.113572e-03	5.166751e-01	-2.083465e-01	-2.093992e-01	
+-2.713138e-01	2.750828e-03	5.354097e-01	-3.109298e+00	-3.119857e+00	
+-2.558450e-01	2.725978e-03	5.548237e-01	-1.951181e-01	-1.959516e-01	
+-2.403763e-01	3.046198e-03	5.749416e-01	-1.958966e+00	-1.967200e+00	
+-2.249075e-01	3.310978e-03	5.957890e-01	-1.310877e+00	-1.306344e+00	
+-2.094388e-01	3.368050e-03	6.173924e-01	7.984727e-01	7.991751e-01	
+-1.939700e-01	3.431882e-03	6.397790e-01	1.249913e+00	1.248711e+00	
+-1.785013e-01	3.032462e-03	6.629774e-01	-6.653076e-03	-5.763282e-03	
+-1.630325e-01	2.710934e-03	6.870170e-01	-4.228843e-01	-4.226407e-01	
+-1.475638e-01	3.022057e-03	7.119283e-01	3.042948e-02	2.881641e-02	
+-1.320950e-01	3.172078e-03	7.377428e-01	-1.417806e+00	-1.421610e+00	
+-1.166263e-01	3.333121e-03	7.644934e-01	2.936106e-01	2.939274e-01	
+-1.011575e-01	3.495259e-03	7.922140e-01	-4.617044e-01	-4.610626e-01	
+-8.568875e-02	3.329292e-03	8.209397e-01	-2.148238e-03	-1.921094e-03	
+-7.022000e-02	2.961367e-03	8.507070e-01	-1.101711e+00	-1.102708e+00	
+-5.475125e-02	2.969457e-03	8.815536e-01	-2.194884e-01	-2.190047e-01	
+-3.928250e-02	3.193129e-03	9.135188e-01	2.018481e-01	2.017149e-01	
+-2.381375e-02	3.463771e-03	9.466430e-01	-3.933628e-01	-3.938243e-01	
+-8.345004e-03	3.489763e-03	9.809684e-01	-2.162368e-01	-2.170836e-01	
+7.123746e-03	7.241882e-01	1.016538e+00	4.464675e-01	4.456938e-01	
+2.259250e-02	1.186541e+00	1.053398e+00	8.271184e-01	8.279915e-01	
+3.806125e-02	1.357084e+00	1.091594e+00	7.151770e-01	7.204102e-01	
+5.353000e-02	1.621187e+00	1.131176e+00	2.559801e-01	2.555055e-01	
+6.899875e-02	1.951643e+00	1.172192e+00	-2.054481e-03	-5.763282e-03	
+8.446750e-02	2.071411e+00	1.214696e+00	-7.335597e-02	-2.459000e-01	
+9.993625e-02	2.391927e+00	1.258741e+00	-9.997840e-03	-4.802735e-02	
+1.154050e-01	2.623634e+00	1.304383e+00	-2.122204e-01	-4.437727e-01	
+1.308737e-01	3.067590e+00	1.351680e+00	-3.238800e-02	-1.728985e-01	
+1.463425e-01	3.425863e+00	1.400692e+00	-3.598676e-02	-2.862430e-01	
+1.618112e-01	3.848775e+00	1.451481e+00	-3.651055e-01	4.207196e-01	
+1.772800e-01	4.719450e+00	1.504111e+00	-1.020308e-02	-2.535844e-01	
+1.927487e-01	5.934578e+00	1.558651e+00	-5.705979e-02	-3.554024e-01	
+2.082175e-01	6.930021e+00	1.615167e+00	-3.497394e-01	8.702556e-01	
+2.236862e-01	8.774568e+00	1.673733e+00	1.419472e-01	1.156499e+00	
+2.391550e-01	1.164300e+01	1.734423e+00	2.922884e-01	-5.494329e-01	
+2.546237e-01	1.798196e+01	1.797313e+00	1.227108e-01	2.631899e-01	
+2.700925e-01	3.214203e+01	1.862484e+00	6.763992e-02	5.763282e-01	
+2.855612e-01	2.942452e+01	1.930017e+00	3.256949e-02	3.826819e+00	
