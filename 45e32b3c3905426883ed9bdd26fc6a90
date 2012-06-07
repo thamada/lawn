@@ -1,94 +1,91 @@
-Fri May 25 19:48:30 JST 2012
--- LOCAL READ CONTROLLER ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
+Thu Jun  7 19:40:22 JST 2012
+-- Copyright 2004 Tsuyoshi Hamada
 --
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- BUSY               ___/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______________
--- hit1               ___/~~~~\____
--- c_nchip               < NC                >< NC -1                           >< negativ value
--- next_chip                          ___/~~~~\____                      ___/~~~~\____
---==================================================
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- c_npipe               < NP                >< NP -1                           >< negativ value
--- next_pipe
-
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
+--MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+--MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity local_read_cnt is
+entity dmar is
   port (
-    -- from PGPG_REG3
-    NCHIP : in std_logic_vector(1 downto 0);     -- (number of chips) - 1
-    NPIPE : in std_logic_vector(7 downto 0);     -- (number of pipelines) - 1
-    NFI   : in std_logic_vector(7 downto 0);     -- (number of fi registers in a pipe) - 1
-    CALC_DONE : in std_logic;   -- pulse
-    -- to GPREG0
-    BUSY  : out std_logic;
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_RE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
+end dmar;
 
-    -- to LOCAL_READ_IF
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    -- from LOCAL_READ_IF
-    BUSY_IF : in std_logic;
- 
-    RST : in  std_logic;
-    CLK : in  std_logic
+architecture rtl of dmar is
+
+component dmar_dbus_hiz
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS_HiZ  : out std_logic);
+end component;
+
+component dmar_state
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end component;
+
+component dmar_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+
+component dmar_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
     );
-end local_read;
+end component;
 
-architecture rtl of local_read is
 
-signal hit0,hit1,hit2 : std_logic :='0';
-signal c_nchip,c_nchipr  : std_logic_vector(2 downto 0) := (others=>'0');
-signal c_npipe,c_npiper  : std_logic_vector(7 downto 0) := (others=>'0');
-signal c_nfi  ,c_nfir    : std_logic_vector(7 downto 0) := (others=>'0');
-signal next_chip, next_pipe : std_logic :='0';
+component dmar_mem_re
+  port (
+    CLK       : in std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    MEM_RE    : out std_logic );
+end component;
+
+signal state : std_logic_vector(1 downto 0);
+signal start_adr : std_logic_vector(18 downto 0);
 
 begin
 
-  hit0 <= CALC_DONE;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      hit2 <= hit1;
-      hit1 <= hit0;
-    end if;
-  end process;
+-- DBUSのトライステート処理は上位で行う
+-- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
 
-  -- BUSY
-  process (RST,CLK,c_nchip) begin
-    if (RST = '1') then
-      BUSY <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        BUSY <= '1';
-      elsif(c_nchip(2) = '1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
+ u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
+ u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
+ u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
+ u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
+
+ u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
+ DBUS_Port <= MEM_DATA;
 
 
-  -- NCHIP COUNTER
-  c_nchipr <= c_nchip - "01";
-  process (RST,CLK,next_chip) begin
-    if (RST = '1') then
-      c_nchip <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        c_nchip <= "0" & NCHIP;              -- SIGNED VALUE
-      elsif (next_chip='1') then
-        c_nchip <= c_nchipr;
-      end if;
-    end if;
-  end process;
-
-  
-
+end rtl;
