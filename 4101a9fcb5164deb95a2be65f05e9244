@@ -1,89 +1,63 @@
-Tue May 29 19:27:16 JST 2012
--- Copyright 2004-2005 Tsuyoshi Hamada
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---MEM_WEHA         _______/~~~~\__________
---MEM_WELA    _______/~~~~\__________
---MEM_DTIA[L]        < L  >              
---MEM_DTIA[H]             < H  >              
---wait             _______/~~~~~~~~~\__________
---dtl
+Sun Jun 10 20:10:00 JST 2012
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+-- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+-- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+-- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
+-- START_ADR                    < n                                    >
+-- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
+-- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
 
-
-entity FIFOFIFO is
+entity dmaw_mem_adr is
   port (
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-    -- output
-    MEM_AD     : out std_logic_vector(31 downto 0);
-    MEM_WE     : out std_logic;
-    MEM_DTI    : out std_logic_vector(63 downto 0);
-
-    RST : in  std_logic;
-    CLK : in  std_logic
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
     );
-end FIFOFIFO;
+end dmaw_mem_adr;
 
-architecture rtl of FIFOFIFO is
-  signal we   : std_logic :='0'; 
-  signal adr  : std_logic_vector(19 downto 0) := (others=>'0'); 
-  signal data : std_logic_vector(63 downto 0) := (others=>'0'); 
+architecture rtl of dmaw_mem_adr is
+
+signal mem_adr_inc : std_logic_vector(18 downto 0);
+signal   x,z : std_logic_vector(18 downto 0);
+constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
+
 begin
 
-  MEM_AD(31 downto 20) <= (others=>'0');
-  MEM_AD(19 downto 0) <= adr;
+  z <= x + one;
 
-  MEM_WE <= we;
-  MEM_DTI <= data;
-
-
-  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
-    if(RST='1') then
-      adr <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='1') then
-        adr <= MEM_ADA(19 downto 0);
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        adr <= MEM_ADA(19 downto 0);
-      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
-        adr <= MEM_ADA(19 downto 0);
-      end if;
-    end if;
-  end process;
-
-  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
-    if(RST='1') then
-      we <= '0';
-    elsif (CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='1') then
-        we <= '1';
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        we <= '0';
-      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
-        we <= '1';
+  -----------------
+  -- mem_adr_inc
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE = "10") then
+        mem_adr_inc <= z;
       else
-        we <= '0';
+        mem_adr_inc <= (others=>'0');
       end if;
     end if;
   end process;
 
-  process (RST,CLK,MEM_WEHA,MEM_WELA) begin
-    if(RST='1') then
-      data <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='1') then
-        data <= MEM_DTIA;
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        data(31 downto 0) <= MEM_DTIA(31 downto 0);
-      elsif(MEM_WEHA='1' AND MEM_WELA='0') then
-        data(63 downto 32) <= MEM_DTIA(63 downto 32);
+  x <= mem_adr_inc;
+
+  -----------------
+  -- MEM_ADR
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE="10") then
+        MEM_ADR <= mem_adr_inc + START_ADR;
+      else
+        MEM_ADR <= (others=>'0');
       end if;
     end if;
   end process;
