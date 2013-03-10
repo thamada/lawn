@@ -1,50 +1,80 @@
-Wed Feb 27 19:47:26 JST 2013
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[DMAR_ENABLE] _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en0                _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en1                     _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en2                          _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en3                               _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS_HiZ            ~~~~~~~~~~~~~~\_________________________________________________/~~~~
+Sun Mar 10 20:06:11 JST 2013
+-- Last Modifiled at 2004/12/27
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-entity dmar_dbus_hiz is
+entity adr_dec is
   port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic :='1');
-end dmar_dbus_hiz;
+    clk        : in std_logic;
+    adr        : in std_logic_vector(18 downto 0);
+    is_jpw     : out std_logic;
+    is_ipw     : out std_logic;
+    is_fo      : out std_logic;
+    is_setn    : out std_logic;
+    is_run     : out std_logic;
+    FPGA_NO    : in std_logic_vector(1 downto 0));
+end adr_dec;
 
-architecture rtl of dmar_dbus_hiz is
-signal en0,en1,en2,en3 : std_logic :='0';
+architecture rtl of adr_dec is
+signal cmd_h : std_logic_vector(6 downto 0);
+signal cmd_l : std_logic_vector(11 downto 0);
+
 begin
 
-  process(CLK) begin
-    if(CLK'event and CLK = '1') then
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-      en0 <= ENABLE;
-    end if;
-  end process;
+cmd_h <= adr(18 downto 12);
+cmd_l <= adr(11 downto 0);
 
+-- is_jpw ----------------------
+process(cmd_h,cmd_l) begin -- BroadCast Only
+--if (cmd_h(3) = '1') then -- 4096w * 512bit = 256KByte
+--if (cmd_h(4) = '1') then -- 8192w * 512bit = 512KByte
+--if (cmd_h(5) = '1') then --16384w * 512bit =   1MByte
+  if (cmd_h(6) = '1') then --32768w * 512bit =   2MByte
+     is_jpw <= '1';
+  else
+     is_jpw <= '0';
+  end if;
+end process;
 
-  process(RST,CLK,en2,en3) begin
-    if(RST='1') then
-      DBUS_HiZ <= '1';
-    elsif(CLK'event and CLK = '1') then
-     if( (en1='1') AND (en2='0') ) then
-       DBUS_HiZ <= '0';
-     elsif( (en2='0') AND (en3='1') ) then
-       DBUS_HiZ <= '1';
-     end if;
-    end if;
-  end process;
+-- is_ipw ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000101") AND (cmd_l(11 downto 10)=FPGA_NO)) then
+     is_ipw <= '1';
+  else
+     is_ipw <= '0';
+  end if;
+end process;
+
+-- is_fo -----------------------
+process(cmd_h,cmd_l) begin
+--  if((cmd_h = "0000110") AND (cmd_l(9 downto 8) = FPGA_NO)) then
+  if((cmd_h = "0000110") AND (cmd_l(10 downto 9) = FPGA_NO)) then
+     is_fo <= '1';
+  else
+     is_fo <= '0';
+  end if;
+end process;
+
+-- is_setn ---------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0111") AND (cmd_l(11 downto 0) = "000000000000")) then
+     is_setn <= '1';
+  else
+     is_setn <= '0';
+  end if;
+end process;
+
+-- is_run ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000111") AND (cmd_l(11 downto 0) = "000000000011")) then
+     is_run <= '1';
+  else
+     is_run <= '0';
+  end if;
+end process;
+
 
 end rtl;
