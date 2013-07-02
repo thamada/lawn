@@ -1,25 +1,26 @@
-Thu Jun 27 19:29:22 JST 2013
-#!/bin/sh
-#
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "commit-msg".
+Tue Jul  2 19:27:02 JST 2013
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
-#
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+entity dmar_start_adr is
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmar_start_adr;
 
-# This example catches duplicate Signed-off-by lines.
-
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
-	exit 1
-}
+architecture rtl of dmar_start_adr is
+component dmaw_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+begin
+  u0 : dmaw_start_adr port map(CLK=>CLK, DBUS=>DBUS, STATE=>STATE, START_ADR=>START_ADR);
+end rtl;
