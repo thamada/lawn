@@ -1,24 +1,41 @@
-Mon Jul  1 20:06:28 JST 2013
-vhdl work ../clk_muldiv.vhd
-vhdl work ../dmaw.vhd
-vhdl work ../dmaw_state.vhd
-vhdl work ../dmar_state.vhd
-vhdl work ../dmaw_start_adr.vhd
-vhdl work ../dmar_start_adr.vhd
-vhdl work ../dmaw_mem_adr.vhd
-vhdl work ../dmar_mem_adr.vhd
-vhdl work ../dmaw_mem_we.vhd
-vhdl work ../dmar_mem_re.vhd
-vhdl work ../dmar_dbus_hiz.vhd
-vhdl work ../dmar.vhd
-vhdl work ../pgpg_mem/adr_dec.vhd
-vhdl work ../pgpg_mem/pg_module.vhd
-vhdl work ../pgpg_mem/pg_pipe.vhd
-vhdl work ../pgpg_mem/calc.vhd
-vhdl work ../pgpg_mem/pipe_sts.vhd
-vhdl work ../pgpg_mem/setn.vhd
-vhdl work ../pgpg_mem/dpram.vhd
-vhdl work ../pgpg_mem/jmem.vhd
-vhdl work ../pgpg_mem/pgpg_mem.vhd
-vhdl work ../user.vhd
-vhdl work ../top.vhd
+Mon Jul  8 19:48:35 JST 2013
+// Time-stamp: <2006-09-04 13:41:34 hamada>
+// by T.Hamada
+//
+// <2006-09-04 13:33:47 hamada>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "pg4.h"
+
+void rst(int devid, int d, int msec)
+{
+  d = 0xff & d;
+  WriteBase0(devid, 0x4, d);
+  usleep(msec*1000);
+}
+
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  int i;
+
+  pg4_open(devid);
+  
+  for(i=0;i<16;i++){
+    int x;
+    x = 0xff&(1<<(i%8));
+    rst(devid, x, 100);
+    rst(devid, 0, 1);
+  }
+
+  rst(devid, 0xff, 1000);
+  rst(devid, 0x0, 0);
+
+  pg4_close(devid);
+
+  return 0;
+}
