@@ -1,25 +1,19 @@
-Tue Jul 23 19:40:28 JST 2013
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT tmp2
-DESIGN tmp2
-DEVFAM virtex2
-DEVFAMTIME 0
-DEVICE xc2v1000
-DEVICETIME 0
-DEVPKG fg456
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE pfpga_config.vhd
-STIMULUS sim.tbw
-[STRATEGY-LIST]
-Normal=True
+Tue Jul 30 19:57:18 JST 2013
+#!Time-stamp: <2007-01-22 04:30:32 hamada>
+
+Linux device driver for the PROGRAPE-4 board,
+
+including runtime libraries and HDL source for interface FPGA.
+
+- Linux kernel release 2.6.x
+
+- Xilinx XC3S5000-5-FG900 FPGAs
+
+- Xilinx ISE 8.1i
+-- Release 8.1.03i xst I.27
+-- Release 8.1.03i par I.27
+-- Release 8.1.03i Trace I.27
+-- Release 8.1.03i Bitgen I.27
+
+
+![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
