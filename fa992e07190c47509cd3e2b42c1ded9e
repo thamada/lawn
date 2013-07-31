@@ -1,5 +1,5 @@
-Wed Jul 24 19:43:32 JST 2013
--- ProjNav VHDL simulation template: sim_local_io.udo
+Wed Jul 31 19:58:58 JST 2013
+-- ProjNav VHDL simulation template: sim_local_write.udo
 -- You may edit this file after the line that starts with
 -- '-- START' to customize your simulation
 -- START user-defined simulation commands
