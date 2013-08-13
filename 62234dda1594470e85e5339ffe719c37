@@ -1,9 +1,4 @@
-Fri Aug  9 19:30:50 JST 2013
-#!/bin/sh
-#
-# An example hook script to prepare a packed repository for use over
-# dumb transports.
-#
-# To enable this hook, rename this file to "post-update".
-
-exec git update-server-info
+Tue Aug 13 19:55:03 JST 2013
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
+OK
