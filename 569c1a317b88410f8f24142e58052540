@@ -1,20 +1,29 @@
-Tue Oct  8 19:43:50 JST 2013
+Thu Oct 10 19:28:50 JST 2013
+//Time-stamp: "2006-11-21 00:17:47 hamada"
 
+#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
+#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
+#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
 
-all:
-	cp top.ucf.ISE6.3i top.ucf
-	rm -rf proj
-	tar xvf proj.ise6.3i.tar
-	cd proj;xst -intstyle ise -ifn __projnav/top.xst -ofn top.syr
-	cd proj;ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.ngc top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+int pgr_open(int);
+void pgr_close(int);
 
+void pgr_reset(int devid);
+int  pgr_get_writecomb_err(int devid);
 
+void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
+void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
 
-clean:
-	rm -rf proj top.ucf *~ .*~
+void pgr_setipset(int devid, unsigned int *idata, int num);
+void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
+void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
 
+void pgr_start_calc(int devid, unsigned int n);
+void pgr_calc_start(int devid, unsigned int n);
+void pgr_calc_finish(int devid);
 
+void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+
+void pgr_set_npipe_per_chip(int devid, int n);
+void pgr_set_jwidth(int devid, int n);
+void pgr_set_nchip(int nchip);
