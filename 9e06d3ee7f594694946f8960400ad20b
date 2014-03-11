@@ -1,41 +1,19 @@
-Sat Mar  8 20:23:25 JST 2014
-// Time-stamp: <2006-09-04 13:41:34 hamada>
-// by T.Hamada
-//
-// <2006-09-04 13:33:47 hamada>
+Tue Mar 11 19:59:42 JST 2014
+//============================================================================
+struct flops_member {
+  double Gflops;
+  double start_time;
+  double force_time;
+  int nbody;
+  int times;
+  int nstep;
+  int nskip;
+};
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+void flops_initialize(struct flops_member *fm, int n, int nskip);
+void flops_check(struct flops_member *fm);
 
-#include "pg4.h"
+void flops_ftime_init(struct flops_member *fm);
+void flops_ftime_save(struct flops_member *fm);
 
-void rst(int devid, int d, int msec)
-{
-  d = 0xff & d;
-  WriteBase0(devid, 0x4, d);
-  usleep(msec*1000);
-}
 
-int main(int argc, char* argv[])
-{
-  int devid=0;
-  int i;
-
-  pg4_open(devid);
-  
-  for(i=0;i<16;i++){
-    int x;
-    x = 0xff&(1<<(i%8));
-    rst(devid, x, 100);
-    rst(devid, 0, 1);
-  }
-
-  rst(devid, 0xff, 1000);
-  rst(devid, 0x0, 0);
-
-  pg4_close(devid);
-
-  return 0;
-}
