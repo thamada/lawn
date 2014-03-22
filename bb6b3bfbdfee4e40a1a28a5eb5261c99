@@ -1,17 +1,2 @@
-Wed Mar 19 20:20:07 JST 2014
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+Sat Mar 22 20:01:21 JST 2014
+work	c:\cygwin\home\administrator\fkit\pci64\rtl\local_io.vhd
