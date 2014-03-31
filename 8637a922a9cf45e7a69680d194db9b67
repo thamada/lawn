@@ -1,34 +1,48 @@
-Thu Mar 13 19:29:48 JST 2014
-// Time-stamp: "2006-12-07 19:19:07 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-
+Mon Mar 31 19:48:47 JST 2014
 #include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+#include <math.h>
+#include "nbodysim.h"
 
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
 {
-  int devid = 0;
-  int i;
+    int i,j,d;
+    double v2,r2;
+    double dx[3];
+    double Ep;  /* 系の位置エネルギー */
+    double Em;  /* 系の運動エネルギー */
+    double Ea;  /* 系の全力学的エネルギー */
 
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-  puts("clear DMA_CTRL register(0x2C).");
-  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+    /* 系の位置エネルギー Ep を計算する。 */ 
+    Ep=0.0;
+    for(i=0;i<n-1;i++){
+        for(j=i+1;j<n;j++){
+            r2 = eps2;           /* 相対距離初期化 */
+            for(d=0;d<3;d++){
+                dx[d] = x[j][d] - x[i][d];
+                r2 += dx[d] * dx[d];
+            }
+            Ep -= m[i] * m[j] * ( 1/sqrt(r2)  );
+        }
+    }
 
-  puts("clear INT_STAT register(0x10).");
-  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
 
-  puts("clear INT_MASK register(0x14).");
-  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+    /* 系の運動エネルギー Em を計算する。 */ 
+    Em=0.0;
+    for(i=0;i<n;i++){
+        v2=0.0;    /* 絶対速度2乗値初期化 */
+        for(d=0;d<3;d++){
+            v2 += v[i][d]*v[i][d];
+        }
+        Em += 0.5 * m[i] * v2;
+    }
 
-  pg4_DMAcheck(devid);
+    /* 系の全力学的エネルギー Ea を計算する。 */ 
+    Ea=0.0;
+    Ea = Em + Ep;
 
-  return 0;
+/*    printf("Emove=%1.6e,   Epot=%1.3e,   Eall=%1.25e\n",Em,Ep,Ea);*/
+/*    printf("%e\n",Ea);*/
+
+    return Ea;
 }
