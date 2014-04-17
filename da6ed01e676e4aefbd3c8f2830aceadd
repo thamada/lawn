@@ -1,2 +1,9 @@
-Fri Mar 21 20:11:07 JST 2014
-No errors or warnings
+Thu Apr 17 19:57:19 JST 2014
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
