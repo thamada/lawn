@@ -1,32 +1,5 @@
-Wed May 14 19:45:34 JST 2014
-/*
- * pfpga_info.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MAXBD 8
-#include "pg4.h"
-
-int main(int argc, char* argv[])
-{
-  int devid=0;
-  char info[1024];
-
-  pg4_open(devid);
-  pg4_get_pfpga_info(devid, info);
-  pg4_close(devid);
-
-  printf("%s\n", info);
-
-  return 1;
-}
+Thu May 15 19:53:25 JST 2014
+-- ProjNav VHDL simulation template: sim.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
