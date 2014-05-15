@@ -1,53 +1,42 @@
-Wed May  7 19:35:39 JST 2014
-/*
- * ifpga_bram_clear.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+Thu May 15 20:08:27 JST 2014
+/**
+   # ハードウェア化する部分 
+   #     1.加速度a[][]の初期化
+   #     2.加速度a[][]の計算
+*/
 
 #include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+#include <math.h>
+#include "nbodysim.h"
 
-//#define NMAX (0x1<<10) // 4KB
-//#define NMAX (0x1<<11) // 8KB
-//#define NMAX (0x1<<12) // 16KB
-//#define NMAX (0x1<<13) // 32KB
-#define NMAX (0x1<<14) // 64KB
-
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
 {
-  int devid = 0;
-  int n = NMAX;
-  int val = 0x1234567;
-  int i;
+  int i,j,d;
+  double dx[3];
 
-  if(argc > 1){
-    n = atoi(argv[1]);
+  /* a[][]の初期化 */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+
+  /* 相互作用の計算  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
+    }
   }
-  if(argc > 2){
-    val = atoi(argv[2]);
-  }
 
-  printf("n = %d\n",n);
-  printf("filled by %x\n",val);
 
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  for(i = 0; i < n; i++) {
-    pg4_writebase1(devid, i, val);
-  }
-
-  return 0;
 }
