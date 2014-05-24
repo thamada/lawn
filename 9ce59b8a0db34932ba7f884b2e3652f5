@@ -1,19 +1,19 @@
-Sun May 11 20:12:35 JST 2014
-//============================================================================
-struct flops_member {
-  double Gflops;
-  double start_time;
-  double force_time;
-  int nbody;
-  int times;
-  int nstep;
-  int nskip;
-};
+Sat May 24 20:02:00 JST 2014
+#!Time-stamp: <2007-01-22 04:30:32 hamada>
 
-void flops_initialize(struct flops_member *fm, int n, int nskip);
-void flops_check(struct flops_member *fm);
+Linux device driver for the PROGRAPE-4 board,
 
-void flops_ftime_init(struct flops_member *fm);
-void flops_ftime_save(struct flops_member *fm);
+including runtime libraries and HDL source for interface FPGA.
+
+- Linux kernel release 2.6.x
+
+- Xilinx XC3S5000-5-FG900 FPGAs
+
+- Xilinx ISE 8.1i
+-- Release 8.1.03i xst I.27
+-- Release 8.1.03i par I.27
+-- Release 8.1.03i Trace I.27
+-- Release 8.1.03i Bitgen I.27
 
 
+![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
