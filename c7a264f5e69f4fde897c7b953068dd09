@@ -1,170 +1,206 @@
-Fri May 30 19:34:44 JST 2014
-#!/bin/sh
-#
-# Copyright (c) 2006, 2008 Junio C Hamano
-#
-# The "pre-rebase" hook is run just before "git rebase" starts doing
-# its job, and can prevent the command from running by exiting with
-# non-zero status.
-#
-# The hook is called with the following parameters:
-#
-# $1 -- the upstream the series was forked from.
-# $2 -- the branch being rebased (or empty when rebasing the current branch).
-#
-# This sample shows how to prevent topic branches that are already
-# merged to 'next' branch from getting rebased, because allowing it
-# would result in rebasing already published history.
+Wed Jun  4 19:56:53 JST 2014
+#include <stdio.h>
+#include <GL/glut.h>
+#include <string.h> // strtok(),strcpy()
+#include <stdlib.h> // atof()
+#include <math.h>
+#define NMAX 210000
+#define XSCALE 2.0
+#define YSCALE 2.0
+//#define IS_PRESET 0
+#define IS_PRESET 1
+#define PRESET_NBODY 4096
+//#define PRESET_NBODY 16384
+//#define PRESET_NBODY 3
 
-publish=next
-basebranch="$1"
-if test "$#" = 2
-then
-	topic="refs/heads/$2"
-else
-	topic=`git symbolic-ref HEAD` ||
-	exit 0 ;# we do not interrupt rebasing detached HEAD
-fi
+#define PRESET_NWRITE 1
+#define PRESET_NSKIP 1
 
-case "$topic" in
-refs/heads/??/*)
-	;;
-*)
-	exit 0 ;# we do not interrupt others.
-	;;
-esac
+static char ifile[256];
+static int istep;
+static FILE *fp;
 
-# Now we are dealing with a topic branch being rebased
-# on top of master.  Is it OK to rebase it?
+int imax;
+double x[NMAX];
+double y[NMAX];
+int NBODY;
+int SKIP_STEP;
 
-# Does the topic really exist?
-git show-ref -q "$topic" || {
-	echo >&2 "No such branch $topic"
-	exit 1
+void reset_fp()
+{
+    printf("restart\n");
+    fclose(fp);
+    fp = fopen(ifile,"r");
+    istep=0;
 }
 
-# Is topic fully merged to master?
-not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
-if test -z "$not_in_master"
-then
-	echo >&2 "$topic is fully merged to master; better remove it."
-	exit 1 ;# we could allow it, but there is no point.
-fi
+void skip_step()
+{
+  int i;
+  char line[101];
+  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
+}
 
-# Is topic ever merged to next?  If so you should not be rebasing it.
-only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
-only_next_2=`git rev-list ^master           ${publish} | sort`
-if test "$only_next_1" = "$only_next_2"
-then
-	not_in_topic=`git rev-list "^$topic" master`
-	if test -z "$not_in_topic"
-	then
-		echo >&2 "$topic is already up-to-date with master"
-		exit 1 ;# we could allow it, but there is no point.
-	else
-		exit 0
-	fi
-else
-	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
-	/usr/bin/perl -e '
-		my $topic = $ARGV[0];
-		my $msg = "* $topic has commits already merged to public branch:\n";
-		my (%not_in_next) = map {
-			/^([0-9a-f]+) /;
-			($1 => 1);
-		} split(/\n/, $ARGV[1]);
-		for my $elem (map {
-				/^([0-9a-f]+) (.*)$/;
-				[$1 => $2];
-			} split(/\n/, $ARGV[2])) {
-			if (!exists $not_in_next{$elem->[0]}) {
-				if ($msg) {
-					print STDERR $msg;
-					undef $msg;
-				}
-				print STDERR " $elem->[1]\n";
-			}
-		}
-	' "$topic" "$not_in_next" "$not_in_master"
-	exit 1
-fi
+void myidle()
+{
+  istep++;
+  if((istep%SKIP_STEP) != 0){
+    skip_step();
+  }else{
+    glutPostRedisplay();
+  }
+  //  printf("%d step\n",(istep*SKIP_STEP));
+}
 
-exit 0
+void display();
 
-################################################################
-
-This sample hook safeguards topic branches that have been
-published from being rewound.
-
-The workflow assumed here is:
-
- * Once a topic branch forks from "master", "master" is never
-   merged into it again (either directly or indirectly).
-
- * Once a topic branch is fully cooked and merged into "master",
-   it is deleted.  If you need to build on top of it to correct
-   earlier mistakes, a new topic branch is created by forking at
-   the tip of the "master".  This is not strictly necessary, but
-   it makes it easier to keep your history simple.
-
- * Whenever you need to test or publish your changes to topic
-   branches, merge them into "next" branch.
-
-The script, being an example, hardcodes the publish branch name
-to be "next", but it is trivial to make it configurable via
-$GIT_DIR/config mechanism.
-
-With this workflow, you would want to know:
-
-(1) ... if a topic branch has ever been merged to "next".  Young
-    topic branches can have stupid mistakes you would rather
-    clean up before publishing, and things that have not been
-    merged into other branches can be easily rebased without
-    affecting other people.  But once it is published, you would
-    not want to rewind it.
-
-(2) ... if a topic branch has been fully merged to "master".
-    Then you can delete it.  More importantly, you should not
-    build on top of it -- other people may already want to
-    change things related to the topic as patches against your
-    "master", so if you need further changes, it is better to
-    fork the topic (perhaps with the same name) afresh from the
-    tip of "master".
-
-Let's look at this example:
-
-		   o---o---o---o---o---o---o---o---o---o "next"
-		  /       /           /           /
-		 /   a---a---b A     /           /
-		/   /               /           /
-	       /   /   c---c---c---c B         /
-	      /   /   /             \         /
-	     /   /   /   b---b C     \       /
-	    /   /   /   /             \     /
-    ---o---o---o---o---o---o---o---o---o---o---o "master"
+void init()
+{
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glColor3f(1.0,1.0,1.0);
+}
 
 
-A, B and C are topic branches.
+int main(int argc, char** argv)
+{
 
- * A has one fix since it was merged up to "next".
+  if(IS_PRESET){
+    NBODY = PRESET_NBODY*PRESET_NWRITE;
+    SKIP_STEP=PRESET_NSKIP;
+  }else{
+    int nb,nw;
+    printf("enter NBODY:");  scanf("%d",&nb);  //粒子数を指定
+    printf("enter Nwrite:");  scanf("%d",&nw);  //連続書込みコマ数
+    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
+    NBODY = (int)(nb * nw);
+    SKIP_STEP=1; // Fixed
+  }
+  istep=0;
+  if(argc <2){printf("no inputfile.\n"); exit(0); }
+  strcpy(ifile,argv[1]);
+  fp = fopen(ifile,"r");
 
- * B has finished.  It has been fully merged up to "master" and "next",
-   and is ready to be deleted.
+  glutInit(&argc,argv);
+  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
+  glutInitWindowSize(400,400);
+  glutInitWindowPosition(600,0);
+  glutCreateWindow("NBODYH-2003/11/08");
+  glutDisplayFunc(display);
+  glutIdleFunc(myidle);
+  init();
+  glutMainLoop();
 
- * C has not merged to "next" at all.
+  fclose(fp);
+  return 0;
+}
 
-We would want to allow C to be rebased, refuse A, and encourage
-B to be deleted.
 
-To compute (1):
 
-	git rev-list ^master ^topic next
-	git rev-list ^master        next
 
-	if these match, topic has not merged in next at all.
+void display()
+{
+  static int flag=0;
+  void display_set_GL_LINES();
+  void display_get_position();
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPointSize(1.0);
 
-To compute (2):
+  { //--- TIME METER ---
+    char p[10];
+    int i,nketa;
+    nketa = 6;
+    sprintf(p,"%06d",istep);
+    glColor3f(0.1 ,0.2,0.3);
+    for(i=0;i<nketa;i++){
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
+      glRasterPos2f(-0.70-0.06*i, -0.95);
+    }
+  }
 
-	git rev-list master..topic
+  display_set_GL_LINES();
+  glBegin(GL_POINTS);
+  //  glColor3f(1.0 ,0.8,0.0);
+  if(flag != 0){
+    int n;
+    display_get_position();
+    for(n=0;n<NBODY;n++){
+      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
+      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
+    }
+  }
+  flag=1;
+  glEnd();
+  glutSwapBuffers();
+}
 
-	if this is empty, it is fully merged to "master".
+
+/* display関数用 */
+void display_set_GL_LINES()
+{ // --- MEMORI ---
+
+  glBegin(GL_LINES);
+
+  glColor3f(0.7,0.0,0.0);
+  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
+  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
+
+  glColor3f(0.0,0.2,0.5);
+  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
+  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
+  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
+  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
+
+  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
+  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
+  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
+  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
+
+  {
+    double tiny=0.04;
+    double small=0.04;
+    glColor3f(0.9,0.4,0.8);
+    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
+    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
+    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
+    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
+
+    glColor3f(0.38, 0.01, 0.8);
+    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
+    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
+    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
+    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
+    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
+    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
+    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
+    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
+
+    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
+    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
+    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
+    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
+    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
+    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
+    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
+    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
+  }
+  glEnd(); // --- End GL_LINES;
+}
+
+void display_get_position()
+{
+  int i;
+  char line[1024];
+  char* p;
+  double _x,_y,_z;
+  for(i=0;i<NBODY;i++){
+    if(fgets(line,100,fp)!=NULL){
+      p = (char* )strtok(line,"\t"); _x = atof(p);
+      p = (char* )strtok(NULL,"\t"); _y = atof(p);
+      p = (char* )strtok(NULL,"\t"); _z = atof(p);
+      x[i] = _x;
+      y[i] = _y;
+    }else{
+      reset_fp();
+    }
+  }
+}
