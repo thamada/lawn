@@ -1,19 +1,16 @@
-Thu Aug 21 20:03:44 JST 2014
-//============================================================================
-struct flops_member {
-  double Gflops;
-  double start_time;
-  double force_time;
-  int nbody;
-  int times;
-  int nstep;
-  int nskip;
-};
+Thu Sep  4 20:09:57 JST 2014
+/** 
+# vを1/2ステップ進める
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
 
-void flops_initialize(struct flops_member *fm, int n, int nskip);
-void flops_check(struct flops_member *fm);
+#include <stdio.h>
+#include "nbodysim.h"
 
-void flops_ftime_init(struct flops_member *fm);
-void flops_ftime_save(struct flops_member *fm);
-
-
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
+}
