@@ -1,26 +1,40 @@
-Sun Oct 19 19:49:06 JST 2014
-#include <stdio.h>
-#include "nbodysim.h"
+Mon Oct 20 20:07:35 JST 2014
+ 
+-w
+-g DebugBitstream:No
+-g Binary:no
+-g CRC:Enable
+-g ConfigRate:4
+-g CclkPin:PullUp
+-g M0Pin:PullUp
+-g M1Pin:PullUp
+-g M2Pin:PullUp
+-g ProgPin:PullUp
+-g DonePin:PullUp
+-g PowerdownPin:PullUp
+-g TckPin:PullUp
+-g TdiPin:PullUp
+-g TdoPin:PullUp
+-g TmsPin:PullUp
+-g UnusedPin:PullDown
+-g UserID:0xFFFFFFFF
+-g DCMShutDown:Disable
+-g DisableBandgap:No
+-g DCIUpdateMode:AsRequired
+-g StartUpClk:CClk
+-g DONE_cycle:4
+-g GTS_cycle:5
+-g GWE_cycle:6
+-g LCK_cycle:NoWait
+-g Match_cycle:Auto
+-g Security:None
+-g DonePipe:No
+-g DriveDone:No
+-g Encrypt:No
 
-void debug(double x[][DIM],double a[][DIM], int n, int nstep)
-{
-  int i;
-  static int flag=0;
-  static FILE* fp;
 
-  if(flag==0){
-    fp = fopen("aaa.log","w");
-    flag = 1;
-  }else{
-    rewind(fp);
-  }
 
-  for(i=0;i<n;i++){
-    fprintf(fp,"%d\t",nstep);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
-  }
 
-  fflush(fp);
-}
+
+
 
