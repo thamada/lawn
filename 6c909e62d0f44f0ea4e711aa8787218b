@@ -1,25 +1,28 @@
-Mon Oct 27 19:35:54 JST 2014
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+Wed Oct 29 19:49:17 JST 2014
+// Copyright(c) 2004- by PGPG
+// The original source : contrib/src_h/vi/pg_util.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#ifndef LONG
+#define LONG unsigned long long int
+#endif
+LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
+double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
+LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
+LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
+double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
+LONG extractbit_long(LONG in, int hi, int lo);
+void l2bit(LONG a);
+void putbits(LONG a);
+void putbits32(LONG a);
+void putbitsn(LONG a,int n);
+double gen_rand_abs(void);
+double gen_rand(void);
+double gen_rand_tamanizero(void);
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+#include <sys/time.h>
+#include <sys/resource.h>
+double e_time(void);
