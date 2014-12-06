@@ -1,40 +1,30 @@
-Tue Dec  2 19:28:51 JST 2014
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
+Sat Dec  6 19:26:37 JST 2014
+#!/usr/bin/perl
 
 
+my $is_stop = 0;
+my $nboard = 0;
 
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
 
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
 
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
 
+print $nbuf ." buffers exists\n";
 
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
+
+1;
