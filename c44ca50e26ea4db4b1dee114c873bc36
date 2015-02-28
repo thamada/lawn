@@ -1,6 +1,17 @@
-Mon Feb 23 19:47:07 JST 2015
-3
-0
-1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
-1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
-1 0 0 0 -0.93240737 -0.86473146 -0
+Sat Feb 28 20:01:35 JST 2015
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
