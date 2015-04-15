@@ -1,17 +1,10 @@
-Sat Apr 11 19:30:12 JST 2015
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+Wed Apr 15 19:59:23 JST 2015
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
