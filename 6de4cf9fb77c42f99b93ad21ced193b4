@@ -1,227 +1,163 @@
-Sat May  9 19:45:01 JST 2015
-//Time-stamp: "2007-01-24 01:31:34 hamada"
-//
-// API for the PGR system for PROGRAPE-4
-//
-// by T.Hamada
-//
+Thu Jun 18 19:29:43 JST 2015
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include "pg4.h"
-#include "pg4reg.h"
-#include "pgrapi.h"
+-- LOCAL READ ( ifpga <- pfpga )
+-- by Tsuyoshi Hamada
+-- (※) l_adroのビット幅(NBIT_L_ADRO)を変えた場合はpromを焼きなおす必要があることに注意.(直すのは上のモジュール)
+-- (※) そもそもの前提：LOCAL_READはPFPGA0からのPIPE_STS信号(CBUS0(7))をトランザクション開始信号としています。
 
-unsigned int *bar1[8];
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-static unsigned int *ptr[] = {
-  NULL, NULL, NULL, NULL
-};
+entity LOCAL_READ is
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
 
-static int npipe_per_chip[] = {1,1,1,1};
-static int jwidth[] = {JDIM, JDIM, JDIM, JDIM};
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-static int NCHIP = 4;                               // NCHIP variable
-void pgr_set_nchip(int n){   NCHIP = n; }           // NCHIP variable
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
 
-void pgr_reset(int devid)
-{
-  // allocate DMA buffer
-  if (ptr[devid] == NULL) {
-    ptr[devid] = pg4_get_dmarptr(devid);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ;
 
-    if (ptr[devid] == NULL) {
-      fprintf(stderr, "mmap error!!!!!\n fatal error, now exiting....\n");
-      exit(-1);
-    }
-  }
+architecture rtl of LOCAL_READ is
 
-  WriteBase0(devid, PIPE_RST, 0xf);   // send RST<="1111" ( 4 chips )
-  WriteBase0(devid, PIPE_RST, 0x0);   // send RST<="0000" ( 4 chips )
-}
+component LOCAL_READ_CNT
+  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
+  port (
+    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
+    CALC_DONE  : in std_logic;                 -- pulse
+    FETCH_DONE : out std_logic;
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-int pgr_get_writecomb_err(int devid)
-{
-  int rtn;
-  rtn = pg4_readbase0(devid, 0);
-  rtn >>= 6;
-  return (rtn);
-}
+component LOCAL_READ_IF
+  port (
+    EXEC : in std_logic;
+    START_AD : in std_logic_vector(18 downto 0);
+    NQWORD   : in std_logic_vector( 8 downto 0);
+    CHIPSEL  : in std_logic_vector( 3 downto 0);
+    MEM_AD_BASE : in std_logic_vector(12 downto 0);
+    BUSY : out std_logic;  -- to GPREG0
+    DMAR_ENABLE : out std_logic_vector(3 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_ADB     : out std_logic_vector(12 downto 0);
+    MEM_WEHB    : out std_logic;
+    MEM_WELB    : out std_logic;
+    MEM_DTIB    : out std_logic_vector(63 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM])
-{
-  unsigned int offset = (ADR_JPSET<<1) + ((j*JDIM*sizeof(unsigned int))>>2);
-  memcpy(bar1[devid]+offset, jdata, jwidth[devid]*sizeof(unsigned int));
-}
+signal calc_done : std_logic :='0';   -- to cnt
+signal csts0,csts1 : std_logic :='0'; -- from pfpga
 
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj)
-{
-  unsigned int offset = (ADR_JPSET<<1);     // BroadCast
-  // nj <= 8192 !!
-  memcpy(bar1[devid]+offset, jdata, JDIM*sizeof(unsigned int)*nj);
-}
+-- CNT
+signal fetch_done : std_logic :='0';
+signal exec : std_logic;                          -- cnt -> if
+signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
+signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
+signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
+signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
+-- IF
+signal ignore_busy : std_logic; 
 
-void pgr_setipset(int devid, unsigned int *idata, int ni)
-{
-  unsigned int offset = (ADR_IPSET<<1);
-  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*ni);
-}
+begin
 
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
-{
-  int i;
-  int num = number_of_pipelines << XI_AWIDTH;
-  //  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11);
-  //  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*num);
+  -- CALC STATUS
+  csts0 <= CALC_STS;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      csts1 <= csts0;
+    end if;
+  end process;
 
-  for(i = 0; i < num; i++) {
-    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
-  }
-}
+  -- CALC DONE
+  process (RST,CLK,csts0,csts1) begin
+    if(RST='1') then
+      calc_done <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        calc_done <= '1';
+      else
+        calc_done <= '0';
+      end if;
+    end if;
+  end process;
 
-/*
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines)
-{
-  int i;
-  int num = number_of_pipelines << XI_AWIDTH;
-  for(i = 0; i < num; i++) {
-    pg4_writebase1(devid, (ADR_IPSET<<1) |(ichip<<11)| i, idata[i]);
-  }
-}
-*/
+  -- BUSY
+  process (RST,CLK,csts0,csts1,fetch_done) begin
+    if (RST='1') then
+      BUSY <='1';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        BUSY <= '1';
+      elsif(fetch_done='1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
 
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim)
-{
-  unsigned int offset = (ADR_IPSET<<1) |(ichip<<11) | (ipipe<<XI_AWIDTH);
-  memcpy(bar1[devid]+offset, idata, sizeof(unsigned int)*idim);
-}
-
-void pgr_start_calc(int devid, unsigned int n)
-{
-  unsigned int offset = ADR_SETN<<1;
-  int i;
-  volatile int j;
-  // SETN
-  pg4_writebase1(devid, offset, n);
-  pg4_writebase1(devid, offset+1, 0xffffffff);
-  j = pg4_readbase1(devid, offset+1); // flash cache
-  
-  // RUN
-  pg4_writebase1(devid, offset+6, 0xffffffff);
-  pg4_writebase1(devid, offset+7, 0xffffffff);
-  j = pg4_readbase1(devid, offset+1); // flash cache
-
-
-  // -------------------------- change 2005/01/04 by T.H
-  //                            wait until runret return
-  //                                 and prepare all foset(for 4chips) to ifpga RAM.
-  //  i=0;
-  while( (0x1 & pg4_readbase0(devid,0)) == 1){
-    //    i++;
-    //    fprintf(stderr,"%d ",i);
-    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
-  }
-  //  fprintf(stderr,"%d\n",i);
-}
-
-void pgr_calc_start(int devid, unsigned int n)
-{
-  unsigned int offset = ADR_SETN<<1;
-  int i;
-  // -------------------------- SETN(i==0) & RUN(i==2)
-  for(i = 0; i < 16; i++){
-    pg4_writebase1(devid, offset+i, n);
-  }
-}
-
-void pgr_calc_finish(int devid)
-{
-  while( (0x1 & pg4_readbase0(devid,0)) == 1){
-    //    i++;
-    //    fprintf(stderr,"%d ",i);
-    //    if(i>3) for(i=0;i<16;i++)  pg4_writebase1(devid, offset+i, n);
-  }
-}
-
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM])
-{
-  int ret;
-  int npc = npipe_per_chip[devid];
-  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
-
-  AGAIN:
-  ret = pg4_DMAget(devid, size);
-  if (pg4_DMAretry(devid) > 0) {
-    //    fprintf(stderr, "possible DMA failure\n");
-    //    pg4_DMAcheck(devid);
-    goto AGAIN;
-  }
-  memcpy(fodata, &ptr[devid][0], size);
-
-  //  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
-}
-
-void pgr_getfoset2(int devid, unsigned long long int fodata[][FDIM], unsigned int size, unsigned int offset)
-{
-  int ret;
-
-  AGAIN2:
-  ret = pg4_DMAget_offset(devid, size, offset);
-  if (pg4_DMAretry(devid) > 0) {
-    //    fprintf(stderr, "possible DMA failure\n");
-    //    pg4_DMAcheck(devid);
-    goto AGAIN2;
-  }
-  memcpy(fodata, &ptr[devid][0], size);
-}
-
-//PIO version
-void pgr_getfoset3(int devid, unsigned long long int fodata[][FDIM])
-{
-  int npc = npipe_per_chip[devid];
-  unsigned int size = NCHIP * npc * FDIM * sizeof(unsigned long long int);
-  memcpy(fodata, bar1[devid]+(ADR_FOSET<<1), size);
-}
-
-void pgr_set_jwidth(int devid, int n)
-{
- if(n < 1) {
-    fprintf(stderr,"pgr api error, JWIDTH be > 0.\n");
-    exit(-1);
-  }
-  jwidth[devid] = n;
-}
-
-void pgr_set_npipe_per_chip(int devid, int n){
-  if(n>256){
-    fprintf(stderr,"pgr api error, NPIPE/chip must be < 257.\n");
-    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
-    exit(-1);
-  }else if(n<1){
-    fprintf(stderr,"pgr api error, NPIPE/chip must be > 0.\n");
-    fprintf(stderr,"[NPIPE/chip %d ?]\n",n);
-    exit(-1);
-  }
-  npipe_per_chip[devid] = n; // this is used in pgr_getfoset().
-  WriteBase0(devid, NPIPE_IFPGA, n);
-}
-
-int pgr_open(int id)
-{
-  int rtn;
-  rtn = pg4_open(id);
-  bar1[id] = pg4_get_bar1ptr(id);
-
-  return rtn;
-}
-
-void pgr_close(int devid)
-{
-  pg4_close(devid);
-}
+  -- =================================================== SUBMODULE INSTANCES
+  u0: LOCAL_READ_CNT 
+    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
+    port map(NPIPE => NPIPE,
+             CALC_DONE => calc_done,
+             FETCH_DONE => fetch_done,
+             EXEC       => exec,
+             START_AD   => start_ad,
+             NQWORD     => nqword,
+             CHIPSEL    => chipsel,
+             MEM_AD_BASE => mem_base,
+             RST => RST, CLK=>CLK);
 
 
+  u1: LOCAL_READ_IF
+    port map(EXEC        => exec,     -- from cnt
+             START_AD    => start_ad, -- from cnt
+             NQWORD      => nqword,   -- from cnt
+             CHIPSEL     => chipsel,  -- from cnt
+             MEM_AD_BASE => mem_base, -- from cnt
+             BUSY => ignore_busy,
+             DMAR_ENABLE => DMAR_ENABLE, -- output directly
+             DBUS_Port   => DBUS_Port,   -- output directly
+             DBUS_idata  => DBUS_idata,  -- output directly
+             DBUS_HiZ    => DBUS_HiZ,    -- output directly
+             MEM_ADB  => MEM_ADB,        -- output directly
+             MEM_WEHB => MEM_WEHB,       -- output directly
+             MEM_WELB => MEM_WELB,       -- output directly
+             MEM_DTIB => MEM_DTIB,       -- output directly
+             RST=>RST,CLK=>CLK);
+
+
+end rtl;
