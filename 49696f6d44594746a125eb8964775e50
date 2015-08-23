@@ -1,206 +1,138 @@
-Sat Aug  1 20:06:53 JST 2015
-#include <stdio.h>
-#include <GL/glut.h>
-#include <string.h> // strtok(),strcpy()
-#include <stdlib.h> // atof()
-#include <math.h>
-#define NMAX 210000
-#define XSCALE 2.0
-#define YSCALE 2.0
-//#define IS_PRESET 0
-#define IS_PRESET 1
-#define PRESET_NBODY 4096
-//#define PRESET_NBODY 16384
-//#define PRESET_NBODY 3
+Sun Aug 23 19:55:35 JST 2015
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
-#define PRESET_NWRITE 1
-#define PRESET_NSKIP 1
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
 
-static char ifile[256];
-static int istep;
-static FILE *fp;
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- ÉäÉZÉbÉg
+    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
+    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
+    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
+  );
+end dcm_ps_f;
 
-int imax;
-double x[NMAX];
-double y[NMAX];
-int NBODY;
-int SKIP_STEP;
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
 
-void reset_fp()
-{
-    printf("restart\n");
-    fclose(fp);
-    fp = fopen(ifile,"r");
-    istep=0;
-}
+--------------------------------------------------
+-- Components
+--------------------------------------------------
 
-void skip_step()
-{
-  int i;
-  char line[101];
-  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
-}
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
+end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
 
-void myidle()
-{
-  istep++;
-  if((istep%SKIP_STEP) != 0){
-    skip_step();
-  }else{
-    glutPostRedisplay();
-  }
-  //  printf("%d step\n",(istep*SKIP_STEP));
-}
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
 
-void display();
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
 
-void init()
-{
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-  glColor3f(1.0,1.0,1.0);
-}
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
+signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
 
+begin
 
-int main(int argc, char** argv)
-{
-
-  if(IS_PRESET){
-    NBODY = PRESET_NBODY*PRESET_NWRITE;
-    SKIP_STEP=PRESET_NSKIP;
-  }else{
-    int nb,nw;
-    printf("enter NBODY:");  scanf("%d",&nb);  //$BN3;R?t$r;XDj(B
-    printf("enter Nwrite:");  scanf("%d",&nw);  //$BO"B3=q9~$_%3%^?t(B
-    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
-    NBODY = (int)(nb * nw);
-    SKIP_STEP=1; // Fixed
-  }
-  istep=0;
-  if(argc <2){printf("no inputfile.\n"); exit(0); }
-  strcpy(ifile,argv[1]);
-  fp = fopen(ifile,"r");
-
-  glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
-  glutInitWindowSize(400,400);
-  glutInitWindowPosition(600,0);
-  glutCreateWindow("NBODYH-2003/11/08");
-  glutDisplayFunc(display);
-  glutIdleFunc(myidle);
-  init();
-  glutMainLoop();
-
-  fclose(fp);
-  return 0;
-}
-
-
-
-
-void display()
-{
-  static int flag=0;
-  void display_set_GL_LINES();
-  void display_get_position();
-  glClear(GL_COLOR_BUFFER_BIT);
-  glPointSize(1.0);
-
-  { //--- TIME METER ---
-    char p[10];
-    int i,nketa;
-    nketa = 6;
-    sprintf(p,"%06d",istep);
-    glColor3f(0.1 ,0.2,0.3);
-    for(i=0;i<nketa;i++){
-      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
-      glRasterPos2f(-0.70-0.06*i, -0.95);
-    }
-  }
-
-  display_set_GL_LINES();
-  glBegin(GL_POINTS);
-  //  glColor3f(1.0 ,0.8,0.0);
-  if(flag != 0){
-    int n;
-    display_get_position();
-    for(n=0;n<NBODY;n++){
-      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
-      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
-    }
-  }
-  flag=1;
-  glEnd();
-  glutSwapBuffers();
-}
+-- *********************************************************************
+-- å≈íËêMçÜ
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0å≈íËêMçÜ
 
 
-/* display$B4X?tMQ(B */
-void display_set_GL_LINES()
-{ // --- MEMORI ---
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ÉäÉZÉbÉg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
+    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
 
-  glBegin(GL_LINES);
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
+    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
+  );
 
-  glColor3f(0.7,0.0,0.0);
-  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
-  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
-
-  glColor3f(0.0,0.2,0.5);
-  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
-  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
-  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
-  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
-
-  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
-  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
-  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
-  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
-
-  {
-    double tiny=0.04;
-    double small=0.04;
-    glColor3f(0.9,0.4,0.8);
-    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
-    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
-    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
-    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
-
-    glColor3f(0.38, 0.01, 0.8);
-    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
-    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
-    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
-    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
-    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
-    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
-    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
-    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
-
-    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
-    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
-    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
-    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
-    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
-    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
-    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
-    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
-  }
-  glEnd(); // --- End GL_LINES;
-}
-
-void display_get_position()
-{
-  int i;
-  char line[1024];
-  char* p;
-  double _x,_y,_z;
-  for(i=0;i<NBODY;i++){
-    if(fgets(line,100,fp)!=NULL){
-      p = (char* )strtok(line,"\t"); _x = atof(p);
-      p = (char* )strtok(NULL,"\t"); _y = atof(p);
-      p = (char* )strtok(NULL,"\t"); _z = atof(p);
-      x[i] = _x;
-      y[i] = _y;
-    }else{
-      reset_fp();
-    }
-  }
-}
+end rtl;
