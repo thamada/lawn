@@ -1,53 +1,53 @@
-Sun Sep 20 20:16:06 JST 2015
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- *
- ***************************************************/
+Wed Sep 23 20:28:09 JST 2015
+-- 2005/06/13
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define D_FSU  1
+#define D_FTL  2
+#define D_LAD  4
+#define D_LMU  1
+#define D_LTF  2
+#define D_FAC  1
 
-inline unsigned int    ReadBase0 (int devid, unsigned int addr);
-inline unsigned int    ReadBase1 (int devid, unsigned int addr);
-inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
-inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
+// -1 < xbox < 1.0,
+// mmin > 1.0 (1e-2 < m < 1.0 ==> underflow around large R)
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+//mmin 0xdf61
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-void                   pg4_close (int id);
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
-int                    pg4_DMAput (int devid, unsigned int size);
-int                    pg4_DMAget (int devid, unsigned int size);
-void                   pg4_DMAcheck (int devid);
-int                    pg4_DMAretry (int devid);
+/NPIPE 5;
+/NVMP 1;
 
-unsigned long          pg4_getbaseaddr (int devid, int j);
-unsigned long          pg4_getbaseaddr_size (int devid, int bar);
-unsigned int*          pg4_get_bar0ptr(int devid);
-unsigned int*          pg4_get_bar1ptr(int devid);
-unsigned int*          pg4_get_dmawptr (int devid);
-unsigned int*          pg4_get_dmarptr (int devid);
-unsigned int           pg4_get_dma_size (int devid);
-void                   pg4_get_pfpga_info (int devid, char *info);
+/JPSET xj[3], x[][], fix,      NPOS,xscale;
+/JPSET mj,    m[],   log,      NLOG,NMAN,mscale;
+/IPSET xi[3], x[][], fix,      NPOS,xscale;
+/IPSET ieps2, eps2,  log,      NLOG,NMAN,escale;
+/FOSET sx[3], a[][], fix,      NACC,fscale;
 
-int                    pg4_open (int id);
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           D_FSU);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, D_FTL);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
-inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
-unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,D_LAD,NCUT);
 
-void                   pg4_set_pfpga_info (int devid, char *info);
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,           D_LMU);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,           D_LMU);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,           D_LMU);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN, D_LMU);
 
-inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
-inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
-
-
-
-// --- following are removed. ---
-int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void                   pg4_wait (int devid, int n);
-
-
+pg_conv_ltof(fxs,  ffx,                NLOG,NMAN,NFOR, D_LTF);
+pg_fix_accum(ffx,  sx,                 NFOR,NACC,      D_FAC);
