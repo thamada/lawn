@@ -1,5 +1,17 @@
-Sat Oct 17 19:28:59 JST 2015
--- ProjNav VHDL simulation template: sim_local_write.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+Thu Nov  5 19:29:55 JST 2015
+#!/usr/bin/perl
+
+my $N = 300;
+my $XSCALE = 1.0;
+my $YSCALE = 1.0;
+
+srand(12345);
+
+print $N ."\n";
+
+for(my $i=0;$i<$N;$i++){
+    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
+    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
+    my $s = sprintf("%e\t%e\n",$x,$y);
+    print $s;
+}
