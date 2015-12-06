@@ -1,52 +1,53 @@
-Fri Nov 27 19:41:33 JST 2015
-#include "cutil.h"
+Sun Dec  6 19:28:49 JST 2015
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-__device__ float4 
-inter(float4 xj, float4 xi, float4 apot)
-{
-  /* ここは図5.と同じ */ 
-  float mj    = xj.w;        // Mass Mj
-  float ieps2 = xi.w;        // epsilon^2
-  float dx = xj.x - xi.x;    // Coordinates Xj - Xi
-  float dy = xj.y - xi.y;    // Coordinates Yj - Yi
-  float dz = xj.z - xi.z;    // Coordinates Zj - Zi
-  float r2 = dx*dx+dy*dy+dz*dz+ieps2;
-  float r1i = 1/sqrt(r2);
-  float r2i = r1i * r1i;
-  float mr3i = mj * r2i * r1i;
-  apot.x += dx * mr3i;       // Accel AXi
-  apot.y += dy * mr3i;       // Accel AYi
-  apot.z += dz * mr3i;       // Accel AZi
-  return (apot);
-}
-#define NTHRE (128) // blockDim.xと同値
-__global__ void
-kernel(float4* g_xj,
-       float* g_xi,
-       float* g_fi,
-       int ni,
-       int nj)
-{
-  int tid      = threadIdx.x;
-  int i = blockIdx.x*NTHRE+tid;
-  float4 ai = make_float4(0.0, 0.0, 0.0, 0.0);
-  float4 xi;
-  xi.x = g_xi[i];
-  xi.y = g_xi[i+ni];
-  xi.z = g_xi[i+ni*2];
-  xi.w = g_xi[i+ni*3];
-  __shared__ float4 s_xj[NTHRE];
-  for(int j = 0; j<nj; j+=NTHRE){
-    __syncthreads();
-    s_xj[tid] = g_xj[j+tid];
-    __syncthreads();
-    for(int js = 0; js<NTHRE; js++) ai = inter(s_xj[js], xi, ai);
-  }
-  if(i<ni){
-    g_fi[i]      = ai.x;
-    g_fi[i+ni]   = ai.y;
-    g_fi[i+ni*2] = ai.z;
-  }
-}
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-#include "api.h"
+void                   pg4_close (int id);
+
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
+
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
+
+int                    pg4_open (int id);
+
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+
+void                   pg4_set_pfpga_info (int devid, char *info);
+
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
+
+
+
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
+
+
