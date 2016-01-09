@@ -1,150 +1,91 @@
-Sat Dec 26 20:01:03 JST 2015
---###############################
---# by T.Hamada for B3 Board    #
---###############################
+Sat Jan  9 19:53:19 JST 2016
+//-----------------------------------------------------------------------------
+// Output Pair-Wise Error
+// Modify: Tsuyoshi Hamada, Nov, 2006
+//-----------------------------------------------------------------------------
+#include  <iostream>
+#include  <cmath>
+#include  <cstdlib>
+#include  <iomanip> // cout << setw() << setprecision() 
+using namespace std;
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
 
-entity DPRAM is
-  port (
-    RST         : in  std_logic;                        -- PCI Bus Reset
-    CLK         : in  std_logic;                        -- PCI bus Clock
-    CLKB        : in   std_logic;                       -- Port B Clock
-    -- PCI R/W ports
-    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
-    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
-    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
-    -- USER Application R/W ports
-    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
-    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
-    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
-    );
-end DPRAM;
+extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
 
+#define NMAX 1024
 
-architecture DPRAM_rtl of DPRAM is
+double rsv[65536][3];
 
---------------------------------------------------
--- Components
---------------------------------------------------
---component dp32b512w
---  port (
---    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
---    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
---    clka       : in  std_logic;                        -- Port A Clock
---    clkb       : in  std_logic;                        -- Port A Clock
---    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
---    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
---    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
---    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
---    wea        : in  std_logic;                        -- Port A Write Enable
---    web        : in  std_logic                         -- Port A Write Enable
---    );
---end component;
+int main(int argc, char *argv[]) {
+  int index;
+  int n = 2;
 
-component dp32b8192w
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
+  double m[NMAX];
+  double r[NMAX][3];
+  double v[NMAX][3];
 
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0)
-  );
-end component;
+  double p[NMAX];
+  double a[NMAX][3];
+  double jk[NMAX][3];
 
-  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
-  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
-begin
+  double _p[NMAX];
+  double _a[NMAX][3];
+  double _jk[NMAX][3];
+
+  m[0] = m[1] = 1.0;
+
+  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
+  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
+  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
+
+  index=0;
+  srand(0x12345);
+
+  for (int t = 0; t < 1000 ; t++){
+    
+
+    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
 
 
---***************************************************************
---* instantiate sub-blocks
---***************************************************************
 
--- Low Word (32 bit)
+    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
 
-  dp0 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port B Clock
-    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
-    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
-    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
-    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
-    wea        => MEM_WELA,                       -- Port A Write Enable
-    web        => MEM_WELB                        -- Port A Write Enable
-  );
-
--- High Word (32 bit)
-
-  dp1 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port A Clock
-    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
-    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
-    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
-    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
-    wea        => MEM_WEHA,                       -- Port A Write Enable
-    web        => MEM_WEHB                        -- Port A Write Enable
-  );
+    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
+    index++;
 
 
---***************************************************************
---*
---*  PORT A Control Block
---*
---***************************************************************
+    _force(r, v, m, _p, _a, _jk, n);
+     force(r, v, m,  p,  a,  jk, n);
 
---------------------------------------------------------------------------------
--- Port A Read Data Select Flag Control Process
---------------------------------------------------------------------------------
+     double err_p, err_a[3], err_jk[3];
+     double rad;
+     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
+     err_p = fabs(p[0]-_p[0])/_p[0];
 
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_RDTFLG <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
-    end if;
-  end process;
+    
+     for (int k = 0; k < 3; k++){
+       double host  = _a[0][k];
+       double pipe  =  a[0][k];
+       double err = sqrt((host - pipe)*(host - pipe))/host;
 
---------------------------------------------------------------------------------
--- Port A Read Data Output Control Process
---------------------------------------------------------------------------------
+       cout << setw(8);
+       cout.precision(6);
+       cout << rad  << "\t";
+       cout.precision(6);
+       cout << err  << "\t";
+       cout.precision(6);
+       cout << host << "\t";
+       cout.precision(6);
+       cout << pipe << endl;
 
-  process (MEM_RDTFLG,MEM_RDDT) begin
-    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
-      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
-    else
-      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
-    end if;
-  end process;
+     }
 
---------------------------------------------------------------------------------
--- Port A Read Data Enable Signal Control Process
---------------------------------------------------------------------------------
+  }
+  
 
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_DTOEN <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
-    end if;
-  end process;
+  debug_position_snap(rsv, 123.456, index, 10);
 
-end DPRAM_rtl;
+  return 0;
+}
