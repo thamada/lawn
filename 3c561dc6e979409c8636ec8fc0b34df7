@@ -1,2 +1,17 @@
-Wed Feb  3 19:29:54 JST 2016
-No errors or warnings
+Wed Feb 10 19:30:41 JST 2016
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
