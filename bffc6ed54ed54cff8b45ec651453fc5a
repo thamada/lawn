@@ -1,20 +1,6 @@
-Thu Apr 28 20:26:17 JST 2016
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-
-if($ARGV[0]){
-    $is_stop = 1;
-}
-
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
-
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
-}
-
-1;
+Thu May 19 19:28:05 JST 2016
+3
+0
+1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
+1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
+1 0 0 0 -0.93240737 -0.86473146 -0
