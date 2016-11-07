@@ -1,4 +1,5 @@
-Fri Oct 14 19:37:35 JST 2016
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
-OK
+Mon Nov  7 19:28:04 JST 2016
+-- ProjNav VHDL simulation template: sim_local_read_if.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
