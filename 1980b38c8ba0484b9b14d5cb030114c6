@@ -1,17 +1,2 @@
-Fri Dec 30 19:29:40 JST 2016
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+Sat Jan  7 19:29:24 JST 2017
+set AD {../rtl/ifpga.ucf}
