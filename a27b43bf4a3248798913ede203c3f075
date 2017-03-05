@@ -1,74 +1,69 @@
-Thu Feb 23 19:37:33 JST 2017
---------------------------------------------------------------------------------
-Release 6.2.03i Trace G.28
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+Sun Mar  5 20:19:39 JST 2017
+-- Copyright (c) by PGR project
+-- All rights reserved.
+-- Auther Tsuyoshi Hamada
+-- for JDIM=4 (JDATA_WIDTH =< 128)
+-- but DEPTH=16384
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
+entity jmem is
+  port (
+    rst        : in  std_logic; -- not used
+    we         : in  std_logic;
+    wclk       : in  std_logic;
+    wadr       : in  std_logic_vector(15 downto 0);
+    rclk       : in  std_logic;
+    radr       : in  std_logic_vector(15 downto 0);
+    idata      : in  std_logic_vector(63 downto 0);
+    odata      : out  std_logic_vector(127 downto 0)  -- for G5
+--  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
+--  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+  );
+end jmem;
 
+architecture rtl of jmem is
 
-Design file:              top.ncd
-Physical constraint file: top.pcf
-Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
-Report level:             error report
+component dpram
+	port (
+	wadr: IN std_logic_VECTOR(13 downto 0);
+	radr: IN std_logic_VECTOR(13 downto 0);
+	wclk: IN std_logic;
+	rclk: IN std_logic;
+	din: IN std_logic_VECTOR(63 downto 0);
+	dout: OUT std_logic_VECTOR(63 downto 0);
+	we: IN std_logic);
+end component;
 
-Environment Variable      Effect 
---------------------      ------ 
-NONE                      No environment variables were set
---------------------------------------------------------------------------------
+signal we0,we1,we2,we3 : std_logic;
+signal adr0,adr1,nadr0,nadr1 : std_logic;
 
-INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
-   option. All paths that are not constrained will be reported in the
-   unconstrained paths section(s) of the report.
+begin
 
-================================================================================
-Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
+adr0  <= wadr(0);
+nadr0 <= NOT wadr(0);
 
- 0 items analyzed, 0 timing errors detected.
---------------------------------------------------------------------------------
+we0  <= we and nadr0;  -- we & wadr(0)="0"
+we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-================================================================================
-Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+u0 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata,
+      dout=> odata(63 downto 0),
+      we  => we0);
 
- 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  19.569ns.
---------------------------------------------------------------------------------
+u1 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata, 
+      dout=> odata(127 downto 64),
+      we  => we1);
 
-================================================================================
-Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
-
- 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  14.739ns.
---------------------------------------------------------------------------------
-
-
-All constraints were met.
-
-
-Data Sheet report:
------------------
-All values displayed in nanoseconds (ns)
-
-Clock to Setup on destination clock CK66
----------------+---------+---------+---------+---------+
-               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
-Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
----------------+---------+---------+---------+---------+
-CK66           |   19.959|         |         |         |
----------------+---------+---------+---------+---------+
-
-
-Timing summary:
----------------
-
-Timing errors: 0  Score: 0
-
-Constraints cover 1709651 paths, 0 nets, and 63904 connections
-
-Design statistics:
-   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
-
-
-Analysis completed Mon Jun 13 23:42:18 2005
---------------------------------------------------------------------------------
-
-Peak Memory Usage: 279 MB
+end rtl;
