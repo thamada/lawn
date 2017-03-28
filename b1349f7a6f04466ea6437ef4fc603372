@@ -1,34 +1,48 @@
-Thu Mar  2 19:44:19 JST 2017
+Tue Mar 28 19:27:07 JST 2017
 #include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
 {
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+    int i,j,d;
+    double v2,r2;
+    double dx[3];
+    double Ep;  /* 系の位置エネルギー */
+    double Em;  /* 系の運動エネルギー */
+    double Ea;  /* 系の全力学的エネルギー */
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
+
+    /* 系の位置エネルギー Ep を計算する。 */ 
+    Ep=0.0;
+    for(i=0;i<n-1;i++){
+        for(j=i+1;j<n;j++){
+            r2 = eps2;           /* 相対距離初期化 */
+            for(d=0;d<3;d++){
+                dx[d] = x[j][d] - x[i][d];
+                r2 += dx[d] * dx[d];
+            }
+            Ep -= m[i] * m[j] * ( 1/sqrt(r2)  );
+        }
     }
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
 
-    fwrite(x, n*24,1,fp);
-
-    /*
+    /* 系の運動エネルギー Em を計算する。 */ 
+    Em=0.0;
     for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
+        v2=0.0;    /* 絶対速度2乗値初期化 */
+        for(d=0;d<3;d++){
+            v2 += v[i][d]*v[i][d];
+        }
+        Em += 0.5 * m[i] * v2;
     }
-    */
 
-    //    fclose(fp);
-    fflush(fp);
+    /* 系の全力学的エネルギー Ea を計算する。 */ 
+    Ea=0.0;
+    Ea = Em + Ep;
+
+/*    printf("Emove=%1.6e,   Epot=%1.3e,   Eall=%1.25e\n",Em,Ep,Ea);*/
+/*    printf("%e\n",Ea);*/
+
+    return Ea;
 }
-
