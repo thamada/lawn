@@ -1,40 +1,17 @@
-Sat Mar 18 19:27:58 JST 2017
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
+Mon Apr  3 19:55:13 JST 2017
+#!/usr/bin/perl
 
+my $N = 300;
+my $XSCALE = 1.0;
+my $YSCALE = 1.0;
 
+srand(12345);
 
+print $N ."\n";
 
-
-
-
+for(my $i=0;$i<$N;$i++){
+    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
+    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
+    my $s = sprintf("%e\t%e\n",$x,$y);
+    print $s;
+}
