@@ -1,3 +1,17 @@
-Tue Apr 25 20:10:25 JST 2017
-(custom-set-variables)
-(custom-set-faces)
+Thu Apr 27 19:34:06 JST 2017
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
