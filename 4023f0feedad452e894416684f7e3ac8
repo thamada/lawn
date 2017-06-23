@@ -1,2 +1,19 @@
-Mon May 15 20:06:43 JST 2017
-36330	80000000000000	4	FFFFFFFFFFFFFA00	
+Fri Jun 23 20:07:27 JST 2017
+//============================================================================
+struct flops_member {
+  double Gflops;
+  double start_time;
+  double force_time;
+  int nbody;
+  int times;
+  int nstep;
+  int nskip;
+};
+
+void flops_initialize(struct flops_member *fm, int n, int nskip);
+void flops_check(struct flops_member *fm);
+
+void flops_ftime_init(struct flops_member *fm);
+void flops_ftime_save(struct flops_member *fm);
+
+
