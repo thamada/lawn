@@ -1,15 +1,30 @@
-2017年  8月 14日 月曜日 10:25:17 JST
-#!/usr/bin/env python3
-import cv2
-import glob
-from datetime import datetime
-import time 
+2017年  8月 14日 月曜日 11:51:06 JST
+#!/usr/bin/perl
 
-while(True):
-    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-    print(tnow)
 
-    with open(".tc~", "w") as file:
-        file.write(tnow +"\n")
+my $is_stop = 0;
+my $nboard = 0;
 
-    time.sleep(3)
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
+
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
+
+print $nbuf ." buffers exists\n";
+
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
+
+1;
