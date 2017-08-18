@@ -1,68 +1,90 @@
-2017年  8月 15日 火曜日 09:36:51 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "flops.h"
-//#include "pg_util.h" // double e_time(void)
+2017年  8月 18日 金曜日 10:45:21 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 00:18:35 hamada>
+import Message
+import numpy as np
+import cv2
+from datetime import datetime
 
-extern double e_time(void);
-
-void flops_initialize(struct flops_member* fm, int n, int nskip)
-{
-  (*fm).nbody = n;
-  (*fm).nskip = nskip;
-  (*fm).times = 0;
-  (*fm).nstep = 0;
-  (*fm).force_time = 0.0;
-  (*fm).start_time = e_time();
-}
-
-void flops_check(struct flops_member* fm)
-{
-  int n = (*fm).nbody;
-  int nskip = (*fm).nskip;
-  int nstep = (*fm).nstep;
-  int times = (*fm).times;
-  double t_start = (*fm).start_time;
-  double tmisc,tall;
-  double nope,Gflops;
-  double t_end;
-  nstep++;
-
-  if((times % nskip) != (nskip-1)){
-    times++;
-  } else {
-    double tforce = (*fm).force_time;
-    t_end = e_time();
-    tall = t_end - t_start;
-    tmisc = tall - tforce;
-    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
-    //       GRAVITY,  LEAPFLOG
-    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
-    fprintf(stderr,"[%d steps]\t",nstep);
-    fprintf(stderr,"LapTime %2.2f sec\t",tall);
-    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
-
-    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
-    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
-
-    times = 0;
-    t_start = e_time();
-  }
-  (*fm).times = times;
-  (*fm).nstep = nstep;
-  (*fm).start_time = t_start;
-}
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
 
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-void flops_ftime_init(struct flops_member *fm){
-  (*fm).force_time = e_time();
-}
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-void flops_ftime_save(struct flops_member *fm){
-  double dum = (*fm).force_time;
-  (*fm).force_time = e_time() - dum;
-}
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
 
+def get_bar_length(msg, x):
+    class_id = msg.get_classId()
+    dx = 25
+    z = 0
+    # if class_id == 5: z = x + dx/2; x = int(z)
+    # if class_id == 6: z = x + dx*2; x = int(z)
+    # if class_id == 4: z = x - dx*2; x = int(z)
+
+    if class_id == 0: z = x + dx*2; x = int(z)
+    if class_id in {0,4,5,6,7,8}: 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        print (tnow,': ', msg.class_count)
+    return (x)
+
+if __name__ == '__main__':
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 120)
+    image  = image0.copy()
+
+    window_title = "AI sensor"
+    x = 0
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
+
+    while(True):
+        x = get_bar_length(msg, x)
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
