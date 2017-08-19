@@ -1,71 +1,90 @@
-2017年  8月 15日 火曜日 10:34:28 JST
-#Time-stamp: <2017-06-23 16:16:23 hamada>
+2017年  8月 19日 土曜日 09:54:48 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 00:18:35 hamada>
+import Message
+import numpy as np
+import cv2
+from datetime import datetime
 
-CONFIG=./etc/config.txt
-MODEL=./etc/model.txt
-WEIGHTS=./backup/m10_150000.weights
-LOGFILE=./log.2gpu
-GPUID= -gpus 0,1
-
-all:
-	@echo 'make run'
-
-r: run
-
-run:
-	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
-
-run.1gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
-
-run.2gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
-
-run.4gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
 
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-demo:
-	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
-#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
+
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
 
-photo:
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+def get_bar_length(msg, x):
+    class_id = msg.get_classId()
+    dx = 25
+    z = 0
+    # if class_id == 5: z = x + dx/2; x = int(z)
+    # if class_id == 6: z = x + dx*2; x = int(z)
+    # if class_id == 4: z = x - dx*2; x = int(z)
 
+    if class_id == 0: z = x + dx*2; x = int(z)
+    if class_id in {0,4,5,6,7,8}: 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        print (tnow,': ', msg.class_count)
+    return (x)
 
-clean:
-	rm -rf bad.list .*~ *~ ./predictions.jpg
-	rm -rf backup/model*
+if __name__ == '__main__':
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 120)
+    image  = image0.copy()
 
+    window_title = "AI sensor"
+    x = 0
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
 
-c: clean
+    while(True):
+        x = get_bar_length(msg, x)
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
 
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
 
-0.check:
-	cd backup/;md5sum --check md5sum.txt
-
-check:
-	grep ID.000[0-3] etc/all.txt |wc -l
-	grep ID.0004 etc/all.txt |wc -l
-	grep ID.0005 etc/all.txt |wc -l
-	grep ID.0006 etc/all.txt |wc -l
-	grep ID.000[7-9] etc/all.txt |wc -l
-	grep ID.0004 etc/list.train.txt |wc -l
-	grep ID.0005 etc/list.train.txt |wc -l
-	grep ID.0006 etc/list.train.txt |wc -l
-	grep ID.0004 etc/list.valid.txt |wc -l
-	grep ID.0005 etc/list.valid.txt |wc -l
-	grep ID.0006 etc/list.valid.txt |wc -l
-
-check.iou:
-	\rm -f IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
-	\grep IOU IOU.txt
+    cv2.destroyAllWindows()
