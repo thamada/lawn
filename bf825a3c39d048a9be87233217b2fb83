@@ -1,42 +1,26 @@
-2017å¹´  8æœˆ 16æ—¥ æ°´æ›œæ—¥ 09:37:17 JST
-/**
-   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
-   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
-   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
-*/
-
+2017å¹´  9æœˆ  2æ—¥ åœŸæ›œæ—¥ 09:26:23 JST
 #include <stdio.h>
-#include <math.h>
 #include "nbodysim.h"
 
-void force_on_host(double x[][DIM],
-	   double m[],
-	   double eps2,
-	   double a[][DIM],
-	   int n)
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
 {
-  int i,j,d;
-  double dx[3];
+  int i;
+  static int flag=0;
+  static FILE* fp;
 
-  /* a[][]‚Ì‰Šú‰» */
-  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
-
-  /* ‘ŠŒİì—p‚ÌŒvZ  */
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] +=  m[j]*dx[d]/r3;
-	a[j][d] += -m[i]*dx[d]/r3;
-      }
-    }
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
   }
 
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
 
+  fflush(fp);
 }
+
