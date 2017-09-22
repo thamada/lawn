@@ -1,2 +1,22 @@
-2017年  9月 19日 火曜日 11:14:32 JST
-EN pfpga_config NULL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd sub00/vhpl00
+2017年  9月 22日 金曜日 09:13:54 JST
+# Xilinx CORE Generator 6.2.03i
+# User = Administrator
+Initializing default project...
+Loading plug-ins...
+All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
+# busformat=BusFormatAngleBracketNotRipped
+# designflow=VHDL
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+# flowvendor=Foundation_iSE
+# formalverification=None
+# simulationoutputproducts=VHDL
+# xilinxfamily=Virtex2
+# outputoption=DesignFlow
+# overwritefiles=Default
+# simvendor=ModelSim
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+SETPROJECT .
+Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
