@@ -1,206 +1,387 @@
-2017年  9月 22日 金曜日 10:10:30 JST
-#ChipScope Core Inserter Project File Version 3.0
-#Sat Nov 20 01:19:00 JST 2004
-Project.device.designInputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
-Project.device.designOutputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
-Project.device.deviceFamily=2
-Project.device.enableRPMs=true
-Project.device.outputDirectory=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\_ngo
-Project.device.useSRL16=true
-Project.filter.dimension=19
-Project.filter<0>=*DBUS_idata*
-Project.filter<10>=*DMAR_ENA*
-Project.filter<11>=*DMAW_ENA*
-Project.filter<12>=*DMAW_*
-Project.filter<13>=*Port*
-Project.filter<14>=*Port
-Project.filter<15>=Hit*
-Project.filter<16>=DEBUG*
-Project.filter<17>=DEBUG
-Project.filter<18>=CLK
-Project.filter<1>=*DBUS_HiZ*
-Project.filter<2>=*MEM_DTIB*
-Project.filter<3>=*MEM_WE*B
-Project.filter<4>=*MEM_WE*
-Project.filter<5>=*MEM_LE**
-Project.filter<6>=*MEM_DTOB*
-Project.filter<7>=*MEM_ADB*
-Project.filter<8>=*MEM_AD*
-Project.filter<9>=*
-Project.icon.boundaryScanChain=0
-Project.icon.disableBUFGInsertion=false
-Project.icon.enableExtTriggerIn=false
-Project.icon.enableExtTriggerOut=false
-Project.icon.triggerInPinName=
-Project.icon.triggerOutPinName=
-Project.unit.dimension=1
-Project.unit<0>.clockChannel=CLK
-Project.unit<0>.clockEdge=Rising
-Project.unit<0>.dataDepth=2048
-Project.unit<0>.dataEqualsTrigger=true
-Project.unit<0>.dataPortWidth=16
-Project.unit<0>.enableGaps=false
-Project.unit<0>.enableTimestamps=false
-Project.unit<0>.timestampDepth=0
-Project.unit<0>.timestampWidth=0
-Project.unit<0>.triggerChannel<0><0>=DEBUG_CS_CLK0
-Project.unit<0>.triggerChannel<0><100>=MEM_DTIB<14>
-Project.unit<0>.triggerChannel<0><101>=MEM_DTIB<15>
-Project.unit<0>.triggerChannel<0><102>=MEM_DTIB<32>
-Project.unit<0>.triggerChannel<0><103>=MEM_DTIB<33>
-Project.unit<0>.triggerChannel<0><104>=MEM_DTIB<34>
-Project.unit<0>.triggerChannel<0><105>=MEM_DTIB<35>
-Project.unit<0>.triggerChannel<0><106>=MEM_DTIB<36>
-Project.unit<0>.triggerChannel<0><107>=MEM_DTIB<37>
-Project.unit<0>.triggerChannel<0><108>=MEM_DTIB<38>
-Project.unit<0>.triggerChannel<0><109>=MEM_DTIB<39>
-Project.unit<0>.triggerChannel<0><10>=DBUS_Port<7>
-Project.unit<0>.triggerChannel<0><110>=MEM_DTIB<40>
-Project.unit<0>.triggerChannel<0><111>=MEM_DTIB<41>
-Project.unit<0>.triggerChannel<0><112>=MEM_DTIB<42>
-Project.unit<0>.triggerChannel<0><113>=MEM_DTIB<43>
-Project.unit<0>.triggerChannel<0><114>=MEM_DTIB<44>
-Project.unit<0>.triggerChannel<0><115>=MEM_DTIB<45>
-Project.unit<0>.triggerChannel<0><116>=MEM_DTIB<46>
-Project.unit<0>.triggerChannel<0><117>=MEM_DTIB<47>
-Project.unit<0>.triggerChannel<0><118>=DBUS_HiZ
-Project.unit<0>.triggerChannel<0><119>=pgpg1 DBUS_idata<0>
-Project.unit<0>.triggerChannel<0><11>=DBUS_Port<8>
-Project.unit<0>.triggerChannel<0><120>=pgpg1 DBUS_idata<1>
-Project.unit<0>.triggerChannel<0><121>=pgpg1 DBUS_idata<2>
-Project.unit<0>.triggerChannel<0><122>=pgpg1 DBUS_idata<3>
-Project.unit<0>.triggerChannel<0><123>=pgpg1 DBUS_idata<4>
-Project.unit<0>.triggerChannel<0><124>=pgpg1 DBUS_idata<5>
-Project.unit<0>.triggerChannel<0><125>=pgpg1 DBUS_idata<6>
-Project.unit<0>.triggerChannel<0><126>=pgpg1 DBUS_idata<7>
-Project.unit<0>.triggerChannel<0><127>=pgpg1 DBUS_idata<8>
-Project.unit<0>.triggerChannel<0><128>=pgpg1 DBUS_idata<9>
-Project.unit<0>.triggerChannel<0><129>=pgpg1 DBUS_idata<10>
-Project.unit<0>.triggerChannel<0><12>=DBUS_Port<9>
-Project.unit<0>.triggerChannel<0><130>=pgpg1 DBUS_idata<11>
-Project.unit<0>.triggerChannel<0><131>=pgpg1 DBUS_idata<12>
-Project.unit<0>.triggerChannel<0><132>=pgpg1 DBUS_idata<13>
-Project.unit<0>.triggerChannel<0><133>=pgpg1 DBUS_idata<14>
-Project.unit<0>.triggerChannel<0><134>=pgpg1 DBUS_idata<15>
-Project.unit<0>.triggerChannel<0><135>=pgpg1 DBUS_idata<32>
-Project.unit<0>.triggerChannel<0><136>=pgpg1 DBUS_idata<33>
-Project.unit<0>.triggerChannel<0><137>=pgpg1 DBUS_idata<34>
-Project.unit<0>.triggerChannel<0><138>=pgpg1 DBUS_idata<35>
-Project.unit<0>.triggerChannel<0><139>=pgpg1 DBUS_idata<36>
-Project.unit<0>.triggerChannel<0><13>=DBUS_Port<10>
-Project.unit<0>.triggerChannel<0><140>=pgpg1 DBUS_idata<37>
-Project.unit<0>.triggerChannel<0><141>=pgpg1 DBUS_idata<38>
-Project.unit<0>.triggerChannel<0><142>=pgpg1 DBUS_idata<39>
-Project.unit<0>.triggerChannel<0><143>=pgpg1 DBUS_idata<40>
-Project.unit<0>.triggerChannel<0><144>=pgpg1 DBUS_idata<41>
-Project.unit<0>.triggerChannel<0><145>=pgpg1 DBUS_idata<42>
-Project.unit<0>.triggerChannel<0><146>=pgpg1 DBUS_idata<43>
-Project.unit<0>.triggerChannel<0><147>=pgpg1 DBUS_idata<44>
-Project.unit<0>.triggerChannel<0><148>=pgpg1 DBUS_idata<45>
-Project.unit<0>.triggerChannel<0><149>=pgpg1 DBUS_idata<46>
-Project.unit<0>.triggerChannel<0><14>=DBUS_Port<11>
-Project.unit<0>.triggerChannel<0><150>=pgpg1 DBUS_idata<47>
-Project.unit<0>.triggerChannel<0><15>=DBUS_Port<12>
-Project.unit<0>.triggerChannel<0><16>=DBUS_Port<13>
-Project.unit<0>.triggerChannel<0><17>=DBUS_Port<14>
-Project.unit<0>.triggerChannel<0><18>=DBUS_Port<15>
-Project.unit<0>.triggerChannel<0><19>=DBUS_Port<32>
-Project.unit<0>.triggerChannel<0><1>=pgpg1 Hit_PGPG_REG2
-Project.unit<0>.triggerChannel<0><20>=DBUS_Port<33>
-Project.unit<0>.triggerChannel<0><21>=DBUS_Port<34>
-Project.unit<0>.triggerChannel<0><22>=DBUS_Port<35>
-Project.unit<0>.triggerChannel<0><23>=DBUS_Port<36>
-Project.unit<0>.triggerChannel<0><24>=DBUS_Port<37>
-Project.unit<0>.triggerChannel<0><25>=DBUS_Port<38>
-Project.unit<0>.triggerChannel<0><26>=DBUS_Port<39>
-Project.unit<0>.triggerChannel<0><27>=DBUS_Port<40>
-Project.unit<0>.triggerChannel<0><28>=DBUS_Port<41>
-Project.unit<0>.triggerChannel<0><29>=DBUS_Port<42>
-Project.unit<0>.triggerChannel<0><2>=pgpg1 Hit_PGPG_REG3
-Project.unit<0>.triggerChannel<0><30>=DBUS_Port<43>
-Project.unit<0>.triggerChannel<0><31>=DBUS_Port<44>
-Project.unit<0>.triggerChannel<0><32>=DBUS_Port<45>
-Project.unit<0>.triggerChannel<0><33>=DBUS_Port<46>
-Project.unit<0>.triggerChannel<0><34>=DBUS_Port<47>
-Project.unit<0>.triggerChannel<0><35>=pgpg1 DMAW_ENABLE<0>
-Project.unit<0>.triggerChannel<0><36>=pgpg1 DMAW_ENABLE<1>
-Project.unit<0>.triggerChannel<0><37>=pgpg1 DMAW_ENABLE<2>
-Project.unit<0>.triggerChannel<0><38>=pgpg1 DMAW_ENABLE<3>
-Project.unit<0>.triggerChannel<0><39>=pgpg1 DMAR_ENABLE<0>
-Project.unit<0>.triggerChannel<0><3>=DBUS_Port<0>
-Project.unit<0>.triggerChannel<0><40>=pgpg1 DMAR_ENABLE<1>
-Project.unit<0>.triggerChannel<0><41>=pgpg1 DMAR_ENABLE<2>
-Project.unit<0>.triggerChannel<0><42>=pgpg1 DMAR_ENABLE<3>
-Project.unit<0>.triggerChannel<0><43>=MEM_ADB<0>
-Project.unit<0>.triggerChannel<0><44>=MEM_ADB<1>
-Project.unit<0>.triggerChannel<0><45>=MEM_ADB<2>
-Project.unit<0>.triggerChannel<0><46>=MEM_ADB<3>
-Project.unit<0>.triggerChannel<0><47>=MEM_ADB<4>
-Project.unit<0>.triggerChannel<0><48>=MEM_ADB<5>
-Project.unit<0>.triggerChannel<0><49>=MEM_ADB<6>
-Project.unit<0>.triggerChannel<0><4>=DBUS_Port<1>
-Project.unit<0>.triggerChannel<0><50>=MEM_ADB<7>
-Project.unit<0>.triggerChannel<0><51>=MEM_ADB<8>
-Project.unit<0>.triggerChannel<0><52>=MEM_DTOB<0>
-Project.unit<0>.triggerChannel<0><53>=MEM_DTOB<1>
-Project.unit<0>.triggerChannel<0><54>=MEM_DTOB<2>
-Project.unit<0>.triggerChannel<0><55>=MEM_DTOB<3>
-Project.unit<0>.triggerChannel<0><56>=MEM_DTOB<4>
-Project.unit<0>.triggerChannel<0><57>=MEM_DTOB<5>
-Project.unit<0>.triggerChannel<0><58>=MEM_DTOB<6>
-Project.unit<0>.triggerChannel<0><59>=MEM_DTOB<7>
-Project.unit<0>.triggerChannel<0><5>=DBUS_Port<2>
-Project.unit<0>.triggerChannel<0><60>=MEM_DTOB<8>
-Project.unit<0>.triggerChannel<0><61>=MEM_DTOB<9>
-Project.unit<0>.triggerChannel<0><62>=MEM_DTOB<10>
-Project.unit<0>.triggerChannel<0><63>=MEM_DTOB<11>
-Project.unit<0>.triggerChannel<0><64>=MEM_DTOB<12>
-Project.unit<0>.triggerChannel<0><65>=MEM_DTOB<13>
-Project.unit<0>.triggerChannel<0><66>=MEM_DTOB<14>
-Project.unit<0>.triggerChannel<0><67>=MEM_DTOB<15>
-Project.unit<0>.triggerChannel<0><68>=MEM_DTOB<32>
-Project.unit<0>.triggerChannel<0><69>=MEM_DTOB<33>
-Project.unit<0>.triggerChannel<0><6>=DBUS_Port<3>
-Project.unit<0>.triggerChannel<0><70>=MEM_DTOB<34>
-Project.unit<0>.triggerChannel<0><71>=MEM_DTOB<35>
-Project.unit<0>.triggerChannel<0><72>=MEM_DTOB<36>
-Project.unit<0>.triggerChannel<0><73>=MEM_DTOB<37>
-Project.unit<0>.triggerChannel<0><74>=MEM_DTOB<38>
-Project.unit<0>.triggerChannel<0><75>=MEM_DTOB<39>
-Project.unit<0>.triggerChannel<0><76>=MEM_DTOB<40>
-Project.unit<0>.triggerChannel<0><77>=MEM_DTOB<41>
-Project.unit<0>.triggerChannel<0><78>=MEM_DTOB<42>
-Project.unit<0>.triggerChannel<0><79>=MEM_DTOB<43>
-Project.unit<0>.triggerChannel<0><7>=DBUS_Port<4>
-Project.unit<0>.triggerChannel<0><80>=MEM_DTOB<44>
-Project.unit<0>.triggerChannel<0><81>=MEM_DTOB<45>
-Project.unit<0>.triggerChannel<0><82>=MEM_DTOB<46>
-Project.unit<0>.triggerChannel<0><83>=MEM_DTOB<47>
-Project.unit<0>.triggerChannel<0><84>=MEM_WELB
-Project.unit<0>.triggerChannel<0><85>=MEM_WEHB
-Project.unit<0>.triggerChannel<0><86>=MEM_DTIB<0>
-Project.unit<0>.triggerChannel<0><87>=MEM_DTIB<1>
-Project.unit<0>.triggerChannel<0><88>=MEM_DTIB<2>
-Project.unit<0>.triggerChannel<0><89>=MEM_DTIB<3>
-Project.unit<0>.triggerChannel<0><8>=DBUS_Port<5>
-Project.unit<0>.triggerChannel<0><90>=MEM_DTIB<4>
-Project.unit<0>.triggerChannel<0><91>=MEM_DTIB<5>
-Project.unit<0>.triggerChannel<0><92>=MEM_DTIB<6>
-Project.unit<0>.triggerChannel<0><93>=MEM_DTIB<7>
-Project.unit<0>.triggerChannel<0><94>=MEM_DTIB<8>
-Project.unit<0>.triggerChannel<0><95>=MEM_DTIB<9>
-Project.unit<0>.triggerChannel<0><96>=MEM_DTIB<10>
-Project.unit<0>.triggerChannel<0><97>=MEM_DTIB<11>
-Project.unit<0>.triggerChannel<0><98>=MEM_DTIB<12>
-Project.unit<0>.triggerChannel<0><99>=MEM_DTIB<13>
-Project.unit<0>.triggerChannel<0><9>=DBUS_Port<6>
-Project.unit<0>.triggerConditionCountWidth=0
-Project.unit<0>.triggerMatchCount<0>=1
-Project.unit<0>.triggerMatchCountWidth<0><0>=0
-Project.unit<0>.triggerMatchType<0><0>=1
-Project.unit<0>.triggerPortCount=1
-Project.unit<0>.triggerPortIsData<0>=true
-Project.unit<0>.triggerPortWidth<0>=151
-Project.unit<0>.triggerSequencerLevels=16
-Project.unit<0>.triggerSequencerType=1
-Project.unit<0>.type=ilapro
+2017年  9月 22日 金曜日 10:53:22 JST
+
+-- **************************************
+--               INREVIUM                
+-- **************************************
+
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_TARGETCNT MODEL
+--------------------------------------------------------------------------------
+-- PCI64_CORE Target Access Control Module
+--------------------------------------------------------------------------------
+-- File                      : PCI_TARGETCNT.vhd
+-- Entity                    : PCI_TARGETCNT
+-- Architecture              : PCI_TARGETCNT_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         �V�K
+--------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+
+entity PCI_TARGETCNT is
+	port (
+	-- Interface to PCI Logicore.
+		FRAMEQ_N		: in	std_logic;							-- Latched FRAME# Signal
+		REQ64Q_N		: in	std_logic;							-- Latched REQ64# Signal
+		TRDYQ_N 		: in	std_logic;							-- Latched TRDY# Signal
+		IRDYQ_N 		: in	std_logic;							-- Latched IRDY# Signal
+		STOPQ_N 		: in	std_logic;							-- Latched STOP# Signal
+		DEVSELQ_N		: in	std_logic;							-- Latched DEVSEL# Signal
+		ACK64Q_N		: in	std_logic;							-- Latched ACK64# Signal
+
+		ADDR			: in	std_logic_vector( 31 downto 0);		-- Latched Target Address Bus
+		ADIO			: inout std_logic_vector( 63 downto 0);		-- Internal Address/Data Bus
+
+		CFG_VLD 		: in	std_logic;							-- Configulation Cycle Valid
+		CFG_HIT 		: in	std_logic;							-- Configuration Cycle Start
+		C_TERM			: out	std_logic;							-- Configuraton Cycle Terminate Signal
+		C_READY 		: out	std_logic;							-- Configuration Data Transfer Ready Signal
+
+		ADDR_VLD		: in	std_logic;							-- Internal Address Valid
+		BASE_HIT		: in	std_logic_vector(  7 downto 0);		-- Base Address Hit
+
+		S_CYCLE64		: in	std_logic;							-- 64 bit Transaction Go On
+		S_TERM			: out	std_logic;							-- Target Transaction Terminate Signal
+		S_READY 		: out	std_logic;							-- Target Transaction Data Transfer Ready Siganl
+		S_ABORT 		: out	std_logic;							-- Target Abort Request Signal
+		S_WRDN			: in	std_logic;							-- Target Transaction Data Direction (0:Write, 1:Read)
+		S_SRC_EN		: in	std_logic;							-- Target Transaction Data Source Enable
+		S_DATA_VLD		: in	std_logic;							-- Target Transaction Data Phase Valid Signal
+		S_CBE			: in	std_logic_vector(  7 downto 0);		-- Target Command & Byte Enable Signal
+		PCI_CMD 		: in	std_logic_vector( 15 downto 0);		-- Latched Bus Command
+
+		IDLE			: in	std_logic;							-- Target Idle State
+		B_BUSY			: in	std_logic;							-- PCI Bus Busy State
+		S_DATA			: in	std_logic;							-- Target Data Transfer State
+		BACKOFF 		: in	std_logic;							-- Target State Machine Transaction End State
+
+		SLOT64			: out	std_logic;							-- 64 bit Extended Signal Eable
+		PERRQ_N 		: in	std_logic;							-- latched PERR# Signal
+		SERRQ_N 		: in	std_logic;							-- Latched SERR# Signal
+		KEEPOUT 		: out	std_logic;							-- ADIO Bus Disable Request Signal
+
+		CSR 			: in	std_logic_vector( 39 downto 0);		-- Command/Status Register State
+		SUB_DATA		: out	std_logic_vector( 31 downto 0);		-- Sub-Identification
+		CFG 			: in	std_logic_vector(255 downto 0);		-- Confiuration Data
+
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
+
+	-- Internal Block Target Access Control Signal
+		TARGET_AD		: out	std_logic_vector(31 downto 0);		-- Target Access Address
+
+		FIFO_RDDT		: in	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: in	std_logic;							-- FIFO Read Data Enable Signel
+
+	-- Base Address 0 Area (Internal Register) Target Access Control Signal
+		BAR0_WRDT		: out	std_logic_vector(31 downto 0);		-- BAR0 Area Target Access Write Data
+		BAR0_WR			: out	std_logic_vector( 3 downto 0);		-- BAR0 Area Target Access Write Signal
+		BAR0_RD			: out	std_logic;							-- BAR0 Area Target Access Read  Signal
+
+	-- Base Address 1 Area (Internal Memoery) Target Access Control Signal
+		BAR1_WRDT		: out	std_logic_vector(63 downto 0);		-- BAR1 Area Target Access Write Data
+		BAR1_WR			: out	std_logic_vector( 7 downto 0);		-- BAR1 Area Target Access Write Signal
+		BAR1_RD			: out	std_logic							-- BAR1 Area Target Access Read  Signal
+		);
+end PCI_TARGETCNT;
+
+
+architecture PCI_TARGETCNT_rtl of PCI_TARGETCNT is
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+-- Internal Block R/W Select Signal
+--
+--	BAR0 : Internal Register
+--	BAR1 : Internal Memory Block
+
+	signal	BAR0_WRENB		: std_logic;							-- BAR0 Block Write Select Signal
+	signal	BAR0_RDENB		: std_logic;							-- BAR0 Block Read  Select Signal
+
+	signal	BAR1_WRENB		: std_logic;							-- BAR1 Block Write Select Signal
+	signal	BAR1_RDENB		: std_logic;							-- BAR1 Block Read  Select Signal
+
+-- Internal Block Access Control Signal
+	signal	TARGET_ADRS		: std_logic_vector(31 downto 2);		-- Target Access Address
+
+	signal	PRERD_CNT		: std_logic_vector(3 downto 0);			-- Pre READ Signal Assert Control
+
+	signal	BAR0_PRERD		: std_logic;							-- BAR0 Block Pre-Read Signal
+	signal	BAR1_PRERD		: std_logic;							-- BAR1 Block Pre-Read Signal
+
+	signal	BAR0_READ		: std_logic;							-- Internal BAR0 Block Read Signal
+	signal	BAR1_READ		: std_logic;							-- Internal BAR1 Block Read Signal
+
+	signal	DTRD_FLG		: std_logic;							-- Data Read Flag
+
+
+
+begin
+
+
+
+--***************************************************************
+--*
+--*  Base Address 0 Area Access Control Signal Generate Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) R/W Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_WRENB <= '0';
+			BAR0_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1') then										------ Base Address 0 Area Access ?
+				BAR0_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR0_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR0_WRENB <= '0';											------ Select Signal Clear
+				BAR0_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR0_WRENB,S_DATA_VLD,S_CBE) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WR <= (not S_CBE(3 downto 0));								------ High Word Write Signal Set
+		else
+			BAR0_WR <= (others => '0');										------ BAR0_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR0_WRENB,S_DATA_VLD,ADIO) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WRDT(31 downto  0) <= ADIO(31 downto 0);					------ Low  Word Write Data Set
+		else
+			BAR0_WRDT <= (others => '0');									------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1' and S_WRDN='0') then						------ Base Address 0 Area Read Access ?
+				BAR0_PRERD <= '1';											------ Base Address 0 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR0_PRERD <= '0';											------ Base Address 0 Area Pre-Read End
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		BAR0_READ <= (BAR0_PRERD or S_SRC_EN) and BAR0_RDENB;			------ Data Read Signal Set
+
+		BAR0_RD   <= BAR0_READ;												------ Data Read Signal Output
+
+
+--***************************************************************
+--*
+--*  Base Address 1 Area Access Control Signal Generate Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) R/W Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_WRENB <= '0';
+			BAR1_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1') then										------ Base Address 1 Area Access ?
+				BAR1_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR1_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR1_WRENB <= '0';											------ Select Signal Clear
+				BAR1_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,S_CBE) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WR <= (not S_CBE);										------ S_CBE Signal Set
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WR <= (not S_CBE(3 downto 0)) & "0000";			------ High Word Write Signal Set
+				else
+					BAR1_WR <=  "0000" & (not S_CBE(3 downto 0));			------ High Word Write Signal Set
+				end if;
+			end if;
+		else
+				BAR1_WR <= (others => '0');									------ BAR1_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,ADIO) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WRDT <= ADIO;											------ 64 bit Write Data Output
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WRDT(31 downto  0) <= (others => '0');				------ Low  Word Write Data Clear
+					BAR1_WRDT(63 downto 32) <= ADIO(31 downto 0);			------ High Word Write Data Set
+				else
+					BAR1_WRDT(31 downto  0) <= ADIO(31 downto 0);			------ Low  Word Write Data Set
+					BAR1_WRDT(63 downto 32) <= (others => '0');				------ High Word Write Data Clear
+				end if;
+			end if;
+		else
+				BAR1_WRDT <= (others => '0');								------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1' and S_WRDN='0') then						------ Base Address 1 Area Read Access ?
+				BAR1_PRERD <= '1';											------ Base Address 1 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR1_PRERD <= '0';											------ Base Address 1 Area Pre-Read End
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		BAR1_READ <= (BAR1_PRERD or S_SRC_EN) and BAR1_RDENB;			------ Data Read Signal Set
+
+		BAR1_RD   <= BAR1_READ;												------ Data Read Signal Output
+
+--------------------------------------------------------------------------------
+-- S_READY Signal Output Control Process
+--------------------------------------------------------------------------------
+
+		S_READY <= BAR0_WRENB or BAR1_WRENB or FIFO_RDTEN;					------ Target Write Access Start or Read Data Available
+
+--------------------------------------------------------------------------------
+-- Internal Block Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PRERD_CNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			PRERD_CNT <= PRERD_CNT(2 downto 0) & (BAR0_PRERD or BAR1_PRERD);		------ FRAMEQ_N Signal Sampling
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Target Access Address Output Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			TARGET_ADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (ADDR_VLD='1') then											------- Target Access Start ?
+				TARGET_ADRS <= ADIO(31 downto 2);							------- Start Address Set
+			elsif (S_WRDN='1' and S_DATA_VLD='1') then						------- Target Write Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			elsif (BAR0_READ='1' or BAR1_READ='1') then						------- Target Read Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+		TARGET_AD <= TARGET_ADRS & "00";									------- Target Access Address Output
+
+--------------------------------------------------------------------------------
+-- ADIO Signal Output Control Process
+--------------------------------------------------------------------------------
+
+	process (S_DATA,FIFO_RDTEN,FIFO_RDDT) begin
+		if (S_DATA='1' and FIFO_RDTEN='1') then								------ PCI Target Read Transaction & Data Valid ?
+			ADIO <= FIFO_RDDT;												------ Read Data Output
+		else
+			ADIO <= (others=>'Z');									--: inout std_logic_vector( 63 downto 0);
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  Unused or Fixed PCI Core Signal Control Block
+--*
+--***************************************************************
+
+
+		C_TERM			<= '0'; --: out   std_logic;
+		C_READY 		<= '1'; --: out   std_logic;
+
+		S_TERM			<= '0'; --: out   std_logic;
+		S_ABORT 		<= '0'; --: out   std_logic;
+
+		SLOT64			<= '1'; --: out   std_logic;
+		KEEPOUT 		<= '0'; --: out   std_logic;
+
+		SUB_DATA		<= (others=>'0'); 								--: out	 std_logic_vector( 31 downto 0);
+
+
+
+
+
+end PCI_TARGETCNT_rtl;
