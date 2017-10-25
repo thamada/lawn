@@ -1,211 +1,261 @@
-2017年 10月 23日 月曜日 09:22:37 JST
+2017年 10月 25日 水曜日 09:24:18 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-12 07:43:27 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
--- **************************************
---               INREVIUM                
--- **************************************
+class State(object):
+    def __init__(self):
+        self.is_record = False
+        self.drawing = False
+        self.moving = False
+        self.posi0 = [-1,-1]
+        self.posi1 = [-1,-1]
+        self.posi2 = [-1,-1]
+        self.image = -1
+        self.image_size = [-1, -1] # [height, width]
+        self.image_orig = -1
+        self.class_num = 777
+        self.image_num = 0
 
---------------------------------------------------------------------------------
--- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
---------------------------------------------------------------------------------
--- PCI_RDTFIFO MODEL
---------------------------------------------------------------------------------
--- PCI_RDTFIFO (64 bit X 4 word) Module
---------------------------------------------------------------------------------
--- File                      : PCI_RDTFIFO.vhd
--- Entity                    : PCI_RDTFIFO
--- Architecture              : PCI_RDTFIFO_rtl
---------------------------------------------------------------------------------
--- Project Navigator version : ISE6.2.03i
--- Design Flow               : XST
---------------------------------------------------------------------------------
--- Ver.     Data        Coded by        Contents
--- 01.00    2004/08/10  TED)DDC         �V�K
---------------------------------------------------------------------------------
+    def draw_rect(self):
+        # print ("posi0, posi1: ", self.posi0, self.posi1)
+        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
 
+    def draw_text(self):
+        if(self.is_record):
+            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
+            font_size = 0.8
+            text = "<<%d>>"% (self.image_num)
+            color = (0x0, 0x0, 0xBF)
+            px = int(self.image_size[1]/2)
+            py = 30
+            cv2.putText(self.image, text,(px, py), font, font_size, color)
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+state = State()
 
+def mouse_event(event,x,y,flags,param):
+    global state
 
-entity PCI_RDTFIFO is
-	port (
-		RST 			: in	std_logic;							-- PCI Bus Reset
-		CLK 			: in	std_logic;							-- PCI bus Clock
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
 
-		FIFO_ENB		: in	std_logic;							-- FIFO Enable Signal
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
-		-- FIFO Data Write ports
-		FIFO_WRDT		: in	std_logic_vector(63 downto 0);		-- FIFO Write Data
-		FIFO_WE			: in	std_logic;					  		-- FIFO Write Enable
+    if event == (cv2.EVENT_RBUTTONDOWN): 
+        state.moving = True
+        state.posi2[0] = x
+        state.posi2[1] = y
 
-		-- FIFO Data Read ports
-		FIFO_RE			: in	std_logic;							-- FIFO Read Enable
-		FIFO_RDDT		: out	std_logic_vector(63 downto 0);		-- FIFO Read Data
-		FIFO_RDTEN		: out	std_logic							-- FIFO Read Data Enable
-		);
-end PCI_RDTFIFO;
+    if event == (cv2.EVENT_RBUTTONUP): 
+        state.moving = False
+        state.posi2[0] = x
+        state.posi2[1] = y
+    
 
+    if event == (cv2.EVENT_MOUSEMOVE):
+        if state.moving == True:
+            width  = abs(state.posi0[0] - state.posi1[0])
+            height = abs(state.posi0[1] - state.posi1[1])
+            x0 = x - int(width/2)
+            x1 = x + int(width/2)
+            y0 = y - int(height/2)
+            y1 = y + int(height/2)
 
-architecture PCI_RDTFIFO_rtl of PCI_RDTFIFO is
+            x_min = min(x0, x1)
+            x_max = max(x0, x1)
+            y_min = min(y0, y1)
+            y_max = max(y0, y1)
 
+            if x_min < 0: x_min = 0
+            if y_min < 0: y_min = 0
+            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
+            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
 
---------------------------------------------------
--- signals
---------------------------------------------------
+            state.posi0[0] = x_min
+            state.posi0[1] = y_min
+            state.posi1[0] = x_max
+            state.posi1[1] = y_max
 
---	type FIFO_TYPE is array (0 to 3) of std_logic_vector(64 downto 0);		------ Define Data Buffer Type (65bit X 4)
+def __mouse_event(event,x,y,flags,param):
+    global state
 
-	signal FIFO_DATA0	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 0
-	signal FIFO_DATA1	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 1
-	signal FIFO_DATA2	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 2
-	signal FIFO_DATA3	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 3
-
-	signal FIFO_WRADRS	: std_logic_vector( 1 downto 0);					------ FIFO Write Address
-	signal FIFO_RDADRS	: std_logic_vector( 1 downto 0);					------ FIFO Read Address
-
-
-begin
-
-
---***************************************************************
---*
---*  FIFO Data Write Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- FIFO_DATA0 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA0 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA0 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="00" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA0 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA1 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA1 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA1 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="01" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA1 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA2 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA2 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA2 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="10" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA2 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO_DATA3 Data Write Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_DATA3 <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_DATA3 <= (others=>'0');								------ FIFO Data Clear
-			elsif (FIFO_WRADRS="11" and FIFO_WE='1') then					------ FIFO Data Write ?
-				FIFO_DATA3 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
-			end if;
-		end if;
-	end process;
-
---------------------------------------------------------------------------------
--- FIFO Write Address Control Process
---------------------------------------------------------------------------------
-
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_WRADRS <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_WRADRS <= (others=>'0');								------ FIFO Write Address Clear
-			elsif (FIFO_WE='1') then										------ FIFO Data Write ?
-				FIFO_WRADRS <= FIFO_WRADRS+1;								------ FIFO Write Address Increment
-			end if;
-		end if;
-	end process;
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
 
 
---***************************************************************
---*
---*  FIFO Data Read Control Block
---*
---***************************************************************
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
---------------------------------------------------------------------------------
--- FIFO Read Data Select Control Process
---------------------------------------------------------------------------------
+#------------------------------------------------------------------------ save_data
+def save_data_bbox(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%08d" % fnum
 
-	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
-		case FIFO_RDADRS is
-			when "00"	=> FIFO_RDDT <= FIFO_DATA0(63 downto 0);			------ Buffer0 Read
-			when "01"	=> FIFO_RDDT <= FIFO_DATA1(63 downto 0);			------ Buffer1 Read
-			when "10"	=> FIFO_RDDT <= FIFO_DATA2(63 downto 0);			------ Buffer2 Read
-			when "11"	=> FIFO_RDDT <= FIFO_DATA3(63 downto 0);			------ Buffer3 Read
-			when others => FIFO_RDDT <= (others=>'0');
-		end case;
-	end process;
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
---------------------------------------------------------------------------------
--- FIFO Read Data Enable Signal Select Control Process
---------------------------------------------------------------------------------
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
-	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
-		case FIFO_RDADRS is
-			when "00"	=> FIFO_RDTEN <= FIFO_DATA0(64);					------ Buffer0 Read Enable Signal
-			when "01"	=> FIFO_RDTEN <= FIFO_DATA1(64);					------ Buffer1 Read Enable Signal
-			when "10"	=> FIFO_RDTEN <= FIFO_DATA2(64);					------ Buffer2 Read Enable Signal
-			when "11"	=> FIFO_RDTEN <= FIFO_DATA3(64);					------ Buffer3 Read Enable Signal
-			when others => FIFO_RDTEN <= '0';
-		end case;
-	end process;
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
 
---------------------------------------------------------------------------------
--- FIFO Read Address Control Process
---------------------------------------------------------------------------------
+def save_data_darknet(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4darknet/'
+    fname_body = "image_%08d" % fnum
 
-	process (RST,CLK) begin
-		if (RST='1') then
-			FIFO_RDADRS <= (others=>'0');
-		elsif (CLK'event and CLK='1') then
-			if (FIFO_ENB='0') then											------ FIFO Disable ?
-				FIFO_RDADRS <= (others=>'0');								------ FIFO Read Address Clear
-			elsif (FIFO_RE='1') then										------ FIFO Data Read ?
-				FIFO_RDADRS <= FIFO_RDADRS+1;								------ FIFO Read Address Increment
-			end if;
-		end if;
-	end process;
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    #print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
+
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    #print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
+
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    
+    label_format = 'BBox'
+    label_format = 'darknet'
+
+    if label_format == 'BBox': 
+        with open(ofname_labels, "w") as file:
+            file.write("1\n")
+            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
+
+    if label_format == 'darknet': 
+        img_h, img_w = image_orig.shape[:2]
+        dh = float(img_h)
+        dw = float(img_w)
+        x0 = bbox_posi[0]
+        y0 = bbox_posi[1]
+        x1 = bbox_posi[2]
+        y1 = bbox_posi[3]
+        dnet_x = (x0 + x1)/(2.0*dw)
+        dnet_y = (y0 + y1)/(2.0*dh)
+        dnet_w = (x1 - x0)/dw
+        dnet_h = (y1 - y0)/dh
+        with open(ofname_labels, "w") as file:
+            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
 
 
+def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
+    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
+    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
 
-end PCI_RDTFIFO_rtl;
+#------------------------------------------------------------------------ save_data./
+
+if (__name__ == '__main__'):
+
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        state.image_orig = frame.copy()
+        state.image      = frame.copy()
+        state.image_size[0], state.image_size[1] = frame.shape[:2]
+        state.draw_rect()
+        state.draw_text()
+        cv2.imshow("THBox-Auto.py", state.image)
+        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            if False:
+                basedir = '../log.%d/'% (devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, state.image)
+                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
+                tnow0 = tnow
+            save_data(state.image, state.image_orig, state.image_num)
+            state.image_num += 1
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if ( (key == ord(' ')) or 
+             (key == 34) or # Muhenkan
+             (key == 35) or # Henkan
+             (key == 39) or # katakana
+             (key == 10)    # Enter
+        ):
+            state.is_record = not (state.is_record)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
