@@ -1,2 +1,20 @@
-2017年 10月 26日 木曜日 09:18:17 JST
-36330	80000000000000	4	FFFFFFFFFFFFFA00	
+2017年 10月 26日 木曜日 11:04:24 JST
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+
+if($ARGV[0]){
+    $is_stop = 1;
+}
+
+my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+
+while(1){
+    my $exe = `$cmd`;
+    print $exe;
+    exit (1) if($is_stop == 1);
+    sleep (2);
+}
+
+1;
