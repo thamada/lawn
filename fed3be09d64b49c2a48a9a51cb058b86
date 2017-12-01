@@ -1,91 +1,68 @@
-2017Âπ¥ 11Êúà 29Êó• Ê∞¥ÊõúÊó• 10:56:34 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
---MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
---MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+2017Âπ¥ 12Êúà  1Êó• ÈáëÊõúÊó• 11:47:02 JST
+#!/usr/bin/env python3
+# ----------------------------------------------------------------------
+# BBox-Label-Tool
+#1
+#231 204 403 455
+# ----------------------------------------------------------------------
+# darknet 
+#0 0.49531250000000004 0.6864583333333333 0.26875 0.5229166666666667
+# ----------------------------------------------------------------------
+import glob
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmar is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_RE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
-end dmar;
-
-architecture rtl of dmar is
-
-component dmar_dbus_hiz
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic);
-end component;
-
-component dmar_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-component dmar_start_adr
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end component;
-
-component dmar_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end component;
+def convert(size, box):
+    dw = (size[0])
+    dh = (size[1])
+    x = (box[0] + box[2])/2.0
+    y = (box[1] + box[3])/2.0
+    w = box[2] - box[0]
+    h = box[3] - box[1]
+    x = x/dw
+    w = w/dw
+    y = y/dh
+    h = h/dh
+    return (x,y,w,h)
 
 
-component dmar_mem_re
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end component;
+def _convert(size, box):
+    dw = 1./(size[0])
+    dh = 1./(size[1])
+    x = (box[0] + box[2])/2.0 - 1
+    y = (box[1] + box[3])/2.0 - 1
+    w = box[2] - box[0]
+    h = box[3] - box[1]
+    x = x*dw
+    w = w*dw
+    y = y*dh
+    h = h*dh
+    return (x,y,w,h)
 
-signal state : std_logic_vector(1 downto 0);
-signal start_adr : std_logic_vector(18 downto 0);
+flist = glob.glob("../data4bbox/Labels/777/image*.txt")
+flist.sort()
 
-begin
+for fname in flist:
+    with open(fname, "r") as fd:
+        lines = fd.readlines()
+        l = lines[1].replace('\n','')
+        box_str = l.split(' ')
+        box = []
+        for v in box_str:
+            box.append(float(int(v)))
 
--- DBUSÇÃÉgÉâÉCÉXÉeÅ[ÉgèàóùÇÕè„à Ç≈çsÇ§
--- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
+        size = [640.0, 480.0]
+        x, y, w, h = convert(size, box)
 
- u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
- u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
- u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
- u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
+        if False:
+        #if True:
+            x0 = box[0]
+            y0 = box[1]
+            x1 = box[2]
+            y1 = box[3]
+            x = (x0 + x1)/2.0/size[0]
+            y = (y0 + y1)/2.0/size[1]
 
- u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
- DBUS_Port <= MEM_DATA;
 
+        #print(fname, lines[1], box, x, y, w, h)
+        print("%1.17f %1.17f %1.17f %1.17f " %(x, y, w, h))
 
-end rtl;
+    
