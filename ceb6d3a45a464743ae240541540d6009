@@ -1,47 +1,131 @@
-2017年 11月 26日 日曜日 09:11:29 JST
-./db/images/ID.0005/image_00000657.jpg
-./db/images/ID.0006/image_00000651.jpg
-./db/images/ID.0004/image_00001568.jpg
-./db/images/ID.0004/image_00000563.jpg
-./db/images/ID.0006/image_00000301.jpg
-./db/images/ID.0004/image_00000578.jpg
-./db/images/ID.0004/image_00000975.jpg
-./db/images/ID.0004/image_00000848.jpg
-./db/images/ID.0006/image_00000436.jpg
-./db/images/ID.0005/image_00000884.jpg
-./db/images/ID.0005/image_00000878.jpg
-./db/images/ID.0005/image_00000840.jpg
-./db/images/ID.0004/image_00000108.jpg
-./db/images/ID.0005/image_00001203.jpg
-./db/images/ID.0006/image_00000088.jpg
-./db/images/ID.0004/image_00001495.jpg
-./db/images/ID.0005/image_00000063.jpg
-./db/images/ID.0006/image_00000696.jpg
-./db/images/ID.0005/image_00001257.jpg
-./db/images/ID.0006/image_00000821.jpg
-./db/images/ID.0005/image_00000153.jpg
-./db/images/ID.0004/image_00001053.jpg
-./db/images/ID.0004/image_00001427.jpg
-./db/images/ID.0006/image_00000815.jpg
-./db/images/ID.0005/image_00000904.jpg
-./db/images/ID.0004/image_00000694.jpg
-./db/images/ID.0004/image_00001043.jpg
-./db/images/ID.0004/image_00000761.jpg
-./db/images/ID.0006/image_00000289.jpg
-./db/images/ID.0006/image_00000739.jpg
-./db/images/ID.0005/image_00001072.jpg
-./db/images/ID.0006/image_00000890.jpg
-./db/images/ID.0005/image_00000903.jpg
-./db/images/ID.0004/image_00001045.jpg
-./db/images/ID.0004/image_00000576.jpg
-./db/images/ID.0005/image_00001009.jpg
-./db/images/ID.0004/image_00001569.jpg
-./db/images/ID.0004/image_00000916.jpg
-./db/images/ID.0004/image_00000687.jpg
-./db/images/ID.0005/image_00001261.jpg
-./db/images/ID.0004/image_00000316.jpg
-./db/images/ID.0005/image_00000288.jpg
-./db/images/ID.0004/image_00001514.jpg
-./db/images/ID.0004/image_00000456.jpg
-./db/images/ID.0004/image_00000191.jpg
-./db/images/ID.0004/image_00000533.jpg
+2017年 12月  1日 金曜日 11:14:24 JST
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+entity USER is
+  port (
+    RST         : in  std_logic;                     -- PCI Bus Reset
+    CLK         : in  std_logic;                     -- PCI bus Clock
+    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
+    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
+    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
+    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
+    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
+    );
+end USER;
+
+
+architecture USER_rtl of USER is
+
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+  signal DIPSWi      : std_logic_vector( 3 downto 0);          ------ Internal DIPSW Data
+  signal SWCHK_CUNT  : std_logic_vector( 7 downto 0);          ------ Push SW Check Counter
+  signal PSWCHK_CNT0 : std_logic_vector( 2 downto 0);          ------ Push SW 0 Check
+  signal PSWCHK_CNT1 : std_logic_vector( 2 downto 0);          ------ Push SW 1 Check
+  signal PSW_ON0i    : std_logic;                      ------ User Interrupt 0 On Request
+  signal PSW_ON1i    : std_logic;                      ------ User Interrupt 1 On Request
+
+begin
+
+
+--------------------------------------------------------------------------------
+-- DIPSW Input Signal Output Control Process
+--------------------------------------------------------------------------------
+    DIPSWi <= (others=>'0');  -- 2004/11/11 by T.Hamada
+    DIPSW <= DIPSWi;
+
+--------------------------------------------------------------------------------
+-- Push SW Check Counter Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       SWCHK_CUNT <= (others=>'0');
+    elsif (CLK'event and CLK='1') then
+       SWCHK_CUNT <= SWCHK_CUNT+1;                  ------ Counter Increment
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Push SW 0 Check Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSWCHK_CNT0 <= (others=>'1');
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+         PSWCHK_CNT0 <= PSWCHK_CNT0(1 downto 0) & PSW_IN(0);    ------ PSW_IN(0) Sampling
+      end if;
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Push SW 0 On Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSW_ON0i <= '0';
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+        PSW_ON0i <= PSWCHK_CNT0(2) and (not PSWCHK_CNT0(1));    ------ SW Check Signal Set
+      else
+        PSW_ON0i <= '0';
+      end if;
+    end if;
+  end process;
+
+    PSW_ON0 <= PSW_ON0i;
+
+--------------------------------------------------------------------------------
+-- Push SW 1 Check Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSWCHK_CNT1 <= (others=>'1');
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+         PSWCHK_CNT1 <= PSWCHK_CNT1(1 downto 0) & PSW_IN(1);    ------ PSW_IN(1) Sampling
+      end if;
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Push SW 1 On Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSW_ON1i <= '0';
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+        PSW_ON1i <= PSWCHK_CNT1(2) and (not PSWCHK_CNT1(1));    ------ SW Check Signal Set
+      else
+        PSW_ON1i <= '0';
+      end if;
+    end if;
+  end process;
+
+    PSW_ON1 <= PSW_ON1i;
+
+--------------------------------------------------------------------------------
+-- User Interrupt 2 Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+      USERINT2_ON <= '0';
+    elsif (CLK'event and CLK='1') then
+      USERINT2_ON <=  RST and DIPSWi(0) and (not PSWCHK_CNT1(2))
+                            and PSWCHK_CNT1(1);
+    end if;
+  end process;
+
+end USER_rtl;
