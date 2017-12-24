@@ -1,170 +1,85 @@
-2017年 12月 23日 土曜日 09:39:38 JST
-#!/bin/sh
-#
-# Copyright (c) 2006, 2008 Junio C Hamano
-#
-# The "pre-rebase" hook is run just before "git rebase" starts doing
-# its job, and can prevent the command from running by exiting with
-# non-zero status.
-#
-# The hook is called with the following parameters:
-#
-# $1 -- the upstream the series was forked from.
-# $2 -- the branch being rebased (or empty when rebasing the current branch).
-#
-# This sample shows how to prevent topic branches that are already
-# merged to 'next' branch from getting rebased, because allowing it
-# would result in rebasing already published history.
+2017年 12月 24日 日曜日 10:49:10 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-05-30 09:51:10 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-publish=next
-basebranch="$1"
-if test "$#" = 2
-then
-	topic="refs/heads/$2"
-else
-	topic=`git symbolic-ref HEAD` ||
-	exit 0 ;# we do not interrupt rebasing detached HEAD
-fi
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xdf, 0xf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
 
-case "$topic" in
-refs/heads/??/*)
-	;;
-*)
-	exit 0 ;# we do not interrupt others.
-	;;
-esac
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-# Now we are dealing with a topic branch being rebased
-# on top of master.  Is it OK to rebase it?
+    log_base = '../log/'
+    cap = []
+    for i in range(3):
+        cap.append(cv2.VideoCapture(i))
 
-# Does the topic really exist?
-git show-ref -q "$topic" || {
-	echo >&2 "No such branch $topic"
-	exit 1
-}
-
-# Is topic fully merged to master?
-not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
-if test -z "$not_in_master"
-then
-	echo >&2 "$topic is fully merged to master; better remove it."
-	exit 1 ;# we could allow it, but there is no point.
-fi
-
-# Is topic ever merged to next?  If so you should not be rebasing it.
-only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
-only_next_2=`git rev-list ^master           ${publish} | sort`
-if test "$only_next_1" = "$only_next_2"
-then
-	not_in_topic=`git rev-list "^$topic" master`
-	if test -z "$not_in_topic"
-	then
-		echo >&2 "$topic is already up-to-date with master"
-		exit 1 ;# we could allow it, but there is no point.
-	else
-		exit 0
-	fi
-else
-	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
-	/usr/bin/perl -e '
-		my $topic = $ARGV[0];
-		my $msg = "* $topic has commits already merged to public branch:\n";
-		my (%not_in_next) = map {
-			/^([0-9a-f]+) /;
-			($1 => 1);
-		} split(/\n/, $ARGV[1]);
-		for my $elem (map {
-				/^([0-9a-f]+) (.*)$/;
-				[$1 => $2];
-			} split(/\n/, $ARGV[2])) {
-			if (!exists $not_in_next{$elem->[0]}) {
-				if ($msg) {
-					print STDERR $msg;
-					undef $msg;
-				}
-				print STDERR " $elem->[1]\n";
-			}
-		}
-	' "$topic" "$not_in_next" "$not_in_master"
-	exit 1
-fi
-
-exit 0
-
-################################################################
-
-This sample hook safeguards topic branches that have been
-published from being rewound.
-
-The workflow assumed here is:
-
- * Once a topic branch forks from "master", "master" is never
-   merged into it again (either directly or indirectly).
-
- * Once a topic branch is fully cooked and merged into "master",
-   it is deleted.  If you need to build on top of it to correct
-   earlier mistakes, a new topic branch is created by forking at
-   the tip of the "master".  This is not strictly necessary, but
-   it makes it easier to keep your history simple.
-
- * Whenever you need to test or publish your changes to topic
-   branches, merge them into "next" branch.
-
-The script, being an example, hardcodes the publish branch name
-to be "next", but it is trivial to make it configurable via
-$GIT_DIR/config mechanism.
-
-With this workflow, you would want to know:
-
-(1) ... if a topic branch has ever been merged to "next".  Young
-    topic branches can have stupid mistakes you would rather
-    clean up before publishing, and things that have not been
-    merged into other branches can be easily rebased without
-    affecting other people.  But once it is published, you would
-    not want to rewind it.
-
-(2) ... if a topic branch has been fully merged to "master".
-    Then you can delete it.  More importantly, you should not
-    build on top of it -- other people may already want to
-    change things related to the topic as patches against your
-    "master", so if you need further changes, it is better to
-    fork the topic (perhaps with the same name) afresh from the
-    tip of "master".
-
-Let's look at this example:
-
-		   o---o---o---o---o---o---o---o---o---o "next"
-		  /       /           /           /
-		 /   a---a---b A     /           /
-		/   /               /           /
-	       /   /   c---c---c---c B         /
-	      /   /   /             \         /
-	     /   /   /   b---b C     \       /
-	    /   /   /   /             \     /
-    ---o---o---o---o---o---o---o---o---o---o---o "master"
+    # -- swap cap --
+    if True:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
 
 
-A, B and C are topic branches.
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
- * A has one fix since it was merged up to "next".
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
 
- * B has finished.  It has been fully merged up to "master" and "next",
-   and is ready to be deleted.
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
- * C has not merged to "next" at all.
+    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
+        frame = [0,0,0]
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
 
-We would want to allow C to be rebased, refuse A, and encourage
-B to be deleted.
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
 
-To compute (1):
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * i
+            sy = 0
+            ex = frame_width * (i+1)
+            ey = frame_height
+            image[sy:ey,sx:ex] = fm
 
-	git rev-list ^master ^topic next
-	git rev-list ^master        next
+        cv2.imshow('pycam', image)
 
-	if these match, topic has not merged in next at all.
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
 
-To compute (2):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-	git rev-list master..topic
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
 
-	if this is empty, it is fully merged to "master".
+    cv2.destroyAllWindows()
+
+    print("Done.")
