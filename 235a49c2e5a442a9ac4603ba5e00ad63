@@ -1,5 +1,3 @@
-2017年 12月 17日 日曜日 11:46:20 JST
--- ProjNav VHDL simulation template: sim_pfpga_dma.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2018年  1月  5日 金曜日 11:14:40 JST
+# XST (Creating Lso File) : 
+top.lso
