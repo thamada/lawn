@@ -1,46 +1,15 @@
-2018年  1月  6日 土曜日 09:07:34 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
+2018年  1月 14日 日曜日 09:58:45 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
 
-VM_NAME="ubuntu16"
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
 
-all: check
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
 
-c: check
-
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-run: start
-
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
+    time.sleep(3)
