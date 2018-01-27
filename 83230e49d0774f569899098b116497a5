@@ -1,16 +1,20 @@
-2018年  1月 24日 水曜日 11:36:17 JST
-/** 
-# v��1/2���ƥå׿ʤ��
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
+2018年  1月 27日 土曜日 09:55:22 JST
+#!/usr/bin/perl
 
-#include <stdio.h>
-#include "nbodysim.h"
 
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
+my $is_stop = 0;
+
+if($ARGV[0]){
+    $is_stop = 1;
 }
+
+my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+
+while(1){
+    my $exe = `$cmd`;
+    print $exe;
+    exit (1) if($is_stop == 1);
+    sleep (2);
+}
+
+1;
