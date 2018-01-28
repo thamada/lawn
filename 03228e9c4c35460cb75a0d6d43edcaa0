@@ -1,34 +1,48 @@
-2018年  1月 28日 日曜日 11:08:55 JST
-// Time-stamp: "2006-12-07 19:19:07 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
+2018年  1月 28日 日曜日 11:29:55 JST
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import numpy as np
+import cv2
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+drawing = False
+mode = True
+ix,iy = -1,-1
 
-unsigned int* ptr;
-unsigned int* bar1;
+def draw_circle(event,x,y,flags,param):
+    global ix,iy,drawing,mode
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ('Push')
+        drawing = True
+        ix,iy = x,y
 
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int i;
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing == True:
+            print ('Drawing...')
+            if mode == True:
+                pass
+            else:
+                cv2.circle(img,(x,y),5,(0,0,255),-1)
+        else:
+            pass
+    elif event == cv2.EVENT_LBUTTONUP:
+        print ('Up')
+        drawing = False
+        if mode == True:
+            cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),2)
+        else:
+            cv2.circle(img,(x,y),5,(0,0,255),-1)
 
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
+if '__main__' == __name__ :
+    img = np.zeros((512,512,3), np.uint8)
+    cv2.namedWindow('image')
+    cv2.setMouseCallback('image',draw_circle)
+    
+    while(1):
+        cv2.imshow('image',img)
+        k = cv2.waitKey(1) & 0xFF
+        if k == ord('m'):
+            mode = not mode
+        elif k == 27:
+            break
 
-  puts("clear DMA_CTRL register(0x2C).");
-  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
-
-  puts("clear INT_STAT register(0x10).");
-  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
-
-  puts("clear INT_MASK register(0x14).");
-  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
-
-  pg4_DMAcheck(devid);
-
-  return 0;
-}
+    cv2.destroyAllWindows()
