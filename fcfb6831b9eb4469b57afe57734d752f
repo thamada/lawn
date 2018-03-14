@@ -1,15 +1,75 @@
-2018年  3月 10日 土曜日 10:36:26 JST
-#!/bin/sh
+2018年  3月 14日 水曜日 09:11:40 JST
+#!/usr/bin/perl
 #
-# An example hook script to verify what is about to be committed
-# by applypatch from an e-mail message.
+# mtrr : MTRR register resetting script for PROGRAPE-4
 #
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.
+# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
+# 
+# No warranty is attached; 
 #
-# To enable this hook, rename this file to "pre-applypatch".
 
-. git-sh-setup
-test -x "$GIT_DIR/hooks/pre-commit" &&
-	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
-:
+my $devid   = 0;
+my $bar;
+my $cmd;
+my $exe;
+
+if(@ARGV){
+    sprintf($devid, "%d", $ARGV[0]);
+}
+
+$bar = 1;
+
+my $adr=0, $size;
+
+$cmd = "ifpga_get_barinfo $devid $bar";
+$exe = `$cmd`;
+chomp($exe);
+$adr = $exe;
+
+$cmd = "ifpga_get_barinfo $devid $bar 1";
+$exe = `$cmd`;
+chomp($exe);
+$size = $exe;
+
+print "BAR1 start at $adr, size $size bytes\n";
+
+if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
+    print "discontinued\n";
+    exit(-1);
+}
+
+
+open(RD,"/proc/mtrr");
+my $hit_line = '';
+while(<RD>){
+    my $s = $_;
+    chomp($s);
+    if($s =~ /$adr/){
+	$hit_line = $s;
+    }
+}
+close(RD);
+
+if($hit_line ne ''){
+    print "Hit: ". $hit_line ."\n";
+}else{
+    $cmd = "cat /proc/mtrr";
+    print `$cmd` ."\n";
+    print "Can't find the mtrr register for bar1($adr)\n";
+    print "discontinued\n";
+    exit(-1);
+}
+
+my ($reg_nr, ) = split(/\:/,$hit_line);
+$reg_nr =~ s/reg//;
+$reg_nr = sprintf("%d",$reg_nr);
+
+$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
+print  $cmd. "\n";
+print  `$cmd`. "\n";
+
+$cmd = "cat /proc/mtrr";
+print `$cmd`;
+
+
+1;
