@@ -1,20 +1,2 @@
-2018年  3月 27日 火曜日 10:32:39 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-
-if($ARGV[0]){
-    $is_stop = 1;
-}
-
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
-
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
-}
-
-1;
+2018年  3月 30日 金曜日 10:33:30 JST
+set ADucfFile {../rtl/ifpga.ucf}
