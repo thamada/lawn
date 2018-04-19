@@ -1,75 +1,15 @@
-2018年  4月 14日 土曜日 10:13:52 JST
+2018年  4月 19日 木曜日 09:27:44 JST
 #!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+my $nloop = 16;
+my $logbase = "log.GTX";
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
+for(my $ni=2; $ni<131073; $ni = $ni*2){
+    my $bin = "\$\(BIN\)";
+    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
+    my $log = "\$LOG";
+    my $cmd = "$bin $ifile $nloop >> $log";
+    print "\t".$cmd ."\n";
 }
-
-$bar = 1;
-
-my $adr=0, $size;
-
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
-
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
-
-
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
-
 
 1;
