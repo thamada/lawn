@@ -1,16 +1,28 @@
-2018年  4月 18日 水曜日 09:50:44 JST
-#!/usr/bin/env python3
+2018年  4月 19日 木曜日 11:24:15 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-import glob
-import sys
-import random
+entity dmar_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmar_mem_adr;
 
-fname = sys.argv[1]
-random.seed()
-
-with open(fname, "r") as fd:
-    lines = fd.readlines()
-    random.shuffle(lines)
-    for l in lines:
-        l = l.replace("\n",'')
-        print (l)
+architecture rtl of dmar_mem_adr is
+component dmaw_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
+begin
+  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
+end rtl;
