@@ -1,103 +1,134 @@
-2018年  4月  7日 土曜日 09:11:36 JST
-# Current time Tue Jan 04 17:06:01 2005
-# ModelSim Stack Trace
-# Program = vish
-# Id = "5.7g"
-# Version = "2003.10"
-# Date = "Oct 13 2003"
-# Platform = win32pe
+2018年  4月 29日 日曜日 09:06:54 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include "pg_util.h"
 
-Exception c0000005 has occurred at address 0060b1ac. Traceback:
-# 0    0x0060b1ac: 'TclpAlloc + 0x9c'
-# 1    0x0060f6ae: 'Tcl_Alloc + 0xe'
-# 2    0x006370a1: 'Tcl_ListObjReplace + 0x321'
-# 3    0x0063b669: 'Tcl_DuplicateObj + 0xd9'
-# 4    0x0061414d: 'Tcl_LreplaceObjCmd + 0x10d'
-# 5    0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 6    0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 7    0x006427ef: 'TclObjInterpProc + 0x26f'
-# 8    0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 9    0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 10   0x0063d426: 'Tcl_Eval + 0x16'
-# 11   0x10002ad3: 'Itk_ArchetypeInit + 0x1ad3'
-# 12   0x100019a0: 'Itk_ArchetypeInit + 0x9a0'
-# 13   0x0033b67c: 'Itcl_EvalMemberCode + 0x206'
-# 14   0x0033c346: 'Itcl_ExecMethod + 0x18d'
-# 15   0x00344657: 'Itcl_EvalArgs + 0x133'
-# 16   0x0033e4b1: 'Itcl_HandleInstance + 0x1f2'
-# 17   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 18   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 19   0x0063a5ba: 'Tcl_NamespaceObjCmd + 0xb2a'
-# 20   0x00639ba9: 'Tcl_NamespaceObjCmd + 0x119'
-# 21   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 22   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 23   0x0063d426: 'Tcl_Eval + 0x16'
-# 24   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 25   0x00530d70: 'Tk_BindEvent + 0x99c'
-# 26   0x00553635: 'TkBindEventProc + 0x18f'
-# 27   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
-# 28   0x005acff7: 'Tk_DestroyWindow + 0x204'
-# 29   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 30   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 31   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 32   0x005ae2f1: 'Tk_GetNumMainWindows + 0x70'
-# 33   0x00622f8d: 'Tcl_Finalize + 0x4d'
-# 34   0x0061060e: 'Tcl_ExitObjCmd + 0x3e'
-# 35   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 36   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 37   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 38   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 39   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 40   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 41   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 42   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 43   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 44   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 45   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 46   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 47   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 48   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 49   0x0060cc62: 'Tcl_EvalObjEx + 0x342'
-# 50   0x0061059c: 'Tcl_EvalObjCmd + 0x6c'
-# 51   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 52   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 53   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 54   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 55   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 56   0x0063d426: 'Tcl_Eval + 0x16'
-# 57   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 58   0x0042d1f7: '<unknown (@0x42d1f7)>'
-# 59   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
-# 60   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 61   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 62   0x0063d426: 'Tcl_Eval + 0x16'
-# 63   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 64   0x0042cfd2: '<unknown (@0x42cfd2)>'
-# 65   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
-# 66   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 67   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 68   0x00623a73: 'TclExecuteByteCode + 0x743'
-# 69   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 70   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 71   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 72   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 73   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 74   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 75   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 76   0x0063d426: 'Tcl_Eval + 0x16'
-# 77   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 78   0x00530d70: 'Tk_BindEvent + 0x99c'
-# 79   0x00553635: 'TkBindEventProc + 0x18f'
-# 80   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
-# 81   0x0055d6d2: 'TkQueueEventForAllChildren + 0xcf'
-# 82   0x0063af20: 'Tcl_ServiceEvent + 0x60'
-# 83   0x0063b191: 'Tcl_DoOneEvent + 0x111'
-# 84   0x0055d73c: 'Tk_MainLoop + 0x14'
-# 85   0x0057ce48: 'Tk_MainEx + 0x438'
-# 86   0x0042eed4: '<unknown (@0x42eed4)>'
-# 87   0x0042f3e9: '<unknown (@0x42f3e9)>'
-# 88   0x004c0925: '<unknown (@0x4c0925)>'
-# 89   0x77e7893d: '<unknown (@0x77e7893d)>'
-StackWalk failed 487
-# End of Stack Trace
+#include "pgrapi.h"
 
+// #define DEBUG
+
+#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
+#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
+
+#define NJMAX 16384
+
+#define NPIPE_PER_CHIP  1
+#define NCHIP_PER_BOARD 4
+
+#define NFLO 26
+#define NMAN 16
+#define RMODE 6
+
+static int      devid = 0;
+static int      __first = 0;
+
+static unsigned long long int fdata[NJMAX][FDIM];
+
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    double          log2(double);
+    int             i, j;
+    unsigned int    npipe, npipe_per_chip;
+    unsigned int    nchip;
+    unsigned int    jdata[JDIM];
+    if (__first == 0) {
+	b3open(devid);
+	pgr_reset(devid);
+	pgr_set_npipe_per_chip(devid, NPIPE_PER_CHIP);
+	pgr_set_jwidth(devid, 16);	// change manually 4 if grape
+	pgr_set_nchip(NCHIP_PER_BOARD);
+	__first = 1;
+    }
+
+    npipe_per_chip = NPIPE_PER_CHIP;
+    nchip = NCHIP_PER_BOARD;
+    npipe = nchip * npipe_per_chip;
+
+    for (j = 0; j < n; j++) {
+	unsigned int    xj[4];
+	xj[0] = (unsigned int) (double2pgpgfloat_r(x[j][0], 26, 16, 6));
+	xj[1] = (unsigned int) (double2pgpgfloat_r(x[j][1], 26, 16, 6));
+	xj[2] = (unsigned int) (double2pgpgfloat_r(x[j][2], 26, 16, 6));
+	xj[3] = (unsigned int) (double2pgpgfloat_r(m[j], 26, 16, 6));
+	for (i = 0; i < JDIM; i++)   jdata[i] = 0x0;
+	jdata[0] |= (0x3ffffff & xj[0]) << 0;	// mask(26)
+	jdata[0] |= (0x3f & xj[1]) << 26;	// mask(6)
+	jdata[1] |= (0xfffff & (xj[1] >> 6));	// mask(20)
+	jdata[1] |= (0xfff & xj[2]) << 20;	// mask(12)
+	jdata[2] |= (0x3fff & (xj[2] >> 12));	// mask(14)
+	jdata[2] |= (0x3ffff & xj[3]) << 14;	// mask(18)
+	jdata[3] |= (0xff & (xj[3] >> 18));	// mask(8)
+	pgr_setjpset_one(devid, j, jdata);
+    }
+
+    for (i = 0; i < n; i += npipe) {
+	int             nn, ii, ichip;
+	nn = MIN(npipe, n - i);
+
+#ifdef DEBUG
+	dum = e_time();
+#endif
+
+	for (ii = 0; ii < nn; ii += npipe_per_chip) {
+	    int             nnn, iii;
+	    ichip = ii / npipe_per_chip;
+
+	    nnn = MIN(npipe_per_chip, nn - ii);
+	    for (iii = 0; iii < nnn; iii++) {
+		unsigned int    idata[4];
+		idata[0] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][0], 26, 16,
+					      6));
+		idata[1] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][1], 26, 16,
+					      6));
+		idata[2] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][2], 26, 16,
+					      6));
+		idata[3] =
+		    (unsigned int) (double2pgpgfloat_r(eps2, 26, 16, 6));
+		pgr_setipset_one(devid, ichip, iii, idata, 4);
+	    }
+	}
+#ifdef DEBUG
+	_t[2] += e_time() - dum;
+	dum = e_time();
+#endif
+
+	pgr_start_calc(devid, n);
+#ifdef DEBUG
+	_t[3] += e_time() - dum;
+	dum = e_time();
+#endif
+
+	pgr_getfoset(devid, fdata);
+	for (ii = 0; ii < nn; ii++) {
+	    a[i + ii][0] =
+		((double) ((long long int) fdata[ii][0] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	    a[i + ii][1] =
+		((double) ((long long int) fdata[ii][1] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	    a[i + ii][2] =
+		((double) ((long long int) fdata[ii][2] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	}
+#ifdef DEBUG
+	_t[4] += e_time() - dum;
+#endif
+
+    }
+#ifdef DEBUG
+    _t[0] = e_time() - _t[0];
+    fprintf(stderr, "total %g sec (jp %g, ip %g, c %g, fo %g %%)\n", _t[0],
+	    100.0 * _t[1] / _t[0], 100.0 * _t[2] / _t[0],
+	    100.0 * _t[3] / _t[0], 100.0 * _t[4] / _t[0]);
+#endif
+}
