@@ -1,56 +1,53 @@
-2018年  5月  5日 土曜日 10:30:08 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-11 19:17:43 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2018年  5月  9日 水曜日 10:38:29 JST
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (440, 15), font_type, font_size, font_color)
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-if (__name__ == '__main__'):
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
+void                   pg4_close (int id);
 
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
 
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
+int                    pg4_open (int id);
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('camera: %d'%(devid), frame)
+void                   pg4_set_pfpga_info (int devid, char *info);
 
-        #tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            basedir = '../log.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, frame)
-            print(ofname, "devid = %d"%devid)
-            tnow0 = tnow
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
 
-    cap.release()
-    cv2.destroyAllWindows()
 
-    print("Done.")
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
+
+
