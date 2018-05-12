@@ -1,96 +1,44 @@
-2018年  5月  9日 水曜日 09:43:04 JST
-//-----------------------------------------------------------------------------
-// hermite.C
-// Code: Standard 4th order Hermite integrator with constant time step
-// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
-// Author: Andreas Ernst Jan, 2006
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2018年  5月 12日 土曜日 11:30:51 JST
+////////////////////////////////////// ADDRESS OF IFPGA REGISTERS
+#define PIPE_DMA_STAT      0x0   // gpreg0(0) : pipe calc sts | available but not used in api
+#define PIPE_RST           0x4
+#define CNF_CMD_ADR       0x80
+#define CNF_DAT_ADR       0x84
+#define PIPE_DMA_WRITE    0x88   // unused
+#define PIPE_DMA_READ     0x8C   // unused
+#define NPIPE_IFPGA       0x8C  // PGPG_REG3 @ ifpga.vhd
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+/********************************************************************
+ * PIPE_DMA_WRITE (31 downto 28) : pfpga chip select
+ *       "        (27 downto 19) : num of 64-bit WARD
+ *       "        (18 downto  0) : offset of pfpga address
+ *
+ * PIPE_DMA_READ  (31 downto 28) : pfpga chip select
+ *       "        (27 downto 19) : num of 64-bit WARD
+ *       "        (18 downto  0) : offset of pfpga address
+ ********************************************************************/
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+/*****************************************************
+0x5000 - 0x501f : i 0
+0x5020 - 0x503f : i 1
+0x5040 - 0x505f : i 2
+0x5060 - 0x507f : i 3
+0x5080 - 0x5fff : -- none --
 
+0x6000 - 0x60ff : f 0
+0x6100 - 0x61ff : f 1
+0x6200 - 0x62ff : f 2
+0x6300 - 0x63ff : f 3
+0x6400 - 0x6fff : -- none --
 
-// Calculate energy
+0x7000          : set n
+0x7001          : run
 
-double energy(double m[], double r[][3], double v[][3], double p[], int n) {
-  double ekin = 0, epot = 0;
-  for (int i = 0; i < n; i++) {
-    epot -= 0.5 * m[i] * p[i];
-    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
-  }
-  return ekin + epot;
-}
+0x40000 -       : j
+********************************************/
+#define ADR_IPSET 0x5000
+#define ADR_FOSET 0x6000
+#define ADR_SETN  0x7000
+#define ADR_RUN   0x7008
 
-int main(int argc, char *argv[]) {
-
-// Read initial conditions from stdin, declaration of variables
-
-  if (argc < 3 ) {
-    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
-    return 0;
-  }
-
-  double dt = atof(argv[1]); // time step
-  double dt2 = dt*dt;
-  double dt3 = dt2*dt;
-  double dt4 = dt2*dt2;
-  double dt5 = dt4*dt;
-  double t_end = atof(argv[2]);
-  double dt_opt = atof(argv[3]);
-  double t_opt = 0.0;
-
-  int n;
-  cin >> n;
-
-  double t;
-  cin >> t;
-
-  double * m = new double[n];
-  double (* r)[3] = new double[n][3];
-  double (* v)[3] = new double[n][3];
-
-  double * p = new double[n];
-  double (* a)[3] = new double[n][3];
-  double (* jk)[3] = new double[n][3];
-
-  double * _p = new double[n];
-  double (* _a)[3] = new double[n][3];
-  double (* _jk)[3] = new double[n][3];
-
-
-  for (int i = 0; i < n ; i++){
-    cin >> m[i];
-    for (int k = 0; k < 3; k++) cin >> r[i][k];
-    for (int k = 0; k < 3; k++) cin >> v[i][k];
-  }
-  
-  _force(r, v, m, _p, _a, _jk, n);
-   force(r, v, m,  p,  a,  jk, n);
-
-
-  for (int i = 0; i < n ; i++){
-    double err_p, err_a[3], err_jk[3];
-    double rad;
-    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
-
-    err_p = fabs(p[i]-_p[i])/_p[i];
-
-    for (int k = 0; k < 3; k++){
-      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
-      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
-    }
-    
-    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
-
-  }
-  
-  return 0;
-}
+#define ADR_JPSET 0x40000
