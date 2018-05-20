@@ -1,50 +1,42 @@
-2018年  4月 29日 日曜日 09:40:45 JST
+2018年  5月 20日 日曜日 10:08:21 JST
 #!/usr/bin/env python3
-import numpy as np
-import cv2
+import os
 from datetime import datetime
-import mkdir
-import sys
+import time
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+# YYYYMMDD_HH_MM_SS
+def get_filename_frame(basedir, str_datetime):
+    cell = list(str_datetime)
+    str_YYYYMMDD = ''.join(cell[0:8])
+    str_HH = ''.join(cell[9:11])
+    str_MM = ''.join(cell[12:14])
+    str_SS = ''.join(cell[15:17])
+    dirname = basedir + str_YYYYMMDD + "/" + str_HH
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + "/" + str_datetime+".jpg"
+    ret = ret.replace(' ','')
+    return ret
+
+
+def get_filename_frame_simple(basedir, fname):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + fname
+    ret = ret.replace(' ','')
+    return ret
+
+def create_dir(basedir):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+
     
 
-
-if (__name__ == '__main__'):
-    argv = sys.argv
-    devid = int(argv[1])
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('frame', frame)
-
+if __name__ == '__main__':
+    while(True):
         tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            ofname = mkdir.get_filename_frame('../log/', tnow)
-#            cv2.imwrite(ofname, frame)
-            print(ofname, ": TEST on devid=%d"%devid)
-            tnow0 = tnow
- 
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
+        fname = get_filename_frame('../work/', tnow)
+        print (fname)
+        time.sleep(0.5)
