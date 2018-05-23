@@ -1,2 +1,5 @@
-2018年  5月  1日 火曜日 11:20:41 JST
-set ElfFiles { }
+2018年  5月 23日 水曜日 10:13:52 JST
+SETPROJECT .
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
