@@ -1,13 +1,16 @@
-2018年  6月  6日 水曜日 10:28:14 JST
+2018年  6月  9日 土曜日 09:38:44 JST
+/** 
+# v��1/2���ƥå׿ʤ��
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
+
 #include <stdio.h>
 #include "nbodysim.h"
 
-void debug_position(double x[][DIM], double time,int n)
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
 {
-    int i;
-    for(i=0;i<n;i++){
-      //        printf("%d,%e,%1.8e,%1.8e,%1.8e\n",i,t,x[i][0],x[i][1],x[i][2]);
-        printf("%1.8e\t%1.8e\t%1.8e\t%1.1e\n",x[i][0],x[i][1],x[i][2],time);
-    }
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
 }
-
