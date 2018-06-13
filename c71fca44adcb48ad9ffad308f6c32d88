@@ -1,23 +1,10 @@
-2018年  6月 10日 日曜日 10:13:49 JST
-#include <stdio.h>
-#include "nbodysim.h"
-
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n)
-{
-    int i,j;
-
-    printf("-------------------------------\n");
-    printf("The debuging routine is called.\n");
-    printf("-------------------------------\n");
-    printf("n = %d\n",n);
-    printf("eps2 = %e\n",eps2);
-
-    for(i=0;i<n;i++){
-        printf("---\n");
-        printf("particle %d\n",i);
-        printf("m[%d] = %e\n",i,m[i]);
-        for(j=0;j<3;j++) printf("x[%d][%d] = %e\n",i,j,x[i][j]);
-        for(j=0;j<3;j++) printf("a[%d][%d] = %e\n",i,j,a[i][j]);
-    }
-}
-
+2018年  6月 13日 水曜日 11:07:22 JST
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
