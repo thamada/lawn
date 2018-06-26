@@ -1,121 +1,114 @@
-2018å¹´  6æœˆ 24æ—¥ æ—¥æ›œæ—¥ 09:09:05 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:59:29 hamada>
-import Message
-import WebCam
-import numpy as np
-import cv2
-from datetime import datetime
-
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
-
-
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
-
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
-
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+2018å¹´  6æœˆ 26æ—¥ ç«æ›œæ—¥ 09:24:33 JST
+-- multiple clock generator
+-- by Tsuyoshi Hamada
+-- Last Modified at 2004/01/11
+-- ===== COMPONENT SAMPLE =======================================
+--component CLK_MULDIV
+--  generic (CLKFX_MULTIPLY : integer :=3;
+--           CLKFX_DIVIDE : integer := 2);
+--  port (ICLK : in std_logic;
+--        OCLK : out std_logic;
+--        OCLK_FX : out std_logic;
+--        LOCKED : out std_logic);
+--end component;
+--
+-- ===== INSTANCIATION SAMPLE ====================================
+--dcm0 : CLK_MULDIV
+----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
+----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
+----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
+----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
+----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
+----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
+----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
+----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
+--  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
+--  port map (
+--	ICLK=>SYS_CLK,
+--	OCLK=>clk,
+--	OCLK_FX=>pclk,
+--	LOCKED=>dcm_locked);
 
 
+library ieee;
+LIBRARY UNISIM;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+USE UNISIM.Vcomponents.ALL;
 
-def draw_text_time(msg, image):
-    font = cv2.FONT_HERSHEY_PLAIN 
-    font_size = 3.0
-    color = (0x0f, 0xff, 0x1f)
-    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    cv2.putText(image, text, (30, 65), font, font_size, color)
-    cv2.putText(image, text, (31, 65), font, font_size, color)
+entity CLK_MULDIV is
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end CLK_MULDIV;
 
+architecture rtl of CLK_MULDIV is
+component BUFG port (I: in  std_logic;  O: out  std_logic); 
+end component;
+component IBUFG port(I: in std_logic; O: out std_logic);
+end component;
+component DCM
+  generic ( 
+       CLKFX_MULTIPLY : integer := 3;
+       CLKFX_DIVIDE : integer := 2;
+       CLKIN_PERIOD : real := 15.000000;
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "FIXED";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+  port ( CLKIN   : in  std_logic;
+       CLKFB   : in  std_logic;
+       DSSEN   : in  std_logic;
+       PSINCDEC   : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK   : in  std_logic;
+       RST     : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90   : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X   : out std_logic;
+       CLK2X180   : out std_logic;
+       CLKDV   : out std_logic;
+       CLKFX   : out std_logic;
+       CLKFX180   : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
 
-def draw_text(msg, image, text):
-    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
-    font_size = 2.5
-    color = (int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)))
+signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
 
-    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
-    py = int(image.shape[0]/2. + np.random.normal(25, 3))
-    cv2.putText(image, text, (px, py), font, font_size, color)
+begin
 
+dcm0 : DCM
+  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
+	CLKFX_DIVIDE=>CLKFX_DIVIDE,
+        CLKIN_PERIOD => 15.000000,
+	DUTY_CYCLE_CORRECTION=>TRUE)
+  port map(
+    RST          => '0',         -- ƒŠƒZƒbƒg
+    CLKIN        => dcm_in,      -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
+    CLKFB        => dcm_fb,         -- FB“ü—Í
+    DSSEN        => '0',
+    PSINCDEC     => '0',
+    PSEN         => '0',         -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
+    PSCLK        => '0',         -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
+    LOCKED       => LOCKED,
+    CLKFX        => dcm_fx,      -- ICLK x N
+    CLK0         => dcm_out      -- PHASE SHIFTo—ÍƒNƒƒbƒN
+  );
 
-if __name__ == '__main__':
-    webcam = WebCam.WebCam()
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 300)
-    image  = image0.copy()
+U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
+U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
+U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
+OCLK <= dcm_fb;
+end rtl;
 
-    window_title = "AI sensor by T. Hamada 2017/07/04"
-    x = 0
-    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
-
-    i_found = 0
-    while(True):
-        is_detect = msg.scan_object("person")
-        draw_text_time(msg, image)
-
-        if is_detect != True:
-            webcam.clear_cache()
-        else:
-            webcam.save_photo()
-            for i in range(8):
-                draw_text(msg, image, "I found you")
-
-            i_found += 1
-            if(i_found > 5):
-                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                with open("./log.person.txt", 'a') as fh:
-                    fh.write(tnow + " - detects 'Person'\n")
-                i_found = 0
-
-
-
-
-        x = 0
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
