@@ -1,5 +1,5 @@
-2018年  6月 26日 火曜日 10:20:31 JST
--- ProjNav VHDL simulation template: sim_writecomb_check.udo
+2018年  6月 28日 木曜日 10:27:41 JST
+-- ProjNav VHDL simulation template: sim_local_read_cnt.udo
 -- You may edit this file after the line that starts with
 -- '-- START' to customize your simulation
 -- START user-defined simulation commands
