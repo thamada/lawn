@@ -1,46 +1,23 @@
-2018年  6月 25日 月曜日 09:16:01 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
+2018年  6月 28日 木曜日 11:04:34 JST
+#include <stdio.h>
+#include "nbodysim.h"
 
-VM_NAME="ubuntu16"
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n)
+{
+    int i,j;
 
-all: check
+    printf("-------------------------------\n");
+    printf("The debuging routine is called.\n");
+    printf("-------------------------------\n");
+    printf("n = %d\n",n);
+    printf("eps2 = %e\n",eps2);
 
-c: check
+    for(i=0;i<n;i++){
+        printf("---\n");
+        printf("particle %d\n",i);
+        printf("m[%d] = %e\n",i,m[i]);
+        for(j=0;j<3;j++) printf("x[%d][%d] = %e\n",i,j,x[i][j]);
+        for(j=0;j<3;j++) printf("a[%d][%d] = %e\n",i,j,a[i][j]);
+    }
+}
 
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-run: start
-
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
