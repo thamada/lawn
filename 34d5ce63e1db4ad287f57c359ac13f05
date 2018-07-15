@@ -1,117 +1,168 @@
-2018年  7月 10日 火曜日 09:55:41 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-16 23:48:16 hamada>
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2018年  7月 15日 日曜日 11:01:45 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Wed Dec 29 19:47:04 2004
 
-class Queue:
-    def __init__(self, queue = None):
-        self.index = 0
-        self.index_max = 50
-        self.image0 = np.zeros((120, 160, 3), np.uint8)
-        if type(queue) is type([]):
-            self.queue = queue
-        elif queue is None:
-            self.queue = []
-        else:
-            print ('Error Message:')
-            print ('    Your input is not type of list!')
-            print ('    Please enter list type!')
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-    def enqueue(self, e):
-        if self.index < self.index_max :
-            self.queue.append(e)
-            self.index += 1
-            print ("queue index: ", self.index)
-        else:
-            self.dequeue()
-            self.queue.append(e)
+ENTITY sim_writecomb_check IS
+END sim_writecomb_check;
 
-        return self.queue
+ARCHITECTURE testbench_arch OF sim_writecomb_check IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_writecomb_check.ano";
+	COMPONENT writecomb_check
+		PORT (
+			MEM_WEHA : In  std_logic;
+			MEM_WELA : In  std_logic;
+			IS_ERR : Out  std_logic_vector (1 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-    def dequeue(self):
-        try:
-            qEl = self.queue[0]
-            del self.queue[0]
-            return (qEl, self.queue)
-        except IndexError:
-            print ('Error Message:')
-            print ('    There is no element in the queue!')
+	SIGNAL MEM_WEHA : std_logic;
+	SIGNAL MEM_WELA : std_logic;
+	SIGNAL IS_ERR : std_logic_vector (1 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-    def look_first(self):
-        ret = self.image0
-        if self.index > 1:
-            ret = self.queue[0]
-        return (ret)
-            
+BEGIN
+	UUT : writecomb_check
+	PORT MAP (
+		MEM_WEHA => MEM_WEHA,
+		MEM_WELA => MEM_WELA,
+		IS_ERR => IS_ERR,
+		RST => RST,
+		CLK => CLK
+	);
 
-class WebCam(object):
-    def __init__(self):
-        self.devid = 2
-        self.tnow  = ''
-        self.fifo = Queue()
-        self.window_title = 'camera: %d' % (self.devid)
-        self.cap = cv2.VideoCapture(self.devid) 
-        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
-        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-        self.display(True)
+		PROCEDURE ANNOTATE_IS_ERR(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",IS_ERR,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, IS_ERR);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-    def put_text(self, image, text):
-        font_size = 1.0
-        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
-        # font_type = cv2.FONT_HERSHEY_PLAIN
-        # font_type = cv2.FONT_HERSHEY_DUPLEX
-        font_type = cv2.FONT_HERSHEY_TRIPLEX
-        font_color = (0x0, 0x77, 0x0)
-        px = int(image.shape[1]*0.15 )
-        py = int(image.shape[0]*0.9 )
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		TX_TIME := TX_TIME + 5;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		TX_TIME := TX_TIME + 50;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		TX_TIME := TX_TIME + 35;
+		ANNOTATE_IS_ERR(TX_TIME);
+		WAIT FOR 10 ns;
+		TX_TIME := TX_TIME + 10;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
+		BEGIN
+		-- --------------------
+		RST <= transport '0';
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=900 ns
+		RST <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1000 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 1900 ns; -- Time=2900 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=3400 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1100 ns; -- Time=4500 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=4700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=6000 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6100 ns
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6200 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 300 ns; -- Time=6500 ns
+		MEM_WEHA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6600 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=7900 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8000 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8100 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8200 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8300 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 2005 ns; -- Time=10305 ns
+		-- --------------------
 
-    def display(self, is_clear=False):
-        wx = 320
-        wy = 240
-        step = 5
-        if is_clear :
-            for i in range (0, self.fifo.index_max, step):
-                image = self.fifo.image0
-                wname = self.window_title + ": %d" %(i)
-                cv2.resizeWindow(wname, wx, wy)
-                cv2.moveWindow(wname, int(i*wx/step), 0)
-                cv2.imshow(wname, image)
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-        for i in range (0, self.fifo.index, step):
-            image = self.fifo.queue[i].copy()
-            wname = self.window_title + ": %d" %(i)
-            image2 = cv2.resize(image, (wx, wy))
-            cv2.imshow(wname, image2)
-
-    def save_photo(self):
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-            if(tnow != self.tnow):
-                self.put_text(frame, tnow)
-                basedir = './log.%d/'% (self.devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, frame)
-                print(ofname, "devid = %d" % self.devid)
-                self.tnow = tnow
-                print("%s: Take photo" % self.tnow )
-                self.fifo.enqueue(frame)
-                self.display()
-
-    def clear_cache(self):
-        self.display()
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-
-        # self.cap.release()
-        # cv2.destroyAllWindows()
-
+CONFIGURATION writecomb_check_cfg OF sim_writecomb_check IS
+	FOR testbench_arch
+	END FOR;
+END writecomb_check_cfg;
