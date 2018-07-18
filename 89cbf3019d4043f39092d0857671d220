@@ -1,138 +1,49 @@
-2018Âπ¥  7Êúà  8Êó• Êó•ÊõúÊó• 10:34:43 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+2018Âπ¥  7Êúà 18Êó• Ê∞¥ÊõúÊó• 09:11:19 JST
+//Time-stamp: <2006-09-07 13:50:20 hamada>
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
+/NPIPE 1;
 
-entity dcm_ps_f is
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;              -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
-  );
-end dcm_ps_f;
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
---------------------------------------------------
--- Components
---------------------------------------------------
+/MEM xj[3] <= x[][] : fix(NPOS);
+/MEM mj    <= m[]   : log(NLOG,NMAN);
+/REG xi[3] <= x[][] : fix(NPOS);
+/REG ieps2 <= eps2  : log(NLOG,NMAN);
+/REG sx[3] => a[][] : fix(NACC);
 
-component BUFG 
-  port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
+/SCALE xj[3] : xscale;
+/SCALE mj    : mscale;
+/SCALE xi[3] : xscale;
+/SCALE ieps2 : escale;
+/SCALE sx[3] : fscale;
+/NVMP 1;
 
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
 
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
-signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
-
-begin
-
--- *********************************************************************
--- å≈íËêMçÜ
--- *********************************************************************
-  logic_0 <= '0';                   -- 0å≈íËêMçÜ
-
-
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ÉäÉZÉbÉg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
-    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
-    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
-    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
-
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
-    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
-  );
-
-end rtl;
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
+pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
+pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
