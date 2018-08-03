@@ -1,74 +1,74 @@
-2018年  7月 29日 日曜日 10:09:48 JST
---------------------------------------------------------------------------------
-Release 6.2.03i Trace G.28
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+2018年  8月  3日 金曜日 09:44:28 JST
+// gravity3.pgdl
+// Calculate Potential, Acceleration and Jerk
+// Author: Andreas Ernst, August 18, 2006
 
-trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
+#define NFLO 26
+#define NMAN 16
+#define NFIX 57
+#define NACC 64
+#define NEXAD 31
+#define NEXAD2 1
+#define FSHIFT pow(2.0,(double)NEXAD)
 
+/MEM xj[3] <= x[][]  : float(NFLO, NMAN);
+/MEM vj[3] <= v[][]  : float(NFLO, NMAN);
+/MEM mj    <= m[]    : float(NFLO, NMAN);
+/REG xi[3] <= x[][]  : float(NFLO, NMAN);
+/REG vi[3] <= v[][]  : float(NFLO, NMAN);
+/REG rx    => p[]    : fix(NACC);
+/REG sx[3] => a[][]  : fix(NACC);
+/REG tx[3] => jk[][] : fix(NACC);
 
-Design file:              top.ncd
-Physical constraint file: top.pcf
-Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
-Report level:             error report
+/SCALE rx    : (1.0/FSHIFT);
+/SCALE sx[3] : (1.0/FSHIFT);
+/SCALE tx[3] : (1.0/FSHIFT);
 
-Environment Variable      Effect 
---------------------      ------ 
-NONE                      No environment variables were set
---------------------------------------------------------------------------------
+/NVMP 1;
+/NPIPE 1;
 
-INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
-   option. All paths that are not constrained will be reported in the
-   unconstrained paths section(s) of the report.
+// Acceleration, 1st part
 
-================================================================================
-Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
+pg_float_sub           (xj,xi,dx,              NFLO,NMAN, 4);     // (1)
+pg_float_mult          (dx,dx,dx2,             NFLO,NMAN, 2);     // (2)
+pg_float_unsigned_add  (dx2[0],dx2[1],x2y2,    NFLO,NMAN, 4);     // (3)
+pg_float_unsigned_add  (dx2[2],x2y2,r2,        NFLO,NMAN, 4);     // (4)
+pg_float_sqrt          (r2,r1,                 NFLO,NMAN, 3);     // (5)
+pg_float_mult          (r2,r1,r3,              NFLO,NMAN, 2);     // (6)
+pg_float_mult          (r3,r2,r5,              NFLO,NMAN, 2);     // (7)
+pg_float_recipro       (r5,r5i,                NFLO,NMAN, 2);     // (8)
+pg_float_mult          (r5i,mj,mr5i,           NFLO,NMAN, 2);     // (9)
+pg_float_mult          (mr5i,r2,mf,            NFLO,NMAN, 2);     // (10)
 
- 0 items analyzed, 0 timing errors detected.
---------------------------------------------------------------------------------
+// Potential
 
-================================================================================
-Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+pg_float_mult          (mf,r2,mp,              NFLO,NMAN, 2);      // (11)
+pg_float_expadd        (mp,ps,                 NEXAD,NFLO,NMAN,1); // (12)
+pg_float_fixaccum      (ps,rx,                 NFLO,NMAN, NFIX, NACC, 2);  // (13)
 
- 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  19.569ns.
---------------------------------------------------------------------------------
+// Acceleration, 2nd part
 
-================================================================================
-Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
+pg_float_expadd        (mf,fs,                 NEXAD,NFLO,NMAN,1);// (14)
+pg_float_mult          (fs,dx,fx,              NFLO,NMAN, 2);     // (15)
+pg_float_fixaccum      (fx,sx,                 NFLO,NMAN, NFIX, NACC, 2);  // (16)
 
- 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  14.739ns.
---------------------------------------------------------------------------------
+// Jerk, 1st term
 
+pg_float_sub           (vj,vi,dv,              NFLO,NMAN, 4);     // (17)
+pg_float_mult          (fs,dv,jk1,             NFLO,NMAN, 2);     // (18)
 
-All constraints were met.
+// Jerk, 2nd term
 
+pg_float_mult          (dx,dv,xv,              NFLO,NMAN, 2);      // (19)
+pg_float_unsigned_add  (xv[0],xv[1],xv1,       NFLO,NMAN, 4);      // (20)
+pg_float_unsigned_add  (xv[2],xv1,xv2,         NFLO,NMAN, 4);      // (21)
+pg_float_expadd        (xv2,xv2x2,             NEXAD2,NFLO,NMAN,1);// (22)
+pg_float_unsigned_add  (xv2x2,xv2,xv2x3,       NFLO,NMAN, 4);      // (23)
+pg_float_mult          (mr5i,xv2x3,jk2a,       NFLO,NMAN, 2);      // (24)
+pg_float_expadd        (jk2a,jk2s,             NEXAD,NFLO,NMAN,1); // (25)
+pg_float_mult          (jk2s,dx,jk2,           NFLO,NMAN, 2);      // (26)
 
-Data Sheet report:
------------------
-All values displayed in nanoseconds (ns)
+// Jerk, 1st - 2nd term
 
-Clock to Setup on destination clock CK66
----------------+---------+---------+---------+---------+
-               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
-Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
----------------+---------+---------+---------+---------+
-CK66           |   19.959|         |         |         |
----------------+---------+---------+---------+---------+
-
-
-Timing summary:
----------------
-
-Timing errors: 0  Score: 0
-
-Constraints cover 1709651 paths, 0 nets, and 63904 connections
-
-Design statistics:
-   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
-
-
-Analysis completed Mon Jun 13 23:42:18 2005
---------------------------------------------------------------------------------
-
-Peak Memory Usage: 279 MB
+pg_float_sub           (jk1,jk2,jk0,           NFLO,NMAN, 4);      // (27)
+pg_float_fixaccum      (jk0,tx,                NFLO,NMAN, NFIX, NACC, 2);  // (28)
