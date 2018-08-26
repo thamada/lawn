@@ -1,51 +1,27 @@
-2018年  8月 19日 日曜日 10:21:12 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2018年  8月 26日 日曜日 09:49:08 JST
+vlib work
+vcom -93 -explicit  ../rtl/local_write.vhd
+vcom -93 -explicit  ../rtl/local_read_cnt.vhd
+vcom -93 -explicit  ../rtl/local_read_if.vhd
+vcom -93 -explicit  ../rtl/local_read.vhd
+vcom -93 -explicit  ../rtl/local_io.vhd
+vcom -93 -explicit  sim_local_io.vhw
+vsim -t 1ps   -lib work sim_local_io
+do sim_local_io.udo
+view wave
+add wave -hex /uut/busy_dmar
+add wave -hex *
+
+
+add wave -hex /uut/u1/u0/clk
+add wave -hex /uut/u1/u0/CALC_DONE
+add wave -dec /uut/u1/u0/cnt
+add wave -hex /uut/u1/u0/cnt_en
+add wave -hex /uut/u1/u0/is_finish
+add wave -hex /uut/u1/u0/EXEC
+add wave -hex /uut/u1/u0/CHIPSEL
+add wave -hex /uut/u1/u0/START_AD
+add wave -hex /uut/u1/u0/NQWORD
+add wave -hex /uut/u1/u0/MEM_AD_BASE
+
+run -all
