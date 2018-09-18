@@ -1,56 +1,27 @@
-2018年  9月 17日 月曜日 11:22:09 JST
+2018年  9月 18日 火曜日 09:25:50 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-06-04 15:57:17 hamada>
-import argparse
-import numpy as np
+#Time-stamp: <2017-06-10 01:52:29 hamada>
 import cv2
-from datetime import datetime
-import mkdir
+import urllib.request
+import numpy as np
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
+#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
+stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-if (__name__ == '__main__'):
-    state = State()
-
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('camera: %d'%(devid), frame)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            basedir = '../log.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, frame)
-            print(ofname, "devid = %d"%devid)
-            tnow0 = tnow
-
+bytes = b''
+while True:
+    raw = stream.read(1024)
+    bytes += raw
+    #print (bytes)
+    a = bytes.find(b'\xff\xd8')
+    b = bytes.find(b'\xff\xd9')
+    if a!=-1 and b!=-1:
+        jpg = bytes[a:b+2]
+        bytes= bytes[b+2:]
+        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
+        cv2.imshow('droidcam',image)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'): break
-        if key == ord(' '): state.is_record = not (state.is_record)
 
+cv2.destroyAllWindows()
 
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
