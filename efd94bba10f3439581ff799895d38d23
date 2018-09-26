@@ -1,34 +1,25 @@
-2018年  8月 26日 日曜日 11:18:07 JST
-#include <stdio.h>
+2018年  9月 26日 水曜日 11:26:55 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-03 00:45:13 hamada>
+import cv2
+import glob
+import aieye_find
+from datetime import datetime
 
+iflist = [] 
+for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
+    iflist.append(fname)
 
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
-{
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+iflist.sort()
+i = 0
+index = 0
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
-
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
-
-    fwrite(x, n*24,1,fp);
-
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
-
-    //    fclose(fp);
-    fflush(fp);
-}
-
+for fname in iflist:
+    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
+    fname_dst = fname.replace('sss_', 'CanonG1X_')
+    if( i % 1 == 0):  # every 30 sec 
+#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
+        cmd =  "mv " + fname_src + " " + fname_dst
+        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
+        index += 1
+    i += 1
