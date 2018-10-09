@@ -1,65 +1,27 @@
-2018年 10月  7日 日曜日 10:29:33 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
--- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
--- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
--- START_ADR                    < n                                    >
--- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
--- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
+2018年 10月  9日 火曜日 11:06:47 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-10 01:52:29 hamada>
+import cv2
+import urllib.request
+import numpy as np
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
+stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-entity dmaw_mem_adr is
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmaw_mem_adr;
+bytes = b''
+while True:
+    raw = stream.read(1024)
+    bytes += raw
+    #print (bytes)
+    a = bytes.find(b'\xff\xd8')
+    b = bytes.find(b'\xff\xd9')
+    if a!=-1 and b!=-1:
+        jpg = bytes[a:b+2]
+        bytes= bytes[b+2:]
+        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
+        cv2.imshow('droidcam',image)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
 
-architecture rtl of dmaw_mem_adr is
+cv2.destroyAllWindows()
 
-signal mem_adr_inc : std_logic_vector(18 downto 0);
-signal   x,z : std_logic_vector(18 downto 0);
-constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
-
-begin
-
-  z <= x + one;
-
-  -----------------
-  -- mem_adr_inc
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE = "10") then
-        mem_adr_inc <= z;
-      else
-        mem_adr_inc <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  x <= mem_adr_inc;
-
-  -----------------
-  -- MEM_ADR
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE="10") then
-        MEM_ADR <= mem_adr_inc + START_ADR;
-      else
-        MEM_ADR <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-end rtl;
