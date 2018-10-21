@@ -1,27 +1,28 @@
-2018年 10月 11日 木曜日 09:52:53 JST
+2018年 10月 21日 日曜日 10:18:23 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-06-10 01:52:29 hamada>
-import cv2
-import urllib.request
 import numpy as np
+import cv2
+from datetime import datetime
 
-#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
-stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-bytes = b''
-while True:
-    raw = stream.read(1024)
-    bytes += raw
-    #print (bytes)
-    a = bytes.find(b'\xff\xd8')
-    b = bytes.find(b'\xff\xd9')
-    if a!=-1 and b!=-1:
-        jpg = bytes[a:b+2]
-        bytes= bytes[b+2:]
-        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
-        cv2.imshow('droidcam',image)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xff, 0xf, 0xff)
+    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    
+
+image = cv2.imread("/tmp/tmp.jpg")
+
+tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+put_text(image, tnow)
+cv2.imshow('test', image)
+
+
+while(True):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
 cv2.destroyAllWindows()
 
+print("Done.")
