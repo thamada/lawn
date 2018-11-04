@@ -1,16 +1,20 @@
-2018年 10月  7日 日曜日 10:52:40 JST
-/** 
-# x��1���ƥå׿ʤ��
-# x(k+1) = x(k) + v(k+1/2)*dt
-*/
+2018年 11月  4日 日曜日 09:27:44 JST
+#!/usr/bin/perl
 
-#include <stdio.h>
-#include "nbodysim.h"
 
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-        for(d=0;d<3;d++)
-            x[i][d] = x[i][d]+v[i][d]*dt;
+my $is_stop = 0;
+
+if($ARGV[0]){
+    $is_stop = 1;
 }
+
+my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+
+while(1){
+    my $exe = `$cmd`;
+    print $exe;
+    exit (1) if($is_stop == 1);
+    sleep (2);
+}
+
+1;
