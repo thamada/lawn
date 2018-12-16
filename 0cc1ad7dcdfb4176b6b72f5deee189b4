@@ -1,50 +1,40 @@
-2018年 12月  2日 日曜日 09:49:53 JST
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import sys
-
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
-
-
-if (__name__ == '__main__'):
-    argv = sys.argv
-    devid = int(argv[1])
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('frame', frame)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            ofname = mkdir.get_filename_frame('../log/', tnow)
-#            cv2.imwrite(ofname, frame)
-            print(ofname, ": TEST on devid=%d"%devid)
-            tnow0 = tnow
+2018年 12月 16日 日曜日 10:26:00 JST
  
+-w
+-g DebugBitstream:No
+-g Binary:no
+-g CRC:Enable
+-g ConfigRate:4
+-g CclkPin:PullUp
+-g M0Pin:PullUp
+-g M1Pin:PullUp
+-g M2Pin:PullUp
+-g ProgPin:PullUp
+-g DonePin:PullUp
+-g PowerdownPin:PullUp
+-g TckPin:PullUp
+-g TdiPin:PullUp
+-g TdoPin:PullUp
+-g TmsPin:PullUp
+-g UnusedPin:PullDown
+-g UserID:0xFFFFFFFF
+-g DCMShutDown:Disable
+-g DisableBandgap:No
+-g DCIUpdateMode:AsRequired
+-g StartUpClk:CClk
+-g DONE_cycle:4
+-g GTS_cycle:5
+-g GWE_cycle:6
+-g LCK_cycle:NoWait
+-g Match_cycle:Auto
+-g Security:None
+-g DonePipe:No
+-g DriveDone:No
+-g Encrypt:No
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
 
-    cap.release()
-    cv2.destroyAllWindows()
 
-    print("Done.")
+
+
+
+
