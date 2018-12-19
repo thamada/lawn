@@ -1,75 +1,29 @@
-2018年 12月 15日 土曜日 10:26:40 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2018年 12月 19日 水曜日 09:22:00 JST
+#!/usr/bin/env python3
+#Time-stamp: <>
+import fnmatch
+import functools
+import os
+import re
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+def find(path, pattern):
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
-}
+    if isinstance(pattern, str): 
+        match = functools.partial(fnmatch.fnmatch, pat=pattern)
+    elif isinstance(pattern, re._pattern_type):
+        match = pattern.match
+    elif callable(pattern):
+        match = pattern
+    else:
+        raise TypeError
 
-$bar = 1;
-
-my $adr=0, $size;
-
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
-
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
+    for root, dirs, files in os.walk(path):
+        for file_ in files:
+            if match(file_):
+                yield os.path.join(root, file_)
 
 
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
+if __name__ == '__main__':
+    for i in find('../log/', '*.jpg'):
+        print (i)
 
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
-
-
-1;
