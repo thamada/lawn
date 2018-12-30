@@ -1,23 +1,44 @@
-2018年 12月 22日 土曜日 11:24:53 JST
-#include <stdio.h>
-#include "nbodysim.h"
+2018年 12月 30日 日曜日 11:14:42 JST
+// Time-stamp: " "
+#include <stdio.h> 
+#include <string.h>
+#include <stdlib.h>
 
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n)
+void read_data(char* fname, int* nbody, double posi[][2])
 {
-    int i,j;
+  int idx,n;
+  char line[2560];
+  FILE *fp;
+  fp = fopen(fname,"r");
+  idx=0;
 
-    printf("-------------------------------\n");
-    printf("The debuging routine is called.\n");
-    printf("-------------------------------\n");
-    printf("n = %d\n",n);
-    printf("eps2 = %e\n",eps2);
+  { // get N (number of particles)
+    char* p;
+    fgets(line,100,fp);
+    p = (char* )strtok(line,"\n");
+    sscanf(p,"%d",&n);
+    *nbody = n;
+  }
 
-    for(i=0;i<n;i++){
-        printf("---\n");
-        printf("particle %d\n",i);
-        printf("m[%d] = %e\n",i,m[i]);
-        for(j=0;j<3;j++) printf("x[%d][%d] = %e\n",i,j,x[i][j]);
-        for(j=0;j<3;j++) printf("a[%d][%d] = %e\n",i,j,a[i][j]);
+  // get all data
+  for(idx=0;idx<n;idx++){
+    char* p;
+    char col[10][400];
+    int i=0;
+    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
+    p = (char* )strtok(line,"\t");
+    strcpy(col[i],p);
+    i++;
+    while((p = (char* )strtok(NULL, "\t"))!=NULL){
+      strcpy(col[i],p);
+      i++;
     }
-}
+    //--- for debug ---
+    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
+    //    printf("\n");
 
+    posi[idx][0]=atof(col[0]);
+    posi[idx][1]=atof(col[1]);
+  }
+  fclose(fp);
+}
