@@ -1,4 +1,52 @@
-2018年 12月 18日 火曜日 11:31:46 JST
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
-OK
+2018年 12月 30日 日曜日 11:08:45 JST
+set -tmpdir __projnav
+set -xsthdpdir ./xst
+run
+-ifn top.prj
+-ifmt mixed
+-ofn top
+-ofmt NGC
+-p xc2vp70-5-ff1517
+-top top
+-opt_mode Speed
+-opt_level 1
+-iuc NO
+-lso top.lso
+-keep_hierarchy NO
+-glob_opt AllClockNets
+-rtlview Yes
+-read_cores YES
+-write_timing_constraints NO
+-cross_clock_analysis NO
+-hierarchy_separator _
+-bus_delimiter <>
+-case maintain
+-slice_utilization_ratio 100
+-verilog2001 YES
+-vlgincdir 
+-fsm_extract YES -fsm_encoding Auto
+-fsm_style lut
+-ram_extract Yes
+-ram_style Auto
+-rom_extract Yes
+-rom_style Auto
+-mux_extract YES
+-mux_style Auto
+-decoder_extract YES
+-priority_extract YES
+-shreg_extract YES
+-shift_extract YES
+-xor_collapse YES
+-resource_sharing YES
+-mult_style auto
+-iobuf YES
+-max_fanout 500
+-bufg 16
+-register_duplication YES
+-equivalent_register_removal YES
+-register_balancing No
+-slice_packing YES
+-optimize_primitives NO
+-tristate2logic No
+-iob auto
+-slice_utilization_ratio_maxmargin 5
