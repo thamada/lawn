@@ -1,15 +1,2 @@
-2018年 12月 17日 月曜日 10:16:42 JST
-#!/usr/bin/perl
-
-my $nloop = 16;
-my $logbase = "log.GTX";
-
-for(my $ni=2; $ni<131073; $ni = $ni*2){
-    my $bin = "\$\(BIN\)";
-    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
-    my $log = "\$LOG";
-    my $cmd = "$bin $ifile $nloop >> $log";
-    print "\t".$cmd ."\n";
-}
-
-1;
+2019年  1月  5日 土曜日 11:24:34 JST
+work	c:\cygwin\home\administrator\fkit\pci64\rtl\local_io.vhd
