@@ -1,12 +1,34 @@
-2019年  1月  5日 土曜日 11:00:53 JST
-10
-2.253285e-01	9.191831e-01
-2.068413e-01	7.247797e-01
-7.321991e-01	9.064824e-01
-3.479571e-01	8.578809e-01
-4.151849e-01	1.941677e-01
-6.856104e-01	5.243755e-01
-1.596357e-01	9.547575e-01
-1.269843e-01	4.339532e-03
-3.826915e-01	2.507929e-01
-6.552879e-01	5.344908e-01
+2019年  1月 12日 土曜日 11:43:25 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+--mem_we                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity dmaw_mem_we is
+  port (
+    CLK       : in std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    MEM_WE    : out std_logic );
+end dmaw_mem_we;
+
+architecture rtl of dmaw_mem_we is
+
+begin
+
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="10") then
+        MEM_WE <= '1';
+      else
+        MEM_WE <= '0';
+      end if;
+    end if;
+  end process;
+
+end rtl;
