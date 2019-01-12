@@ -1,91 +1,25 @@
-2018Âπ¥ 12Êúà 21Êó• ÈáëÊõúÊó• 09:28:41 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
---MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
---MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+2019Âπ¥  1Êúà 12Êó• ÂúüÊõúÊó• 11:19:35 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-03 00:45:13 hamada>
+import cv2
+import glob
+import aieye_find
+from datetime import datetime
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+iflist = [] 
+for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
+    iflist.append(fname)
 
-entity dmar is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_RE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
-end dmar;
+iflist.sort()
+i = 0
+index = 0
 
-architecture rtl of dmar is
-
-component dmar_dbus_hiz
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic);
-end component;
-
-component dmar_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-component dmar_start_adr
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end component;
-
-component dmar_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end component;
-
-
-component dmar_mem_re
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end component;
-
-signal state : std_logic_vector(1 downto 0);
-signal start_adr : std_logic_vector(18 downto 0);
-
-begin
-
--- DBUSÇÃÉgÉâÉCÉXÉeÅ[ÉgèàóùÇÕè„à Ç≈çsÇ§
--- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
-
- u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
- u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
- u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
- u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
-
- u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
- DBUS_Port <= MEM_DATA;
-
-
-end rtl;
+for fname in iflist:
+    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
+    fname_dst = fname.replace('sss_', 'CanonG1X_')
+    if( i % 1 == 0):  # every 30 sec 
+#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
+        cmd =  "mv " + fname_src + " " + fname_dst
+        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
+        index += 1
+    i += 1
