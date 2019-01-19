@@ -1,50 +1,75 @@
-2018年 12月 17日 月曜日 09:22:22 JST
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import sys
+2019年  1月 19日 土曜日 10:43:25 JST
+#!/usr/bin/perl
+#
+# mtrr : MTRR register resetting script for PROGRAPE-4
+#
+# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
+# 
+# No warranty is attached; 
+#
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
+my $devid   = 0;
+my $bar;
+my $cmd;
+my $exe;
+
+if(@ARGV){
+    sprintf($devid, "%d", $ARGV[0]);
+}
+
+$bar = 1;
+
+my $adr=0, $size;
+
+$cmd = "ifpga_get_barinfo $devid $bar";
+$exe = `$cmd`;
+chomp($exe);
+$adr = $exe;
+
+$cmd = "ifpga_get_barinfo $devid $bar 1";
+$exe = `$cmd`;
+chomp($exe);
+$size = $exe;
+
+print "BAR1 start at $adr, size $size bytes\n";
+
+if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
+    print "discontinued\n";
+    exit(-1);
+}
 
 
-if (__name__ == '__main__'):
-    argv = sys.argv
-    devid = int(argv[1])
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
+open(RD,"/proc/mtrr");
+my $hit_line = '';
+while(<RD>){
+    my $s = $_;
+    chomp($s);
+    if($s =~ /$adr/){
+	$hit_line = $s;
+    }
+}
+close(RD);
 
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+if($hit_line ne ''){
+    print "Hit: ". $hit_line ."\n";
+}else{
+    $cmd = "cat /proc/mtrr";
+    print `$cmd` ."\n";
+    print "Can't find the mtrr register for bar1($adr)\n";
+    print "discontinued\n";
+    exit(-1);
+}
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
+my ($reg_nr, ) = split(/\:/,$hit_line);
+$reg_nr =~ s/reg//;
+$reg_nr = sprintf("%d",$reg_nr);
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
+print  $cmd. "\n";
+print  `$cmd`. "\n";
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('frame', frame)
+$cmd = "cat /proc/mtrr";
+print `$cmd`;
 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            ofname = mkdir.get_filename_frame('../log/', tnow)
-#            cv2.imwrite(ofname, frame)
-            print(ofname, ": TEST on devid=%d"%devid)
-            tnow0 = tnow
- 
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
+1;
