@@ -1,50 +1,56 @@
-2019Âπ¥  1Êúà 19Êó• ÂúüÊõúÊó• 09:46:46 JST
-#include <math.h>
-#define DIM (3)              /* éüå≥êî */
-#define NMAX (65536)         /* ç≈ëÂó±éqêî */
-//#define NTOTAL 1000      /* ó±éqêî (NTOTAL <= NMAX) */
+2019Âπ¥  1Êúà 22Êó• ÁÅ´ÊõúÊó• 09:09:07 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-11 19:17:43 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xf, 0xf, 0xff)
+    cv2.putText(image, text, (440, 15), font_type, font_size, font_color)
 
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
 
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+    print(cap_width, "x", cap_height, ":", cap_fps)
 
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('camera: %d'%(devid), frame)
 
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+        #tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(tnow != tnow0):
+            put_text(frame, tnow)
+            basedir = '../log.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, frame)
+            print(ofname, "devid = %d"%devid)
+            tnow0 = tnow
 
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
+    cap.release()
+    cv2.destroyAllWindows()
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
+    print("Done.")
