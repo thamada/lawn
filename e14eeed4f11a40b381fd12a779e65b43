@@ -1,90 +1,54 @@
-2019年  1月 26日 土曜日 10:05:22 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 00:18:35 hamada>
-import Message
-import numpy as np
-import cv2
-from datetime import datetime
+2019年  2月  8日 金曜日 09:47:30 JST
+#!/bin/sh
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local sha1> <remote ref> <remote sha1>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
 
+remote="$1"
+url="$2"
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
+z40=0000000000000000000000000000000000000000
 
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
+IFS=' '
+while read local_ref local_sha remote_ref remote_sha
+do
+	if [ "$local_sha" = $z40 ]
+	then
+		# Handle delete
+	else
+		if [ "$remote_sha" = $z40 ]
+		then
+			# New branch, examine all commits
+			range="$local_sha"
+		else
+			# Update to existing branch, examine new commits
+			range="$remote_sha..$local_sha"
+		fi
 
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+		# Check for WIP commit
+		commit=`git rev-list -n 1 --grep '^WIP' "$range"`
+		if [ -n "$commit" ]
+		then
+			echo "Found WIP commit in $local_ref, not pushing"
+			exit 1
+		fi
+	fi
+done
 
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
-
-
-def get_bar_length(msg, x):
-    class_id = msg.get_classId()
-    dx = 25
-    z = 0
-    # if class_id == 5: z = x + dx/2; x = int(z)
-    # if class_id == 6: z = x + dx*2; x = int(z)
-    # if class_id == 4: z = x - dx*2; x = int(z)
-
-    if class_id == 0: z = x + dx*2; x = int(z)
-    if class_id in {0,4,5,6,7,8}: 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        print (tnow,': ', msg.class_count)
-    return (x)
-
-if __name__ == '__main__':
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 120)
-    image  = image0.copy()
-
-    window_title = "AI sensor"
-    x = 0
-    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
-
-    while(True):
-        x = get_bar_length(msg, x)
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
+exit 0
