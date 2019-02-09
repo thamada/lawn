@@ -1,7 +1,46 @@
-2019年  1月 23日 水曜日 11:25:36 JST
-classes= 10
-train  = ./etc/list.train.txt
-valid  = ./etc/list.valid.txt
-names =  ./etc/list.classname.txt
-backup = ./backup
+2019年  2月  9日 土曜日 09:55:38 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
+VM_NAME="ubuntu16"
+
+all: check
+
+c: check
+
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
