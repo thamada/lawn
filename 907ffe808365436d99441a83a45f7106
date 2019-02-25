@@ -1,29 +1,47 @@
-2019年  2月 16日 土曜日 11:13:29 JST
-//Time-stamp: "2006-11-21 00:17:47 hamada"
+2019年  2月 25日 月曜日 10:48:21 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
-#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
-#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
+void b3_init(int devid);
+void b3_init_config(int devid, char* fpga_conf_file);
 
-int pgr_open(int);
-void pgr_close(int);
 
-void pgr_reset(int devid);
-int  pgr_get_writecomb_err(int devid);
 
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
+void b3_set_idata(unsigned int devid,      // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int ireg_index, // iregister index
+                  unsigned int data);      // data
 
-void pgr_setipset(int devid, unsigned int *idata, int num);
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
+void b3_reset_jmem_adr();
+void b3_reset_jmem_adr_n(int nchip);
 
-void pgr_start_calc(int devid, unsigned int n);
-void pgr_calc_start(int devid, unsigned int n);
-void pgr_calc_finish(int devid);
+void b3_set_jdata(unsigned int devid,      // device id
+                  unsigned int nword,      // number of jdata
+                  unsigned int jdata[] );  // 
 
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+void b3_set_jdata_n_chip(unsigned int devid,    // device id
+			 unsigned int nchip,    // 0, 1, 2, 3
+			 unsigned int nword,    // number of jdata
+			 unsigned int jdata[]);
 
-void pgr_set_npipe_per_chip(int devid, int n);
-void pgr_set_jwidth(int devid, int n);
-void pgr_set_nchip(int nchip);
+
+void b3_get_jdata(unsigned int devid,      // device id
+                  unsigned int chip_sel,   // chip_sel
+		  unsigned int jmem_adr,   // mem adr
+                  unsigned int* data );    // data 
+
+void b3_start_calc(unsigned int n,
+		   unsigned int chip_sel);
+
+void b3_start_calc_sepa4jM(unsigned int nrun[]);
+
+unsigned int b3_get_calcsts(unsigned int chip_sel);
+
+
+void b3_get_fodata(unsigned int devid,     // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int fo_index,   // iregister index
+                  unsigned int* data);     // data
