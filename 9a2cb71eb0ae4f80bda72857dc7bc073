@@ -1,2 +1,7 @@
-2019年  2月 24日 日曜日 10:20:54 JST
-work	c:\cygwin\home\administrator\fkit\pci64\rtl\local_io.vhd
+2019年  2月 27日 水曜日 09:22:20 JST
+classes= 10
+train  = ./etc/list.train.txt
+valid  = ./etc/list.valid.txt
+names =  ./etc/list.classname.txt
+backup = ./backup
+
