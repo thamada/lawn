@@ -1,51 +1,53 @@
-2019年  2月 26日 火曜日 11:04:20 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2019年  3月 20日 水曜日 11:09:43 JST
+-- 2005/06/13
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define D_FSU  1
+#define D_FTL  2
+#define D_LAD  4
+#define D_LMU  1
+#define D_LTF  2
+#define D_FAC  1
+
+// -1 < xbox < 1.0,
+// mmin > 1.0 (1e-2 < m < 1.0 ==> underflow around large R)
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+//mmin 0xdf61
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
+
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
+
+/NPIPE 5;
+/NVMP 1;
+
+/JPSET xj[3], x[][], fix,      NPOS,xscale;
+/JPSET mj,    m[],   log,      NLOG,NMAN,mscale;
+/IPSET xi[3], x[][], fix,      NPOS,xscale;
+/IPSET ieps2, eps2,  log,      NLOG,NMAN,escale;
+/FOSET sx[3], a[][], fix,      NACC,fscale;
+
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           D_FSU);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, D_FTL);
+pg_log_shift(1,dx,x2,                  NLOG);
+
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,D_LAD,NCUT);
+
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,           D_LMU);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,           D_LMU);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,           D_LMU);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN, D_LMU);
+
+pg_conv_ltof(fxs,  ffx,                NLOG,NMAN,NFOR, D_LTF);
+pg_fix_accum(ffx,  sx,                 NFOR,NACC,      D_FAC);
