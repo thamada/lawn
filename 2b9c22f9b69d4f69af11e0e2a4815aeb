@@ -1,45 +1,71 @@
-2019年  3月 17日 日曜日 09:59:05 JST
-#include "cutil.h"
+2019年  3月 23日 土曜日 09:56:49 JST
+-- 2004/05/13 16:30
+-- for matsubayashi simulation
 
-__device__ float4
-inter(float4 xj,  float4 xi,  float4 apot)
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+
+#define DELAY_SUB 2     /* A */
+#define DELAY_FL  4     /* B */
+#define DELAY_X2Y2 5    /* C */
+#define DELAY_R2   5    /* D */
+#define DELAY_R3   1    /* E */
+#define DELAY_MR3  1    /* F */
+#define DELAY_F    1    /* G */
+#define DELAY_OF   1    /* H */
+#define DELAY_LF   2    /* I */
+#define DELAY_AC   3    /* J */
+
+#define DELAY_EPS  6    /* A+B */
+#define DELAY_DX   12   /* C+D+E+F */
+#define DELAY_M    17   /* A+B+C+D+E */
+#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
+#define DELAY_TOT  25   /* (DELAY_CLE) + J */
+
+
+
+
+#define xsize (100.0)
+#define mmin (1.220703125e-04)
+#define xoffset (xsize/2.0)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
+#define foffset (pow(2.0,23.0))
+#define fscale (-xscale*xscale*foffset/mscale)
+--mmin 0xdf61
+
+/NPIPE 1
+/NVMP 1
+
+/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
+/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
+/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
+/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
+/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
+/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
+/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
+/IPSET ieps2,eps2,log,NLOG,NMAN,escale
+/FOSET sx,a[][0],fix,NACC,fscale
+/FOSET sy,a[][1],fix,NACC,fscale
+/FOSET sz,a[][2],fix,NACC,fscale
+/VALSET fx_ofst,0x9700,0,16
+/VALSET fy_ofst,0x9700,0,16
+/VALSET fz_ofst,0x9700,0,16
+/DATASET fx_ofst,01001011100000000,0,16
+/DATASET fy_ofst,01001011100000000,0,16
+/DATASET fz_ofst,01001011100000000,0,16
+
+void force_gravity_on_emulator(x,m,eps2,a,n)
+	double x[][3];
+	double m[];
+	double eps2;
+	double a[][3];
+	int n;
 {
-  float mj    = xj.w;        // Mass Mj
-  float ieps2 = xi.w;        // epsilon^2
-  float dx = xj.x - xi.x;    // Coordinates Xj - Xi
-  float dy = xj.y - xi.y;    // Coordinates Yj - Yi
-  float dz = xj.z - xi.z;    // Coordinates Zj - Zi
-  float r2 = dx*dx+dy*dy+dz*dz+ieps2;
-  float r1i = 1/sqrt(r2);
-  float r2i = r1i * r1i;
-  float mr3i = mj * r2i * r1i;
-  apot.x += dx * mr3i;       // Accel AXi
-  apot.y += dy * mr3i;       // Accel AYi
-  apot.z += dz * mr3i;       // Accel AZi
-  return (apot);
+  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
 }
-
-__global__ void
-kernel(float4* g_xj,
-       float* g_xi,
-       float* g_fi,
-       int ni,
-       int nj)
-{
-  int i = blockIdx.x*blockDim.x+threadIdx.x;
-  float4 ai = make_float4(0.0, 0.0, 0.0, 0.0);
-  float4 xi;
-  xi.x = g_xi[i];       // Coordinates Xi
-  xi.y = g_xi[i+ni];    // Coordinates Yi
-  xi.z = g_xi[i+ni*2];  // Coordinates Zi
-  xi.w = g_xi[i+ni*3];  // epsilon ^ 2
-  for(int j = 0; j<nj; j++)  ai = inter(g_xj[j], xi, ai);
-  if(i<ni) {
-    g_fi[i]      = ai.x;
-    g_fi[i+ni]   = ai.y;
-    g_fi[i+ni*2] = ai.z;
-  }
-}
-
-#define NTHRE (128)
-#include "api.h"
