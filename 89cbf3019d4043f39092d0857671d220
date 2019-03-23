@@ -1,102 +1,231 @@
-2019年  3月 13日 水曜日 11:06:07 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 03:06:20 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
+2019年  3月 23日 土曜日 10:17:15 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 15:15:30 2005
 
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-if (__name__ == '__main__'):
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
+ENTITY sim_local_read_cnt IS
+END sim_local_read_cnt;
 
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
-    i_fp = 0.0
-    i_delta = 1
-    i_scale = 60.0
-    speed_state = 0
+ARCHITECTURE testbench_arch OF sim_local_read_cnt IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read_cnt.ano";
+	COMPONENT local_read_cnt
+		GENERIC (
+			CNT_WIDTH : INTEGER;
+			FO_BASE : INTEGER;
+			NBIT_FO_UAD : INTEGER;
+			INTF_LAT : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_DONE : In  std_logic;
+			BUSY : Out  std_logic;
+			EXEC : Out  std_logic;
+			START_AD : Out  std_logic_vector (18 DOWNTO 0);
+			NQWORD : Out  std_logic_vector (8 DOWNTO 0);
+			CHIPSEL : Out  std_logic_vector (3 DOWNTO 0);
+			MEM_AD_BASE : Out  std_logic_vector (12 DOWNTO 0);
+			BUSY_IF : In  std_logic;
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_DONE : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL EXEC : std_logic;
+	SIGNAL START_AD : std_logic_vector (18 DOWNTO 0);
+	SIGNAL NQWORD : std_logic_vector (8 DOWNTO 0);
+	SIGNAL CHIPSEL : std_logic_vector (3 DOWNTO 0);
+	SIGNAL MEM_AD_BASE : std_logic_vector (12 DOWNTO 0);
+	SIGNAL BUSY_IF : std_logic;
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-        #print (fname, i, ni, i/ni)
-        image = cv2.imread(fname)
-        cv2.imshow("play.py", image)
+BEGIN
+	UUT : local_read_cnt
+	GENERIC MAP (
+		CNT_WIDTH => 16,
+		FO_BASE => 24576,
+		NBIT_FO_UAD => 3,
+		INTF_LAT => 8
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_DONE => CALC_DONE,
+		BUSY => BUSY,
+		EXEC => EXEC,
+		START_AD => START_AD,
+		NQWORD => NQWORD,
+		CHIPSEL => CHIPSEL,
+		MEM_AD_BASE => MEM_AD_BASE,
+		BUSY_IF => BUSY_IF,
+		RST => RST,
+		CLK => CLK
+	);
 
-        key = cv2.waitKey(1) & 0xFF
-        if key != 255:  print (key, "%d/%d"% (i, ni))
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-        if key  == 114:           i_fp = 0.  # r
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-        if key  == ord('q'): break
-        if key  == 97:            i_fp -= 1.  # d
-        if key  == 100:           i_fp += 1.  # a
-        if key  == 81:            i_fp -= 5.  # <-
-        if key  == 83:            i_fp += 5.  # ->
-        if key  == 86:            i_fp += 30. # Up
-        if key  == 85:            i_fp -= 30. # Down
-        if key  == 82:            i_fp += 300. # PgDn
-        if key  == 84:            i_fp -= 300. # PgUp
+		PROCEDURE ANNOTATE_EXEC(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",EXEC,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, EXEC);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-        if key  == ord(' '): 
-            if 0 != speed_state: 
-                i_delta = 0
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 1
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+		PROCEDURE ANNOTATE_START_AD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",START_AD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, START_AD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_NQWORD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",NQWORD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, NQWORD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-        if key  == 226: # R_SHIFT
-            if 0 == speed_state:
-                i_delta = int(i_scale/10.)
-                speed_state = 1
-            elif 1 == speed_state:
-                i_delta = int(i_scale)
-                speed_state = 2
-            elif 2 == speed_state:
-                i_delta = int(i_scale*10.)
-                speed_state = 3
-            elif 3 == speed_state:
-                i_delta = int(i_scale*100.)
-                speed_state = 4
-            elif 4 == speed_state:
-                i_delta = 1
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 0
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+		PROCEDURE ANNOTATE_CHIPSEL(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CHIPSEL,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CHIPSEL);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-        if key  == ord('+'): 
-            i_delta *= 2
-            print ("i_delta:", i_delta)
+		PROCEDURE ANNOTATE_MEM_AD_BASE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_AD_BASE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_AD_BASE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-        if key  == ord('-'): 
-            i_delta = int(i_delta / 2)
-            if i_delta < 1: i_delta = 1 
-            print ("i_delta:", i_delta)
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_EXEC(TX_TIME);
+		ANNOTATE_START_AD(TX_TIME);
+		ANNOTATE_NQWORD(TX_TIME);
+		ANNOTATE_CHIPSEL(TX_TIME);
+		ANNOTATE_MEM_AD_BASE(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-        #----------------------------------
-        i_fp += i_delta/i_scale
-        if i_fp < 0.0 :  i_fp = 0.0
-        if i_fp >= float(ni): i_fp = float(ni) -1.0
-        i = int(i_fp)
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
-    cv2.destroyAllWindows()
+		BEGIN
+		-- --------------------
+		CALC_DONE <= transport '0';
+		BUSY_IF <= transport '0';
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=100 ns
+		NPIPE <= transport std_logic_vector'("00000010"); --2
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=600 ns
+		CALC_DONE <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=700 ns
+		CALC_DONE <= transport '0';
+		-- --------------------
+		WAIT FOR 32225 ns; -- Time=32925 ns
+		-- --------------------
+
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
+
+CONFIGURATION local_read_cnt_cfg OF sim_local_read_cnt IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cnt_cfg;
