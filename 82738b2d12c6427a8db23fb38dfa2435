@@ -1,86 +1,12 @@
-2019年  3月 20日 水曜日 09:27:43 JST
-# CUDA
-###  Modify this part as your environment   ##################
-export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
-export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
-export PATH=$PATH:$CUDA_INSTALL_PATH/bin
-
-# for profiling
-export CUDA_PROFILE=0
-export CUDA_PROFILE_LOG=./cuda_profile.log
-export CUDA_PROFILE_CSV=1
-alias cudaprofon='export CUDA_PROFILE=1'
-alias cudaprofoff='export CUDA_PROFILE=0'
-
-# OpenCL
-#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
-
-
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
-
-# for MPICH
-#export PATH=/export/opt/mpi/local/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
-
-#------------ GbEd --------------------
-#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
-
-#------------ InfiniBand (OFED 1.4) --------------------
-export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
-
-#------------ InfiniBand (OFED 1.5.1) --------------------
-#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
-
-
-export LANG=C
-export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
-
-# for ICC
-# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
-
-# for Mplayer
-export PATH=/export/opt/mplayer/bin:$PATH
-
-#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
-
-#for Cray-XT5
-alias ssc='ssh hawk.cray.com -l p01130'
-
-#for AMD/ATI GPU
-#export CALROOT=/export/opt/amdstream/atical
-#export PATH=$CALROOT/bin/lnx64:$PATH
-#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
-#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
-#alias aon='export DISPLAY=:0.0'
-export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
-#xmodmap ~/.Xmodmap 2> /dev/null
-#nodeid=`uname -n`
-#echo "node $nodeid"
-
-
-
-export OMP_NUM_THREADS=1
-#export OMP_NUM_THREADS=2
-#export OMP_NUM_THREADS=4
-#export OMP_NUM_THREADS=8
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
-
-export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
-
+2019年  3月 24日 日曜日 10:15:30 JST
+10
+2.253285e-01	9.191831e-01
+2.068413e-01	7.247797e-01
+7.321991e-01	9.064824e-01
+3.479571e-01	8.578809e-01
+4.151849e-01	1.941677e-01
+6.856104e-01	5.243755e-01
+1.596357e-01	9.547575e-01
+1.269843e-01	4.339532e-03
+3.826915e-01	2.507929e-01
+6.552879e-01	5.344908e-01
