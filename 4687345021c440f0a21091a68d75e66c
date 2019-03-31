@@ -1,20 +1,44 @@
-2019年  3月 31日 日曜日 10:55:09 JST
-#!/usr/bin/perl
+2019年  3月 31日 日曜日 11:30:12 JST
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+class Message(object):
+    def __init__(self):
+        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
+        self.is_update = False
+
+#D95CBBF2 7 41 53 28 48 50 R->
+def read_log_one(msg):
+
+    fname = '/dev/shm/log.txt'
+    with open(fname, 'r') as fh:
+        lines = fh.readlines()
+        l = lines[-2]
+        l = l.rstrip()
+        cols = l.split(' ')
+        if cols[0] != msg.last[0]:
+            msg.last = cols
+            msg.is_update = True
+        else:
+            msg.is_update = False
 
 
-my $is_stop = 0;
+fig = plt.figure()
+msg = Message()
 
-if($ARGV[0]){
-    $is_stop = 1;
-}
+def plot(data):
+    global msg, fig
+    read_log_one(msg)
+    if msg.is_update :
+        print (msg.last)
 
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+    plt.cla() # clear graph
+    rand = np.random.randn(100)
+    im = plt.plot(rand)
 
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
-}
 
-1;
+ani = animation.FuncAnimation(fig, plot, interval=100)
+plt.show()
+
