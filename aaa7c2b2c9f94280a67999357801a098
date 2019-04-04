@@ -1,12 +1,16 @@
-2019年  4月  3日 水曜日 10:08:17 JST
+2019年  4月  4日 木曜日 11:28:42 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
 
-all:
-	cp top.ucf.ISE6.3i_Synplify top.ucf
-	rm -rf proj
-	tar xvf proj.synplify.tar
-	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+#include <stdio.h>
+#include "nbodysim.h"
 
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
+}
