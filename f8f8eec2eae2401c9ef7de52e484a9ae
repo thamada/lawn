@@ -1,25 +1,46 @@
-2019年  3月 31日 日曜日 11:36:45 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+2019年  4月  5日 金曜日 10:37:49 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
+VM_NAME="ubuntu16"
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+all: check
+
+c: check
+
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
