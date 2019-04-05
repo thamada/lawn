@@ -1,10 +1,9 @@
-2019å¹´  4æœˆ  4æ—¥ æœ¨æ›œæ—¥ 10:07:28 JST
+2019å¹´  4æœˆ  5æ—¥ é‡‘æ›œæ—¥ 09:09:21 JST
 #include "cutil.h"
 
-__device__ float4 
-inter(float4 xj, float4 xi, float4 apot)
+__device__ float4
+inter(float4 xj,  float4 xi,  float4 apot)
 {
-  /* ¤³¤³¤Ï¿Þ5.¤ÈÆ±¤¸ */ 
   float mj    = xj.w;        // Mass Mj
   float ieps2 = xi.w;        // epsilon^2
   float dx = xj.x - xi.x;    // Coordinates Xj - Xi
@@ -19,7 +18,7 @@ inter(float4 xj, float4 xi, float4 apot)
   apot.z += dz * mr3i;       // Accel AZi
   return (apot);
 }
-#define NTHRE (128) // blockDim.x¤ÈÆ±ÃÍ
+
 __global__ void
 kernel(float4* g_xj,
        float* g_xi,
@@ -27,21 +26,14 @@ kernel(float4* g_xj,
        int ni,
        int nj)
 {
-  int tid      = threadIdx.x;
-  int i = blockIdx.x*NTHRE+tid;
+  int i = blockIdx.x*gridDim.x+threadIdx.x;
   float4 ai = make_float4(0.0, 0.0, 0.0, 0.0);
   float4 xi;
-  xi.x = g_xi[i];
-  xi.y = g_xi[i+ni];
-  xi.z = g_xi[i+ni*2];
-  xi.w = g_xi[i+ni*3];
-  __shared__ float4 s_xj[NTHRE];
-  for(int j = 0; j<nj; j+=NTHRE){
-    __syncthreads();
-    s_xj[tid] = g_xj[j+tid];
-    __syncthreads();
-    for(int js = 0; js<NTHRE; js++) ai = inter(s_xj[js], xi, ai);
-  }
+  xi.x = g_xi[i];       // Coordinates Xi
+  xi.y = g_xi[i+ni];    // Coordinates Yi
+  xi.z = g_xi[i+ni*2];  // Coordinates Zi
+  xi.w = g_xi[i+ni*3];  // epsilon ^ 2
+  for(int j = 0; j<nj; j++)  ai = inter(g_xj[j], xi, ai);
   if(i<ni){
     g_fi[i]      = ai.x;
     g_fi[i+ni]   = ai.y;
@@ -49,4 +41,5 @@ kernel(float4* g_xj,
   }
 }
 
+#define NTHRE (128)
 #include "api.h"
