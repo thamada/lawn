@@ -1,36 +1,44 @@
-2019年  4月  6日 土曜日 11:49:13 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---dmaw_state          0  >< 1 >< 2                                    >< 3 >< 0 
---dmaw_start_adr               < n                                         >< 0
+2019年  4月  6日 土曜日 11:58:42 JST
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+class Message(object):
+    def __init__(self):
+        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
+        self.is_update = False
 
-entity dmaw_start_adr is
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end dmaw_start_adr;
+#D95CBBF2 7 41 53 28 48 50 R->
+def read_log_one(msg):
 
-architecture rtl of dmaw_start_adr is
-constant zero : std_logic_vector(18 downto 0) := (others=>'0');
-begin
+    fname = '/dev/shm/log.txt'
+    with open(fname, 'r') as fh:
+        lines = fh.readlines()
+        l = lines[-2]
+        l = l.rstrip()
+        cols = l.split(' ')
+        if cols[0] != msg.last[0]:
+            msg.last = cols
+            msg.is_update = True
+        else:
+            msg.is_update = False
 
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="01") then
-        START_ADR <= DBUS(18 downto 0);
-      elsif((STATE="00") OR (STATE="11")) then
-        START_ADR <= zero;
-      end if;
-    end if;
-  end process;
 
-end rtl;
+fig = plt.figure()
+msg = Message()
+
+def plot(data):
+    global msg, fig
+    read_log_one(msg)
+    if msg.is_update :
+        print (msg.last)
+
+    plt.cla() # clear graph
+    rand = np.random.randn(100)
+    im = plt.plot(rand)
+
+
+ani = animation.FuncAnimation(fig, plot, interval=100)
+plt.show()
+
