@@ -1,150 +1,53 @@
-2019年  4月  6日 土曜日 11:05:01 JST
---###############################
---# by T.Hamada for B3 Board    #
---###############################
+2019年  4月 15日 月曜日 11:02:20 JST
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-entity DPRAM is
-  port (
-    RST         : in  std_logic;                        -- PCI Bus Reset
-    CLK         : in  std_logic;                        -- PCI bus Clock
-    CLKB        : in   std_logic;                       -- Port B Clock
-    -- PCI R/W ports
-    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
-    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
-    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
-    -- USER Application R/W ports
-    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
-    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
-    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
-    );
-end DPRAM;
+void                   pg4_close (int id);
 
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
 
-architecture DPRAM_rtl of DPRAM is
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
 
---------------------------------------------------
--- Components
---------------------------------------------------
---component dp32b512w
---  port (
---    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
---    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
---    clka       : in  std_logic;                        -- Port A Clock
---    clkb       : in  std_logic;                        -- Port A Clock
---    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
---    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
---    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
---    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
---    wea        : in  std_logic;                        -- Port A Write Enable
---    web        : in  std_logic                         -- Port A Write Enable
---    );
---end component;
+int                    pg4_open (int id);
 
-component dp32b8192w
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
 
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0)
-  );
-end component;
+void                   pg4_set_pfpga_info (int devid, char *info);
 
-  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
-  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
-begin
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
 
 
---***************************************************************
---* instantiate sub-blocks
---***************************************************************
 
--- Low Word (32 bit)
-
-  dp0 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port B Clock
-    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
-    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
-    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
-    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
-    wea        => MEM_WELA,                       -- Port A Write Enable
-    web        => MEM_WELB                        -- Port A Write Enable
-  );
-
--- High Word (32 bit)
-
-  dp1 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port A Clock
-    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
-    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
-    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
-    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
-    wea        => MEM_WEHA,                       -- Port A Write Enable
-    web        => MEM_WEHB                        -- Port A Write Enable
-  );
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
 
 
---***************************************************************
---*
---*  PORT A Control Block
---*
---***************************************************************
-
---------------------------------------------------------------------------------
--- Port A Read Data Select Flag Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_RDTFLG <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Port A Read Data Output Control Process
---------------------------------------------------------------------------------
-
-  process (MEM_RDTFLG,MEM_RDDT) begin
-    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
-      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
-    else
-      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Port A Read Data Enable Signal Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_DTOEN <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
-    end if;
-  end process;
-
-end DPRAM_rtl;
