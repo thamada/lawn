@@ -1,40 +1,143 @@
-2019年  4月 14日 日曜日 10:02:16 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2019年  4月 15日 月曜日 11:19:33 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=16
 
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-entity WRITECOMB_CHECK is
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+learning_rate=0.001
+max_batches = 2000001
+#max_batches = 50
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-architecture rtl of WRITECOMB_CHECK is
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
+[maxpool]
+size=2
+stride=2
 
-begin
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-  IS_ERR <= cnt;
+[maxpool]
+size=2
+stride=2
 
-  cntr <= cnt;
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
-      end if;
-    end if;
-  end process;
+[maxpool]
+size=2
+stride=2
 
-end rtl;
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+# filters = (classes + coords + 1) * num
+## (10+5)*5
+filters=75
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=10
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
