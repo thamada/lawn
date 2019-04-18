@@ -1,44 +1,41 @@
-2019年  4月 17日 水曜日 10:29:50 JST
-#!/usr/bin/env python3
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+2019年  4月 18日 木曜日 09:48:33 JST
+// Time-stamp: <2006-09-04 13:41:34 hamada>
+// by T.Hamada
+//
+// <2006-09-04 13:33:47 hamada>
 
-class Message(object):
-    def __init__(self):
-        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
-        self.is_update = False
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#D95CBBF2 7 41 53 28 48 50 R->
-def read_log_one(msg):
+#include "pg4.h"
 
-    fname = '/dev/shm/log.txt'
-    with open(fname, 'r') as fh:
-        lines = fh.readlines()
-        l = lines[-2]
-        l = l.rstrip()
-        cols = l.split(' ')
-        if cols[0] != msg.last[0]:
-            msg.last = cols
-            msg.is_update = True
-        else:
-            msg.is_update = False
+void rst(int devid, int d, int msec)
+{
+  d = 0xff & d;
+  WriteBase0(devid, 0x4, d);
+  usleep(msec*1000);
+}
 
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  int i;
 
-fig = plt.figure()
-msg = Message()
+  pg4_open(devid);
+  
+  for(i=0;i<16;i++){
+    int x;
+    x = 0xff&(1<<(i%8));
+    rst(devid, x, 100);
+    rst(devid, 0, 1);
+  }
 
-def plot(data):
-    global msg, fig
-    read_log_one(msg)
-    if msg.is_update :
-        print (msg.last)
+  rst(devid, 0xff, 1000);
+  rst(devid, 0x0, 0);
 
-    plt.cla() # clear graph
-    rand = np.random.randn(100)
-    im = plt.plot(rand)
+  pg4_close(devid);
 
-
-ani = animation.FuncAnimation(fig, plot, interval=100)
-plt.show()
-
+  return 0;
+}
