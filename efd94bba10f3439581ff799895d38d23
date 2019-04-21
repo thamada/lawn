@@ -1,34 +1,5 @@
-2019年  4月 17日 水曜日 09:58:18 JST
-// Time-stamp: "2006-12-07 19:19:07 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
-
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int i;
-
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  puts("clear DMA_CTRL register(0x2C).");
-  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
-
-  puts("clear INT_STAT register(0x10).");
-  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
-
-  puts("clear INT_MASK register(0x14).");
-  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
-
-  pg4_DMAcheck(devid);
-
-  return 0;
-}
+2019年  4月 21日 日曜日 10:15:26 JST
+-- ProjNav VHDL simulation template: sim_pfpga_dma.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
