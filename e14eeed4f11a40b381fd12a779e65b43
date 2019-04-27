@@ -1,104 +1,96 @@
-2019年  4月 20日 土曜日 10:12:53 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-01 03:19:59 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2019年  4月 27日 土曜日 11:23:56 JST
+//-----------------------------------------------------------------------------
+// hermite.C
+// Code: Standard 4th order Hermite integrator with constant time step
+// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
+// Author: Andreas Ernst Jan, 2006
+// Modify: Tsuyoshi Hamada, Nov, 2006
+//-----------------------------------------------------------------------------
+#include  <iostream>
+#include  <cmath>
+#include  <cstdlib>
+#include  <iomanip> // cout << setw() << setprecision() 
+using namespace std;
 
-def get_ndev():
-    ndev = 0
-    devid = []
-    for i in range(0, 10):
-        c = cv2.VideoCapture(i)
-        if c.isOpened():
-            ndev = ndev + 1
-            devid.append(i)
-        c.release()
+extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
 
-    print ("devid = ", devid)
-    return ndev
-
-def isOpened(cap):
-    ret = True
-    for c in cap:
-        ret = ret and c.isOpened()
-    return ret
+extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
 
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xaf, 0xff, 0xaf)
-    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
+// Calculate energy
 
-if (__name__ == '__main__'):
-    ndev = get_ndev()
-    log_base = '../log/'
-    cap = []
-    for i in range(ndev):
-        cap.append(cv2.VideoCapture(i))
+double energy(double m[], double r[][3], double v[][3], double p[], int n) {
+  double ekin = 0, epot = 0;
+  for (int i = 0; i < n; i++) {
+    epot -= 0.5 * m[i] * p[i];
+    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
+  }
+  return ekin + epot;
+}
 
-    # -- swap cap --
-    if False:
-        cap_tmp = cap[0]
-        cap[0] = cap[2]
-        cap[2] = cap_tmp
+int main(int argc, char *argv[]) {
+
+// Read initial conditions from stdin, declaration of variables
+
+  if (argc < 3 ) {
+    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
+    return 0;
+  }
+
+  double dt = atof(argv[1]); // time step
+  double dt2 = dt*dt;
+  double dt3 = dt2*dt;
+  double dt4 = dt2*dt2;
+  double dt5 = dt4*dt;
+  double t_end = atof(argv[2]);
+  double dt_opt = atof(argv[3]);
+  double t_opt = 0.0;
+
+  int n;
+  cin >> n;
+
+  double t;
+  cin >> t;
+
+  double * m = new double[n];
+  double (* r)[3] = new double[n][3];
+  double (* v)[3] = new double[n][3];
+
+  double * p = new double[n];
+  double (* a)[3] = new double[n][3];
+  double (* jk)[3] = new double[n][3];
+
+  double * _p = new double[n];
+  double (* _a)[3] = new double[n][3];
+  double (* _jk)[3] = new double[n][3];
 
 
-    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
+  for (int i = 0; i < n ; i++){
+    cin >> m[i];
+    for (int k = 0; k < 3; k++) cin >> r[i][k];
+    for (int k = 0; k < 3; k++) cin >> v[i][k];
+  }
+  
+  _force(r, v, m, _p, _a, _jk, n);
+   force(r, v, m,  p,  a,  jk, n);
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
-    size = (int(cap_width/2), int(cap_height/2))
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+  for (int i = 0; i < n ; i++){
+    double err_p, err_a[3], err_jk[3];
+    double rad;
+    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
 
-    while(isOpened(cap)):
-        frame = [0] * ndev
-        for (i, fm) in enumerate(frame):
-            ret, fm = cap[i].read()
-            smallimg = cv2.resize(fm, size)
-            if False: cv2.imshow('camera: %d'%(i), smallimg)
-            frame[i] = smallimg
+    err_p = fabs(p[i]-_p[i])/_p[i];
 
-        # ----------------------------------------------------------------
-        frame_height, frame_width = frame[0].shape[:2]
+    for (int k = 0; k < 3; k++){
+      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
+      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
+    }
+    
+    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
 
-        nwx = 3
-        nwy = int(1.0+(ndev-1)/3.0)
-
-        image = np.zeros((frame_height * nwy, frame_width*nwx, 3), dtype=np.uint8)
-        # image = np.zeros((frame_height, frame_width*ndev, 3), dtype=np.uint8)
-
-        # --- ROI ---
-        for (i, fm) in enumerate(frame):
-            sx = frame_width * (i%nwx)
-            sy = frame_height * int(i/nwx)
-            ex = frame_width * (i%nwx+1)
-            ey = frame_height * int(1+i/nwx)
-            image[sy:ey,sx:ex] = fm
-
-        cv2.imshow(__file__, image)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(tnow != tnow0):
-            put_text(image, tnow)
-            basedir = '../log/'
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, image)
-            print(ofname)
-            tnow0 = tnow
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    for (i, fm) in enumerate(frame):
-        cap[i].release()
-
-    cv2.destroyAllWindows()
-
-    print("Done.")
+  }
+  
+  return 0;
+}
