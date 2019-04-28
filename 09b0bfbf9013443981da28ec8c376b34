@@ -1,387 +1,345 @@
-2019年  4月 27日 土曜日 09:26:49 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-
-entity PFPGA_DMA is
-  port (
-    -- PGPG REG input 
-    PGPG_REG3 : in std_logic_vector(31 downto 0);  -- PFPGA Read  { CHIPSEL(4b), NQWORD(9b),  STARTADR(19b) }
-    GPREG0    : out std_logic_vector(31 downto 0); -- PFPGA Read Status(BUSY or DONE)
-    Hit_PGPG_REG3 : in std_logic;
-
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(16 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end PFPGA_DMA;
-
-architecture rtl of PFPGA_DMA is
-
------------------------------------------------------------------
--- DMAW/R
-  signal Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr : std_logic;
-  signal ChipSel    : std_logic_vector(3 downto 0);
-  signal START_ADR : std_logic_vector(18 downto 0);
-
--- DMAW
-  signal mem_wea   : std_logic := '0';
-  signal dmaw_we0  : std_logic := '0';
-  signal dmaw_we1  : std_logic := '0';
-  signal dmaw_adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dt0,dmaw_dt1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
---
-
--- DMAR
-  signal dmar_enable_cnt0   : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable_cnt0_r : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable0 : std_logic :='0';
-  signal dmar_enable1 : std_logic :='0';
-  signal dmar_enable2 : std_logic :='0';
-  signal dmar_enable3 : std_logic :='0';
-  signal dmar_enable4 : std_logic :='0';
-  signal dmar_enable5 : std_logic :='0';
-  signal dmar_enable6 : std_logic :='0';
-  signal dmar_enable7 : std_logic :='0';
-  signal lo_mem_wad, lo_mem_wad_z : std_logic_vector(12 downto 0);
-  signal dmar_dbus_o   : std_logic_vector(63 downto 0) := (others=>'0');
----
-  signal busy_dmar : std_logic;
-  signal busy_dmaw : std_logic;
-  signal dbus_port0 : std_logic_vector(63 downto 0) := (others=>'0'); 
-begin
-
-  GPREG0(0)   <= '0'; -- not used
-  Hit_DMAW    <= '0'; -- not used
-  busy_dmaw   <= '0'; -- not used
-
-  -- DMA BUSY or IDLE
-  GPREG0(1)   <= busy_dmar;
-  busy_dmar   <= Hit_DMAR or Hit_DMARr or dmar_enable0 or  dmar_enable1 or  dmar_enable2 or  dmar_enable3
-                                       or dmar_enable4 or  dmar_enable5 or  dmar_enable6 or  dmar_enable7;
-  GPREG0(31 downto 2) <= (others=>'0');
-
-
-  Hit_DMAR <= Hit_PGPG_REG3;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      Hit_DMAWr <= Hit_DMAW;
-      Hit_DMARr <= Hit_DMAR;
-    end if;
-  end process;
-
-
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
---    WR SHARE
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
-
-  ----------------------------
-  --- DMAR/W START ADR     ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      START_ADR <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        START_ADR <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        START_ADR <= PGPG_REG3(18 downto 0);
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  --- ChipSel              ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      ChipSel <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        ChipSel <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        if    (PGPG_REG3(28) = '1') then
-          ChipSel <= "0001";
-        elsif (PGPG_REG3(29) = '1') then
-          ChipSel <= "0010";
-        elsif (PGPG_REG3(30) = '1') then
-          ChipSel <= "0100";
-        else
-          ChipSel <= "1000";
-        end if;
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      DBUS_Port <= dbus_port0;
-    end if;
-  end process;
-
-  with busy_dmar select
-    dbus_port0 <= dmar_dbus_o when '1',
-                  dmaw_dbus_o when others;
-
-  ------------------------------
-  --- MEM_ADB                ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      MEM_ADB <= lo_mem_wad;
-    end if;
-  end process;
-
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
--- DMA WRITE ( ifpga -> pfpga )
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-  ------------------------------
-  --- mem_wea                ---
-  ------------------------------
-  mem_wea <= MEM_WEHA AND MEM_WELA;
-
-  ------------------------------
-  --- dmaw_we0,1             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      dmaw_we0 <= mem_wea;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmaw_we1 <= dmaw_we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- dmaw_adr               ---
-  ------------------------------
-  process (RST,CLK,mem_wea,dmaw_we0) begin
-    if(RST='1') then
-      dmaw_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((mem_wea = '1') and (dmaw_we0 = '0')) then
-        dmaw_adr(15 downto 0) <= MEM_ADA(16 downto 1);
-      end if;
-      dmaw_adr(63 downto 16) <= (others=>'0');
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dt delay          ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_dt1 <= (others=>'0');
-      dmaw_dt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      dmaw_dt1 <= dmaw_dt0;
-      dmaw_dt0 <= MEM_DTIA;
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dbus_o            ---
-  ------------------------------
-  process (RST,CLK,dmaw_we0,dmaw_we1) begin
-    if(RST='1') then
-      dmaw_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(dmaw_we0 = '1' and dmaw_we1 = '0') then
-        dmaw_dbus_o <= dmaw_adr;
-      else
-        dmaw_dbus_o <= dmaw_dt1;
-      end if;
-    end if;
-  end process;
-
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= dmaw_we1;
-      DMAW_ENABLE(1) <= dmaw_we1;
-      DMAW_ENABLE(2) <= dmaw_we1;
-      DMAW_ENABLE(3) <= dmaw_we1;
-    end if;
-  end process;
-
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
--- DMA READ (ifpga <- pfpga)
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-
-  ----------------------------
-  -- DMAR ENABLE COUNT     ---
-  ----------------------------
-  dmar_enable_cnt0_r <= dmar_enable_cnt0;
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0_r) begin
-    if(RST='1') then
-      dmar_enable_cnt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable_cnt0 <= "0000" & PGPG_REG3(27 downto 19);   -- SET NQWORD
-      elsif(dmar_enable_cnt0_r /= "000000000000") then
-        dmar_enable_cnt0 <= dmar_enable_cnt0_r - "000000000001";
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  -- DMAR ENABLE 0         ---
-  ----------------------------
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0) begin
-    if(RST='1') then
-      dmar_enable0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable0 <= '1';
-      elsif(dmar_enable_cnt0 = "000000000000") then
-        dmar_enable0 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmar_enable7 <= dmar_enable6;
-      dmar_enable6 <= dmar_enable5;
-      dmar_enable5 <= dmar_enable4;
-      dmar_enable4 <= dmar_enable3;
-      dmar_enable3 <= dmar_enable2;
-      dmar_enable2 <= dmar_enable1;
-      dmar_enable1 <= dmar_enable0;
-    end if;
-  end process;
-
-
-  ------------------------------
-  --- DMAR ENABLE            ---
-  ------------------------------
-  process (CLK,dmar_enable1,dmar_enable2)  begin
-    if(CLK'event and CLK='1') then
-      if((dmar_enable0 = '1') OR (dmar_enable1 = '1')) then
-        DMAR_ENABLE(0) <= '1' AND ChipSel(0);
-        DMAR_ENABLE(1) <= '1' AND ChipSel(1);
-        DMAR_ENABLE(2) <= '1' AND ChipSel(2);
-        DMAR_ENABLE(3) <= '1' AND ChipSel(3);
-      else
-        DMAR_ENABLE <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DMAR_DBUS_O            ---
-  ------------------------------
-  process (RST,CLK,dmar_enable0,dmar_enable1,dmar_enable2,dmar_enable3)  begin
-    if(RST='1') then
-      dmar_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(    (dmar_enable0 = '1') AND (dmar_enable1 = '0') ) then
-        dmar_dbus_o <= ("000000000000000000000000000000000000000000000" & START_ADR);
-      elsif( (dmar_enable1 = '1') AND (dmar_enable2 = '0') ) then
---        dmar_dbus_o <= X"FFFFFFFFFFFFFFFF";
-        NULL;
-      elsif( (dmar_enable2 = '1') AND (dmar_enable3 = '0') ) then
-        dmar_dbus_o <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_HiZ               ---
-  ------------------------------
-  process (RST,CLK,dmar_enable2,dmar_enable3,dmar_enable4,dmar_enable5)  begin
-    if(RST='1') then
-      DBUS_HiZ <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable2 = '1') OR (dmar_enable3 = '1') OR (dmar_enable4 = '1') OR (dmar_enable5 = '1') ) then
-        DBUS_HiZ <= '1';
-      else
-        DBUS_HiZ <= '0';
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_DTIB               ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_DTIB <= DBUS_idata;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_WEHB, MEM_WELB     ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_WEHB <= dmar_enable6;
-      MEM_WELB <= dmar_enable6;
-    end if;
-  end process;
-
-  ------------------------------
-  --- lo_mem_wad             ---
-  ------------------------------
-  lo_mem_wad_z <= lo_mem_wad;
---  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
---    if(RST='1') then
---      lo_mem_wad <= "1000000000000";
---    elsif(CLK'event and CLK='1') then
---      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
---        lo_mem_wad <= "1000000000000";
---      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
---      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= "1000000000000";
---      end if;
---    end if;
---  end process;
-  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
-    if(RST='1') then
-      lo_mem_wad <= "0000000000000";
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
-        lo_mem_wad <= "0000000000000";
-      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
-      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= "0000000000000";
-      end if;
-    end if;
-  end process;
-
-end rtl;
+2019年  4月 28日 日曜日 09:45:27 JST
+#ChipScope Core Inserter Project File Version 3.0
+#Thu Dec 30 21:23:10 JST 2004
+Project.device.designInputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
+Project.device.designOutputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
+Project.device.deviceFamily=2
+Project.device.enableRPMs=true
+Project.device.outputDirectory=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\_ngo
+Project.device.useSRL16=true
+Project.filter.dimension=12
+Project.filter<0>=MEM_ADA*
+Project.filter<10>=DEBUG*
+Project.filter<11>=DE
+Project.filter<1>=
+Project.filter<2>=DBUS_Port*
+Project.filter<3>=DBUS_Port
+Project.filter<4>=DMAW_ENABLE*
+Project.filter<5>=DMAW_ENABLE
+Project.filter<6>=MEM_*
+Project.filter<7>=MEM_DTIA*
+Project.filter<8>=MEM_DT*
+Project.filter<9>=MEM_AD*
+Project.icon.boundaryScanChain=0
+Project.icon.disableBUFGInsertion=false
+Project.icon.enableExtTriggerIn=false
+Project.icon.enableExtTriggerOut=false
+Project.icon.triggerInPinName=
+Project.icon.triggerOutPinName=
+Project.unit.dimension=1
+Project.unit<0>.clockChannel=dp0 CLK
+Project.unit<0>.clockEdge=Rising
+Project.unit<0>.dataChannel<0>=DEBUG_CS_CLK0
+Project.unit<0>.dataChannel<100>=pgpg1 DBUS_Port<17>
+Project.unit<0>.dataChannel<101>=pgpg1 DBUS_Port<18>
+Project.unit<0>.dataChannel<102>=pgpg1 DBUS_Port<19>
+Project.unit<0>.dataChannel<103>=pgpg1 DBUS_Port<20>
+Project.unit<0>.dataChannel<104>=pgpg1 DBUS_Port<21>
+Project.unit<0>.dataChannel<105>=pgpg1 DBUS_Port<22>
+Project.unit<0>.dataChannel<106>=pgpg1 DBUS_Port<23>
+Project.unit<0>.dataChannel<107>=pgpg1 DBUS_Port<24>
+Project.unit<0>.dataChannel<108>=pgpg1 DBUS_Port<25>
+Project.unit<0>.dataChannel<109>=pgpg1 DBUS_Port<26>
+Project.unit<0>.dataChannel<10>=dp0 MEM_ADA<6>
+Project.unit<0>.dataChannel<110>=pgpg1 DBUS_Port<27>
+Project.unit<0>.dataChannel<111>=pgpg1 DBUS_Port<28>
+Project.unit<0>.dataChannel<112>=pgpg1 DBUS_Port<29>
+Project.unit<0>.dataChannel<113>=pgpg1 DBUS_Port<30>
+Project.unit<0>.dataChannel<114>=pgpg1 DBUS_Port<31>
+Project.unit<0>.dataChannel<115>=pgpg1 DBUS_Port<32>
+Project.unit<0>.dataChannel<116>=pgpg1 DBUS_Port<33>
+Project.unit<0>.dataChannel<117>=pgpg1 DBUS_Port<34>
+Project.unit<0>.dataChannel<118>=pgpg1 DBUS_Port<35>
+Project.unit<0>.dataChannel<119>=pgpg1 DBUS_Port<36>
+Project.unit<0>.dataChannel<11>=dp0 MEM_ADA<7>
+Project.unit<0>.dataChannel<120>=pgpg1 DBUS_Port<37>
+Project.unit<0>.dataChannel<121>=pgpg1 DBUS_Port<38>
+Project.unit<0>.dataChannel<122>=pgpg1 DBUS_Port<39>
+Project.unit<0>.dataChannel<123>=pgpg1 DBUS_Port<40>
+Project.unit<0>.dataChannel<124>=pgpg1 DBUS_Port<41>
+Project.unit<0>.dataChannel<125>=pgpg1 DBUS_Port<42>
+Project.unit<0>.dataChannel<126>=pgpg1 DBUS_Port<43>
+Project.unit<0>.dataChannel<127>=pgpg1 DBUS_Port<44>
+Project.unit<0>.dataChannel<128>=pgpg1 DBUS_Port<45>
+Project.unit<0>.dataChannel<129>=pgpg1 DBUS_Port<46>
+Project.unit<0>.dataChannel<12>=dp0 MEM_ADA<8>
+Project.unit<0>.dataChannel<130>=pgpg1 DBUS_Port<47>
+Project.unit<0>.dataChannel<131>=pgpg1 DBUS_Port<48>
+Project.unit<0>.dataChannel<132>=pgpg1 DBUS_Port<49>
+Project.unit<0>.dataChannel<133>=pgpg1 DBUS_Port<50>
+Project.unit<0>.dataChannel<134>=pgpg1 DBUS_Port<51>
+Project.unit<0>.dataChannel<135>=pgpg1 DBUS_Port<52>
+Project.unit<0>.dataChannel<136>=pgpg1 DBUS_Port<53>
+Project.unit<0>.dataChannel<137>=pgpg1 DBUS_Port<54>
+Project.unit<0>.dataChannel<138>=pgpg1 DBUS_Port<55>
+Project.unit<0>.dataChannel<139>=pgpg1 DBUS_Port<56>
+Project.unit<0>.dataChannel<13>=dp0 MEM_ADA<9>
+Project.unit<0>.dataChannel<140>=pgpg1 DBUS_Port<57>
+Project.unit<0>.dataChannel<141>=pgpg1 DBUS_Port<58>
+Project.unit<0>.dataChannel<142>=pgpg1 DBUS_Port<59>
+Project.unit<0>.dataChannel<143>=pgpg1 DBUS_Port<60>
+Project.unit<0>.dataChannel<144>=pgpg1 DBUS_Port<61>
+Project.unit<0>.dataChannel<145>=pgpg1 DBUS_Port<62>
+Project.unit<0>.dataChannel<146>=pgpg1 DBUS_Port<63>
+Project.unit<0>.dataChannel<14>=dp0 MEM_ADA<10>
+Project.unit<0>.dataChannel<15>=dp0 MEM_ADA<11>
+Project.unit<0>.dataChannel<16>=dp0 MEM_ADA<12>
+Project.unit<0>.dataChannel<17>=dp0 MEM_ADA<13>
+Project.unit<0>.dataChannel<18>=dp0 MEM_DTIA<0>
+Project.unit<0>.dataChannel<19>=dp0 MEM_DTIA<1>
+Project.unit<0>.dataChannel<1>=dp0 MEM_REA
+Project.unit<0>.dataChannel<20>=dp0 MEM_DTIA<2>
+Project.unit<0>.dataChannel<21>=dp0 MEM_DTIA<3>
+Project.unit<0>.dataChannel<22>=dp0 MEM_DTIA<4>
+Project.unit<0>.dataChannel<23>=dp0 MEM_DTIA<5>
+Project.unit<0>.dataChannel<24>=dp0 MEM_DTIA<6>
+Project.unit<0>.dataChannel<25>=dp0 MEM_DTIA<7>
+Project.unit<0>.dataChannel<26>=dp0 MEM_DTIA<8>
+Project.unit<0>.dataChannel<27>=dp0 MEM_DTIA<9>
+Project.unit<0>.dataChannel<28>=dp0 MEM_DTIA<10>
+Project.unit<0>.dataChannel<29>=dp0 MEM_DTIA<11>
+Project.unit<0>.dataChannel<2>=dp0 MEM_WELA
+Project.unit<0>.dataChannel<30>=dp0 MEM_DTIA<12>
+Project.unit<0>.dataChannel<31>=dp0 MEM_DTIA<13>
+Project.unit<0>.dataChannel<32>=dp0 MEM_DTIA<14>
+Project.unit<0>.dataChannel<33>=dp0 MEM_DTIA<15>
+Project.unit<0>.dataChannel<34>=dp0 MEM_DTIA<16>
+Project.unit<0>.dataChannel<35>=dp0 MEM_DTIA<17>
+Project.unit<0>.dataChannel<36>=dp0 MEM_DTIA<18>
+Project.unit<0>.dataChannel<37>=dp0 MEM_DTIA<19>
+Project.unit<0>.dataChannel<38>=dp0 MEM_DTIA<20>
+Project.unit<0>.dataChannel<39>=dp0 MEM_DTIA<21>
+Project.unit<0>.dataChannel<3>=dp0 MEM_WEHA
+Project.unit<0>.dataChannel<40>=dp0 MEM_DTIA<22>
+Project.unit<0>.dataChannel<41>=dp0 MEM_DTIA<23>
+Project.unit<0>.dataChannel<42>=dp0 MEM_DTIA<24>
+Project.unit<0>.dataChannel<43>=dp0 MEM_DTIA<25>
+Project.unit<0>.dataChannel<44>=dp0 MEM_DTIA<26>
+Project.unit<0>.dataChannel<45>=dp0 MEM_DTIA<27>
+Project.unit<0>.dataChannel<46>=dp0 MEM_DTIA<28>
+Project.unit<0>.dataChannel<47>=dp0 MEM_DTIA<29>
+Project.unit<0>.dataChannel<48>=dp0 MEM_DTIA<30>
+Project.unit<0>.dataChannel<49>=dp0 MEM_DTIA<31>
+Project.unit<0>.dataChannel<4>=dp0 MEM_ADA<0>
+Project.unit<0>.dataChannel<50>=dp0 MEM_DTIA<32>
+Project.unit<0>.dataChannel<51>=dp0 MEM_DTIA<33>
+Project.unit<0>.dataChannel<52>=dp0 MEM_DTIA<34>
+Project.unit<0>.dataChannel<53>=dp0 MEM_DTIA<35>
+Project.unit<0>.dataChannel<54>=dp0 MEM_DTIA<36>
+Project.unit<0>.dataChannel<55>=dp0 MEM_DTIA<37>
+Project.unit<0>.dataChannel<56>=dp0 MEM_DTIA<38>
+Project.unit<0>.dataChannel<57>=dp0 MEM_DTIA<39>
+Project.unit<0>.dataChannel<58>=dp0 MEM_DTIA<40>
+Project.unit<0>.dataChannel<59>=dp0 MEM_DTIA<41>
+Project.unit<0>.dataChannel<5>=dp0 MEM_ADA<1>
+Project.unit<0>.dataChannel<60>=dp0 MEM_DTIA<42>
+Project.unit<0>.dataChannel<61>=dp0 MEM_DTIA<43>
+Project.unit<0>.dataChannel<62>=dp0 MEM_DTIA<44>
+Project.unit<0>.dataChannel<63>=dp0 MEM_DTIA<45>
+Project.unit<0>.dataChannel<64>=dp0 MEM_DTIA<46>
+Project.unit<0>.dataChannel<65>=dp0 MEM_DTIA<47>
+Project.unit<0>.dataChannel<66>=dp0 MEM_DTIA<48>
+Project.unit<0>.dataChannel<67>=dp0 MEM_DTIA<49>
+Project.unit<0>.dataChannel<68>=dp0 MEM_DTIA<50>
+Project.unit<0>.dataChannel<69>=dp0 MEM_DTIA<51>
+Project.unit<0>.dataChannel<6>=dp0 MEM_ADA<2>
+Project.unit<0>.dataChannel<70>=dp0 MEM_DTIA<52>
+Project.unit<0>.dataChannel<71>=dp0 MEM_DTIA<53>
+Project.unit<0>.dataChannel<72>=dp0 MEM_DTIA<54>
+Project.unit<0>.dataChannel<73>=dp0 MEM_DTIA<55>
+Project.unit<0>.dataChannel<74>=dp0 MEM_DTIA<56>
+Project.unit<0>.dataChannel<75>=dp0 MEM_DTIA<57>
+Project.unit<0>.dataChannel<76>=dp0 MEM_DTIA<58>
+Project.unit<0>.dataChannel<77>=dp0 MEM_DTIA<59>
+Project.unit<0>.dataChannel<78>=dp0 MEM_DTIA<60>
+Project.unit<0>.dataChannel<79>=dp0 MEM_DTIA<61>
+Project.unit<0>.dataChannel<7>=dp0 MEM_ADA<3>
+Project.unit<0>.dataChannel<80>=dp0 MEM_DTIA<62>
+Project.unit<0>.dataChannel<81>=dp0 MEM_DTIA<63>
+Project.unit<0>.dataChannel<82>=pgpg1 DMAW_ENABLE<0>
+Project.unit<0>.dataChannel<83>=pgpg1 DBUS_Port<0>
+Project.unit<0>.dataChannel<84>=pgpg1 DBUS_Port<1>
+Project.unit<0>.dataChannel<85>=pgpg1 DBUS_Port<2>
+Project.unit<0>.dataChannel<86>=pgpg1 DBUS_Port<3>
+Project.unit<0>.dataChannel<87>=pgpg1 DBUS_Port<4>
+Project.unit<0>.dataChannel<88>=pgpg1 DBUS_Port<5>
+Project.unit<0>.dataChannel<89>=pgpg1 DBUS_Port<6>
+Project.unit<0>.dataChannel<8>=dp0 MEM_ADA<4>
+Project.unit<0>.dataChannel<90>=pgpg1 DBUS_Port<7>
+Project.unit<0>.dataChannel<91>=pgpg1 DBUS_Port<8>
+Project.unit<0>.dataChannel<92>=pgpg1 DBUS_Port<9>
+Project.unit<0>.dataChannel<93>=pgpg1 DBUS_Port<10>
+Project.unit<0>.dataChannel<94>=pgpg1 DBUS_Port<11>
+Project.unit<0>.dataChannel<95>=pgpg1 DBUS_Port<12>
+Project.unit<0>.dataChannel<96>=pgpg1 DBUS_Port<13>
+Project.unit<0>.dataChannel<97>=pgpg1 DBUS_Port<14>
+Project.unit<0>.dataChannel<98>=pgpg1 DBUS_Port<15>
+Project.unit<0>.dataChannel<99>=pgpg1 DBUS_Port<16>
+Project.unit<0>.dataChannel<9>=dp0 MEM_ADA<5>
+Project.unit<0>.dataDepth=512
+Project.unit<0>.dataEqualsTrigger=true
+Project.unit<0>.dataPortWidth=147
+Project.unit<0>.enableGaps=false
+Project.unit<0>.enableTimestamps=false
+Project.unit<0>.timestampDepth=0
+Project.unit<0>.timestampWidth=0
+Project.unit<0>.triggerChannel<0><0>=DEBUG_CS_CLK0
+Project.unit<0>.triggerChannel<0><100>=pgpg1 DBUS_Port<17>
+Project.unit<0>.triggerChannel<0><101>=pgpg1 DBUS_Port<18>
+Project.unit<0>.triggerChannel<0><102>=pgpg1 DBUS_Port<19>
+Project.unit<0>.triggerChannel<0><103>=pgpg1 DBUS_Port<20>
+Project.unit<0>.triggerChannel<0><104>=pgpg1 DBUS_Port<21>
+Project.unit<0>.triggerChannel<0><105>=pgpg1 DBUS_Port<22>
+Project.unit<0>.triggerChannel<0><106>=pgpg1 DBUS_Port<23>
+Project.unit<0>.triggerChannel<0><107>=pgpg1 DBUS_Port<24>
+Project.unit<0>.triggerChannel<0><108>=pgpg1 DBUS_Port<25>
+Project.unit<0>.triggerChannel<0><109>=pgpg1 DBUS_Port<26>
+Project.unit<0>.triggerChannel<0><10>=dp0 MEM_ADA<6>
+Project.unit<0>.triggerChannel<0><110>=pgpg1 DBUS_Port<27>
+Project.unit<0>.triggerChannel<0><111>=pgpg1 DBUS_Port<28>
+Project.unit<0>.triggerChannel<0><112>=pgpg1 DBUS_Port<29>
+Project.unit<0>.triggerChannel<0><113>=pgpg1 DBUS_Port<30>
+Project.unit<0>.triggerChannel<0><114>=pgpg1 DBUS_Port<31>
+Project.unit<0>.triggerChannel<0><115>=pgpg1 DBUS_Port<32>
+Project.unit<0>.triggerChannel<0><116>=pgpg1 DBUS_Port<33>
+Project.unit<0>.triggerChannel<0><117>=pgpg1 DBUS_Port<34>
+Project.unit<0>.triggerChannel<0><118>=pgpg1 DBUS_Port<35>
+Project.unit<0>.triggerChannel<0><119>=pgpg1 DBUS_Port<36>
+Project.unit<0>.triggerChannel<0><11>=dp0 MEM_ADA<7>
+Project.unit<0>.triggerChannel<0><120>=pgpg1 DBUS_Port<37>
+Project.unit<0>.triggerChannel<0><121>=pgpg1 DBUS_Port<38>
+Project.unit<0>.triggerChannel<0><122>=pgpg1 DBUS_Port<39>
+Project.unit<0>.triggerChannel<0><123>=pgpg1 DBUS_Port<40>
+Project.unit<0>.triggerChannel<0><124>=pgpg1 DBUS_Port<41>
+Project.unit<0>.triggerChannel<0><125>=pgpg1 DBUS_Port<42>
+Project.unit<0>.triggerChannel<0><126>=pgpg1 DBUS_Port<43>
+Project.unit<0>.triggerChannel<0><127>=pgpg1 DBUS_Port<44>
+Project.unit<0>.triggerChannel<0><128>=pgpg1 DBUS_Port<45>
+Project.unit<0>.triggerChannel<0><129>=pgpg1 DBUS_Port<46>
+Project.unit<0>.triggerChannel<0><12>=dp0 MEM_ADA<8>
+Project.unit<0>.triggerChannel<0><130>=pgpg1 DBUS_Port<47>
+Project.unit<0>.triggerChannel<0><131>=pgpg1 DBUS_Port<48>
+Project.unit<0>.triggerChannel<0><132>=pgpg1 DBUS_Port<49>
+Project.unit<0>.triggerChannel<0><133>=pgpg1 DBUS_Port<50>
+Project.unit<0>.triggerChannel<0><134>=pgpg1 DBUS_Port<51>
+Project.unit<0>.triggerChannel<0><135>=pgpg1 DBUS_Port<52>
+Project.unit<0>.triggerChannel<0><136>=pgpg1 DBUS_Port<53>
+Project.unit<0>.triggerChannel<0><137>=pgpg1 DBUS_Port<54>
+Project.unit<0>.triggerChannel<0><138>=pgpg1 DBUS_Port<55>
+Project.unit<0>.triggerChannel<0><139>=pgpg1 DBUS_Port<56>
+Project.unit<0>.triggerChannel<0><13>=dp0 MEM_ADA<9>
+Project.unit<0>.triggerChannel<0><140>=pgpg1 DBUS_Port<57>
+Project.unit<0>.triggerChannel<0><141>=pgpg1 DBUS_Port<58>
+Project.unit<0>.triggerChannel<0><142>=pgpg1 DBUS_Port<59>
+Project.unit<0>.triggerChannel<0><143>=pgpg1 DBUS_Port<60>
+Project.unit<0>.triggerChannel<0><144>=pgpg1 DBUS_Port<61>
+Project.unit<0>.triggerChannel<0><145>=pgpg1 DBUS_Port<62>
+Project.unit<0>.triggerChannel<0><146>=pgpg1 DBUS_Port<63>
+Project.unit<0>.triggerChannel<0><147>=PCI_CNT MEM_ADA<14>
+Project.unit<0>.triggerChannel<0><148>=PCI_CNT MEM_ADA<15>
+Project.unit<0>.triggerChannel<0><149>=PCI_CNT MEM_ADA<16>
+Project.unit<0>.triggerChannel<0><14>=dp0 MEM_ADA<10>
+Project.unit<0>.triggerChannel<0><15>=dp0 MEM_ADA<11>
+Project.unit<0>.triggerChannel<0><16>=dp0 MEM_ADA<12>
+Project.unit<0>.triggerChannel<0><17>=dp0 MEM_ADA<13>
+Project.unit<0>.triggerChannel<0><18>=dp0 MEM_DTIA<0>
+Project.unit<0>.triggerChannel<0><19>=dp0 MEM_DTIA<1>
+Project.unit<0>.triggerChannel<0><1>=dp0 MEM_REA
+Project.unit<0>.triggerChannel<0><20>=dp0 MEM_DTIA<2>
+Project.unit<0>.triggerChannel<0><21>=dp0 MEM_DTIA<3>
+Project.unit<0>.triggerChannel<0><22>=dp0 MEM_DTIA<4>
+Project.unit<0>.triggerChannel<0><23>=dp0 MEM_DTIA<5>
+Project.unit<0>.triggerChannel<0><24>=dp0 MEM_DTIA<6>
+Project.unit<0>.triggerChannel<0><25>=dp0 MEM_DTIA<7>
+Project.unit<0>.triggerChannel<0><26>=dp0 MEM_DTIA<8>
+Project.unit<0>.triggerChannel<0><27>=dp0 MEM_DTIA<9>
+Project.unit<0>.triggerChannel<0><28>=dp0 MEM_DTIA<10>
+Project.unit<0>.triggerChannel<0><29>=dp0 MEM_DTIA<11>
+Project.unit<0>.triggerChannel<0><2>=dp0 MEM_WELA
+Project.unit<0>.triggerChannel<0><30>=dp0 MEM_DTIA<12>
+Project.unit<0>.triggerChannel<0><31>=dp0 MEM_DTIA<13>
+Project.unit<0>.triggerChannel<0><32>=dp0 MEM_DTIA<14>
+Project.unit<0>.triggerChannel<0><33>=dp0 MEM_DTIA<15>
+Project.unit<0>.triggerChannel<0><34>=dp0 MEM_DTIA<16>
+Project.unit<0>.triggerChannel<0><35>=dp0 MEM_DTIA<17>
+Project.unit<0>.triggerChannel<0><36>=dp0 MEM_DTIA<18>
+Project.unit<0>.triggerChannel<0><37>=dp0 MEM_DTIA<19>
+Project.unit<0>.triggerChannel<0><38>=dp0 MEM_DTIA<20>
+Project.unit<0>.triggerChannel<0><39>=dp0 MEM_DTIA<21>
+Project.unit<0>.triggerChannel<0><3>=dp0 MEM_WEHA
+Project.unit<0>.triggerChannel<0><40>=dp0 MEM_DTIA<22>
+Project.unit<0>.triggerChannel<0><41>=dp0 MEM_DTIA<23>
+Project.unit<0>.triggerChannel<0><42>=dp0 MEM_DTIA<24>
+Project.unit<0>.triggerChannel<0><43>=dp0 MEM_DTIA<25>
+Project.unit<0>.triggerChannel<0><44>=dp0 MEM_DTIA<26>
+Project.unit<0>.triggerChannel<0><45>=dp0 MEM_DTIA<27>
+Project.unit<0>.triggerChannel<0><46>=dp0 MEM_DTIA<28>
+Project.unit<0>.triggerChannel<0><47>=dp0 MEM_DTIA<29>
+Project.unit<0>.triggerChannel<0><48>=dp0 MEM_DTIA<30>
+Project.unit<0>.triggerChannel<0><49>=dp0 MEM_DTIA<31>
+Project.unit<0>.triggerChannel<0><4>=dp0 MEM_ADA<0>
+Project.unit<0>.triggerChannel<0><50>=dp0 MEM_DTIA<32>
+Project.unit<0>.triggerChannel<0><51>=dp0 MEM_DTIA<33>
+Project.unit<0>.triggerChannel<0><52>=dp0 MEM_DTIA<34>
+Project.unit<0>.triggerChannel<0><53>=dp0 MEM_DTIA<35>
+Project.unit<0>.triggerChannel<0><54>=dp0 MEM_DTIA<36>
+Project.unit<0>.triggerChannel<0><55>=dp0 MEM_DTIA<37>
+Project.unit<0>.triggerChannel<0><56>=dp0 MEM_DTIA<38>
+Project.unit<0>.triggerChannel<0><57>=dp0 MEM_DTIA<39>
+Project.unit<0>.triggerChannel<0><58>=dp0 MEM_DTIA<40>
+Project.unit<0>.triggerChannel<0><59>=dp0 MEM_DTIA<41>
+Project.unit<0>.triggerChannel<0><5>=dp0 MEM_ADA<1>
+Project.unit<0>.triggerChannel<0><60>=dp0 MEM_DTIA<42>
+Project.unit<0>.triggerChannel<0><61>=dp0 MEM_DTIA<43>
+Project.unit<0>.triggerChannel<0><62>=dp0 MEM_DTIA<44>
+Project.unit<0>.triggerChannel<0><63>=dp0 MEM_DTIA<45>
+Project.unit<0>.triggerChannel<0><64>=dp0 MEM_DTIA<46>
+Project.unit<0>.triggerChannel<0><65>=dp0 MEM_DTIA<47>
+Project.unit<0>.triggerChannel<0><66>=dp0 MEM_DTIA<48>
+Project.unit<0>.triggerChannel<0><67>=dp0 MEM_DTIA<49>
+Project.unit<0>.triggerChannel<0><68>=dp0 MEM_DTIA<50>
+Project.unit<0>.triggerChannel<0><69>=dp0 MEM_DTIA<51>
+Project.unit<0>.triggerChannel<0><6>=dp0 MEM_ADA<2>
+Project.unit<0>.triggerChannel<0><70>=dp0 MEM_DTIA<52>
+Project.unit<0>.triggerChannel<0><71>=dp0 MEM_DTIA<53>
+Project.unit<0>.triggerChannel<0><72>=dp0 MEM_DTIA<54>
+Project.unit<0>.triggerChannel<0><73>=dp0 MEM_DTIA<55>
+Project.unit<0>.triggerChannel<0><74>=dp0 MEM_DTIA<56>
+Project.unit<0>.triggerChannel<0><75>=dp0 MEM_DTIA<57>
+Project.unit<0>.triggerChannel<0><76>=dp0 MEM_DTIA<58>
+Project.unit<0>.triggerChannel<0><77>=dp0 MEM_DTIA<59>
+Project.unit<0>.triggerChannel<0><78>=dp0 MEM_DTIA<60>
+Project.unit<0>.triggerChannel<0><79>=dp0 MEM_DTIA<61>
+Project.unit<0>.triggerChannel<0><7>=dp0 MEM_ADA<3>
+Project.unit<0>.triggerChannel<0><80>=dp0 MEM_DTIA<62>
+Project.unit<0>.triggerChannel<0><81>=dp0 MEM_DTIA<63>
+Project.unit<0>.triggerChannel<0><82>=pgpg1 DMAW_ENABLE<0>
+Project.unit<0>.triggerChannel<0><83>=pgpg1 DBUS_Port<0>
+Project.unit<0>.triggerChannel<0><84>=pgpg1 DBUS_Port<1>
+Project.unit<0>.triggerChannel<0><85>=pgpg1 DBUS_Port<2>
+Project.unit<0>.triggerChannel<0><86>=pgpg1 DBUS_Port<3>
+Project.unit<0>.triggerChannel<0><87>=pgpg1 DBUS_Port<4>
+Project.unit<0>.triggerChannel<0><88>=pgpg1 DBUS_Port<5>
+Project.unit<0>.triggerChannel<0><89>=pgpg1 DBUS_Port<6>
+Project.unit<0>.triggerChannel<0><8>=dp0 MEM_ADA<4>
+Project.unit<0>.triggerChannel<0><90>=pgpg1 DBUS_Port<7>
+Project.unit<0>.triggerChannel<0><91>=pgpg1 DBUS_Port<8>
+Project.unit<0>.triggerChannel<0><92>=pgpg1 DBUS_Port<9>
+Project.unit<0>.triggerChannel<0><93>=pgpg1 DBUS_Port<10>
+Project.unit<0>.triggerChannel<0><94>=pgpg1 DBUS_Port<11>
+Project.unit<0>.triggerChannel<0><95>=pgpg1 DBUS_Port<12>
+Project.unit<0>.triggerChannel<0><96>=pgpg1 DBUS_Port<13>
+Project.unit<0>.triggerChannel<0><97>=pgpg1 DBUS_Port<14>
+Project.unit<0>.triggerChannel<0><98>=pgpg1 DBUS_Port<15>
+Project.unit<0>.triggerChannel<0><99>=pgpg1 DBUS_Port<16>
+Project.unit<0>.triggerChannel<0><9>=dp0 MEM_ADA<5>
+Project.unit<0>.triggerConditionCountWidth=0
+Project.unit<0>.triggerMatchCount<0>=1
+Project.unit<0>.triggerMatchCountWidth<0><0>=0
+Project.unit<0>.triggerMatchType<0><0>=1
+Project.unit<0>.triggerPortCount=1
+Project.unit<0>.triggerPortIsData<0>=true
+Project.unit<0>.triggerPortWidth<0>=150
+Project.unit<0>.triggerSequencerLevels=16
+Project.unit<0>.triggerSequencerType=1
+Project.unit<0>.type=ilapro
