@@ -1,117 +1,74 @@
-2019年  4月 28日 日曜日 10:29:44 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-16 23:48:16 hamada>
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2019年  4月 28日 日曜日 11:48:19 JST
+--------------------------------------------------------------------------------
+Release 6.2.03i Trace G.28
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-class Queue:
-    def __init__(self, queue = None):
-        self.index = 0
-        self.index_max = 50
-        self.image0 = np.zeros((120, 160, 3), np.uint8)
-        if type(queue) is type([]):
-            self.queue = queue
-        elif queue is None:
-            self.queue = []
-        else:
-            print ('Error Message:')
-            print ('    Your input is not type of list!')
-            print ('    Please enter list type!')
-
-    def enqueue(self, e):
-        if self.index < self.index_max :
-            self.queue.append(e)
-            self.index += 1
-            print ("queue index: ", self.index)
-        else:
-            self.dequeue()
-            self.queue.append(e)
-
-        return self.queue
-
-    def dequeue(self):
-        try:
-            qEl = self.queue[0]
-            del self.queue[0]
-            return (qEl, self.queue)
-        except IndexError:
-            print ('Error Message:')
-            print ('    There is no element in the queue!')
-
-    def look_first(self):
-        ret = self.image0
-        if self.index > 1:
-            ret = self.queue[0]
-        return (ret)
-            
-
-class WebCam(object):
-    def __init__(self):
-        self.devid = 2
-        self.tnow  = ''
-        self.fifo = Queue()
-        self.window_title = 'camera: %d' % (self.devid)
-        self.cap = cv2.VideoCapture(self.devid) 
-        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
-        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
-
-        self.display(True)
-
-    def put_text(self, image, text):
-        font_size = 1.0
-        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
-        # font_type = cv2.FONT_HERSHEY_PLAIN
-        # font_type = cv2.FONT_HERSHEY_DUPLEX
-        font_type = cv2.FONT_HERSHEY_TRIPLEX
-        font_color = (0x0, 0x77, 0x0)
-        px = int(image.shape[1]*0.15 )
-        py = int(image.shape[0]*0.9 )
-
-        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
 
 
-    def display(self, is_clear=False):
-        wx = 320
-        wy = 240
-        step = 5
-        if is_clear :
-            for i in range (0, self.fifo.index_max, step):
-                image = self.fifo.image0
-                wname = self.window_title + ": %d" %(i)
-                cv2.resizeWindow(wname, wx, wy)
-                cv2.moveWindow(wname, int(i*wx/step), 0)
-                cv2.imshow(wname, image)
+Design file:              top.ncd
+Physical constraint file: top.pcf
+Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
+Report level:             error report
 
-        for i in range (0, self.fifo.index, step):
-            image = self.fifo.queue[i].copy()
-            wname = self.window_title + ": %d" %(i)
-            image2 = cv2.resize(image, (wx, wy))
-            cv2.imshow(wname, image2)
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
 
-    def save_photo(self):
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-            if(tnow != self.tnow):
-                self.put_text(frame, tnow)
-                basedir = './log.%d/'% (self.devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, frame)
-                print(ofname, "devid = %d" % self.devid)
-                self.tnow = tnow
-                print("%s: Take photo" % self.tnow )
-                self.fifo.enqueue(frame)
-                self.display()
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
+   option. All paths that are not constrained will be reported in the
+   unconstrained paths section(s) of the report.
 
-    def clear_cache(self):
-        self.display()
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
+================================================================================
+Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
 
-        # self.cap.release()
-        # cv2.destroyAllWindows()
+ 0 items analyzed, 0 timing errors detected.
+--------------------------------------------------------------------------------
 
+================================================================================
+Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  19.569ns.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  14.739ns.
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Clock to Setup on destination clock CK66
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+CK66           |   19.959|         |         |         |
+---------------+---------+---------+---------+---------+
+
+
+Timing summary:
+---------------
+
+Timing errors: 0  Score: 0
+
+Constraints cover 1709651 paths, 0 nets, and 63904 connections
+
+Design statistics:
+   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
+
+
+Analysis completed Mon Jun 13 23:42:18 2005
+--------------------------------------------------------------------------------
+
+Peak Memory Usage: 279 MB
