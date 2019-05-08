@@ -1,90 +1,48 @@
-2019年  5月  4日 土曜日 11:55:00 JST
+2019年  5月  8日 水曜日 10:02:05 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-07-05 00:18:35 hamada>
-import Message
+# -*- coding: utf-8 -*-
 import numpy as np
 import cv2
-from datetime import datetime
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+drawing = False
+mode = True
+ix,iy = -1,-1
 
+def draw_circle(event,x,y,flags,param):
+    global ix,iy,drawing,mode
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ('Push')
+        drawing = True
+        ix,iy = x,y
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing == True:
+            print ('Drawing...')
+            if mode == True:
+                pass
+            else:
+                cv2.circle(img,(x,y),5,(0,0,255),-1)
+        else:
+            pass
+    elif event == cv2.EVENT_LBUTTONUP:
+        print ('Up')
+        drawing = False
+        if mode == True:
+            cv2.rectangle(img,(ix,iy),(x,y),(0,255,0),2)
+        else:
+            cv2.circle(img,(x,y),5,(0,0,255),-1)
 
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
-
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
-
-
-def get_bar_length(msg, x):
-    class_id = msg.get_classId()
-    dx = 25
-    z = 0
-    # if class_id == 5: z = x + dx/2; x = int(z)
-    # if class_id == 6: z = x + dx*2; x = int(z)
-    # if class_id == 4: z = x - dx*2; x = int(z)
-
-    if class_id == 0: z = x + dx*2; x = int(z)
-    if class_id in {0,4,5,6,7,8}: 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        print (tnow,': ', msg.class_count)
-    return (x)
-
-if __name__ == '__main__':
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 120)
-    image  = image0.copy()
-
-    window_title = "AI sensor"
-    x = 0
-    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
-
-    while(True):
-        x = get_bar_length(msg, x)
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
+if '__main__' == __name__ :
+    img = np.zeros((512,512,3), np.uint8)
+    cv2.namedWindow('image')
+    cv2.setMouseCallback('image',draw_circle)
+    
+    while(1):
+        cv2.imshow('image',img)
+        k = cv2.waitKey(1) & 0xFF
+        if k == ord('m'):
+            mode = not mode
+        elif k == 27:
+            break
 
     cv2.destroyAllWindows()
