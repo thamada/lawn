@@ -1,75 +1,34 @@
-2019年  5月  8日 水曜日 11:20:40 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2019年  5月  9日 木曜日 10:04:47 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+--mem_we                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
-}
+entity dmaw_mem_we is
+  port (
+    CLK       : in std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    MEM_WE    : out std_logic );
+end dmaw_mem_we;
 
-$bar = 1;
+architecture rtl of dmaw_mem_we is
 
-my $adr=0, $size;
+begin
 
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="10") then
+        MEM_WE <= '1';
+      else
+        MEM_WE <= '0';
+      end if;
+    end if;
+  end process;
 
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
-
-
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
-
-
-1;
+end rtl;
