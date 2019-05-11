@@ -1,121 +1,129 @@
-2019年  5月 11日 土曜日 09:35:07 JST
+2019年  5月 11日 土曜日 09:59:49 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:59:29 hamada>
-import Message
-import WebCam
+# -*- coding: utf-8 -*-
+import argparse
 import numpy as np
 import cv2
 from datetime import datetime
+import mkdir
+import aieye_find
+import time
+import sys
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+class_num = 1 # annotate number for class: 001: hamada
+drawing = False
+posi0 = [-1,-1]
+posi1 = [-1,-1]
+image_size = [-1, -1] # [height, width]
 
+def mouse_event(event,x,y,flags,param):
+    global posi0, posi1, drawing
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
-
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
-
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+    if x < 0: x = 0 
+    if y < 0: y = 0 
+    if x >= image_size[1]: x = image_size[1] - 1
+    if y >= image_size[0]: y = image_size[0] - 1
 
 
-
-def draw_text_time(msg, image):
-    font = cv2.FONT_HERSHEY_PLAIN 
-    font_size = 3.0
-    color = (0x0f, 0xff, 0x1f)
-    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    cv2.putText(image, text, (30, 65), font, font_size, color)
-    cv2.putText(image, text, (31, 65), font, font_size, color)
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ('Push')
+        drawing = True
+        posi0[0] = x
+        posi0[1] = y
 
 
-def draw_text(msg, image, text):
-    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
-    font_size = 2.5
-    color = (int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)))
-
-    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
-    py = int(image.shape[0]/2. + np.random.normal(25, 3))
-    cv2.putText(image, text, (px, py), font, font_size, color)
-
-
-if __name__ == '__main__':
-    webcam = WebCam.WebCam()
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 300)
-    image  = image0.copy()
-
-    window_title = "AI sensor by T. Hamada 2017/07/04"
-    x = 0
-    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
-
-    i_found = 0
-    while(True):
-        is_detect = msg.scan_object("person")
-        draw_text_time(msg, image)
-
-        if is_detect != True:
-            webcam.clear_cache()
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing == True:
+            print ("Drawing... (%d, %d)" % (x, y))
         else:
-            webcam.save_photo()
-            for i in range(8):
-                draw_text(msg, image, "I found you")
+            pass
+    elif event == cv2.EVENT_LBUTTONUP:
+        print ('Up')
+        drawing = False
+        cv2.rectangle(image, (posi0[0],posi0[1]), (x,y), (0,255,0), 1)
+        posi1[0] = x
+        posi1[1] = y
 
-            i_found += 1
-            if(i_found > 5):
-                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                with open("./log.person.txt", 'a') as fh:
-                    fh.write(tnow + " - detects 'Person'\n")
-                i_found = 0
+def save_data(image_dbg, image_orig, fnum):
+    global class_num, posi0, posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%04d" % fnum
 
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
 
-        x = 0
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
+if '__main__' == __name__:
+    basedir = '../log/'
+    if (len(sys.argv) > 1 ):
+        basedir = sys.argv[1]
+    
+    iflist = [] 
+    for fname in aieye_find.find(basedir, '*.jpg'):
+        iflist.append(fname)
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
+    iflist.sort()
+    ni = len(iflist)
+    i = 0
+
+    #    for i, fname in enumerate(iflist):
+    while( i < ni) :
+        fname = iflist[i]
+        print (fname, "%d/%d (%1.3f)"%(i, ni, i/ni))
+
+        image_orig = cv2.imread(fname, cv2.IMREAD_COLOR)
+        image = image_orig.copy()
+        image_size[0], image_size[1] = image.shape[:2]
+        is_next = False
+        while (not is_next):
+            cv2.imshow("THBox-annon.py", image)
+            cv2.namedWindow("THBox-annon.py", cv2.WINDOW_NORMAL)
+            cv2.setMouseCallback("THBox-annon.py", mouse_event)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord(' '):
+                save_data(image, image_orig, i)
+                is_next = True
+            if key  == 83:  # ->
+                is_next = True
+            if key  == 81:  # <-
+                i = i - 2
+                is_next = True
+            if key == ord('r'): # Reset
+                i = i - 1
+                is_next = True
+            if key  == ord('q'): 
+                i = ni
+                break
+        i = i+1
 
     cv2.destroyAllWindows()
+
+
+
+
+
+    
