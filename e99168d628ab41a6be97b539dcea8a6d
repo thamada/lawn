@@ -1,131 +1,59 @@
-2019年  5月  7日 火曜日 11:16:29 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2019年  5月 11日 土曜日 09:16:19 JST
+//-----------------------------------------------------------------------------
+// mk_eight.C:  prints initial conditions for the figure eight
+//              of the three-body problem
+//-----------------------------------------------------------------------------
+#include  <iostream>
+using namespace std;
 
-entity USER is
-  port (
-    RST         : in  std_logic;                     -- PCI Bus Reset
-    CLK         : in  std_logic;                     -- PCI bus Clock
-    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
-    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
-    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
-    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
-    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
-    );
-end USER;
+typedef double  real;                      // "real" as a general name for the
+                                           // standard floating-point data type
+#define  NDIM     3                        // number of spatial dimensions
 
+int main()
+{
+    const int n = 3;           // number of particles
+    const real t = 0;          // time
+    real r[n][NDIM];           // r[i][k] : position component k for particle i
+    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
+    real m[n];                 // m[i] : mass for particle i
 
-architecture USER_rtl of USER is
+    m[0] = 1;
+    m[1] = 1;
+    m[2] = 1;
 
---------------------------------------------------
--- signals
---------------------------------------------------
+    r[0][0] = 0.9700436;
+    r[0][1] = -0.24308753;
+    r[0][2] = 0;
+    v[0][0] = 0.466203685;
+    v[0][1] = 0.43236573;
+    v[0][2] = 0;
 
-  signal DIPSWi      : std_logic_vector( 3 downto 0);          ------ Internal DIPSW Data
-  signal SWCHK_CUNT  : std_logic_vector( 7 downto 0);          ------ Push SW Check Counter
-  signal PSWCHK_CNT0 : std_logic_vector( 2 downto 0);          ------ Push SW 0 Check
-  signal PSWCHK_CNT1 : std_logic_vector( 2 downto 0);          ------ Push SW 1 Check
-  signal PSW_ON0i    : std_logic;                      ------ User Interrupt 0 On Request
-  signal PSW_ON1i    : std_logic;                      ------ User Interrupt 1 On Request
+    r[1][0] = -r[0][0];
+    r[1][1] = -r[0][1];
+    r[1][2] = -r[0][2];
+    v[1][0] = v[0][0];
+    v[1][1] = v[0][1];
+    v[1][2] = v[0][2];
 
-begin
+    r[2][0] = 0;
+    r[2][1] = 0;
+    r[2][2] = 0;
+    v[2][0] = -2 * v[0][0];
+    v[2][1] = -2 * v[0][1];
+    v[2][2] = -2 * v[0][2];
 
+    cout.precision(16);
 
---------------------------------------------------------------------------------
--- DIPSW Input Signal Output Control Process
---------------------------------------------------------------------------------
-    DIPSWi <= (others=>'0');  -- 2004/11/11 by T.Hamada
-    DIPSW <= DIPSWi;
-
---------------------------------------------------------------------------------
--- Push SW Check Counter Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       SWCHK_CUNT <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-       SWCHK_CUNT <= SWCHK_CUNT+1;                  ------ Counter Increment
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 0 Check Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT0 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT0 <= PSWCHK_CNT0(1 downto 0) & PSW_IN(0);    ------ PSW_IN(0) Sampling
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 0 On Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON0i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON0i <= PSWCHK_CNT0(2) and (not PSWCHK_CNT0(1));    ------ SW Check Signal Set
-      else
-        PSW_ON0i <= '0';
-      end if;
-    end if;
-  end process;
-
-    PSW_ON0 <= PSW_ON0i;
-
---------------------------------------------------------------------------------
--- Push SW 1 Check Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSWCHK_CNT1 <= (others=>'1');
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-         PSWCHK_CNT1 <= PSWCHK_CNT1(1 downto 0) & PSW_IN(1);    ------ PSW_IN(1) Sampling
-      end if;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Push SW 1 On Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-       PSW_ON1i <= '0';
-    elsif (CLK'event and CLK='1') then
-      if (SWCHK_CUNT="11111111") then
-        PSW_ON1i <= PSWCHK_CNT1(2) and (not PSWCHK_CNT1(1));    ------ SW Check Signal Set
-      else
-        PSW_ON1i <= '0';
-      end if;
-    end if;
-  end process;
-
-    PSW_ON1 <= PSW_ON1i;
-
---------------------------------------------------------------------------------
--- User Interrupt 2 Signal Output Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      USERINT2_ON <= '0';
-    elsif (CLK'event and CLK='1') then
-      USERINT2_ON <=  RST and DIPSWi(0) and (not PSWCHK_CNT1(2))
-                            and PSWCHK_CNT1(1);
-    end if;
-  end process;
-
-end USER_rtl;
+    cout << n << endl;                      // first output line:  N
+    cout << t << endl;                      // second output line:  time
+    for (int i = 0; i < n; i++){
+        cout << m[i];                       // each next output line:
+        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
+            cout << ' ' << r[i][k];
+        for (int k = 0; k < NDIM; k++)
+            cout << ' ' << v[i][k];
+        cout << endl;
+    }
+}
+//-----------------------------------------------------------------------------
