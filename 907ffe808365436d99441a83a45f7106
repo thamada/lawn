@@ -1,129 +1,117 @@
-2019年  5月  4日 土曜日 10:54:26 JST
-#!/bin/sh
-#
-# An example hook script to blocks unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
-#
-# To enable this hook, rename this file to "update".
-#
-# Config
-# ------
-# hooks.allowunannotated
-#   This boolean sets whether unannotated tags will be allowed into the
-#   repository.  By default they won't be.
-# hooks.allowdeletetag
-#   This boolean sets whether deleting tags will be allowed in the
-#   repository.  By default they won't be.
-# hooks.allowmodifytag
-#   This boolean sets whether a tag may be modified after creation. By default
-#   it won't be.
-# hooks.allowdeletebranch
-#   This boolean sets whether deleting branches will be allowed in the
-#   repository.  By default they won't be.
-# hooks.denycreatebranch
-#   This boolean sets whether remotely creating branches will be denied
-#   in the repository.  By default this is allowed.
-#
+2019年  5月 11日 土曜日 09:25:58 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-16 23:48:16 hamada>
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-# --- Command line
-refname="$1"
-oldrev="$2"
-newrev="$3"
+class Queue:
+    def __init__(self, queue = None):
+        self.index = 0
+        self.index_max = 50
+        self.image0 = np.zeros((120, 160, 3), np.uint8)
+        if type(queue) is type([]):
+            self.queue = queue
+        elif queue is None:
+            self.queue = []
+        else:
+            print ('Error Message:')
+            print ('    Your input is not type of list!')
+            print ('    Please enter list type!')
 
-# --- Safety check
-if [ -z "$GIT_DIR" ]; then
-	echo "Don't run this script from the command line." >&2
-	echo " (if you want, you could supply GIT_DIR then run" >&2
-	echo "  $0 <ref> <oldrev> <newrev>)" >&2
-	exit 1
-fi
+    def enqueue(self, e):
+        if self.index < self.index_max :
+            self.queue.append(e)
+            self.index += 1
+            print ("queue index: ", self.index)
+        else:
+            self.dequeue()
+            self.queue.append(e)
 
-if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
-	exit 1
-fi
+        return self.queue
 
-# --- Config
-allowunannotated=$(git config --bool hooks.allowunannotated)
-allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --bool hooks.denycreatebranch)
-allowdeletetag=$(git config --bool hooks.allowdeletetag)
-allowmodifytag=$(git config --bool hooks.allowmodifytag)
+    def dequeue(self):
+        try:
+            qEl = self.queue[0]
+            del self.queue[0]
+            return (qEl, self.queue)
+        except IndexError:
+            print ('Error Message:')
+            print ('    There is no element in the queue!')
 
-# check for no description
-projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-case "$projectdesc" in
-"Unnamed repository"* | "")
-	echo "*** Project description file hasn't been set" >&2
-	exit 1
-	;;
-esac
+    def look_first(self):
+        ret = self.image0
+        if self.index > 1:
+            ret = self.queue[0]
+        return (ret)
+            
 
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
-zero="0000000000000000000000000000000000000000"
-if [ "$newrev" = "$zero" ]; then
-	newrev_type=delete
-else
-	newrev_type=$(git cat-file -t $newrev)
-fi
+class WebCam(object):
+    def __init__(self):
+        self.devid = 2
+        self.tnow  = ''
+        self.fifo = Queue()
+        self.window_title = 'camera: %d' % (self.devid)
+        self.cap = cv2.VideoCapture(self.devid) 
+        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
+        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
 
-case "$refname","$newrev_type" in
-	refs/tags/*,commit)
-		# un-annotated tag
-		short_refname=${refname##refs/tags/}
-		if [ "$allowunannotated" != "true" ]; then
-			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,delete)
-		# delete tag
-		if [ "$allowdeletetag" != "true" ]; then
-			echo "*** Deleting a tag is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,tag)
-		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
-		then
-			echo "*** Tag '$refname' already exists." >&2
-			echo "*** Modifying a tag is not allowed in this repository." >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,commit)
-		# branch
-		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
-			echo "*** Creating a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,delete)
-		# delete branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/remotes/*,commit)
-		# tracking branch
-		;;
-	refs/remotes/*,delete)
-		# delete tracking branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	*)
-		# Anything else (is there anything else?)
-		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
-		exit 1
-		;;
-esac
+        self.display(True)
 
-# --- Finished
-exit 0
+    def put_text(self, image, text):
+        font_size = 1.0
+        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
+        # font_type = cv2.FONT_HERSHEY_PLAIN
+        # font_type = cv2.FONT_HERSHEY_DUPLEX
+        font_type = cv2.FONT_HERSHEY_TRIPLEX
+        font_color = (0x0, 0x77, 0x0)
+        px = int(image.shape[1]*0.15 )
+        py = int(image.shape[0]*0.9 )
+
+        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+
+
+    def display(self, is_clear=False):
+        wx = 320
+        wy = 240
+        step = 5
+        if is_clear :
+            for i in range (0, self.fifo.index_max, step):
+                image = self.fifo.image0
+                wname = self.window_title + ": %d" %(i)
+                cv2.resizeWindow(wname, wx, wy)
+                cv2.moveWindow(wname, int(i*wx/step), 0)
+                cv2.imshow(wname, image)
+
+        for i in range (0, self.fifo.index, step):
+            image = self.fifo.queue[i].copy()
+            wname = self.window_title + ": %d" %(i)
+            image2 = cv2.resize(image, (wx, wy))
+            cv2.imshow(wname, image2)
+
+    def save_photo(self):
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
+            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+            if(tnow != self.tnow):
+                self.put_text(frame, tnow)
+                basedir = './log.%d/'% (self.devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, frame)
+                print(ofname, "devid = %d" % self.devid)
+                self.tnow = tnow
+                print("%s: Take photo" % self.tnow )
+                self.fifo.enqueue(frame)
+                self.display()
+
+    def clear_cache(self):
+        self.display()
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
+
+        # self.cap.release()
+        # cv2.destroyAllWindows()
+
