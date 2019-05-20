@@ -1,94 +1,121 @@
-2019年  5月  9日 木曜日 09:55:14 JST
--- LOCAL READ CONTROLLER ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
---
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- BUSY               ___/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______________
--- hit1               ___/~~~~\____
--- c_nchip               < NC                >< NC -1                           >< negativ value
--- next_chip                          ___/~~~~\____                      ___/~~~~\____
---==================================================
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- c_npipe               < NP                >< NP -1                           >< negativ value
--- next_pipe
+2019年  5月 20日 月曜日 09:58:03 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:59:29 hamada>
+import Message
+import WebCam
+import numpy as np
+import cv2
+from datetime import datetime
+
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-entity local_read_cnt is
-  port (
-    -- from PGPG_REG3
-    NCHIP : in std_logic_vector(1 downto 0);     -- (number of chips) - 1
-    NPIPE : in std_logic_vector(7 downto 0);     -- (number of pipelines) - 1
-    NFI   : in std_logic_vector(7 downto 0);     -- (number of fi registers in a pipe) - 1
-    CALC_DONE : in std_logic;   -- pulse
-    -- to GPREG0
-    BUSY  : out std_logic;
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-    -- to LOCAL_READ_IF
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    -- from LOCAL_READ_IF
-    BUSY_IF : in std_logic;
- 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end local_read;
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
 
-architecture rtl of local_read is
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-signal hit0,hit1,hit2 : std_logic :='0';
-signal c_nchip,c_nchipr  : std_logic_vector(2 downto 0) := (others=>'0');
-signal c_npipe,c_npiper  : std_logic_vector(7 downto 0) := (others=>'0');
-signal c_nfi  ,c_nfir    : std_logic_vector(7 downto 0) := (others=>'0');
-signal next_chip, next_pipe : std_logic :='0';
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-begin
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
 
-  hit0 <= CALC_DONE;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      hit2 <= hit1;
-      hit1 <= hit0;
-    end if;
-  end process;
-
-  -- BUSY
-  process (RST,CLK,c_nchip) begin
-    if (RST = '1') then
-      BUSY <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        BUSY <= '1';
-      elsif(c_nchip(2) = '1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
 
-  -- NCHIP COUNTER
-  c_nchipr <= c_nchip - "01";
-  process (RST,CLK,next_chip) begin
-    if (RST = '1') then
-      c_nchip <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        c_nchip <= "0" & NCHIP;              -- SIGNED VALUE
-      elsif (next_chip='1') then
-        c_nchip <= c_nchipr;
-      end if;
-    end if;
-  end process;
 
-  
+def draw_text_time(msg, image):
+    font = cv2.FONT_HERSHEY_PLAIN 
+    font_size = 3.0
+    color = (0x0f, 0xff, 0x1f)
+    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    cv2.putText(image, text, (30, 65), font, font_size, color)
+    cv2.putText(image, text, (31, 65), font, font_size, color)
 
+
+def draw_text(msg, image, text):
+    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
+    font_size = 2.5
+    color = (int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)))
+
+    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
+    py = int(image.shape[0]/2. + np.random.normal(25, 3))
+    cv2.putText(image, text, (px, py), font, font_size, color)
+
+
+if __name__ == '__main__':
+    webcam = WebCam.WebCam()
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 300)
+    image  = image0.copy()
+
+    window_title = "AI sensor by T. Hamada 2017/07/04"
+    x = 0
+    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+
+    i_found = 0
+    while(True):
+        is_detect = msg.scan_object("person")
+        draw_text_time(msg, image)
+
+        if is_detect != True:
+            webcam.clear_cache()
+        else:
+            webcam.save_photo()
+            for i in range(8):
+                draw_text(msg, image, "I found you")
+
+            i_found += 1
+            if(i_found > 5):
+                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                with open("./log.person.txt", 'a') as fh:
+                    fh.write(tnow + " - detects 'Person'\n")
+                i_found = 0
+
+
+
+
+        x = 0
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
