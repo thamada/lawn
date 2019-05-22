@@ -1,220 +1,265 @@
-2019年  5月 21日 火曜日 11:47:23 JST
-/*
- * pfpga_conf.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+2019年  5月 22日 水曜日 10:10:06 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 18:45:17 2005
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>     // usleep
-#include "pg4.h"
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-static char pfpga_info[256];
-#define CNF_CMD_ADR 0x80
-#define CNF_DAT_ADR 0x84
+ENTITY sim_local_read IS
+END sim_local_read;
 
-static unsigned int *data;
+ARCHITECTURE testbench_arch OF sim_local_read IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read.ano";
+	COMPONENT local_read
+		GENERIC (
+			NBIT_L_ADRO : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_STS : In  std_logic;
+			BUSY : Out  std_logic;
+			DMAR_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			DBUS_idata : In  std_logic_vector (63 DOWNTO 0);
+			DBUS_HiZ : Out  std_logic;
+			MEM_ADB : Out  std_logic_vector (12 DOWNTO 0);
+			MEM_WEHB : Out  std_logic;
+			MEM_WELB : Out  std_logic;
+			MEM_DTIB : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-void get_header(char* bitfile, char* header)
-{
-  int index=0, x;
-  char buf[128];
-  
-  index += 2 + (((0xff&bitfile[index])<<8) | (0xff&bitfile[index+1]));
-  index += 2 + (((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]));
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_STS : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_idata : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_HiZ : std_logic;
+	SIGNAL MEM_ADB : std_logic_vector (12 DOWNTO 0);
+	SIGNAL MEM_WEHB : std_logic;
+	SIGNAL MEM_WELB : std_logic;
+	SIGNAL MEM_DTIB : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-  // --- NCD file name ---
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
+BEGIN
+	UUT : local_read
+	GENERIC MAP (
+		NBIT_L_ADRO => 1
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_STS => CALC_STS,
+		BUSY => BUSY,
+		DMAR_ENABLE => DMAR_ENABLE,
+		DBUS_Port => DBUS_Port,
+		DBUS_idata => DBUS_idata,
+		DBUS_HiZ => DBUS_HiZ,
+		MEM_ADB => MEM_ADB,
+		MEM_WEHB => MEM_WEHB,
+		MEM_WELB => MEM_WELB,
+		MEM_DTIB => MEM_DTIB,
+		RST => RST,
+		CLK => CLK
+	);
 
-  // --- device ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-  // --- data ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  // --- time ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
+		PROCEDURE ANNOTATE_DMAR_ENABLE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DMAR_ENABLE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAR_ENABLE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  // --- key ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
+		PROCEDURE ANNOTATE_DBUS_Port(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_DBUS_HiZ(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_HiZ,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_HiZ);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-}
+		PROCEDURE ANNOTATE_MEM_ADB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_ADB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_ADB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_MEM_WEHB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WEHB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WEHB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_MEM_WELB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WELB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WELB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-int fread_config_data(char* fname, unsigned int *size)
-{
-  // -- Read Config File to 'config_bit_data'---
-  FILE* fin;
-  int ndata;
-  int i;
+		PROCEDURE ANNOTATE_MEM_DTIB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_DTIB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_DTIB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  struct stat buf;
-  int fsize;
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_DMAR_ENABLE(TX_TIME);
+		ANNOTATE_DBUS_Port(TX_TIME);
+		ANNOTATE_DBUS_HiZ(TX_TIME);
+		ANNOTATE_MEM_ADB(TX_TIME);
+		ANNOTATE_MEM_WEHB(TX_TIME);
+		ANNOTATE_MEM_WELB(TX_TIME);
+		ANNOTATE_MEM_DTIB(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-  // read file status
-  if (stat(fname, &buf) == -1) {
-    fprintf(stderr, "fread_config_data: can't open bit file!!! %s\n", fname);
-    exit(-1);
-  }
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
-  fsize = buf.st_size;
-  if (data != NULL) {
-    free(data);
-  }
-  data = (unsigned int*)malloc(fsize);
-  if (data == NULL) {
-    fprintf(stderr, "fread_config_data: memory allocation error!\n");
-    exit(-1);
-  }
-  
-  fin = fopen(fname, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "fread_config_data: cannot open %s!\n", fname);
-    exit(-1);
-  }
-  fread(data,fsize,1,fin);
-  fclose(fin);
-  fprintf(stderr, "fread_config_data: read %i bytes.\n", fsize);
+		BEGIN
+		-- --------------------
+		CALC_STS <= transport '0';
+		DBUS_idata <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		NPIPE <= transport std_logic_vector'("00010001"); --11
+		-- --------------------
+		WAIT FOR 600 ns; -- Time=800 ns
+		CALC_STS <= transport '1';
+		-- --------------------
+		WAIT FOR 4400 ns; -- Time=5200 ns
+		CALC_STS <= transport '0';
+		-- --------------------
+		WAIT FOR 60275 ns; -- Time=65475 ns
+		-- --------------------
 
-  get_header((char*)data, pfpga_info);
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-  
-  ndata = fsize/sizeof(unsigned int);
-
-  // CHANGE ENDIAN (LittleEndian -> BigEndian)
-  for(i = 0;i < ndata; i++){
-    unsigned int byte[8];
-    byte[0] = 0xFF&(data[i]>>24);
-    byte[1] = 0xFF&(data[i]>>16);
-    byte[2] = 0xFF&(data[i]>>8);
-    byte[3] = 0xFF&(data[i]);
-    data[i]=0x0;
-    data[i]= (byte[3]<<24)|(byte[2]<<16)|(byte[1]<<8)|byte[0];
-  }
-
-  *size = (unsigned int)ndata;
-
-  return fsize;
-}
-
-void config_onechip(int devid, unsigned int nfp, unsigned int ncfgdata)
-{
-  unsigned int i, d;
-  unsigned int *p;
-
-  if (data == NULL) return;
-  if (nfp > 0x8) {
-    fprintf(stderr, "nfp err\n");
-    exit(-1);
-  } 
-
-  // ---------------------------------------- SETUP CONFIGURATION
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(  ((0xF^nfp)<<4)   |nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  usleep(15000);
-
-  // ---------------------------------------- SEND CONFIGURATION DATA
-  p = data;
-  for(i = 0; i < ncfgdata; i++){
-    WriteBase0(devid, CNF_DAT_ADR, *(p++));
-    d = (unsigned int)(0x1f0|nfp);
-    WriteBase0(devid, CNF_CMD_ADR,      d);
-    WriteBase0(devid, CNF_CMD_ADR, 0xff&d);
-  }
-
-  // ---------------------------------------- STOP CFG_CCLK
-  d = (unsigned int)(0xf0);
-  WriteBase0(devid, CNF_CMD_ADR,d);
-}
-
-void config_pfpga_all(int devid, char* fname)
-{
-  unsigned int i, nfp, ncfgdata;
-
-  data = NULL;
-  fread_config_data(fname, &ncfgdata);
-
-  for(i = 0; i < 4; i++) {
-    nfp = 0xf&(0x1<<i);
-    fprintf(stderr, "configuring chip%i ...\n", i);
-    config_onechip(devid, nfp, ncfgdata);
-  }
-
-  free(data);
-}
-
-int main(int argc, char* argv[])
-{
-  int devid;
-
-  if (argc < 2) {
-    fprintf(stderr, "%s <bitfile> <devid>\n", argv[0]);
-    exit(-1);
-  }
-  if (argv[2] == NULL) {
-    devid = 0;
-  } else {
-    devid = atoi(argv[2]);
-    if (devid > 2) {
-      fprintf(stderr, "%s : invalid argument <devid>%s:%d\n", argv[0], __FILE__, __LINE__);
-      exit(-1);
-    }
-  }
-  fprintf(stderr, "%s configures all PFPGAs on progrape%i ...\n", argv[0], devid);
-
-  pg4_open(devid);
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Previous config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  {
-    sprintf(pfpga_info, "%s",argv[1]);
-    config_pfpga_all(devid, argv[1]);
-    pg4_set_pfpga_info(devid, pfpga_info);
-  }
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Current config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  pg4_close(devid);
-
-  return 0;
-}
+CONFIGURATION local_read_cfg OF sim_local_read IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cfg;
