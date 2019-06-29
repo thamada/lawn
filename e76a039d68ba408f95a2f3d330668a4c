@@ -1,19 +1,40 @@
-2019年  6月 29日 土曜日 10:06:55 JST
-#!Time-stamp: <2007-01-22 04:30:32 hamada>
-
-Linux device driver for the PROGRAPE-4 board,
-
-including runtime libraries and HDL source for interface FPGA.
-
-- Linux kernel release 2.6.x
-
-- Xilinx XC3S5000-5-FG900 FPGAs
-
-- Xilinx ISE 8.1i
--- Release 8.1.03i xst I.27
--- Release 8.1.03i par I.27
--- Release 8.1.03i Trace I.27
--- Release 8.1.03i Bitgen I.27
+2019年  6月 29日 土曜日 11:15:03 JST
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
-![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
+entity WRITECOMB_CHECK is
+  port (
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    IS_ERR : out std_logic_vector(25 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end WRITECOMB_CHECK;
+
+architecture rtl of WRITECOMB_CHECK is
+
+signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
+
+begin
+
+  IS_ERR <= cnt;
+
+  cntr <= cnt;
+
+  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
+    if(RST = '1') then
+      cnt <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='0') then
+        cnt <= cntr + "00000000000000000000000001";
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        cnt <= cntr + "00000000000000000000000001";
+      end if;
+    end if;
+  end process;
+
+end rtl;
