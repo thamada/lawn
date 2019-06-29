@@ -1,141 +1,44 @@
-2019年  6月 25日 火曜日 10:49:09 JST
-[net]
-# Testing
-batch=1
-subdivisions=1
-#-- # Training
-#-- batch=64
-#-- subdivisions=8
+2019年  6月 29日 土曜日 09:26:35 JST
+// Time-stamp: " "
+#include <stdio.h> 
+#include <string.h>
+#include <stdlib.h>
 
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+void read_data(char* fname, int* nbody, double posi[][2])
+{
+  int idx,n;
+  char line[2560];
+  FILE *fp;
+  fp = fopen(fname,"r");
+  idx=0;
 
-learning_rate=0.001
-max_batches = 40200
-#max_batches = 50
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+  { // get N (number of particles)
+    char* p;
+    fgets(line,100,fp);
+    p = (char* )strtok(line,"\n");
+    sscanf(p,"%d",&n);
+    *nbody = n;
+  }
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+  // get all data
+  for(idx=0;idx<n;idx++){
+    char* p;
+    char col[10][400];
+    int i=0;
+    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
+    p = (char* )strtok(line,"\t");
+    strcpy(col[i],p);
+    i++;
+    while((p = (char* )strtok(NULL, "\t"))!=NULL){
+      strcpy(col[i],p);
+      i++;
+    }
+    //--- for debug ---
+    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
+    //    printf("\n");
 
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-filters=75
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=10
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+    posi[idx][0]=atof(col[0]);
+    posi[idx][1]=atof(col[1]);
+  }
+  fclose(fp);
+}
