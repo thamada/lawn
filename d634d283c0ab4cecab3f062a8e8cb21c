@@ -1,22 +1,26 @@
-2019年  6月 25日 火曜日 10:58:29 JST
-# Xilinx CORE Generator 6.2.03i
-# User = Administrator
-Initializing default project...
-Loading plug-ins...
-All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
-# busformat=BusFormatAngleBracketNotRipped
-# designflow=VHDL
-# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
-# flowvendor=Foundation_iSE
-# formalverification=None
-# simulationoutputproducts=VHDL
-# xilinxfamily=Virtex2
-# outputoption=DesignFlow
-# overwritefiles=Default
-# simvendor=ModelSim
-# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
-SETPROJECT .
-Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
-SET BusFormat = BusFormatAngleBracketNotRipped
-SETXIPCPORTHOST 1271
-XIPCPJSENDCORES virtex2
+2019年  6月 30日 日曜日 10:19:59 JST
+#include <stdio.h>
+#include "nbodysim.h"
+
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
+
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
+
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
+
+  fflush(fp);
+}
+
