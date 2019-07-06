@@ -1,50 +1,121 @@
-2019年  6月 28日 金曜日 11:26:02 JST
-/EQNINJ
-/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
-/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
-/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
-/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
-/NPIPE 1
-/NVMP 1
-void force(double x[][3], double m[], double eps2, double a[][3], int n){
-  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
-  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
-  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
-  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
-  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
-  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
-  pg_log_shift(1,dx_0,x2_0,17)
-  pg_log_shift(1,dx_1,x2_1,17)
-  pg_log_shift(1,dx_2,x2_2,17)
-  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
-  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
-  pg_log_shift(-1,r2,r1,17)
-  pg_log_muldiv(MUL,r2,r1,r3,17,2)
-  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
-  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
-  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
-  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
-  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
-  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
-  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
-  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
-  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
-  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
-  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
-  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
-  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
-  pg_pdelay(ieps2,ieps2r,17,7)
-  pg_pdelay(mj,mjr,17,27)
-  pg_pdelay(dx_0,dx_0r,17,22)
-  pg_pdelay(dx_1,dx_1r,17,22)
-  pg_pdelay(dx_2,dx_2r,17,22)
-  pg_rundelay(41)
-}
+2019年  7月  6日 土曜日 10:58:13 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:59:29 hamada>
+import Message
+import WebCam
+import numpy as np
+import cv2
+from datetime import datetime
+
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
+
+
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
+
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
+
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+
+
+
+def draw_text_time(msg, image):
+    font = cv2.FONT_HERSHEY_PLAIN 
+    font_size = 3.0
+    color = (0x0f, 0xff, 0x1f)
+    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    cv2.putText(image, text, (30, 65), font, font_size, color)
+    cv2.putText(image, text, (31, 65), font, font_size, color)
+
+
+def draw_text(msg, image, text):
+    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
+    font_size = 2.5
+    color = (int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)))
+
+    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
+    py = int(image.shape[0]/2. + np.random.normal(25, 3))
+    cv2.putText(image, text, (px, py), font, font_size, color)
+
+
+if __name__ == '__main__':
+    webcam = WebCam.WebCam()
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 300)
+    image  = image0.copy()
+
+    window_title = "AI sensor by T. Hamada 2017/07/04"
+    x = 0
+    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+
+    i_found = 0
+    while(True):
+        is_detect = msg.scan_object("person")
+        draw_text_time(msg, image)
+
+        if is_detect != True:
+            webcam.clear_cache()
+        else:
+            webcam.save_photo()
+            for i in range(8):
+                draw_text(msg, image, "I found you")
+
+            i_found += 1
+            if(i_found > 5):
+                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                with open("./log.person.txt", 'a') as fh:
+                    fh.write(tnow + " - detects 'Person'\n")
+                i_found = 0
+
+
+
+
+        x = 0
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
