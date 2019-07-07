@@ -1,113 +1,57 @@
-2019年  6月 26日 水曜日 10:00:39 JST
--- LOCAL WRITE ( ifpga -> pfpga )
--- by Tsuyoshi Hamada
---
--- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
--- MEM_WE            __/~~~~~~~~~~\_____ 
--- MEM_AD              < a0 >< a1 >
--- MEM_DTI             < d0 >< d1 >
--- DMAW_ENABLE                      __/~~~~~~~~~~\___  
--- DBUS_Port                     < a0 >< d0 >< d1 >
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-entity LOCAL_WRITE is
-  port (
-    -- pcicnt input
-    MEM_AD  : in std_logic_vector(19 downto 0);
-    MEM_WE  : in std_logic;
-    MEM_DTI : in std_logic_vector(63 downto 0);
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_WRITE;
-
-architecture rtl of LOCAL_WRITE is
-
-  signal we0  : std_logic := '0';
-  signal we1  : std_logic := '0';
-  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
-
-begin
-  ------------------------------
-  --- we0,1                  ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      we0 <= MEM_WE;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      we1 <= we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- adr                    ---
-  ------------------------------
-  process (RST,CLK,MEM_WE,we0) begin
-    if(RST='1') then
-      adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((MEM_WE = '1') and (we0 = '0')) then
-        adr(18 downto 0) <= MEM_AD(19 downto 1);
-      end if;
-      adr(63 downto 19) <= (others=>'0');
-    end if;
-  end process;
-
-  ------------------------------
-  --- data delay             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      data1 <= (others=>'0');
-      data0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      data1 <= data0;
-      data0 <= MEM_DTI;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (RST,CLK,we0,we1) begin
-    if(RST='1') then
-      DBUS_Port <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(we0 = '1' and we1 = '0') then
-        DBUS_Port <= adr;
-      else
-        DBUS_Port <= data1;
-      end if;
-    end if;
-  end process;
-
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= we1;
-      DMAW_ENABLE(1) <= we1;
-      DMAW_ENABLE(2) <= we1;
-      DMAW_ENABLE(3) <= we1;
-    end if;
-  end process;
-
-
-end rtl;
+2019年  7月  7日 日曜日 11:33:09 JST
+1
+0.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-2.746715e-01	4.191831e-01
+-2.931587e-01	2.247797e-01
+2.321991e-01	4.064824e-01
+-1.520429e-01	3.578809e-01
+-8.481506e-02	-3.058323e-01
+1.856104e-01	2.437552e-02
+-3.403643e-01	4.547575e-01
+-3.730157e-01	-4.956605e-01
+-1.173085e-01	-2.492071e-01
+1.552879e-01	3.449078e-02
+1.099664e-01	-2.121421e-01
+4.092620e-01	2.361288e-01
+-3.788992e-01	1.148062e-01
+-2.340848e-01	4.453564e-01
+-7.531051e-02	-2.516460e-01
+1.772955e-01	-4.287967e-01
+-4.426001e-02	-3.237644e-04
+-4.797312e-01	3.861750e-01
+1.545830e-01	5.970007e-02
+4.850480e-01	-1.605443e-01
+-4.632017e-01	-2.009751e-01
+4.881687e-01	-5.634217e-02
+-3.708808e-01	4.150378e-01
+-1.135756e-01	-4.695678e-01
+-3.155564e-01	4.356883e-01
+-1.920876e-02	9.783734e-02
+-6.385236e-02	-3.949834e-01
+2.275205e-01	-3.768423e-01
+1.721155e-01	-4.660092e-01
+4.644338e-01	-4.804784e-01
+-4.553355e-01	-7.876486e-02
+2.642185e-01	4.444889e-01
+5.434882e-02	1.171663e-01
+1.465040e-01	-1.143288e-01
+4.021194e-01	-1.771178e-01
+-7.684997e-02	-4.504972e-02
+7.223762e-02	-4.515364e-01
+-2.392842e-02	-3.878574e-01
+3.425949e-01	-1.136164e-01
+-4.632521e-01	2.447992e-01
+2.661087e-03	-2.676771e-01
+-2.328564e-01	-3.223420e-01
+-4.466751e-01	-1.286633e-01
+-4.479510e-01	-6.189542e-02
+-4.433532e-01	1.711145e-01
+-2.251056e-01	-4.814771e-01
+1.644014e-01	3.307433e-01
+-4.618902e-01	1.489123e-01
+7.775744e-02	3.332788e-01
+3.334003e-01	-1.894713e-01
