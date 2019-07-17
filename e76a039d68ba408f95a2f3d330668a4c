@@ -1,40 +1,37 @@
-2019年  6月 29日 土曜日 11:15:03 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2019年  7月 17日 水曜日 10:48:59 JST
+#!/bin/sh
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file.  If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
 
+# This hook includes three examples.  The first comments out the
+# "Conflicts:" part of a merge commit.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# commits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
 
-entity WRITECOMB_CHECK is
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+case "$2,$3" in
+  merge,)
+    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
-architecture rtl of WRITECOMB_CHECK is
+# ,|template,)
+#   /usr/bin/perl -i.bak -pe '
+#      print "\n" . `git diff --cached --name-status -r`
+#	 if /^#/ && $first++ == 0' "$1" ;;
 
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
+  *) ;;
+esac
 
-begin
-
-  IS_ERR <= cnt;
-
-  cntr <= cnt;
-
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
-      end if;
-    end if;
-  end process;
-
-end rtl;
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
