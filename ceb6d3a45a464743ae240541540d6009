@@ -1,64 +1,11 @@
-2019年  7月 14日 日曜日 11:39:27 JST
+2019年  7月 17日 水曜日 11:19:54 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-06-12 07:42:18 hamada>
-import cv2
-import urllib.request
-import numpy as np
+#Time-stamp: <2017-06-12 07:43:27 hamada>
 import argparse
+import numpy as np
+import cv2
 from datetime import datetime
 import mkdir
-import math
-
-class DroidCam(object):
-    def __init__(self):
-        self.droidapp = 'IP Webcam'
-        self.ipadr  = '192.168.43.1'
-#        self.ipadr  = '133.45.9.162'
-        self.port  = '3389'
-        self.stream = -1
-        self.URL = -1
-        self.image = -1
-    def get_stream(self):
-        stub = ''
-        if (self.droidapp == 'DroidCam'):
-            stub = '/mjpegfeed?960x720'
-        elif (self.droidapp == 'IP Webcam'):
-            stub = '/video?dummy=param.mjpg'
-        else:
-            stub = '/mjpegfeed?640x480'
-
-        url = 'http://'+self.ipadr+':'+self.port + stub
-
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
-
-    def get_stream_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
-
-    def get_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        urlObj = urllib.request.urlopen(url)
-        #print ('URL: ', url, urlObj.getcode())
-        ofname = '/dev/shm/now.jpg'
-        with open(ofname, "wb") as file:
-            file.write(urlObj.read())
-        self.image = cv2.imread(ofname)
-        return (self.image)
-        
-    def set_focus(self):
-        stub = '/focus'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('focus: ', url)
-        urlObj = urllib.request.urlopen(url)
-        
 
 class State(object):
     def __init__(self):
@@ -140,6 +87,21 @@ def mouse_event(event,x,y,flags,param):
             state.posi1[0] = x_max
             state.posi1[1] = y_max
 
+def __mouse_event(event,x,y,flags,param):
+    global state
+
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
+
+
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
 #------------------------------------------------------------------------ save_data
 def save_data_bbox(image_dbg, image_orig, fnum):
@@ -241,11 +203,7 @@ def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
 
 #------------------------------------------------------------------------ save_data./
 
-
 if (__name__ == '__main__'):
-
-    droidcam = DroidCam()
-#    stream = droidcam.get_stream()
 
     parser = argparse.ArgumentParser(description = "description goes here")
     parser.add_argument("--devid", type=int, help = "set device id", required=False)
@@ -255,15 +213,27 @@ if (__name__ == '__main__'):
         devid = int(args.devid)
         print ("set devid = ", devid)
 
-    while True:
-        frame = droidcam.get_jpg()
+
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
         state.image_orig = frame.copy()
         state.image      = frame.copy()
         state.image_size[0], state.image_size[1] = frame.shape[:2]
         state.draw_rect()
         state.draw_text()
-        cv2.imshow('droidcam',state.image)
-        cv2.setMouseCallback("droidcam", mouse_event)
+        cv2.imshow("THBox-Auto.py", state.image)
+        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
+
         tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
         if(state.is_record):
             if False:
@@ -284,9 +254,8 @@ if (__name__ == '__main__'):
              (key == 10)    # Enter
         ):
             state.is_record = not (state.is_record)
-        if key == ord('f'): droidcam.set_focus()
 
-
+    cap.release()
     cv2.destroyAllWindows()
-    print("Done.")
 
+    print("Done.")
