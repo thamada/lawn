@@ -1,71 +1,25 @@
-2019年  7月 13日 土曜日 10:23:39 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:28:33 hamada>
-import numpy as np
-import cv2
-
-class Message(object):
-    def __init__(self):
-        self.class_num = 80
-        self.last = [0 for i in range(8)]
-        self.log_previous = ''
-        self.is_update = False
-#        self.filename = '/dev/shm/log.txt'
-        self.filename = '/tmp/log.draw_detections.txt'
-        self.class_count = []
-
-    def reset(self):
-        self.is_update = False
-        self.class_count = [0 for i in range(self.class_num)]
-        self.get_classId()
-        self.class_count = [0 for i in range(self.class_num)]
-
-    def get_message(self):
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            l = lines[-2]
-            l = l.rstrip()
-            cols = l.split(' ')
-            if cols[0] != self.last[0]:
-                self.last = cols
-                self.is_update = True
-            else:
-                self.is_update = False
-        
-
-    def check_log_update(self):
-        self.is_update = False
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            current = lines[-2]
-            if current != self.log_previous:
-                self.is_update = True
-                self.log_previous = current
-        return (self.is_update)
-
-    def scan_object(self, cl_name):
-        is_detect = False
-
-        if self.check_log_update():
-            with open(self.filename, 'r') as fh:
-                lines = fh.readlines()
-                for i in range(2, 20):
-                    l = lines[-i]
-                    l = l.rstrip()
-                    cols = l.split(' ')
-                    if cols[-1] == cl_name:
-                        is_detect = True
-
-        return (is_detect)
-
-    def get_classId(self):
-        self.get_message()
-
-        if True == self.is_update:
-            z = int(self.last[1])
-            self.class_count[z] += 1
-        else:
-            z = -1
-
-        return (z)
-
+2019年  7月 19日 金曜日 09:15:54 JST
+JDF G
+// Created by Project Navigator ver 1.0
+PROJECT tmp2
+DESIGN tmp2
+DEVFAM virtex2
+DEVFAMTIME 0
+DEVICE xc2v1000
+DEVICETIME 0
+DEVPKG fg456
+DEVPKGTIME 0
+DEVSPEED -5
+DEVSPEEDTIME 0
+DEVTOPLEVELMODULETYPE HDL
+TOPLEVELMODULETYPETIME 0
+DEVSYNTHESISTOOL XST (VHDL/Verilog)
+SYNTHESISTOOLTIME 0
+DEVSIMULATOR Modelsim
+SIMULATORTIME 0
+DEVGENERATEDSIMULATIONMODEL VHDL
+GENERATEDSIMULATIONMODELTIME 0
+SOURCE pfpga_config.vhd
+STIMULUS sim.tbw
+[STRATEGY-LIST]
+Normal=True
