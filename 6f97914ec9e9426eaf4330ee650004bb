@@ -1,129 +1,69 @@
-2019年  7月  7日 日曜日 10:12:06 JST
-#!/bin/sh
-#
-# An example hook script to blocks unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
-#
-# To enable this hook, rename this file to "update".
-#
-# Config
-# ------
-# hooks.allowunannotated
-#   This boolean sets whether unannotated tags will be allowed into the
-#   repository.  By default they won't be.
-# hooks.allowdeletetag
-#   This boolean sets whether deleting tags will be allowed in the
-#   repository.  By default they won't be.
-# hooks.allowmodifytag
-#   This boolean sets whether a tag may be modified after creation. By default
-#   it won't be.
-# hooks.allowdeletebranch
-#   This boolean sets whether deleting branches will be allowed in the
-#   repository.  By default they won't be.
-# hooks.denycreatebranch
-#   This boolean sets whether remotely creating branches will be denied
-#   in the repository.  By default this is allowed.
-#
+2019年  7月 19日 金曜日 10:28:24 JST
+-- Copyright (c) by PGR project
+-- All rights reserved.
+-- Auther Tsuyoshi Hamada
+-- for JDIM=4 (JDATA_WIDTH =< 128)
+-- but DEPTH=16384
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-# --- Command line
-refname="$1"
-oldrev="$2"
-newrev="$3"
+entity jmem is
+  port (
+    rst        : in  std_logic; -- not used
+    we         : in  std_logic;
+    wclk       : in  std_logic;
+    wadr       : in  std_logic_vector(15 downto 0);
+    rclk       : in  std_logic;
+    radr       : in  std_logic_vector(15 downto 0);
+    idata      : in  std_logic_vector(63 downto 0);
+    odata      : out  std_logic_vector(127 downto 0)  -- for G5
+--  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
+--  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+  );
+end jmem;
 
-# --- Safety check
-if [ -z "$GIT_DIR" ]; then
-	echo "Don't run this script from the command line." >&2
-	echo " (if you want, you could supply GIT_DIR then run" >&2
-	echo "  $0 <ref> <oldrev> <newrev>)" >&2
-	exit 1
-fi
+architecture rtl of jmem is
 
-if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
-	exit 1
-fi
+component dpram
+	port (
+	wadr: IN std_logic_VECTOR(13 downto 0);
+	radr: IN std_logic_VECTOR(13 downto 0);
+	wclk: IN std_logic;
+	rclk: IN std_logic;
+	din: IN std_logic_VECTOR(63 downto 0);
+	dout: OUT std_logic_VECTOR(63 downto 0);
+	we: IN std_logic);
+end component;
 
-# --- Config
-allowunannotated=$(git config --bool hooks.allowunannotated)
-allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --bool hooks.denycreatebranch)
-allowdeletetag=$(git config --bool hooks.allowdeletetag)
-allowmodifytag=$(git config --bool hooks.allowmodifytag)
+signal we0,we1,we2,we3 : std_logic;
+signal adr0,adr1,nadr0,nadr1 : std_logic;
 
-# check for no description
-projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-case "$projectdesc" in
-"Unnamed repository"* | "")
-	echo "*** Project description file hasn't been set" >&2
-	exit 1
-	;;
-esac
+begin
 
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
-zero="0000000000000000000000000000000000000000"
-if [ "$newrev" = "$zero" ]; then
-	newrev_type=delete
-else
-	newrev_type=$(git cat-file -t $newrev)
-fi
+adr0  <= wadr(0);
+nadr0 <= NOT wadr(0);
 
-case "$refname","$newrev_type" in
-	refs/tags/*,commit)
-		# un-annotated tag
-		short_refname=${refname##refs/tags/}
-		if [ "$allowunannotated" != "true" ]; then
-			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,delete)
-		# delete tag
-		if [ "$allowdeletetag" != "true" ]; then
-			echo "*** Deleting a tag is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,tag)
-		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
-		then
-			echo "*** Tag '$refname' already exists." >&2
-			echo "*** Modifying a tag is not allowed in this repository." >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,commit)
-		# branch
-		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
-			echo "*** Creating a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,delete)
-		# delete branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/remotes/*,commit)
-		# tracking branch
-		;;
-	refs/remotes/*,delete)
-		# delete tracking branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	*)
-		# Anything else (is there anything else?)
-		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
-		exit 1
-		;;
-esac
+we0  <= we and nadr0;  -- we & wadr(0)="0"
+we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-# --- Finished
-exit 0
+u0 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata,
+      dout=> odata(63 downto 0),
+      we  => we0);
+
+u1 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata, 
+      dout=> odata(127 downto 64),
+      we  => we1);
+
+end rtl;
