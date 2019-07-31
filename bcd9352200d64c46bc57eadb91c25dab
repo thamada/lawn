@@ -1,68 +1,51 @@
-2019年  7月 14日 日曜日 10:46:20 JST
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
+2019年  7月 31日 水曜日 10:13:05 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
 
-entity calc is
-  port (
-    start      : in  std_logic;
-    clk        : in  std_logic;
-    pclk       : in  std_logic;
-    n          : in  std_logic_vector(31 downto 0);
-    run        : out  std_logic;
-    mem_adr    : out  std_logic_vector(31 downto 0));
-end calc;
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
 
-architecture rtl of calc is
+# If you want to allow non-ascii filenames set this variable to true.
+allownonascii=$(git config hooks.allownonascii)
 
-signal rst :  std_logic;
-signal rstn : std_logic_vector(31 downto 0);
-signal start_r : std_logic;
-signal mema_dc : std_logic_vector(17 downto 0) := (others=>'0');
-begin
+# Redirect output to stderr.
+exec 1>&2
 
--- GENERATE rst PULS ------------------
-process(pclk) begin
-  if(pclk'event and pclk='1') then
-    rst <= rstn(0);
-  end if;
-end process;
+# Cross platform projects tend to avoid non-ascii filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	test $(git diff --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+	echo "Error: Attempt to add a non-ascii file name."
+	echo
+	echo "This can cause problems if you want to work"
+	echo "with people on other platforms."
+	echo
+	echo "To be portable it is advisable to rename the file ..."
+	echo
+	echo "If you know what you are doing you can disable this"
+	echo "check using:"
+	echo
+	echo "  git config hooks.allownonascii true"
+	echo
+	exit 1
+fi
 
-process (clk) begin
-  if(clk'event and clk='1') then
-    rstn(0) <= start_r AND (NOT start);
-    start_r <= start;
-  end if;
-end process;
----------------------------------------
-
--- GENERATE run --------------------------
-process(pclk,rst) begin
-  if(rst = '1') then
-    run <= '0';
-  elsif(pclk'event and pclk='1') then
-    if(mema_dc /= "000000000000000000") then
-      run <= '1';
-    else
-      run <= '0';
-    end if;
-  end if;
-end process;
-
--- GENERATE mem_adr  ---------------------
-process(pclk,rst) begin
-  if(rst = '1') then
-    mema_dc <=  n(17 downto 0) ;
-  elsif(pclk'event and pclk='1') then
-    if(mema_dc /= "000000000000000000") then
-      mema_dc <= mema_dc - "000000000000000001";
-    end if;
-  end if;
-end process;
---hoge
-  mem_adr <= "000000000000000" & mema_dc(15 downto 0) & "0";  -- G5
---mem_adr <= "00000000000000" & mema_dc(15 downto 0) & "00";  -- SPH FirstStage
---mem_adr <= "0000000000000" & mema_dc(15 downto 0) & "000";  -- SPH SecondStage
-
-end rtl;
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
