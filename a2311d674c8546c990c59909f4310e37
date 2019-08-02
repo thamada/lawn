@@ -1,102 +1,141 @@
-2019年  8月  2日 金曜日 11:55:24 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 03:06:20 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
+2019年  8月  2日 金曜日 12:03:31 JST
+[net]
+# Testing
+batch=1
+subdivisions=1
+#-- # Training
+#-- batch=64
+#-- subdivisions=8
 
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-if (__name__ == '__main__'):
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
+learning_rate=0.001
+max_batches = 40200
+#max_batches = 50
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
-    i_fp = 0.0
-    i_delta = 1
-    i_scale = 60.0
-    speed_state = 0
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
+[maxpool]
+size=2
+stride=2
 
-        #print (fname, i, ni, i/ni)
-        image = cv2.imread(fname)
-        cv2.imshow("play.py", image)
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-        key = cv2.waitKey(1) & 0xFF
-        if key != 255:  print (key, "%d/%d"% (i, ni))
+[maxpool]
+size=2
+stride=2
 
-        if key  == 114:           i_fp = 0.  # r
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-        if key  == ord('q'): break
-        if key  == 97:            i_fp -= 1.  # d
-        if key  == 100:           i_fp += 1.  # a
-        if key  == 81:            i_fp -= 5.  # <-
-        if key  == 83:            i_fp += 5.  # ->
-        if key  == 86:            i_fp += 30. # Up
-        if key  == 85:            i_fp -= 30. # Down
-        if key  == 82:            i_fp += 300. # PgDn
-        if key  == 84:            i_fp -= 300. # PgUp
+[maxpool]
+size=2
+stride=2
 
-        if key  == ord(' '): 
-            if 0 != speed_state: 
-                i_delta = 0
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 1
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
 
+[maxpool]
+size=2
+stride=2
 
-        if key  == 226: # R_SHIFT
-            if 0 == speed_state:
-                i_delta = int(i_scale/10.)
-                speed_state = 1
-            elif 1 == speed_state:
-                i_delta = int(i_scale)
-                speed_state = 2
-            elif 2 == speed_state:
-                i_delta = int(i_scale*10.)
-                speed_state = 3
-            elif 3 == speed_state:
-                i_delta = int(i_scale*100.)
-                speed_state = 4
-            elif 4 == speed_state:
-                i_delta = 1
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 0
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
 
-        if key  == ord('+'): 
-            i_delta *= 2
-            print ("i_delta:", i_delta)
+[maxpool]
+size=2
+stride=2
 
-        if key  == ord('-'): 
-            i_delta = int(i_delta / 2)
-            if i_delta < 1: i_delta = 1 
-            print ("i_delta:", i_delta)
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
 
-        #----------------------------------
-        i_fp += i_delta/i_scale
-        if i_fp < 0.0 :  i_fp = 0.0
-        if i_fp >= float(ni): i_fp = float(ni) -1.0
-        i = int(i_fp)
+[maxpool]
+size=2
+stride=1
 
-    cv2.destroyAllWindows()
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=75
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=10
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
