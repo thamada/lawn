@@ -1,418 +1,102 @@
-2019年  7月 31日 水曜日 10:35:53 JST
-// Time-stamp: "2007-01-24 20:26:48 hamada"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <asm/page.h>
-#include <errno.h>
-#include <memory.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <time.h>
-
-void pg4_close_and_exit(int devid);
-
-#include "pg4.h"
-
-/* Function macros not implemented in C language */
-#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
-#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
-
-//#define NMAX (0x1<<10) // 4KB
-#define NMAX (0x1<<14)   // 64KB
-
-unsigned int buf[NMAX], buf2[NMAX];
-int devid;
-unsigned int* ptr;
-unsigned int* bar0;
-unsigned int* bar1;
-unsigned int* dmaw_buf;
-unsigned int* dmar_buf;
-
-double Rpeak, Wpeak;
-
-double e_time(void)
-{
-  static struct timeval now;
-  static struct timezone tz;
-
-  gettimeofday(&now, &tz);
-  return (double)(now.tv_sec  + now.tv_usec/1000000.0);
-}
-
-void PIO(void)
-{
-  int i, n, j, count, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO write
-  count = 0x1000;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-
-    //    for(i = 0; i < n; i++)  pg4_writebase1(devid, i, buf[i]);
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-
-  }
-  lap = e_time() - dum;
-  printf("PIO Write %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  Wpeak = MAX(Wpeak, (double)size*count/lap/1.0e6);
-
-
-  // PIO read
-  count = 0x100;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    for(i = 0; i < n; i++) {
-      buf[i] = pg4_readbase1(devid, i);
-    }
-  }
-  lap = e_time() - dum;
-  printf("PIO Read %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-}
-
-
-void DMA(void)
-{
-  int i, n, j, count, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // write speed
-  count = 0x800;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAput(devid, size);
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Write %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-
-  // read speed
-  count = 0x3000;
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAget(devid, size);
-    if (ret < 0) {
-      printf("count %i\n", j);
-      pg4_DMAcheck(devid);
-    }
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Read %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-  Rpeak = MAX(Rpeak, (double)size*count/lap/1.0e6);
-
-}
-
-void PIO_W_speed(int count)
-{
-  int i, n, j, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO write
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    //    for(i = 0; i < n; i++)  pg4_writebase1(devid, i, buf[i]);
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-  }
-  lap = e_time() - dum;
-  printf("PIO Write %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  Wpeak = MAX(Wpeak, (double)size*count/lap/1.0e6);
-}
-
-void PIO_R_speed(int count)
-{
-  int i, n, j, size;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // PIO read
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    for(i = 0; i < n; i++) {
-      buf[i] = pg4_readbase1(devid, i);
-    }
-  }
-  lap = e_time() - dum;
-  printf("PIO Read %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-}
-
-void DMA_W_speed(int count)
-{
-  int i, n, j, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    //    buf[i] = rand();
-    buf[i] = i;
-  }
-  size = n*sizeof(int);
-
-  // write speed
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAput(devid, size);
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Write %f MB/sec (%f)\n", size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-}
-
-void DMA_R_speed(int count)
-{
-  int i, n, j, size, ret;
-  double lap, dum;
-
-  n = NMAX;
-  for(i = 0; i < n; i++) {
-    buf[i] = rand();
-  }
-  size = n*sizeof(int);
-
-  // read speed
-  dum = e_time();
-  for(j = 0; j < count; j++) {
-    ret = pg4_DMAget(devid, size);
-    if (ret < 0) {
-      printf("count %i\n", j);
-      pg4_DMAcheck(devid);
-    }
-  }
-  lap = e_time() - dum;
-  printf("BusMaster Read %f MB/sec (%f)\n", (double)size*count/lap/1.0e6, lap);
-  //  pg4_DMAcheck(devid);
-
-  Rpeak = MAX(Rpeak, (double)size*count/lap/1.0e6);
-
-}
-
-
-void DMA_R_check(void)
-{
-  int i, j, n, ret, size, is_err=0;
-  n = NMAX;
-  size = n*sizeof(int);
-
-  // read test
-  for(j = 0; j < 200; j++) {
-    for(i = 0; i < n; i++) {
-      //      buf[i] = rand();
-      buf[i] = i;
-      pg4_writebase1(devid, i, buf[i]);
-    }
-
-    ret = pg4_DMAget(devid, size);
-
-    if (ret < 0) {
-      fprintf(stderr, "DMA failed!!!!!\n");
-    }
-
-
-    is_err = 0;
-    for(i = 0; i < n; i++) {
-      if (dmar_buf[i] != buf[i]) {
-	//	if(is_err <20) printf("DMAR error(%d) buf[%i] %x %x %x\n", 
-	printf("DMAR error(%d) buf[%i] %x %x %x\n", 
-			      is_err, i, buf[i], dmar_buf[i], buf[i] - dmar_buf[i]);
-	is_err++;
-      }
-    }
-
-    if(is_err == 0){
-      //      printf("R");
-    } else {
-      puts("----------- FAILED DMA_R");
-      pg4_close_and_exit(devid);
-    }
-  }
-  printf("R");
-  fflush(NULL);
-}
-
-
-void DMA_W_check(void)
-{
-  int i, j, n, ret, size, is_err=0;
-  n = NMAX;
-
-  size = n*sizeof(int);
-
-  // write test
-  for(j = 0; j < 50; j++) {
-    for(i = 0; i < n; i++) {
-      unsigned int x = rand();
-      //      unsigned int x = 0x222<<16 | i;
-      x = i;
-      dmaw_buf[i] = x;
-      buf[i]      = x;
-      //      pg4_writebase1(devid, i, 0x777);
-    }
-
-    ret = pg4_DMAput(devid, size);
-
-    if (ret < 0) {
-      fprintf(stderr, "DMA failed!!!!!\n");
-    }
-
-    is_err=0;
-    for(i = 0; i < n; i++) {
-      unsigned int x = pg4_readbase1(devid, i);
-      if (buf[i] != x) {
-	if(is_err < 100)	printf("DMAW error %i %x %x %x\n", i, buf[i], x, buf[i]-x);
-	is_err++;
-      }
-    }
-
-    if(is_err == 0){
-      //      printf("W");
-    }else{
-      puts("----------- FAILED");
-      exit(-1);
-    }
-
-  }
-  printf("W");
-  fflush(NULL);
-}
-
-
-void ErrorCheck_PIOW(void)
-{
-  int i, j, k, n, size;
-  int is_err=0;
-  n = NMAX;
-  size = n*sizeof(int);
-
-  for(k = 0; k < 20000; k++) {
-    // write test
-    for(j = 0; j < 100; j++) {
-      for(i = 0; i < n; i++) {
-	buf[i] = rand();
-      }
-
-
-      //      for(i = 0; i < n; i++) {
-      //	pg4_writebase1(devid, i, buf[i]);
-      //      }
-      memcpy(bar1, buf, n*sizeof(unsigned int));
-
-
-      for(i = 0; i < n; i++) {
-	unsigned int x = pg4_readbase1(devid, i);
-	if (buf[i] != x) {
-	  printf("error %i %x %x %x\n", i, buf[i], x, buf[i]-x);
-	  is_err++;
-	}
-      }
-      if(is_err != 0) {printf("is_err %d\n",is_err);exit(-1);}
-    }
-    printf(".");
-    fflush(NULL);
-  }
-
-  printf("\n");
-  fflush(NULL);
-}
-
-
-
-
-int main(int argc,char *argv[])
-{
-  int i;
-  int dma_size;
-  Rpeak = Wpeak = 0.0;
-  srand(time(NULL));
-
-  devid = 0;
-
-  pg4_open(devid);
-
-  bar0 = pg4_get_bar0ptr(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-
-  dmaw_buf = pg4_get_dmawptr(devid);
-  dmar_buf = pg4_get_dmarptr(devid);
-  dma_size = pg4_get_dma_size(devid);
-
-  printf("DMA SIZE=0x%x\n",dma_size);
-  printf("BAR0 (%ld Bytes)    : %lx\n"
-	 ,pg4_getbaseaddr_size(devid,0)
-	 ,pg4_getbaseaddr(devid,0));
-  printf("BAR1 (%ld Bytes)    : %lx\n"
-	 ,pg4_getbaseaddr_size(devid,1)
-	 ,pg4_getbaseaddr(devid,1));
-
-
-  //  DMA_W_speed();
-  //  DMA_R_speed();
-
-  if(0){
-    int i, n;
-    n = (dma_size >> 2);
-    for(i = 0; i < n; i++) buf[i] = i;
-    memcpy(bar1, buf, n*sizeof(unsigned int));
-
-    pg4_DMAput(devid, dma_size);
-
-    for(i = 0; i < (dma_size>>2); i++) {
-      int res  = dmar_buf[i];
-      int diff = i  - res;
-      if(diff != 0)
-	printf("dmar_buf[%i] %i %i\n",i ,res, diff);
-    }
-  }
-
-
-
-  PIO_W_speed(1000);
-  PIO_R_speed(40);
-  
-  DMA_W_speed(40);
-  DMA_R_speed(1000);
-
-  while(0) {
-    DMA_W_check();
-    DMA_R_check();
-  }
-
-
-  ErrorCheck_PIOW();
-  return 0;
-}
-
-
+2019年  8月  3日 土曜日 09:12:38 JST
+100
+-2.746715e-01	4.191831e-01
+-2.931587e-01	2.247797e-01
+2.321991e-01	4.064824e-01
+-1.520429e-01	3.578809e-01
+-8.481506e-02	-3.058323e-01
+1.856104e-01	2.437552e-02
+-3.403643e-01	4.547575e-01
+-3.730157e-01	-4.956605e-01
+-1.173085e-01	-2.492071e-01
+1.552879e-01	3.449078e-02
+1.099664e-01	-2.121421e-01
+4.092620e-01	2.361288e-01
+-3.788992e-01	1.148062e-01
+-2.340848e-01	4.453564e-01
+-7.531051e-02	-2.516460e-01
+1.772955e-01	-4.287967e-01
+-4.426001e-02	-3.237644e-04
+-4.797312e-01	3.861750e-01
+1.545830e-01	5.970007e-02
+4.850480e-01	-1.605443e-01
+-4.632017e-01	-2.009751e-01
+4.881687e-01	-5.634217e-02
+-3.708808e-01	4.150378e-01
+-1.135756e-01	-4.695678e-01
+-3.155564e-01	4.356883e-01
+-1.920876e-02	9.783734e-02
+-6.385236e-02	-3.949834e-01
+2.275205e-01	-3.768423e-01
+1.721155e-01	-4.660092e-01
+4.644338e-01	-4.804784e-01
+-4.553355e-01	-7.876486e-02
+2.642185e-01	4.444889e-01
+5.434882e-02	1.171663e-01
+1.465040e-01	-1.143288e-01
+4.021194e-01	-1.771178e-01
+-7.684997e-02	-4.504972e-02
+7.223762e-02	-4.515364e-01
+-2.392842e-02	-3.878574e-01
+3.425949e-01	-1.136164e-01
+-4.632521e-01	2.447992e-01
+2.661087e-03	-2.676771e-01
+-2.328564e-01	-3.223420e-01
+-4.466751e-01	-1.286633e-01
+-4.479510e-01	-6.189542e-02
+-4.433532e-01	1.711145e-01
+-2.251056e-01	-4.814771e-01
+1.644014e-01	3.307433e-01
+-4.618902e-01	1.489123e-01
+7.775744e-02	3.332788e-01
+3.334003e-01	-1.894713e-01
+-2.498460e-01	-4.304763e-01
+-2.016626e-01	-3.888901e-01
+3.431431e-01	-6.968799e-02
+9.800158e-02	3.226420e-01
+1.605654e-01	-8.747274e-02
+-4.682621e-01	-3.876081e-01
+2.279104e-01	1.228907e-01
+2.623244e-02	-7.350670e-02
+-3.627764e-01	1.817259e-01
+2.810276e-01	4.027677e-01
+-1.422834e-01	3.805313e-01
+4.783312e-01	2.763473e-01
+-3.893109e-01	2.006641e-03
+3.557465e-01	-1.806598e-01
+1.450046e-01	-2.954686e-01
+-2.783369e-01	-3.638557e-01
+-7.520648e-02	5.595485e-02
+2.496197e-02	-2.837536e-02
+2.810538e-01	1.905431e-01
+-3.170416e-01	-1.766273e-01
+4.882654e-01	-3.097528e-01
+-4.631571e-01	-3.453426e-02
+-1.609725e-01	4.549768e-01
+8.088132e-03	2.639415e-01
+-4.847877e-01	3.397484e-01
+4.413317e-01	-1.913503e-01
+-3.675422e-01	2.785392e-01
+3.611714e-01	-2.921098e-01
+-4.166281e-01	8.013365e-02
+2.673365e-01	-1.624028e-01
+3.691146e-01	-6.944182e-02
+4.231276e-01	2.426829e-01
+-2.873224e-01	2.458353e-01
+3.373099e-01	2.320625e-01
+4.419646e-01	2.934974e-02
+2.343567e-01	-1.409978e-01
+-4.534335e-01	4.573376e-01
+3.897785e-01	4.435523e-01
+-9.306764e-02	4.667342e-01
+3.670526e-01	-2.663117e-02
+-4.954102e-01	-4.096787e-01
+-2.756701e-01	-3.467814e-01
+-1.885635e-01	-1.210909e-01
+-9.027580e-02	-7.420788e-03
+4.672701e-01	1.888859e-01
+-2.162385e-01	-3.037337e-01
+-4.418227e-01	3.812396e-01
+3.998173e-01	2.168659e-01
+1.527816e-01	-4.239467e-01
+4.445392e-01	2.424582e-01
