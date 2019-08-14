@@ -1,163 +1,138 @@
-2019Âπ¥  8Êúà  3Êó• ÂúüÊõúÊó• 11:33:32 JST
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
-
--- LOCAL READ ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
--- (Å¶) l_adroÇÃÉrÉbÉgïù(NBIT_L_ADRO)ÇïœÇ¶ÇΩèÍçáÇÕpromÇèƒÇ´Ç»Ç®Ç∑ïKóvÇ™Ç†ÇÈÇ±Ç∆Ç…íçà”.(íºÇ∑ÇÃÇÕè„ÇÃÉÇÉWÉÖÅ[Éã)
--- (Å¶) ÇªÇ‡ÇªÇ‡ÇÃëOíÒÅFLOCAL_READÇÕPFPGA0Ç©ÇÁÇÃPIPE_STSêMçÜ(CBUS0(7))ÇÉgÉâÉìÉUÉNÉVÉáÉìäJénêMçÜÇ∆ÇµÇƒÇ¢Ç‹Ç∑ÅB
-
+2019Âπ¥  8Êúà 14Êó• Ê∞¥ÊõúÊó• 09:45:42 JST
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
-entity LOCAL_READ is
-  generic ( NBIT_L_ADRO : integer := 3);
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
+
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- ÉäÉZÉbÉg
+    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
+    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
+    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
+  );
+end dcm_ps_f;
+
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+component BUFG 
   port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
-
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ;
-
-architecture rtl of LOCAL_READ is
-
-component LOCAL_READ_CNT
-  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
-  port (
-    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
-    CALC_DONE  : in std_logic;                 -- pulse
-    FETCH_DONE : out std_logic;
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
 end component;
-
-component LOCAL_READ_IF
-  port (
-    EXEC : in std_logic;
-    START_AD : in std_logic_vector(18 downto 0);
-    NQWORD   : in std_logic_vector( 8 downto 0);
-    CHIPSEL  : in std_logic_vector( 3 downto 0);
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);
-    BUSY : out std_logic;  -- to GPREG0
-    DMAR_ENABLE : out std_logic_vector(3 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_ADB     : out std_logic_vector(12 downto 0);
-    MEM_WEHB    : out std_logic;
-    MEM_WELB    : out std_logic;
-    MEM_DTIB    : out std_logic_vector(63 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
 end component;
+--
+-- Attributes
 
-signal calc_done : std_logic :='0';   -- to cnt
-signal csts0,csts1 : std_logic :='0'; -- from pfpga
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
 
--- CNT
-signal fetch_done : std_logic :='0';
-signal exec : std_logic;                          -- cnt -> if
-signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
-signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
-signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
-signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
--- IF
-signal ignore_busy : std_logic; 
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
+signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
 
 begin
 
-  -- CALC STATUS
-  csts0 <= CALC_STS;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      csts1 <= csts0;
-    end if;
-  end process;
-
-  -- CALC DONE
-  process (RST,CLK,csts0,csts1) begin
-    if(RST='1') then
-      calc_done <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        calc_done <= '1';
-      else
-        calc_done <= '0';
-      end if;
-    end if;
-  end process;
-
-  -- BUSY
-  process (RST,CLK,csts0,csts1,fetch_done) begin
-    if (RST='1') then
-      BUSY <='1';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        BUSY <= '1';
-      elsif(fetch_done='1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
-
-  -- =================================================== SUBMODULE INSTANCES
-  u0: LOCAL_READ_CNT 
-    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
-    port map(NPIPE => NPIPE,
-             CALC_DONE => calc_done,
-             FETCH_DONE => fetch_done,
-             EXEC       => exec,
-             START_AD   => start_ad,
-             NQWORD     => nqword,
-             CHIPSEL    => chipsel,
-             MEM_AD_BASE => mem_base,
-             RST => RST, CLK=>CLK);
+-- *********************************************************************
+-- å≈íËêMçÜ
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0å≈íËêMçÜ
 
 
-  u1: LOCAL_READ_IF
-    port map(EXEC        => exec,     -- from cnt
-             START_AD    => start_ad, -- from cnt
-             NQWORD      => nqword,   -- from cnt
-             CHIPSEL     => chipsel,  -- from cnt
-             MEM_AD_BASE => mem_base, -- from cnt
-             BUSY => ignore_busy,
-             DMAR_ENABLE => DMAR_ENABLE, -- output directly
-             DBUS_Port   => DBUS_Port,   -- output directly
-             DBUS_idata  => DBUS_idata,  -- output directly
-             DBUS_HiZ    => DBUS_HiZ,    -- output directly
-             MEM_ADB  => MEM_ADB,        -- output directly
-             MEM_WEHB => MEM_WEHB,       -- output directly
-             MEM_WELB => MEM_WELB,       -- output directly
-             MEM_DTIB => MEM_DTIB,       -- output directly
-             RST=>RST,CLK=>CLK);
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ÉäÉZÉbÉg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
+    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
 
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
+    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
+  );
 
 end rtl;
