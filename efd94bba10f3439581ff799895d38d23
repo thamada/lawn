@@ -1,172 +1,158 @@
-2019å¹´  8æœˆ  4æ—¥ æ—¥æ›œæ—¥ 10:59:46 JST
--- LOCAL READ CONTROLLER ( ifpga <- pfpga )
--- (LOCAL_READ_IF‚ÉŠJŽnM†‚ð‘Sƒ`ƒbƒv‰ñ”•ª‘—‚éƒ‚ƒWƒ…[ƒ‹)
--- by Tsuyoshi Hamada 2005/01/04
--- ƒƒ‚ : 
---   NQWORD‚Æ‚Á‚Ä‚­‚é‚Ì‚É•K—v‚ÈLOCAL_READ_IF‚ÌƒNƒƒbƒN(BUSY) : NQWORD + 8(ƒŒƒCƒeƒ“ƒV:INTF_LAT) ƒNƒƒbƒN
--- 
--- (0) IF‚É START_AD, NQWORD ‚ðƒZƒbƒg     : 1ƒNƒƒbƒN
--- (1) IF‚É CHIPSEL, MEM_AD_BASE ‚ðƒZƒbƒg : 1ƒNƒƒbƒN
--- (2) IF‚Ì EXEC ‚ðã‚°‚é                 : 1ƒNƒƒbƒN
--- (3) IF‚É EXEC ‚ð‰º‚°‚é                 : 1ƒNƒƒbƒN
--- (4) IF‚ª“]‘—‚ðI—¹‚·‚é‚Ü‚Å‘Ò‚Â         : I_NC ƒNƒƒbƒN(I_NC= NPIPE*pow(2,NBIT_L_ADRO)
--- (5) (1)‚©‚ç(4)‚Ü‚Å‚ð4ƒ`ƒbƒv•ªŒJ‚è•Ô‚·.
---
--- (¦) LOCAL_READ_IF‚Ì“]‘—‚É•K—v‚ÈƒNƒƒbƒN‚ÍŒˆ‚Ü‚Á‚Ä‚¢‚é‚Ì‚Å“]‘—I—¹ƒtƒ‰ƒO‚ÍŒ©‚È‚¢.
--- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
+2019å¹´  8æœˆ 20æ—¥ ç«æ›œæ—¥ 10:49:35 JST
+#define ERROR_CHECK
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+#include <iostream>
+using namespace std;
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-entity LOCAL_READ_CNT is
-  generic (
-           CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8        -- LOCAL_READ_IF latency (clock)
-  );
-  port (
-    -- from LOCAL_READ
-    NPIPE : in std_logic_vector(7 downto 0);     -- number of pipelines per chip
-    -- from LOCAL_READ_DONE
-    CALC_DONE  : in std_logic;   -- pulse
-    -- to LOCAL_READ_DONE
-    FETCH_DONE : out std_logic;  -- pulse
+#define NMAX (1<<17) // 131072
 
-    -- to LOCAL_READ_IF
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    -- from LOCAL_READ_IF
---    BUSY_IF : in std_logic;
- 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ_CNT;
+extern "C" void force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj);
 
-architecture rtl of LOCAL_READ_CNT is
+#include <time.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+double get_time(void)
+{
+  struct rusage r;
+  double sec, usec, z;
+  getrusage(RUSAGE_SELF, &r);
+  sec   = r.ru_utime.tv_sec;
+  usec  = r.ru_utime.tv_usec;
+  z = sec + usec*1.0e-6;
+  return (z);
+}
 
-signal hit0,hit1 : std_logic :='0';
-signal cnt,cntr : std_logic_vector(CNT_WIDTH-1 downto 0) :=(others=>'0');
-signal cnt_en : std_logic :='0';
-signal is_finish,is_finishr : std_logic :='0';
+static double r[NMAX][3];
+static double m[NMAX];
+static double eps2 = 0.0001;
+static double a[NMAX][3];
+static double v[NMAX][3];
+static double a_h[NMAX][3];
 
-----
-signal c_start_ad   : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_nqword     : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_chipsel    : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_mem_offset : std_logic_vector(18 downto 0) :=(others=>'0');
-begin
+void readfile(char* fname, int* nbody, double* m, double r[][3], double v[][3])
+{
+  ifstream f;
+  f.open(fname, ios::in);
+  if(!f) {
+    cerr << "Can't open file: " <<  fname << endl;
+    exit(-1);
+  }
+  char* buf= new char [2048];
+  f.getline(buf, 511); // *ignore*
+  int n;
+  f >> n;
+  (*nbody) = n;
+  f.getline(buf, 511); // *ignore*
 
-  FETCH_DONE <= is_finish; -- transfer done pulse
+  f.scientific;
+  for(int i=0; i<n; i++){
+    f.getline(buf, 1024);
+    char ii[256];
+    double mj, x, y, z, vx, vy, vz;
+    f >> ii >> mj >> x >> y >> z >> vx >> vy >> vz;
+    //    printf("%s   %.16E   % .16E % .16E % .16E   % .16E % .16E % .16E \n", ii, m, x, y, z, vx, vy, vz);
+    m[i]    = mj;
+    r[i][0] = x;
+    r[i][1] = y;
+    r[i][2] = z;
+    v[i][0] = vx;
+    v[i][1] = vy;
+    v[i][2] = vz;
+  }
+  f.close();
 
-  hit0 <= CALC_DONE;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      is_finishr <= is_finish;
-      hit1 <= hit0;
-    end if;
-  end process;
+  delete[] buf;
+}
 
-  -- PROGRAM COUNTER
-  cntr <= cnt + conv_std_logic_vector(1, CNT_WIDTH);
-  process (RST,CLK,hit0,hit1,cnt_en) begin
-    if (RST = '1') then
-      cnt <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        cnt <= (others=>'0');
-      elsif(cnt_en = '1') then
-        cnt <= cntr;
-      end if;
-    end if;
-  end process;
+void force_host(double xj[][3],
+								double m[],
+								double xi[][3],
+								double eps2,
+								double a[][3],
+								int ni,
+								int nj)
+{
+  int i,j,d;
+  double dx[3];
+  for(i=0;i<ni;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
 
-  -- COUNTER ENABLE (counting up signal)
-  process (RST,CLK,hit0,hit1,is_finish,is_finishr) begin
-    if (RST = '1') then
-      cnt_en <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        cnt_en <= '1';
-      elsif((is_finish = '1') AND (is_finishr = '0')) then
-        cnt_en <= '0';
-      end if;
-    end if;
-  end process;
+  for(i=0;i<ni;i++){
+    for(j=0;j<nj;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+				dx[d] = xj[j][d] - xi[i][d];
+				r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+				a[i][d] +=  m[j]*dx[d]/r3;
+      }
+    }
+  }
+}
 
-  ------------------------------------------------------------- PROGRAM
-  process (RST,CLK,cnt)
-      variable I_NPIPE : integer;
-      variable I_NFI   : integer;
-      variable I_NC    : integer;
-      variable I_MAB   : integer;
-      variable I_NQW   : integer;
-  begin
-    if (RST='1') then
-      is_finish <= '0';
-    elsif (CLK'event and CLK='1') then
+int main(int argc,char** argv)
+{
+  int n=0;
+  int nstep = 1;
 
-      --= = = = = = = = = = = = = = = = = = = = INTEGER VARLUES
-      I_NPIPE := conv_integer(NPIPE);
-      I_NFI   := (2**NBIT_L_ADRO);
---      I_NFI   := (2**2);  -- ƒgƒbƒv‚©‚ç‚ÌƒWƒFƒlƒŠƒbƒN‚Ì“`”d‚ª‚¤‚Ü‚­‚¢‚«‚Ü‚¹‚ñ‚Ì‚Å’ˆÓ
-      I_NC    := I_NPIPE*I_NFI + INTF_LAT;
-      I_MAB   := I_NPIPE*I_NFI;
-      I_NQW   := I_NPIPE*I_NFI - 1;
-      --= = = = = = = = = = = = = = = = = = = = = = = = = = = =
+  if((argc == 2)||(argc == 3)){
+    char ifile[256];
+    strcpy(ifile,argv[1]);
+    readfile(ifile, &n, m, r, v);
+    if(argc == 3)  nstep = atoi(argv[2]);
+  }else{
+    fprintf(stderr, "argc = %d\n",argc);
+    fprintf(stderr, "cmd <init file> <nstep>\n");
+    exit(-1);
+  }
 
-      if(    cnt = conv_std_logic_vector(0, CNT_WIDTH) ) then
-        is_finish <= '0';
-        NQWORD   <= conv_std_logic_vector(I_NQW, 9);
-        START_AD <= conv_std_logic_vector(FO_BASE, 19);
-      -- ================================================================================ CHIP 0
-      elsif( cnt = conv_std_logic_vector(1, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(0, 13);
-        CHIPSEL  <= "0001";
-      elsif( cnt = conv_std_logic_vector(2, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(3, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 1
-      elsif( cnt = conv_std_logic_vector(3 + 1*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(1*I_MAB  , 13);
-        CHIPSEL  <= "0010";
-      elsif( cnt = conv_std_logic_vector(4 + 1*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(5 + 1*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 2
-      elsif( cnt = conv_std_logic_vector(5 + 2*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(2*I_MAB, 13);
-        CHIPSEL  <= "0100";
-      elsif( cnt = conv_std_logic_vector(6 + 2*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(7 + 2*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 3
-      elsif( cnt = conv_std_logic_vector(7 + 3*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(3*I_MAB, 13);
-        CHIPSEL  <= "1000";
-      elsif( cnt = conv_std_logic_vector(8 + 3*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(9 + 3*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ FINISH
-      elsif( cnt = conv_std_logic_vector(9 + 4*I_NC, CNT_WIDTH) ) then
-        is_finish <= '1';
-      elsif( cnt = conv_std_logic_vector(10 + 4*I_NC, CNT_WIDTH) ) then
-        is_finish <= '0';
-      else
-      end if;
+  int ni=n;
+  int nj=n;
 
-    end if;
-  end process;
+  force(r, m, r, eps2, a, ni, nj);
 
-end rtl;
+  double eps2 = (1./256.);
+  double tt = get_time();
+  for(int step = 0; step < nstep; step++) force(r, m, r, eps2, a, ni, nj);
+  tt = get_time() - tt;
 
+  double nfloat = 38.0 * ((double)ni)*((double)nj) * ((double)nstep);
+  double gflops = nfloat * (1.e-9) / tt;
+  //  fprintf(stdout, "n=%d\t%g sec/gpucall\t%g Gflops\n", n, tt/(double)nstep, gflops );
+  fprintf(stdout, "n=%d\n", n);
+  fprintf(stdout, "%g sec/gpucall\n", tt/(double)nstep);
+  fprintf(stdout, "%g Gflops\n",  gflops );
+
+
+  if(0){
+    cout << "Start Error check: " << n <<endl;
+    force_host(r, m, r, eps2, a_h, ni, nj);
+    double err_max = 0.0;
+    for(int i=0;i<ni;i++){
+      double err=0.0;
+      for(int d=0;d<3;d++){
+				double diff = fabs(a[i][d] - a_h[i][d]);
+				err += (diff*diff);
+      }
+      err = sqrt(err);
+      err = err/sqrt(a_h[i][0]*a_h[i][0]+a_h[i][1]*a_h[i][1]+a_h[i][2]*a_h[i][2]);
+      if (err > err_max){
+				err_max = err;
+				printf("[%d]:\t", i);
+				printf("%.7e:\t", err);
+				printf("%e,%e,%e:\t%e,%e,%e\n",a_h[i][0], a_h[i][1], a_h[i][2],a[i][0], a[i][1], a[i][2]);
+      }
+    }
+    printf("Max Err %.7e\n", err_max);
+  }
+
+  return (0);
+}
