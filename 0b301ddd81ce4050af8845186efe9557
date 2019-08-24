@@ -1,117 +1,104 @@
-2019年  8月 17日 土曜日 10:40:22 JST
+2019年  8月 24日 土曜日 11:15:48 JST
 #!/usr/bin/env python3
-#Time-stamp: <2017-07-16 23:48:16 hamada>
+#Time-stamp: <2017-06-01 03:19:59 hamada>
+import argparse
 import numpy as np
 import cv2
 from datetime import datetime
 import mkdir
 
-class Queue:
-    def __init__(self, queue = None):
-        self.index = 0
-        self.index_max = 50
-        self.image0 = np.zeros((120, 160, 3), np.uint8)
-        if type(queue) is type([]):
-            self.queue = queue
-        elif queue is None:
-            self.queue = []
-        else:
-            print ('Error Message:')
-            print ('    Your input is not type of list!')
-            print ('    Please enter list type!')
+def get_ndev():
+    ndev = 0
+    devid = []
+    for i in range(0, 10):
+        c = cv2.VideoCapture(i)
+        if c.isOpened():
+            ndev = ndev + 1
+            devid.append(i)
+        c.release()
 
-    def enqueue(self, e):
-        if self.index < self.index_max :
-            self.queue.append(e)
-            self.index += 1
-            print ("queue index: ", self.index)
-        else:
-            self.dequeue()
-            self.queue.append(e)
+    print ("devid = ", devid)
+    return ndev
 
-        return self.queue
-
-    def dequeue(self):
-        try:
-            qEl = self.queue[0]
-            del self.queue[0]
-            return (qEl, self.queue)
-        except IndexError:
-            print ('Error Message:')
-            print ('    There is no element in the queue!')
-
-    def look_first(self):
-        ret = self.image0
-        if self.index > 1:
-            ret = self.queue[0]
-        return (ret)
-            
-
-class WebCam(object):
-    def __init__(self):
-        self.devid = 2
-        self.tnow  = ''
-        self.fifo = Queue()
-        self.window_title = 'camera: %d' % (self.devid)
-        self.cap = cv2.VideoCapture(self.devid) 
-        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
-        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
-
-        self.display(True)
-
-    def put_text(self, image, text):
-        font_size = 1.0
-        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
-        # font_type = cv2.FONT_HERSHEY_PLAIN
-        # font_type = cv2.FONT_HERSHEY_DUPLEX
-        font_type = cv2.FONT_HERSHEY_TRIPLEX
-        font_color = (0x0, 0x77, 0x0)
-        px = int(image.shape[1]*0.15 )
-        py = int(image.shape[0]*0.9 )
-
-        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+def isOpened(cap):
+    ret = True
+    for c in cap:
+        ret = ret and c.isOpened()
+    return ret
 
 
-    def display(self, is_clear=False):
-        wx = 320
-        wy = 240
-        step = 5
-        if is_clear :
-            for i in range (0, self.fifo.index_max, step):
-                image = self.fifo.image0
-                wname = self.window_title + ": %d" %(i)
-                cv2.resizeWindow(wname, wx, wy)
-                cv2.moveWindow(wname, int(i*wx/step), 0)
-                cv2.imshow(wname, image)
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xff, 0xaf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
 
-        for i in range (0, self.fifo.index, step):
-            image = self.fifo.queue[i].copy()
-            wname = self.window_title + ": %d" %(i)
-            image2 = cv2.resize(image, (wx, wy))
-            cv2.imshow(wname, image2)
+if (__name__ == '__main__'):
+    ndev = get_ndev()
+    log_base = '../log/'
+    cap = []
+    for i in range(ndev):
+        cap.append(cv2.VideoCapture(i))
 
-    def save_photo(self):
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-            if(tnow != self.tnow):
-                self.put_text(frame, tnow)
-                basedir = './log.%d/'% (self.devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, frame)
-                print(ofname, "devid = %d" % self.devid)
-                self.tnow = tnow
-                print("%s: Take photo" % self.tnow )
-                self.fifo.enqueue(frame)
-                self.display()
+    # -- swap cap --
+    if False:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
 
-    def clear_cache(self):
-        self.display()
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
 
-        # self.cap.release()
-        # cv2.destroyAllWindows()
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
+
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+
+    while(isOpened(cap)):
+        frame = [0] * ndev
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
+
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+
+        nwx = 3
+        nwy = int(1.0+(ndev-1)/3.0)
+
+        image = np.zeros((frame_height * nwy, frame_width*nwx, 3), dtype=np.uint8)
+        # image = np.zeros((frame_height, frame_width*ndev, 3), dtype=np.uint8)
+
+        # --- ROI ---
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * (i%nwx)
+            sy = frame_height * int(i/nwx)
+            ex = frame_width * (i%nwx+1)
+            ey = frame_height * int(1+i/nwx)
+            image[sy:ey,sx:ex] = fm
+
+        cv2.imshow(__file__, image)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
+
+    cv2.destroyAllWindows()
+
+    print("Done.")
