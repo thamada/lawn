@@ -1,20 +1,5 @@
-2019年  9月  1日 日曜日 09:59:40 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-
-if($ARGV[0]){
-    $is_stop = 1;
-}
-
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
-
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
-}
-
-1;
+2019年  9月  2日 月曜日 11:14:22 JST
+-- ProjNav VHDL simulation template: sim_writecomb_check.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
