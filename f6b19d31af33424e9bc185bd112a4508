@@ -1,19 +1,139 @@
-2019年  8月 20日 火曜日 11:02:25 JST
-#!Time-stamp: <2007-01-22 04:30:32 hamada>
+2019年  9月  5日 木曜日 09:10:08 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=8
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-Linux device driver for the PROGRAPE-4 board,
+learning_rate=0.001
+max_batches = 40200
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-including runtime libraries and HDL source for interface FPGA.
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-- Linux kernel release 2.6.x
+[maxpool]
+size=2
+stride=2
 
-- Xilinx XC3S5000-5-FG900 FPGAs
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-- Xilinx ISE 8.1i
--- Release 8.1.03i xst I.27
--- Release 8.1.03i par I.27
--- Release 8.1.03i Trace I.27
--- Release 8.1.03i Bitgen I.27
+[maxpool]
+size=2
+stride=2
 
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=35
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=2
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
