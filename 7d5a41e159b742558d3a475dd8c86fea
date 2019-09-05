@@ -1,5 +1,46 @@
-2019年  9月  3日 火曜日 11:40:28 JST
--- ProjNav VHDL simulation template: sim_local_write.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2019年  9月  5日 木曜日 09:17:29 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
+
+VM_NAME="ubuntu16"
+
+all: check
+
+c: check
+
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
