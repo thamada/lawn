@@ -1,141 +1,28 @@
-2019年  8月 24日 土曜日 11:21:12 JST
-[net]
-# Testing
-batch=1
-subdivisions=1
-#-- # Training
-#-- batch=64
-#-- subdivisions=8
+2019年  9月 11日 水曜日 09:50:09 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+entity dmar_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmar_mem_adr;
 
-learning_rate=0.001
-max_batches = 40200
-#max_batches = 50
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
-
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-filters=75
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=10
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+architecture rtl of dmar_mem_adr is
+component dmaw_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
+begin
+  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
+end rtl;
