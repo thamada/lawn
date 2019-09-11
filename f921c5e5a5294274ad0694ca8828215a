@@ -1,90 +1,71 @@
-2019年  9月 11日 水曜日 09:35:43 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 00:18:35 hamada>
-import Message
-import numpy as np
-import cv2
-from datetime import datetime
+2019年  9月 11日 水曜日 11:01:59 JST
+-- 2004/05/13 16:30
+-- for matsubayashi simulation
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
 
+#define DELAY_SUB 2     /* A */
+#define DELAY_FL  4     /* B */
+#define DELAY_X2Y2 5    /* C */
+#define DELAY_R2   5    /* D */
+#define DELAY_R3   1    /* E */
+#define DELAY_MR3  1    /* F */
+#define DELAY_F    1    /* G */
+#define DELAY_OF   1    /* H */
+#define DELAY_LF   2    /* I */
+#define DELAY_AC   3    /* J */
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
-
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
-
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+#define DELAY_EPS  6    /* A+B */
+#define DELAY_DX   12   /* C+D+E+F */
+#define DELAY_M    17   /* A+B+C+D+E */
+#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
+#define DELAY_TOT  25   /* (DELAY_CLE) + J */
 
 
-def get_bar_length(msg, x):
-    class_id = msg.get_classId()
-    dx = 25
-    z = 0
-    # if class_id == 5: z = x + dx/2; x = int(z)
-    # if class_id == 6: z = x + dx*2; x = int(z)
-    # if class_id == 4: z = x - dx*2; x = int(z)
 
-    if class_id == 0: z = x + dx*2; x = int(z)
-    if class_id in {0,4,5,6,7,8}: 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        print (tnow,': ', msg.class_count)
-    return (x)
 
-if __name__ == '__main__':
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 120)
-    image  = image0.copy()
+#define xsize (100.0)
+#define mmin (1.220703125e-04)
+#define xoffset (xsize/2.0)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
+#define foffset (pow(2.0,23.0))
+#define fscale (-xscale*xscale*foffset/mscale)
+--mmin 0xdf61
 
-    window_title = "AI sensor"
-    x = 0
-    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
+/NPIPE 1
+/NVMP 1
 
-    while(True):
-        x = get_bar_length(msg, x)
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
+/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
+/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
+/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
+/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
+/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
+/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
+/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
+/IPSET ieps2,eps2,log,NLOG,NMAN,escale
+/FOSET sx,a[][0],fix,NACC,fscale
+/FOSET sy,a[][1],fix,NACC,fscale
+/FOSET sz,a[][2],fix,NACC,fscale
+/VALSET fx_ofst,0x9700,0,16
+/VALSET fy_ofst,0x9700,0,16
+/VALSET fz_ofst,0x9700,0,16
+/DATASET fx_ofst,01001011100000000,0,16
+/DATASET fy_ofst,01001011100000000,0,16
+/DATASET fz_ofst,01001011100000000,0,16
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
+void force_gravity_on_emulator(x,m,eps2,a,n)
+	double x[][3];
+	double m[];
+	double eps2;
+	double a[][3];
+	int n;
+{
+  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
+}
