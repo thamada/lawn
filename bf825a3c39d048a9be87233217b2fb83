@@ -1,75 +1,82 @@
-2019年  9月 11日 水曜日 11:34:32 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2019年  9月 18日 水曜日 09:24:54 JST
+-----------------------------------------------
+--  pgpg-b3 dual port RAM module (for IMEM)
+--      32 bits
+--   16384 entries
+--  Copyright(c) 2004- by Tsuyoshi Hamada
+--  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
+--  2004/10/29 : for Jmem by Tsuyoshi Hamada
+-----------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+entity dp32b16384w is
+  port (
+    clka  : in std_logic;
+    wea   : in std_logic;
+    addra : in std_logic_vector(13 downto 0);
+    dina  : in std_logic_vector(31 downto 0);
+    douta : out std_logic_vector(31 downto 0);
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
-}
+    clkb  : in std_logic;
+    web   : in std_logic;
+    addrb : in std_logic_vector(13 downto 0);
+    dinb  : in std_logic_vector(31 downto 0);
+    doutb : out std_logic_vector(31 downto 0));
 
-$bar = 1;
+end dp32b16384w;
 
-my $adr=0, $size;
+architecture rtl of dp32b16384w is
 
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
+component RAMB16_S1_S1
+  generic (
+         INIT_A : bit_vector := X"0";
+         INIT_B : bit_vector := X"0";
+         SRVAL_A : bit_vector := X"0";
+         SRVAL_B : bit_vector := X"0";
+         WRITE_MODE_A : string :="WRITE_FIRST";
+         WRITE_MODE_B : string :="WRITE_FIRST");
+  port ( doa   : out std_logic_vector(0 downto 0);
+         addra : in std_logic_vector(13 downto 0);
+         clka  : in std_logic;
+         dia   : in std_logic_vector(0 downto 0);
+         ena   : in std_logic;
+         ssra  : in std_logic;
+         wea   : in std_logic;
 
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
+         dob   : out std_logic_vector(0 downto 0);
+         addrb : in std_logic_vector(13 downto 0);
+         clkb  : in std_logic;
+         dib   : in std_logic_vector(0 downto 0);
+         enb   : in std_logic;
+         ssrb  : in std_logic;
+         web   : in std_logic);
+end component;
 
-print "BAR1 start at $adr, size $size bytes\n";
+begin
 
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
-
-
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
+  forgen1: for i in 0 to 31 generate
+    uraml: RAMB16_S1_S1 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
+	      PORT MAP(-- FIFO SIDE --
+                       clka=>clka,
+                       addra=>addra,
+                       dia=>dina(i downto i),
+                       doa=>douta(i downto i),
+                       ena=>'1',
+                       ssra=>'0',
+                       wea=>wea,
+                       -- LOCAL SIDE --
+                       clkb=>clkb,
+                       addrb=>addrb,
+                       dib=>dinb(i downto i),
+                       dob=>doutb(i downto i),
+                       enb=>'1',
+                       ssrb=>'0',
+                       web=>web);
+  end generate forgen1;
 
 
-1;
+end rtl;
+
