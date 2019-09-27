@@ -1,210 +1,233 @@
-2019年  9月 26日 木曜日 11:04:29 JST
-#COREGen Project File
-#Tue Nov 09 19:41:17 JST 2004
-overwritefiles=Default
-blkmemsp_v5_0|Xilinx,\ Inc.|5.0=true
-sid_v3_1|Xilinx,\ Inc.|3.1=true
-decode_8b10b_v5_0|Xilinx,\ Inc.|5.0=true
-C_REG_FD_V6_0|Xilinx,\ Inc.|6.0=true
-C_REG_FD_V3_0|Xilinx,\ Inc.|3.0=false
-C_MUX_BIT_V5_0|Xilinx,\ Inc.|5.0=false
-convolution_v2_0|Xilinx,\ Inc.|2.0=false
-pci32_v3_0|Xilinx,\ Inc.|3.0=true
-C_TWOS_COMP_V4_0|Xilinx,\ Inc.|4.0=false
-C_SHIFT_FD_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_PCI32sII|Xilinx,\ Inc.|3.0=false
-gig_eth_pcs_pma_v4_0|Xilinx,\ Inc.|4.0=true
-C_DDS_V4_2|Xilinx,\ Inc.|4.2=true
-ten_gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
-C_ACCUM_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_pci_express_x1|Xilinx,\ Inc.|1.0=true
-C_GATE_BIT_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-xilinxfamily=Virtex2
-C_COUNTER_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
-C_DIST_MEM_V4_1|Xilinx,\ Inc.|4.1=false
-C_COUNTER_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
-C_ADDSUB_V4_0|Xilinx,\ Inc.|4.0=false
-outputoption=DesignFlow
-C_MUX_SLICE_BUFE_V2_0|Xilinx,\ Inc.|2.0=false
-dividervht|Xilinx,\ Inc.|2.0=true
-C_GATE_BIT_V4_0|Xilinx,\ Inc.|4.0=false
-simvendor=ModelSim
-mult_gen_v6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-vfft64v2|Xilinx,\ Inc.|2.0=true
-C_DA_FIR_V7_0|Xilinx,\ Inc.|7.0=false
-C_REG_LD_V6_0|Xilinx,\ Inc.|6.0=true
-mac_v2_0|Xilinx,\ Inc.|2.0=true
-C_REG_LD_V3_0|Xilinx,\ Inc.|3.0=false
-sid_v2_0|Xilinx,\ Inc.|2.0=false
-C_SHIFT_RAM_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_SLICE_BUFT_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFE_V5_0|Xilinx,\ Inc.|5.0=false
-C_SHIFT_RAM_V3_0|Xilinx,\ Inc.|3.0=false
-ADPCM32_catalog|Xilinx,\ Inc.|1.0=true
-C_MUX_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-outputproducts=ImpNetlist;ASYSymbol;VHDLSim
-cam_v4_0|Xilinx,\ Inc.|4.0=true
-C_MAC_FIR_V2_0|Xilinx,\ Inc.|2.0=false
-C_COMPARE_V4_0|Xilinx,\ Inc.|4.0=false
-C_DA_2D_DCT_V2_0|Xilinx,\ Inc.|2.0=true
-C_BIT_CORRELATOR_V3_0|Xilinx,\ Inc.|3.0=true
-cordic_v2_0|Xilinx,\ Inc.|2.0=true
-xlnx_PCI64v|Xilinx,\ Inc.|3.0=false
-fileversion=4
-C_DIST_MEM_V3_0|Xilinx,\ Inc.|3.0=false
-decode_8b10b_v4_0|Xilinx,\ Inc.|4.0=false
-viterbi_v3_0|Xilinx,\ Inc.|3.0=true
-C_MUX_SLICE_BUFT_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_FD_V2_0|Xilinx,\ Inc.|2.0=false
-encode_8b10b_v4_0|Xilinx,\ Inc.|4.0=true
-xapp265|Xilinx,\ Inc.|1.1=true
-C_DECODE_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
-C_SHIFT_FD_V2_0|Xilinx,\ Inc.|2.0=false
-rs_decoder_v4_0|Xilinx,\ Inc.|4.0=false
-C_DECODE_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
-C_GATE_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-blkmemdp_v3_0|Xilinx,\ Inc.|3.0=false
-C_MAC_V3_0|Xilinx,\ Inc.|3.0=true
-posphyl3_link_v1_0|Xilinx,\ Inc.|3.2=true
-sync_fifo_v2_0|Xilinx,\ Inc.|2.0=false
-blkmemsp_v4_0|Xilinx,\ Inc.|4.0=false
-C_DIST_MEM_V6_0|Xilinx,\ Inc.|6.0=true
-C_REG_FD_V5_0|Xilinx,\ Inc.|5.0=false
-C_MUX_BIT_V4_0|Xilinx,\ Inc.|4.0=false
-C_TWOS_COMP_V3_0|Xilinx,\ Inc.|3.0=false
-C_SHIFT_FD_V5_0|Xilinx,\ Inc.|5.0=false
-posphyl4_v6_0_1|Xilinx,\ Inc.|6.0.1=true
-formalverification=None
-C_ACCUM_V4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BIT_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-vfft1024|Xilinx,\ Inc.|1.0=true
-C_COUNTER_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
-C_ADDSUB_V3_0|Xilinx,\ Inc.|3.0=false
-vfft1024v2|Xilinx,\ Inc.|2.0=true
-C_MUX_SLICE_BUFE_V4_0|Xilinx,\ Inc.|4.0=false
-C_SHIFT_RAM_V2_0|Xilinx,\ Inc.|2.0=false
-xfft_v2_0|Xilinx,\ Inc.|2.0=false
-designflow=VHDL
-C_GATE_BIT_V3_0|Xilinx,\ Inc.|3.0=false
-rs_decoder_v4_1|Xilinx,\ Inc.|4.1=true
-mult_gen_v5_0|Xilinx,\ Inc.|5.0=false
-C_TWOS_COMP_V6_0|Xilinx,\ Inc.|6.0=true
-xlnx_pci64_dk|Xilinx,\ Inc.|1.0=true
-vfft64|Xilinx,\ Inc.|1.0=true
-C_DDC_V1_0|Xilinx,\ Inc.|1.0=true
-C_DA_FIR_V6_0|Xilinx,\ Inc.|6.0=false
-C_REG_LD_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_LD_V2_0|Xilinx,\ Inc.|2.0=false
-lockedprops=
-lfsr_v3_0|Xilinx,\ Inc.|3.0=true
-C_ADDSUB_V6_0|Xilinx,\ Inc.|6.0=true
-xfft_v2_1|Xilinx,\ Inc.|2.1=true
-C_CIC_V3_0|Xilinx,\ Inc.|3.0=true
-C_SHIFT_RAM_V5_0|Xilinx,\ Inc.|5.0=false
-async_fifo_v5_0|Xilinx,\ Inc.|5.0=false
-blkmemdp_v3_2|Xilinx,\ Inc.|3.2=false
-C_GATE_BIT_V6_0|Xilinx,\ Inc.|6.0=true
-simulationoutputproducts=VHDL
-C_MUX_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-C_SIN_COS_V4_0|Xilinx,\ Inc.|4.0=false
-HDLC32_catalog|Xilinx,\ Inc.|1.0=true
-busformat=BusFormatAngleBracketNotRipped
-cam_v3_0|Xilinx,\ Inc.|3.0=false
-vfft256v2|Xilinx,\ Inc.|2.0=true
-C_MAC_FIR_V1_0|Xilinx,\ Inc.|1.0=false
-C_COMPARE_V3_0|Xilinx,\ Inc.|3.0=false
-vfft16|Xilinx,\ Inc.|1.0=true
-xlnx_PCI64s2|Xilinx,\ Inc.|3.0=false
-cordic_v1_0|Xilinx,\ Inc.|1.0=false
-flowvendor=Foundation_iSE
-magicnumber=-1172307782
-viterbi_v2_0|Xilinx,\ Inc.|2.0=false
-C_DIST_MEM_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFT_V4_0|Xilinx,\ Inc.|4.0=false
-encode_8b10b_v3_0|Xilinx,\ Inc.|3.0=false
-C_SIN_COS_V4_1|Xilinx,\ Inc.|4.1=false
-HDLC1_catalog|Xilinx,\ Inc.|1.0=true
-C_DECODE_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
-rs_encoder_v4_0|Xilinx,\ Inc.|4.0=false
-rs_decoder_v3_0|Xilinx,\ Inc.|3.0=false
-blkmemdp_v5_0|Xilinx,\ Inc.|5.0=true
-C_GATE_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-sync_fifo_v4_0|Xilinx,\ Inc.|4.0=true
-tcc_decoder_v1_0|Xilinx,\ Inc.|1.0=true
-C_MAC_FIR_V4_0|Xilinx,\ Inc.|4.0=false
-C_ACCUM_V3_0|Xilinx,\ Inc.|3.0=false
-sync_fifo_v1_0|Xilinx,\ Inc.|1.0=false
-C_COMPARE_V6_0|Xilinx,\ Inc.|6.0=true
-cordic_v1_1|Xilinx,\ Inc.|1.1=false
-blkmemsp_v3_0|Xilinx,\ Inc.|3.0=false
-async_fifo_v5_1|Xilinx,\ Inc.|5.1=true
-C_DIST_MEM_V5_0|Xilinx,\ Inc.|5.0=false
-C_REG_FD_V4_0|Xilinx,\ Inc.|4.0=false
-C_MUX_BIT_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_BIT_V3_0|Xilinx,\ Inc.|3.0=false
-convolution_v3_0|Xilinx,\ Inc.|3.0=true
-rs_encoder_v4_1|Xilinx,\ Inc.|4.1=true
-mult_gen_v4_0|Xilinx,\ Inc.|4.0=false
-xfft1024_v1_1|Xilinx,\ Inc.|1.1=true
-C_TWOS_COMP_V2_0|Xilinx,\ Inc.|2.0=false
-flexbus4_v1_0|Xilinx,\ Inc.|1.0=false
-C_SHIFT_FD_V4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-C_ACCUM_V6_0|Xilinx,\ Inc.|6.0=true
-C_GATE_BIT_BUS_V4_0|Xilinx,\ Inc.|4.0=false
-C_DIST_MEM_V5_1|Xilinx,\ Inc.|5.1=false
-C_ADDSUB_V5_0|Xilinx,\ Inc.|5.0=false
-lfsr_v2_0|Xilinx,\ Inc.|2.0=false
-C_COUNTER_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
-C_ADDSUB_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_SLICE_BUFE_V3_0|Xilinx,\ Inc.|3.0=false
-C_SIN_COS_V4_2|Xilinx,\ Inc.|4.2=true
-xaui_v4_0|Xilinx,\ Inc.|4.0=true
-vfft16v2|Xilinx,\ Inc.|2.0=true
-xlnx_PCIX64_virtex_e_ii|Xilinx,\ Inc.|5.0=true
-C_GATE_BIT_V5_0|Xilinx,\ Inc.|5.0=false
-C_GATE_BIT_V2_0|Xilinx,\ Inc.|2.0=false
-C_MUX_BUS_V3_0|Xilinx,\ Inc.|3.0=false
-C_TWOS_COMP_V5_0|Xilinx,\ Inc.|5.0=false
-posphyl4_lite_v2_0|Xilinx,\ Inc.|2.0=true
-C_DA_FIR_V8_0|Xilinx,\ Inc.|8.0=true
-C_DA_FIR_V5_0|Xilinx,\ Inc.|5.0=false
-xlnx_PCI64|Xilinx,\ Inc.|3.0=true
-C_DDS_V4_0|Xilinx,\ Inc.|4.0=false
-C_REG_LD_V4_0|Xilinx,\ Inc.|4.0=false
-C_DA_1D_DCT_V2_1|Xilinx,\ Inc.|2.1=true
-C_COUNTER_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
-C_MUX_SLICE_BUFE_V6_0|Xilinx,\ Inc.|6.0=true
-C_SHIFT_RAM_V4_0|Xilinx,\ Inc.|4.0=false
-async_fifo_v4_0|Xilinx,\ Inc.|4.0=false
-xlnx_PCI32v|Xilinx,\ Inc.|3.0=false
-vfft32_v3_0|Xilinx,\ Inc.|3.0=true
-C_MUX_BUS_V6_0|Xilinx,\ Inc.|6.0=true
-blkmemsp_v3_2|Xilinx,\ Inc.|3.2=false
-C_COMPARE_V2_0|Xilinx,\ Inc.|2.0=false
-C_DDS_V4_1|Xilinx,\ Inc.|4.1=false
-vfft256|Xilinx,\ Inc.|1.0=true
-simelaboptions=
-C_DIST_MEM_V4_0|Xilinx,\ Inc.|4.0=false
-C_MUX_SLICE_BUFT_V6_0|Xilinx,\ Inc.|6.0=true
-sid_v3_0|Xilinx,\ Inc.|3.0=false
-xilinxsubfamily=Virtex2
-C_MUX_SLICE_BUFT_V3_0|Xilinx,\ Inc.|3.0=false
-C_MUX_BIT_V2_0|Xilinx,\ Inc.|2.0=false
-gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
-C_DECODE_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
-C_SHIFT_FD_V3_0|Xilinx,\ Inc.|3.0=false
-corelibraryid=0
-C_DECODE_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
-rs_encoder_v3_0|Xilinx,\ Inc.|3.0=false
-C_GATE_BUS_V5_0|Xilinx,\ Inc.|5.0=false
-blkmemdp_v4_0|Xilinx,\ Inc.|4.0=false
-C_GATE_BUS_V2_0|Xilinx,\ Inc.|2.0=false
-sync_fifo_v3_0|Xilinx,\ Inc.|3.0=false
-tcc_encoder_v1_0|Xilinx,\ Inc.|1.0=true
-C_MAC_FIR_V3_0|Xilinx,\ Inc.|3.0=true
-C_ACCUM_V2_0|Xilinx,\ Inc.|2.0=false
-C_COMPARE_V5_0|Xilinx,\ Inc.|5.0=false
+2019年  9月 27日 金曜日 11:29:19 JST
+/*
+ * pfpga_conf_a.c
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>     // usleep
+#include "pg4.h"
+
+static char pfpga_info[256];
+#define CNF_CMD_ADR 0x80
+#define CNF_DAT_ADR 0x84
+
+static unsigned int *data;
+
+void get_header(char* bitfile, char* header)
+{
+  int index=0, x;
+  char buf[128];
+  
+  index += 2 + (((0xff&bitfile[index])<<8) | (0xff&bitfile[index+1]));
+  index += 2 + (((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]));
+
+  // --- NCD file name ---
+  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
+  //  memcpy(buf, &bitfile[index+2], x);
+  //  sprintf(header, "%s, %s", header, buf);
+
+  // --- device ---
+  index += (x+3);
+  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
+  memcpy(buf, &bitfile[index+2], x);
+  sprintf(header, "%s, %s", header, buf);
+
+  // --- data ---
+  index += (x+3);
+  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
+  memcpy(buf, &bitfile[index+2], x);
+  sprintf(header, "%s, %s", header, buf);
+
+  // --- time ---
+  index += (x+3);
+  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
+  memcpy(buf, &bitfile[index+2], x);
+  sprintf(header, "%s, %s", header, buf);
+
+  // --- key ---
+  index += (x+3);
+  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
+  //  memcpy(buf, &bitfile[index+2], x);
+  //  sprintf(header, "%s, %s", header, buf);
+
+
+}
+
+
+
+int fread_config_data(char* fname, unsigned int *size)
+{
+  // -- Read Config File to 'config_bit_data'---
+  FILE* fin;
+  int ndata;
+  int i;
+
+  struct stat buf;
+  int fsize;
+
+  // read file status
+  if (stat(fname, &buf) == -1) {
+    fprintf(stderr, "fread_config_data: can't open bit file!!! %s\n", fname);
+    exit(-1);
+  }
+
+  fsize = buf.st_size;
+  if (data != NULL) {
+    free(data);
+  }
+  data = (unsigned int*)malloc(fsize);
+  if (data == NULL) {
+    fprintf(stderr, "fread_config_data: memory allocation error!\n");
+    exit(-1);
+  }
+  
+  fin = fopen(fname, "r");
+  if (fin == NULL) {
+    fprintf(stderr, "fread_config_data: cannot open %s!\n", fname);
+    exit(-1);
+  }
+  fread(data,fsize,1,fin);
+  fclose(fin);
+  fprintf(stderr, "fread_config_data: read %i bytes.\n", fsize);
+
+  get_header((char*)data, pfpga_info);
+
+  
+  ndata = fsize/sizeof(unsigned int);
+
+  // CHANGE ENDIAN (LittleEndian -> BigEndian)
+  for(i = 0;i < ndata; i++){
+    unsigned int byte[8];
+    byte[0] = 0xFF&(data[i]>>24);
+    byte[1] = 0xFF&(data[i]>>16);
+    byte[2] = 0xFF&(data[i]>>8);
+    byte[3] = 0xFF&(data[i]);
+    data[i]=0x0;
+    data[i]= (byte[3]<<24)|(byte[2]<<16)|(byte[1]<<8)|byte[0];
+  }
+
+  *size = (unsigned int)ndata;
+
+  return fsize;
+}
+
+void config_onechip(int devid, unsigned int nfp, unsigned int ncfgdata)
+{
+  unsigned int i, d;
+  unsigned int *p;
+
+  if (data == NULL) return;
+  if (nfp > 0x8) {
+    fprintf(stderr, "nfp err\n");
+    exit(-1);
+  } 
+
+  // ---------------------------------------- SETUP CONFIGURATION
+  d = (unsigned int)(0xf0|nfp);
+  WriteBase0(devid, CNF_CMD_ADR, d);
+  d = (unsigned int)(  ((0xF^nfp)<<4)   |nfp);
+  WriteBase0(devid, CNF_CMD_ADR, d);
+  d = (unsigned int)(0xf0|nfp);
+  WriteBase0(devid, CNF_CMD_ADR, d);
+  usleep(15000);
+
+  // ---------------------------------------- SEND CONFIGURATION DATA
+  p = data;
+  for(i = 0; i < ncfgdata; i++){
+    WriteBase0(devid, CNF_DAT_ADR, *(p++));
+    d = (unsigned int)(0x1f0|nfp);
+    WriteBase0(devid, CNF_CMD_ADR,      d);
+    WriteBase0(devid, CNF_CMD_ADR, 0xff&d);
+  }
+
+  // ---------------------------------------- STOP CFG_CCLK
+  d = (unsigned int)(0xf0);
+  WriteBase0(devid, CNF_CMD_ADR,d);
+}
+
+void config_pfpga_a(int devid, char* fname, int chipid)
+{
+  unsigned int i, nfp, ncfgdata;
+
+  data = NULL;
+  fread_config_data(fname, &ncfgdata);
+
+  {
+    i = chipid;
+    nfp = 0xf&(0x1<<i);
+    fprintf(stderr, "configuring chip%i ...\n", i);
+    config_onechip(devid, nfp, ncfgdata);
+  }
+
+  free(data);
+}
+
+int main(int argc, char* argv[])
+{
+  int devid, chipid;
+
+  if (argc < 2) {
+    fprintf(stderr, "%s <bitfile> <chipid> <devid>\n", argv[0]);
+    exit(-1);
+  }
+
+  if (argv[2] == NULL) {
+    chipid = 0;
+  } else {
+    chipid = atoi(argv[2]);
+    if (chipid > 3) {
+      fprintf(stderr, "%s : invalid argument <chipid> %s:%d\n", argv[0], __FILE__, __LINE__);
+      exit(-1);
+    }
+  }
+
+  if (argv[3] == NULL) {
+    devid = 0;
+  } else {
+    devid = atoi(argv[3]);
+    if (devid > 3) {
+      fprintf(stderr, "%s : invalid argument <devid>%s:%d\n", argv[0], __FILE__, __LINE__);
+      exit(-1);
+    }
+  }
+
+  fprintf(stderr, "%s configures a PFPGA%i on progrape%i ...\n", argv[0], chipid, devid);
+
+  pg4_open(devid);
+
+  {
+    pg4_get_pfpga_info(devid, pfpga_info);
+    printf("----------------------\n");
+    printf("Previous config info: \n");
+    printf("%s\n",pfpga_info);
+    printf("----------------------\n");
+  }
+
+  {
+    sprintf(pfpga_info, "%s on <PFPGA%d>", argv[1], chipid);
+    config_pfpga_a(devid, argv[1], chipid);
+    pg4_set_pfpga_info(devid, pfpga_info);
+  }
+
+  {
+    pg4_get_pfpga_info(devid, pfpga_info);
+    printf("----------------------\n");
+    printf("Current config info: \n");
+    printf("%s\n",pfpga_info);
+    printf("----------------------\n");
+  }
+
+  pg4_close(devid);
+
+  return 0;
+}
