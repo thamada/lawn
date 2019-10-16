@@ -1,46 +1,16 @@
-2019年  9月  5日 木曜日 09:17:29 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
+2019年 10月 16日 水曜日 11:17:56 JST
+#!/bin/sh
+#
+# An example hook script to check the commit log message taken by
+# applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.  The hook is
+# allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "applypatch-msg".
 
-VM_NAME="ubuntu16"
-
-all: check
-
-c: check
-
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-run: start
-
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
+. git-sh-setup
+test -x "$GIT_DIR/hooks/commit-msg" &&
+	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
+:
