@@ -1,30 +1,28 @@
-2019年 10月  8日 火曜日 10:26:58 JST
-#!/usr/bin/perl
+2019年 10月 16日 水曜日 11:09:13 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
+entity dmar_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmar_mem_adr;
 
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
-my $cmd ="cat ". $kbuf_dir ."/kbuffers";
-my $exe = `$cmd`;
-print $exe;
-
-my $nbuf = `$cmd | wc -l`;
-chomp($nbuf);
-$nbuf--;
-
-print $nbuf ." buffers exists\n";
-
-for(my $i=0;$i<$nbuf;$i++){
-    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
-    print $cmd ."\n";
-    $exe = `$cmd`;
-    print $exe;
-}
-
-1;
+architecture rtl of dmar_mem_adr is
+component dmaw_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
+begin
+  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
+end rtl;
