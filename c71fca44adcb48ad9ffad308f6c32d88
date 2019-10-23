@@ -1,12 +1,37 @@
-2019年  9月 26日 木曜日 09:25:52 JST
+2019年 10月 23日 水曜日 10:16:09 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+--mem_data                          <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
-all:
-	cp top.ucf.ISE6.3i_Synplify top.ucf
-	rm -rf proj
-	tar xvf proj.synplify.tar
-	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+entity dmaw_mem_data is
+  port (
+    CLK      : in std_logic;
+    DBUS     : in std_logic_vector(63 downto 0);
+    STATE    : in std_logic_vector(1 downto 0);
+    MEM_DATA : out std_logic_vector(63 downto 0) );
+end dmaw_mem_data;
+
+architecture rtl of dmaw_mem_data is
+constant zero : std_logic_vector(63 downto 0) := (others=>'0');
+begin
+
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="10") then
+        MEM_DATA <= DBUS;
+      else
+        MEM_DATA <= zero;
+      end if;
+    end if;
+  end process;
+
+end rtl;
