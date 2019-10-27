@@ -1,4 +1,17 @@
-2019年 10月  9日 水曜日 10:50:58 JST
-PROGRAM=PAR
-STATE=ROUTED
-TIMESPECS_MET=YES
+2019年 10月 27日 日曜日 11:32:55 JST
+#!/usr/bin/perl
+
+my $N = 300;
+my $XSCALE = 1.0;
+my $YSCALE = 1.0;
+
+srand(12345);
+
+print $N ."\n";
+
+for(my $i=0;$i<$N;$i++){
+    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
+    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
+    my $s = sprintf("%e\t%e\n",$x,$y);
+    print $s;
+}
