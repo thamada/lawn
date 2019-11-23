@@ -1,51 +1,18 @@
-2019年 11月 20日 水曜日 10:32:25 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2019年 11月 23日 土曜日 09:41:35 JST
+FILES
+{
+	VHDL_FILE = pgfpga.vhd;
+}
+COMPILER_SETTINGS_LIST
+{
+	COMPILER_SETTINGS = pgfpga;
+}
+SIMULATOR_SETTINGS_LIST
+{
+	SIMULATOR_SETTINGS = pgfpga;
+}
+SOFTWARE_SETTINGS_LIST
+{
+	SOFTWARE_SETTINGS = Debug;
+	SOFTWARE_SETTINGS = Release;
+}
