@@ -1,19 +1,13 @@
-2019年 11月 10日 日曜日 11:39:52 JST
-//============================================================================
-struct flops_member {
-  double Gflops;
-  double start_time;
-  double force_time;
-  int nbody;
-  int times;
-  int nstep;
-  int nskip;
-};
+2019年 11月 23日 土曜日 09:23:51 JST
+#include <stdio.h>
+#include "nbodysim.h"
 
-void flops_initialize(struct flops_member *fm, int n, int nskip);
-void flops_check(struct flops_member *fm);
-
-void flops_ftime_init(struct flops_member *fm);
-void flops_ftime_save(struct flops_member *fm);
-
+void debug_position(double x[][DIM], double time,int n)
+{
+    int i;
+    for(i=0;i<n;i++){
+      //        printf("%d,%e,%1.8e,%1.8e,%1.8e\n",i,t,x[i][0],x[i][1],x[i][2]);
+        printf("%1.8e\t%1.8e\t%1.8e\t%1.1e\n",x[i][0],x[i][1],x[i][2],time);
+    }
+}
 
