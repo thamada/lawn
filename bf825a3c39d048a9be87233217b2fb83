@@ -1,102 +1,124 @@
-2019年 11月 23日 土曜日 09:49:00 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 03:06:20 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
+2019年 11月 24日 日曜日 09:30:24 JST
+#include "pg_util.h"
+// Funtion Prototyping
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_sqrt_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_recipro_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_expadd_31_26_16(LONG x, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
+void            pg_float_fixaccum_26_16(LONG x, LONG * z);
 
 
-if (__name__ == '__main__'):
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
-
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
-    i_fp = 0.0
-    i_delta = 1
-    i_scale = 60.0
-    speed_state = 0
-
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
-
-        #print (fname, i, ni, i/ni)
-        image = cv2.imread(fname)
-        cv2.imshow("play.py", image)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key != 255:  print (key, "%d/%d"% (i, ni))
-
-        if key  == 114:           i_fp = 0.  # r
-
-        if key  == ord('q'): break
-        if key  == 97:            i_fp -= 1.  # d
-        if key  == 100:           i_fp += 1.  # a
-        if key  == 81:            i_fp -= 5.  # <-
-        if key  == 83:            i_fp += 5.  # ->
-        if key  == 86:            i_fp += 30. # Up
-        if key  == 85:            i_fp -= 30. # Down
-        if key  == 82:            i_fp += 300. # PgDn
-        if key  == 84:            i_fp -= 300. # PgUp
-
-        if key  == ord(' '): 
-            if 0 != speed_state: 
-                i_delta = 0
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 1
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+// API
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    int             i, j;
+    LONG            sx_0;
+    LONG            sx_1;
+    LONG            sx_2;
+    LONG            xi_0;
+    LONG            xj_0;
+    LONG            xi_1;
+    LONG            xj_1;
+    LONG            xi_2;
+    LONG            xj_2;
+    LONG            dx2_0;
+    LONG            dx2_1;
+    LONG            dx2_2;
+    LONG            ieps2;
+    LONG            x2y2;
+    LONG            z2e2;
+    LONG            r2;
+    LONG            r1;
+    LONG            r3;
+    LONG            r3i;
+    LONG            mj;
+    LONG            mf;
+    LONG            dx_0;
+    LONG            dx_1;
+    LONG            fs;
+    LONG            dx_2;
+    LONG            fx_0;
+    LONG            fx_1;
+    LONG            fx_2;
 
 
-        if key  == 226: # R_SHIFT
-            if 0 == speed_state:
-                i_delta = int(i_scale/10.)
-                speed_state = 1
-            elif 1 == speed_state:
-                i_delta = int(i_scale)
-                speed_state = 2
-            elif 2 == speed_state:
-                i_delta = int(i_scale*10.)
-                speed_state = 3
-            elif 3 == speed_state:
-                i_delta = int(i_scale*100.)
-                speed_state = 4
-            elif 4 == speed_state:
-                i_delta = 1
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 0
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
+    for (i = 0; i < n; i++) {
+	/*
+	 * CONVERT(xi_0,float) 
+	 */ xi_0 = double2pgpgfloat_r(x[i][0], 26, 16, 6);
+	/*
+	 * CONVERT(xi_1,float) 
+	 */ xi_1 = double2pgpgfloat_r(x[i][1], 26, 16, 6);
+	/*
+	 * CONVERT(xi_2,float) 
+	 */ xi_2 = double2pgpgfloat_r(x[i][2], 26, 16, 6);
+	/*
+	 * CONVERT(ieps2,float) 
+	 */ ieps2 = double2pgpgfloat_r(eps2, 26, 16, 6);
 
-        if key  == ord('+'): 
-            i_delta *= 2
-            print ("i_delta:", i_delta)
+	sx_0 = 0;
+	sx_1 = 0;
+	sx_2 = 0;
 
-        if key  == ord('-'): 
-            i_delta = int(i_delta / 2)
-            if i_delta < 1: i_delta = 1 
-            print ("i_delta:", i_delta)
+	for (j = n - 1; j >= 0; j--) {
+	    /*
+	     * CONVERT(xj_0,float) 
+	     */ xj_0 = double2pgpgfloat_r(x[j][0], 26, 16, 6);
+	    /*
+	     * CONVERT(xj_1,float) 
+	     */ xj_1 = double2pgpgfloat_r(x[j][1], 26, 16, 6);
+	    /*
+	     * CONVERT(xj_2,float) 
+	     */ xj_2 = double2pgpgfloat_r(x[j][2], 26, 16, 6);
+	    /*
+	     * CONVERT(mj,float) 
+	     */ mj = double2pgpgfloat_r(m[j], 26, 16, 6);
 
-        #----------------------------------
-        i_fp += i_delta/i_scale
-        if i_fp < 0.0 :  i_fp = 0.0
-        if i_fp >= float(ni): i_fp = float(ni) -1.0
-        i = int(i_fp)
-
-    cv2.destroyAllWindows()
+	    pg_float_sub_26_16(xi_0, xj_0, &dx_0);
+	    pg_float_sub_26_16(xi_1, xj_1, &dx_1);
+	    pg_float_sub_26_16(xi_2, xj_2, &dx_2);
+	    pg_float_mult_26_16(dx_0, dx_0, &dx2_0);
+	    pg_float_mult_26_16(dx_1, dx_1, &dx2_1);
+	    pg_float_mult_26_16(dx_2, dx_2, &dx2_2);
+	    pg_float_unsigned_add_26_16(dx2_0, dx2_1, &x2y2);
+	    pg_float_unsigned_add_26_16(dx2_2, ieps2, &z2e2);
+	    pg_float_unsigned_add_26_16(x2y2, z2e2, &r2);
+	    pg_float_sqrt_26_16(r2, &r1);
+	    pg_float_mult_26_16(r2, r1, &r3);
+	    pg_float_recipro_26_16(r3, &r3i);
+	    pg_float_mult_26_16(r3i, mj, &mf);
+	    pg_float_expadd_31_26_16(mf, &fs);
+	    pg_float_mult_26_16(fs, dx_0, &fx_0);
+	    pg_float_mult_26_16(fs, dx_1, &fx_1);
+	    pg_float_mult_26_16(fs, dx_2, &fx_2);
+	    pg_float_fixaccum_26_16_57_64(fx_0, &sx_0);
+	    pg_float_fixaccum_26_16_57_64(fx_1, &sx_1);
+	    pg_float_fixaccum_26_16_57_64(fx_2, &sx_2);
+	}
+	a[i][0] =
+	    ((double) (((long long int) sx_0) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	a[i][1] =
+	    ((double) (((long long int) sx_1) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	a[i][2] =
+	    ((double) (((long long int) sx_2) << 0)) *
+	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+    }
+}
