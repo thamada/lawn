@@ -1,9 +1,121 @@
-2019年 11月 20日 水曜日 11:29:53 JST
-V1 3
-FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd 2004/11/10.11:36:20
-EN work/PFPGA_CONFIG \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      PB ieee/STD_LOGIC_1164 PB ieee/STD_LOGIC_ARITH PB ieee/STD_LOGIC_UNSIGNED
-AR work/PFPGA_CONFIG/RTL \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      EN work/PFPGA_CONFIG
+2019年 11月 24日 日曜日 11:46:20 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:59:29 hamada>
+import Message
+import WebCam
+import numpy as np
+import cv2
+from datetime import datetime
+
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
+
+
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
+
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
+
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+
+
+
+def draw_text_time(msg, image):
+    font = cv2.FONT_HERSHEY_PLAIN 
+    font_size = 3.0
+    color = (0x0f, 0xff, 0x1f)
+    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    cv2.putText(image, text, (30, 65), font, font_size, color)
+    cv2.putText(image, text, (31, 65), font, font_size, color)
+
+
+def draw_text(msg, image, text):
+    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
+    font_size = 2.5
+    color = (int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)))
+
+    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
+    py = int(image.shape[0]/2. + np.random.normal(25, 3))
+    cv2.putText(image, text, (px, py), font, font_size, color)
+
+
+if __name__ == '__main__':
+    webcam = WebCam.WebCam()
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 300)
+    image  = image0.copy()
+
+    window_title = "AI sensor by T. Hamada 2017/07/04"
+    x = 0
+    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+
+    i_found = 0
+    while(True):
+        is_detect = msg.scan_object("person")
+        draw_text_time(msg, image)
+
+        if is_detect != True:
+            webcam.clear_cache()
+        else:
+            webcam.save_photo()
+            for i in range(8):
+                draw_text(msg, image, "I found you")
+
+            i_found += 1
+            if(i_found > 5):
+                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                with open("./log.person.txt", 'a') as fh:
+                    fh.write(tnow + " - detects 'Person'\n")
+                i_found = 0
+
+
+
+
+        x = 0
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
