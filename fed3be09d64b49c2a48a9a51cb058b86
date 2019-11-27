@@ -1,59 +1,90 @@
-2019年 11月 10日 日曜日 10:36:53 JST
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+2019年 11月 27日 水曜日 11:00:24 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 00:18:35 hamada>
+import Message
+import numpy as np
+import cv2
+from datetime import datetime
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
-int main()
-{
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
 
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
 
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-    cout.precision(16);
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
-    }
-}
-//-----------------------------------------------------------------------------
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+
+
+def get_bar_length(msg, x):
+    class_id = msg.get_classId()
+    dx = 25
+    z = 0
+    # if class_id == 5: z = x + dx/2; x = int(z)
+    # if class_id == 6: z = x + dx*2; x = int(z)
+    # if class_id == 4: z = x - dx*2; x = int(z)
+
+    if class_id == 0: z = x + dx*2; x = int(z)
+    if class_id in {0,4,5,6,7,8}: 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        print (tnow,': ', msg.class_count)
+    return (x)
+
+if __name__ == '__main__':
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 120)
+    image  = image0.copy()
+
+    window_title = "AI sensor"
+    x = 0
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
+
+    while(True):
+        x = get_bar_length(msg, x)
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
