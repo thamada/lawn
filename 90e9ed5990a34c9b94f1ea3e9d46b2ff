@@ -1,7 +1,15 @@
-2019年 11月 27日 水曜日 09:48:51 JST
-classes= 10
-train  = ./etc/list.train.txt
-valid  = ./etc/list.valid.txt
-names =  ./etc/list.classname.txt
-backup = ./backup
+2019年 12月  5日 木曜日 11:24:16 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
 
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
+
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
+
+    time.sleep(3)
