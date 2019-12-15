@@ -1,121 +1,86 @@
-2019年 12月  7日 土曜日 10:13:07 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:59:29 hamada>
-import Message
-import WebCam
-import numpy as np
-import cv2
-from datetime import datetime
+2019年 12月 15日 日曜日 09:28:38 JST
+# CUDA
+###  Modify this part as your environment   ##################
+export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
+export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+# for profiling
+export CUDA_PROFILE=0
+export CUDA_PROFILE_LOG=./cuda_profile.log
+export CUDA_PROFILE_CSV=1
+alias cudaprofon='export CUDA_PROFILE=1'
+alias cudaprofoff='export CUDA_PROFILE=0'
 
+# OpenCL
+#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
-
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
-
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
 
+#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
-def draw_text_time(msg, image):
-    font = cv2.FONT_HERSHEY_PLAIN 
-    font_size = 3.0
-    color = (0x0f, 0xff, 0x1f)
-    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    cv2.putText(image, text, (30, 65), font, font_size, color)
-    cv2.putText(image, text, (31, 65), font, font_size, color)
+# for MPICH
+#export PATH=/export/opt/mpi/local/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
+
+#------------ GbEd --------------------
+#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
+
+#------------ InfiniBand (OFED 1.4) --------------------
+export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
+
+#------------ InfiniBand (OFED 1.5.1) --------------------
+#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
 
 
-def draw_text(msg, image, text):
-    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
-    font_size = 2.5
-    color = (int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)))
+export LANG=C
+export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
 
-    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
-    py = int(image.shape[0]/2. + np.random.normal(25, 3))
-    cv2.putText(image, text, (px, py), font, font_size, color)
+# for ICC
+# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
 
+# for Mplayer
+export PATH=/export/opt/mplayer/bin:$PATH
 
-if __name__ == '__main__':
-    webcam = WebCam.WebCam()
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 300)
-    image  = image0.copy()
+#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
 
-    window_title = "AI sensor by T. Hamada 2017/07/04"
-    x = 0
-    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+#for Cray-XT5
+alias ssc='ssh hawk.cray.com -l p01130'
 
-    i_found = 0
-    while(True):
-        is_detect = msg.scan_object("person")
-        draw_text_time(msg, image)
-
-        if is_detect != True:
-            webcam.clear_cache()
-        else:
-            webcam.save_photo()
-            for i in range(8):
-                draw_text(msg, image, "I found you")
-
-            i_found += 1
-            if(i_found > 5):
-                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                with open("./log.person.txt", 'a') as fh:
-                    fh.write(tnow + " - detects 'Person'\n")
-                i_found = 0
+#for AMD/ATI GPU
+#export CALROOT=/export/opt/amdstream/atical
+#export PATH=$CALROOT/bin/lnx64:$PATH
+#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
+#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
+#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
+#alias aon='export DISPLAY=:0.0'
+export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
+export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
+#xmodmap ~/.Xmodmap 2> /dev/null
+#nodeid=`uname -n`
+#echo "node $nodeid"
 
 
 
+export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=2
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=8
 
-        x = 0
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
+export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
 
-    cv2.destroyAllWindows()
