@@ -1,68 +1,71 @@
-2019å¹´ 12æœˆ 15æ—¥ æ—¥æ›œæ—¥ 10:46:09 JST
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+2019å¹´ 12æœˆ 22æ—¥ æ—¥æ›œæ—¥ 10:58:39 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:28:33 hamada>
+import numpy as np
+import cv2
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
-{
-  int i,j,d;
-  double v2,r2;
-  double dx[3];
-  double Ep;        /* Še—±q‚ÌˆÊ’uƒGƒlƒ‹ƒM[ */
-  double Em;        /* Še—±q‚Ì‰^“®ƒGƒlƒ‹ƒM[ */
-  double Ea;        /* Še—±q‚Ì‘S—ÍŠw“IƒGƒlƒ‹ƒM[ */
-  static double Ea_init;
-  static int flag=0;
-  //  double a[NMAX][DIM];
+class Message(object):
+    def __init__(self):
+        self.class_num = 80
+        self.last = [0 for i in range(8)]
+        self.log_previous = ''
+        self.is_update = False
+#        self.filename = '/dev/shm/log.txt'
+        self.filename = '/tmp/log.draw_detections.txt'
+        self.class_count = []
 
+    def reset(self):
+        self.is_update = False
+        self.class_count = [0 for i in range(self.class_num)]
+        self.get_classId()
+        self.class_count = [0 for i in range(self.class_num)]
 
-  /******************************************************  FORCE
-  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] =  m[j]*dx[d]/r3;
-	a[j][d] = -m[i]*dx[d]/r3;
-      }
-    }
-  }
-  ***********************************************************/
+    def get_message(self):
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            l = lines[-2]
+            l = l.rstrip()
+            cols = l.split(' ')
+            if cols[0] != self.last[0]:
+                self.last = cols
+                self.is_update = True
+            else:
+                self.is_update = False
+        
 
-  Ea = 0.0;
-  for(i=0;i<n;i++){
-    Ep=0.0;     // Potential Energy
-    for(j=0;j<n;j++){
-      r2 = eps2;           /* ‘Š‘Î‹——£‰Šú‰» */
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
-    }
+    def check_log_update(self):
+        self.is_update = False
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            current = lines[-2]
+            if current != self.log_previous:
+                self.is_update = True
+                self.log_previous = current
+        return (self.is_update)
 
-    v2=0.0;    /* â‘Î‘¬“x2æ’l‰Šú‰» */
-    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
-    Em = 0.5 * m[i] * v2;
+    def scan_object(self, cl_name):
+        is_detect = False
 
-    Ea += Em + Ep;
-    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
-    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
-    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
-  }
+        if self.check_log_update():
+            with open(self.filename, 'r') as fh:
+                lines = fh.readlines()
+                for i in range(2, 20):
+                    l = lines[-i]
+                    l = l.rstrip()
+                    cols = l.split(' ')
+                    if cols[-1] == cl_name:
+                        is_detect = True
 
-  if(flag==0){
-    Ea_init = Ea;
-    flag = 1;
-  }
-  printf("Eall = %e\t",Ea);
-  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
-  printf("\n");
-  return;
-}
+        return (is_detect)
+
+    def get_classId(self):
+        self.get_message()
+
+        if True == self.is_update:
+            z = int(self.last[1])
+            self.class_count[z] += 1
+        else:
+            z = -1
+
+        return (z)
+
