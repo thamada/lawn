@@ -1,40 +1,57 @@
-2020Âπ¥  1Êúà  6Êó• ÊúàÊõúÊó• 09:32:13 JST
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
+2020Âπ¥  1Êúà  6Êó• ÊúàÊõúÊó• 10:06:11 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+
+entity pipe_sts is
+  port (
+    rst        : in  std_logic;
+    clk        : in  std_logic;
+    run        : in  std_logic;
+    runret     : in  std_logic;
+    status     : out std_logic_vector(31 downto 0)
+  );
+end pipe_sts;
+
+architecture rtl of pipe_sts is
+signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
+signal rund,sts : std_logic;
+signal cntr : std_logic_vector(7 downto 0);
+signal irun : std_logic := '0';
+
+begin
+
+-- clk    ____~~~~____~~~~____~~~~____~~~~__
+-- runret _____~~~~~~~~_____________________
+-- rund   _____________~~~~~~~~_____________
+-- status                      <finish     >
+
+-- status
+status(31 downto 8) <= (others=>'0');
+process(clk,rst) begin
+  if(rst='1') then
+    status(7 downto 0) <= (others=>'1');
+  elsif(clk'event and clk='1') then
+    if((runret='0') AND (rund='1')) then  -- åvéZèIóπ
+      status(7 downto 0) <= (others=>'1');
+    elsif((run='1') AND (irun='0')) then -- åvéZäJén
+      status(7 downto 0) <= (others=>'0');
+    end if;
+  end if;
+end process;
+
+process(clk) begin
+  if(clk'event and clk='1') then
+    rund  <= runret;
+  end if;
+end process;
+
+process(clk) begin
+  if(clk'event and clk='1') then
+    irun  <= run;
+  end if;
+end process;
 
 
-
-
-
-
-
+end rtl;
