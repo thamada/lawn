@@ -1,250 +1,231 @@
-2020年  1月  5日 日曜日 11:05:28 JST
-// Copyright(c) 2004- by PGPG
-// The original source : package/src/vi/pg_util.c
-// 2005/06/11:   xx = (double *)&hi;         ->  xx = (double *)(void*)&hi;          by T.H
-// 2005/06/11:   LONG _i_ = *((LONG *)(&a)); ->  LONG _i_ = *((LONG *)(void*)(&a));  by T.H
+2020年  1月  6日 月曜日 09:46:42 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 15:15:30 2005
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#ifndef LONG
-#define LONG unsigned long long int
-#endif
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-LONG double2pgpglog(double x, int nbit_log, int nbit_man)
-{
-  LONG z;
-  if (x == 0.0){
-    z = 0;
-  }else if(x>0.0){
-    double zz = pow(2.0,(double)nbit_man) * log(x)/log(2.0);
-    z = ((int)zz);
-    z &= (0x1ULL<<(nbit_log-2))-1;
-    z |= 0x1ULL<<(nbit_log-2);
-  }else{
-    double zz = pow(2.0,(double)nbit_man) * log(-x)/log(2.0);
-    z = ((int)zz);
-    z &= (0x1ULL<<(nbit_log-2))-1;
-    z |= 0x3ULL<<(nbit_log-2);
-  }
-  return z;
-}
+ENTITY sim_local_read_cnt IS
+END sim_local_read_cnt;
 
-double pgpglog2double(LONG x, int nbit_log, int nbit_man)
-{
-  double z;
-  LONG sign,nonz,logval;
-  sign = 0x1ULL & (x>>(nbit_log-1));
-  nonz = 0x1ULL & (x>>(nbit_log-2));
-  logval  = ((0x1ULL<<(nbit_log-2))-1) & x;
-  z = pow(2.0,((double)logval)/pow(2.0,(double)(nbit_man)));
-  if(nonz == 0) z = 0.0;
-  if(sign == 1) z *= -1.0;
-  return z;
-}
+ARCHITECTURE testbench_arch OF sim_local_read_cnt IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read_cnt.ano";
+	COMPONENT local_read_cnt
+		GENERIC (
+			CNT_WIDTH : INTEGER;
+			FO_BASE : INTEGER;
+			NBIT_FO_UAD : INTEGER;
+			INTF_LAT : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_DONE : In  std_logic;
+			BUSY : Out  std_logic;
+			EXEC : Out  std_logic;
+			START_AD : Out  std_logic_vector (18 DOWNTO 0);
+			NQWORD : Out  std_logic_vector (8 DOWNTO 0);
+			CHIPSEL : Out  std_logic_vector (3 DOWNTO 0);
+			MEM_AD_BASE : Out  std_logic_vector (12 DOWNTO 0);
+			BUSY_IF : In  std_logic;
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-LONG double2pgpgfloat(double a, int nbit_float, int nbit_man)
-{
-  LONG hi;
-  int nbit_exp;
-  nbit_exp = nbit_float - nbit_man - 2;
-  if (a == 0.0)
-    hi = 0;
-  else {
-    LONG _i_ = *((LONG *)(void*)(&a));
-    LONG h_exp, h_man, h_sign, h_nonz;
-    h_sign = (_i_ >> 63) & (0x1LL);
-    h_nonz = 0x1LL;
-    h_exp =  (_i_ >> 52) & ((0x1LL<<11)-1);
-    h_exp -= 1023LL; // subtract bias 
-    h_exp = h_exp & ((0x1LL<<nbit_exp)-1);
-    h_man = (_i_&((0x1LL<<52)-1));
-    h_man = h_man>>(52-nbit_man);
-    hi = (h_sign << (nbit_float-1)) | (h_nonz << (nbit_float-2)) | (h_exp << nbit_man) | h_man;
-  }
-  return hi;
-}
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_DONE : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL EXEC : std_logic;
+	SIGNAL START_AD : std_logic_vector (18 DOWNTO 0);
+	SIGNAL NQWORD : std_logic_vector (8 DOWNTO 0);
+	SIGNAL CHIPSEL : std_logic_vector (3 DOWNTO 0);
+	SIGNAL MEM_AD_BASE : std_logic_vector (12 DOWNTO 0);
+	SIGNAL BUSY_IF : std_logic;
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-/* --- ROUNDING VERSION --- */
-LONG double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode)
-{
-  LONG hi;
-  int nbit_exp;
-  nbit_exp = nbit_float - nbit_man - 2;
-  if (a == 0.0)
-    hi = 0;
-  else {
-    LONG _i_ = *((LONG *)(void*)(&a));
-    LONG h_exp, h_man;
-    LONG signz,nonzz;
-    LONG expz,manz;
-    LONG Guard,Sbit,Gbit,Ulp;
+BEGIN
+	UUT : local_read_cnt
+	GENERIC MAP (
+		CNT_WIDTH => 16,
+		FO_BASE => 24576,
+		NBIT_FO_UAD => 3,
+		INTF_LAT => 8
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_DONE => CALC_DONE,
+		BUSY => BUSY,
+		EXEC => EXEC,
+		START_AD => START_AD,
+		NQWORD => NQWORD,
+		CHIPSEL => CHIPSEL,
+		MEM_AD_BASE => MEM_AD_BASE,
+		BUSY_IF => BUSY_IF,
+		RST => RST,
+		CLK => CLK
+	);
 
-    signz = (_i_ >> 63) & (0x1LL);
-    nonzz = 0x1LL;
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-    h_exp =  (_i_ >> 52) & ((0x1LL<<11)-1);
-    h_exp -= 1023LL; // subtract bias 
-    expz  = h_exp & ((0x1LL<<nbit_exp)-1);
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-    h_man = (_i_&((0x1LL<<52)-1));
-    Guard = ((0x1ULL<<(52-nbit_man))-1)&h_man;
-    Sbit  = 0x1ULL&(Guard>>(51-nbit_man));
-    Gbit  = (((0x1ULL<<(51-nbit_man))-1)&Guard) == 0x0ULL ? 0 : 1;
-    manz  = h_man>>(52-nbit_man);
+		PROCEDURE ANNOTATE_EXEC(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",EXEC,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, EXEC);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-    Ulp = 0x1ULL & manz;
-    {
-      LONG man_inc;
-      if(rmode == 0)      man_inc = 0; /* Truncation */
-      else if(rmode == 1) man_inc = signz*(1-(1-Sbit)*(1-Gbit)); /* Truncation to Zero */
-      else if(rmode == 2) man_inc = Sbit; /* Rounding to Plus Infinity */
-      else if(rmode == 3) man_inc = Sbit*Gbit; /* Rounding to Minus Infinity */
-      else if(rmode == 4) man_inc = Sbit*(1-signz*(1-Gbit)); /* Rounding to Infinity */
-      else if(rmode == 5) man_inc = Sbit*(1-(1-signz)*(1-Gbit)); /* Rounding to Zero */
-      else if(rmode == 6) man_inc = Sbit*(1-(1-Ulp)*(1-Gbit)); /* Rounding to Even */
-      else if(rmode == 7) man_inc = Sbit*(1-Ulp*(1-Gbit)); /* Rounding to Odd */
-      else if(rmode == 8) man_inc = Sbit+Gbit; /* Force one */
-      else                man_inc = Sbit*(1-(1-Ulp)*(1-Gbit)); /* Rounding to Even */
-      // adder with overflow-flag
-      manz = manz+man_inc;
-      if ((manz>>(nbit_man)) == 1ULL) {
-	manz = 0x0ULL;
-	expz++;
-      }
-    }
-    hi = (signz << (nbit_float-1)) | (nonzz << (nbit_float-2)) | (expz << nbit_man) | manz;
-  }
-  return hi;
-}
+		PROCEDURE ANNOTATE_START_AD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",START_AD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, START_AD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-double pgpgfloat2double(LONG x, int nbit_float, int nbit_man)
-{
-  LONG hi;
-  double *xx;
-  LONG h_exp, h_man, h_sign, h_nonz;
-  int nbit_exp;
-  nbit_exp = nbit_float - nbit_man - 2;
-  h_sign = 0x1LL&(x>>(nbit_float-1));
-  h_nonz = 0x1LL&(x>>(nbit_float-2));
-  h_exp  = ((0x1LL<<nbit_exp)-1)&(x>>nbit_man);
-  h_man  = ((0x1LL<<nbit_man)-1)&x;
-  if((0x1LL&(h_exp>>(nbit_exp-1)))==0x1LL){
-    h_exp |= ((0x1LL<<(11-nbit_exp))-1)<<(nbit_exp);  
-  }
-  h_exp += 1023LL; // add bias (IEEE double)
-  h_exp &= (0x1LL<<11)-1;
-  if (h_nonz == 0) return 0.0;
-  hi = (h_sign << 63) | (h_exp << 52) | h_man << (52-nbit_man);
-  xx = (double *)(void*)&hi;
-  return *xx;
-}
+		PROCEDURE ANNOTATE_NQWORD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",NQWORD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, NQWORD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-void l2bit(idata,sdata,nbit)
-LONG idata;
-char sdata[];
-int nbit;
-{
-  int i;
-  LONG itmp;
-  strcpy(sdata,"");
-  for(i=0;i<nbit;i++){
-    itmp =0x1ULL&(idata>>(nbit-1-i));
-    if(itmp == 0x1ULL) strcat(sdata,"1");
-    if(itmp == 0x0ULL) strcat(sdata,"0");
-  }
-}
+		PROCEDURE ANNOTATE_CHIPSEL(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CHIPSEL,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CHIPSEL);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-LONG extractbit_long(LONG in, int hi, int lo)
-{
-  int size;
-  LONG mask, res;
-  size = hi - lo + 1;
-  mask = (0x1ULL<<size) - 1;
-  res = (in>>lo) & mask;
-  return res;
-}
-void putbits(LONG a)
-{
-    int i;
-    for(i = 0; i < 64; i++) {
-	if (extractbit_long(a, 63-i, 63-i) == 1ULL) {
-	    printf("1");
-	} else {
-	    printf("0");
-	}
-    }
-    puts("");
-}
+		PROCEDURE ANNOTATE_MEM_AD_BASE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_AD_BASE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_AD_BASE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-void putbits32(LONG a)
-{
-    int i;
-    for(i = 0; i < 32; i++) {
-	if (extractbit_long(a, 31-i, 31-i) == 1ULL) {
-	    printf("1");
-	} else {
-	    printf("0");
-	}
-    }
-    puts("");
-}
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_EXEC(TX_TIME);
+		ANNOTATE_START_AD(TX_TIME);
+		ANNOTATE_NQWORD(TX_TIME);
+		ANNOTATE_CHIPSEL(TX_TIME);
+		ANNOTATE_MEM_AD_BASE(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-void putbitsn(LONG a, int n)
-{
-    int i;
-    for(i = 0; i < n; i++) {
-	if (extractbit_long(a, n-i, n-i) == 1ULL) {
-	    printf("1");
-	} else {
-	    printf("0");
-	}
-    }
-    puts("");
-}
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
-double gen_rand(void)
-{
-  double x;
-  double man,exp,sign,es;
-  if((rand()/(RAND_MAX+1.0))<0.5) sign = 1.0; else sign = -1.0;
-  if((rand()/(RAND_MAX+1.0))<0.5) es   = 1.0; else es   = -1.0;
-  man = rand()/(RAND_MAX+1.0);
-  exp = rand()/(RAND_MAX+1.0);
-//  x = sign*(2.0*man) * pow(2.0,38.0*es*exp);
-  x = sign*(2.0*man) * pow(2.0,20.0*es*exp);
-  return (x);
+		BEGIN
+		-- --------------------
+		CALC_DONE <= transport '0';
+		BUSY_IF <= transport '0';
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=100 ns
+		NPIPE <= transport std_logic_vector'("00000010"); --2
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=600 ns
+		CALC_DONE <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=700 ns
+		CALC_DONE <= transport '0';
+		-- --------------------
+		WAIT FOR 32225 ns; -- Time=32925 ns
+		-- --------------------
 
-}
-double gen_rand_abs(void)
-{
-  double x;
-  double man,exp,es;
-  if((rand()/(RAND_MAX+1.0))<0.5) es   = 1.0; else es   = -1.0;
-  man = rand()/(RAND_MAX+1.0);
-  exp = rand()/(RAND_MAX+1.0);
-  //  x = (2.0*man) * pow(2.0,1024.0*es*exp);
-  //  x = 2.0 - man*0.0001;
-  //  x = (2.0*man) * pow(2.0,39.0*es*exp);
-  //  x = (1.0+man) * pow(10.0,38.0*es);      // boundary-test
-  x = (1.0+man) * pow(10.0,38.0*es*exp);
-  return (x);
-}
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-double gen_rand_tamanizero(void)
-{
-  // 100 mankai ni 1 do zero
-  if((rand()/(RAND_MAX+1.0))<1.0e-7) return 0.0; else return 1.0;
-}
-
-#include <sys/time.h>
-#include <sys/resource.h>
-double e_time(void)
-{
-  static struct timeval now;
-  static struct timezone tz;
-  gettimeofday(&now, &tz);
-  return (double)(now.tv_sec + now.tv_usec/1000000.0);
-}
-
+CONFIGURATION local_read_cnt_cfg OF sim_local_read_cnt IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cnt_cfg;
