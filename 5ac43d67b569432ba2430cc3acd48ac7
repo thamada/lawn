@@ -1,138 +1,104 @@
-2020Âπ¥  1Êúà  9Êó• Êú®ÊõúÊó• 11:45:18 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+2020Âπ¥  1Êúà 10Êó• ÈáëÊõúÊó• 10:32:02 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-01 03:19:59 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
+def get_ndev():
+    ndev = 0
+    devid = []
+    for i in range(0, 10):
+        c = cv2.VideoCapture(i)
+        if c.isOpened():
+            ndev = ndev + 1
+            devid.append(i)
+        c.release()
 
-entity dcm_ps_f is
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;              -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
-  );
-end dcm_ps_f;
+    print ("devid = ", devid)
+    return ndev
 
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
-
---------------------------------------------------
--- Components
---------------------------------------------------
-
-component BUFG 
-  port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
-
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
-
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
-
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
-signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
-
-begin
-
--- *********************************************************************
--- å≈íËêMçÜ
--- *********************************************************************
-  logic_0 <= '0';                   -- 0å≈íËêMçÜ
+def isOpened(cap):
+    ret = True
+    for c in cap:
+        ret = ret and c.isOpened()
+    return ret
 
 
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ÉäÉZÉbÉg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
-    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
-    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
-    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xff, 0xaf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
 
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
-    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
-  );
+if (__name__ == '__main__'):
+    ndev = get_ndev()
+    log_base = '../log/'
+    cap = []
+    for i in range(ndev):
+        cap.append(cv2.VideoCapture(i))
 
-end rtl;
+    # -- swap cap --
+    if False:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
+
+
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
+
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+
+    while(isOpened(cap)):
+        frame = [0] * ndev
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
+
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+
+        nwx = 3
+        nwy = int(1.0+(ndev-1)/3.0)
+
+        image = np.zeros((frame_height * nwy, frame_width*nwx, 3), dtype=np.uint8)
+        # image = np.zeros((frame_height, frame_width*ndev, 3), dtype=np.uint8)
+
+        # --- ROI ---
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * (i%nwx)
+            sy = frame_height * int(i/nwx)
+            ex = frame_width * (i%nwx+1)
+            ey = frame_height * int(1+i/nwx)
+            image[sy:ey,sx:ex] = fm
+
+        cv2.imshow(__file__, image)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
+
+    cv2.destroyAllWindows()
+
+    print("Done.")
