@@ -1,51 +1,68 @@
-2020年  1月 11日 土曜日 09:33:31 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2020年  1月 11日 土曜日 10:33:45 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "flops.h"
+//#include "pg_util.h" // double e_time(void)
+
+extern double e_time(void);
+
+void flops_initialize(struct flops_member* fm, int n, int nskip)
+{
+  (*fm).nbody = n;
+  (*fm).nskip = nskip;
+  (*fm).times = 0;
+  (*fm).nstep = 0;
+  (*fm).force_time = 0.0;
+  (*fm).start_time = e_time();
+}
+
+void flops_check(struct flops_member* fm)
+{
+  int n = (*fm).nbody;
+  int nskip = (*fm).nskip;
+  int nstep = (*fm).nstep;
+  int times = (*fm).times;
+  double t_start = (*fm).start_time;
+  double tmisc,tall;
+  double nope,Gflops;
+  double t_end;
+  nstep++;
+
+  if((times % nskip) != (nskip-1)){
+    times++;
+  } else {
+    double tforce = (*fm).force_time;
+    t_end = e_time();
+    tall = t_end - t_start;
+    tmisc = tall - tforce;
+    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
+    //       GRAVITY,  LEAPFLOG
+    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
+    fprintf(stderr,"[%d steps]\t",nstep);
+    fprintf(stderr,"LapTime %2.2f sec\t",tall);
+    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+
+    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
+    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
+
+    times = 0;
+    t_start = e_time();
+  }
+  (*fm).times = times;
+  (*fm).nstep = nstep;
+  (*fm).start_time = t_start;
+}
+
+
+
+void flops_ftime_init(struct flops_member *fm){
+  (*fm).force_time = e_time();
+}
+
+void flops_ftime_save(struct flops_member *fm){
+  double dum = (*fm).force_time;
+  (*fm).force_time = e_time() - dum;
+}
+
+
