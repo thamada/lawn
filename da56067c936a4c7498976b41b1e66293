@@ -1,37 +1,29 @@
-2020年  1月  9日 木曜日 09:54:11 JST
-#!/bin/sh
-#
-# An example hook script to prepare the commit log message.
-# Called by "git commit" with the name of the file that has the
-# commit message, followed by the description of the commit
-# message's source.  The hook's purpose is to edit the commit
-# message file.  If the hook fails with a non-zero status,
-# the commit is aborted.
-#
-# To enable this hook, rename this file to "prepare-commit-msg".
+2020年  1月 11日 土曜日 10:01:38 JST
+#!/usr/bin/env python3
+#Time-stamp: <>
+import fnmatch
+import functools
+import os
+import re
 
-# This hook includes three examples.  The first comments out the
-# "Conflicts:" part of a merge commit.
-#
-# The second includes the output of "git diff --name-status -r"
-# into the message, just before the "git status" output.  It is
-# commented because it doesn't cope with --amend or with squashed
-# commits.
-#
-# The third example adds a Signed-off-by line to the message, that can
-# still be edited.  This is rarely a good idea.
+def find(path, pattern):
 
-case "$2,$3" in
-  merge,)
-    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
+    if isinstance(pattern, str): 
+        match = functools.partial(fnmatch.fnmatch, pat=pattern)
+    elif isinstance(pattern, re._pattern_type):
+        match = pattern.match
+    elif callable(pattern):
+        match = pattern
+    else:
+        raise TypeError
 
-# ,|template,)
-#   /usr/bin/perl -i.bak -pe '
-#      print "\n" . `git diff --cached --name-status -r`
-#	 if /^#/ && $first++ == 0' "$1" ;;
+    for root, dirs, files in os.walk(path):
+        for file_ in files:
+            if match(file_):
+                yield os.path.join(root, file_)
 
-  *) ;;
-esac
 
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+if __name__ == '__main__':
+    for i in find('../log/', '*.jpg'):
+        print (i)
+
