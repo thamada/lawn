@@ -1,4 +1,9 @@
-2020年  1月 11日 土曜日 11:15:55 JST
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
-OK
+2020年  1月 20日 月曜日 09:44:58 JST
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
