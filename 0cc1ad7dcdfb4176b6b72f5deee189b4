@@ -1,29 +1,40 @@
-2020年  1月 21日 火曜日 09:26:59 JST
-#! /bin/sh
-# Time-stamp: <2006-11-22 17:38:27 hamada>
-# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-#
-# init script for PGR & PROGRAPE-4 (for developers)
-#
+2020年  1月 21日 火曜日 09:46:09 JST
+ 
+-w
+-g DebugBitstream:No
+-g Binary:no
+-g CRC:Enable
+-g ConfigRate:4
+-g CclkPin:PullUp
+-g M0Pin:PullUp
+-g M1Pin:PullUp
+-g M2Pin:PullUp
+-g ProgPin:PullUp
+-g DonePin:PullUp
+-g PowerdownPin:PullUp
+-g TckPin:PullUp
+-g TdiPin:PullUp
+-g TdoPin:PullUp
+-g TmsPin:PullUp
+-g UnusedPin:PullDown
+-g UserID:0xFFFFFFFF
+-g DCMShutDown:Disable
+-g DisableBandgap:No
+-g DCIUpdateMode:AsRequired
+-g StartUpClk:CClk
+-g DONE_cycle:4
+-g GTS_cycle:5
+-g GWE_cycle:6
+-g LCK_cycle:NoWait
+-g Match_cycle:Auto
+-g Security:None
+-g DonePipe:No
+-g DriveDone:No
+-g Encrypt:No
 
-rm -rf /tmp/*
-ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
-ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
-ln -s /usr/local/src/package.20060613 /tmp/pgr
-ln -s /usr/local/src/progrape /tmp/progrape
-cd /pciDriver/src/driver/; ./insmod.sh
-
-cd /tmp/progrape/driver;  make load
 
 
-umount /mnt/ram
-rm -rf /mnt/ram
-mkdir /mnt/ram
-mke2fs /dev/ram0
-mount -t ext2 /dev/ram0 /mnt/ram
-chmod -R 777 /mnt/ram
 
-cp /usr/local/bin/xxx.log /mnt/ram
-chmod -R 777 /mnt/ram
+
 
 
