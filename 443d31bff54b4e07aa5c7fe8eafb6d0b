@@ -1,54 +1,41 @@
-2020年  1月 10日 金曜日 09:11:41 JST
-#!/bin/sh
+2020年  1月 22日 水曜日 10:11:41 JST
+// Time-stamp: <2006-09-04 13:41:34 hamada>
+// by T.Hamada
+//
+// <2006-09-04 13:33:47 hamada>
 
-# An example hook script to verify what is about to be pushed.  Called by "git
-# push" after it has checked the remote status, but before anything has been
-# pushed.  If this script exits with a non-zero status nothing will be pushed.
-#
-# This hook is called with the following parameters:
-#
-# $1 -- Name of the remote to which the push is being done
-# $2 -- URL to which the push is being done
-#
-# If pushing without using a named remote those arguments will be equal.
-#
-# Information about the commits which are being pushed is supplied as lines to
-# the standard input in the form:
-#
-#   <local ref> <local sha1> <remote ref> <remote sha1>
-#
-# This sample shows how to prevent push of commits where the log message starts
-# with "WIP" (work in progress).
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-remote="$1"
-url="$2"
+#include "pg4.h"
 
-z40=0000000000000000000000000000000000000000
+void rst(int devid, int d, int msec)
+{
+  d = 0xff & d;
+  WriteBase0(devid, 0x4, d);
+  usleep(msec*1000);
+}
 
-IFS=' '
-while read local_ref local_sha remote_ref remote_sha
-do
-	if [ "$local_sha" = $z40 ]
-	then
-		# Handle delete
-	else
-		if [ "$remote_sha" = $z40 ]
-		then
-			# New branch, examine all commits
-			range="$local_sha"
-		else
-			# Update to existing branch, examine new commits
-			range="$remote_sha..$local_sha"
-		fi
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  int i;
 
-		# Check for WIP commit
-		commit=`git rev-list -n 1 --grep '^WIP' "$range"`
-		if [ -n "$commit" ]
-		then
-			echo "Found WIP commit in $local_ref, not pushing"
-			exit 1
-		fi
-	fi
-done
+  pg4_open(devid);
+  
+  for(i=0;i<16;i++){
+    int x;
+    x = 0xff&(1<<(i%8));
+    rst(devid, x, 100);
+    rst(devid, 0, 1);
+  }
 
-exit 0
+  rst(devid, 0xff, 1000);
+  rst(devid, 0x0, 0);
+
+  pg4_close(devid);
+
+  return 0;
+}
