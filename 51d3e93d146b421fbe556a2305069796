@@ -1,68 +1,163 @@
-2020å¹´  1æœˆ 11æ—¥ åœŸæ›œæ—¥ 10:33:45 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "flops.h"
-//#include "pg_util.h" // double e_time(void)
+2020å¹´  1æœˆ 23æ—¥ æœ¨æ›œæ—¥ 10:35:32 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
 
-extern double e_time(void);
+-- LOCAL READ ( ifpga <- pfpga )
+-- by Tsuyoshi Hamada
+-- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
+-- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ðƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJŽnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
 
-void flops_initialize(struct flops_member* fm, int n, int nskip)
-{
-  (*fm).nbody = n;
-  (*fm).nskip = nskip;
-  (*fm).times = 0;
-  (*fm).nstep = 0;
-  (*fm).force_time = 0.0;
-  (*fm).start_time = e_time();
-}
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-void flops_check(struct flops_member* fm)
-{
-  int n = (*fm).nbody;
-  int nskip = (*fm).nskip;
-  int nstep = (*fm).nstep;
-  int times = (*fm).times;
-  double t_start = (*fm).start_time;
-  double tmisc,tall;
-  double nope,Gflops;
-  double t_end;
-  nstep++;
+entity LOCAL_READ is
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
 
-  if((times % nskip) != (nskip-1)){
-    times++;
-  } else {
-    double tforce = (*fm).force_time;
-    t_end = e_time();
-    tall = t_end - t_start;
-    tmisc = tall - tforce;
-    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
-    //       GRAVITY,  LEAPFLOG
-    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
-    fprintf(stderr,"[%d steps]\t",nstep);
-    fprintf(stderr,"LapTime %2.2f sec\t",tall);
-    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
-    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
 
-    times = 0;
-    t_start = e_time();
-  }
-  (*fm).times = times;
-  (*fm).nstep = nstep;
-  (*fm).start_time = t_start;
-}
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ;
+
+architecture rtl of LOCAL_READ is
+
+component LOCAL_READ_CNT
+  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
+  port (
+    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
+    CALC_DONE  : in std_logic;                 -- pulse
+    FETCH_DONE : out std_logic;
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+component LOCAL_READ_IF
+  port (
+    EXEC : in std_logic;
+    START_AD : in std_logic_vector(18 downto 0);
+    NQWORD   : in std_logic_vector( 8 downto 0);
+    CHIPSEL  : in std_logic_vector( 3 downto 0);
+    MEM_AD_BASE : in std_logic_vector(12 downto 0);
+    BUSY : out std_logic;  -- to GPREG0
+    DMAR_ENABLE : out std_logic_vector(3 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_ADB     : out std_logic_vector(12 downto 0);
+    MEM_WEHB    : out std_logic;
+    MEM_WELB    : out std_logic;
+    MEM_DTIB    : out std_logic_vector(63 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+signal calc_done : std_logic :='0';   -- to cnt
+signal csts0,csts1 : std_logic :='0'; -- from pfpga
+
+-- CNT
+signal fetch_done : std_logic :='0';
+signal exec : std_logic;                          -- cnt -> if
+signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
+signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
+signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
+signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
+-- IF
+signal ignore_busy : std_logic; 
+
+begin
+
+  -- CALC STATUS
+  csts0 <= CALC_STS;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      csts1 <= csts0;
+    end if;
+  end process;
+
+  -- CALC DONE
+  process (RST,CLK,csts0,csts1) begin
+    if(RST='1') then
+      calc_done <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        calc_done <= '1';
+      else
+        calc_done <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- BUSY
+  process (RST,CLK,csts0,csts1,fetch_done) begin
+    if (RST='1') then
+      BUSY <='1';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        BUSY <= '1';
+      elsif(fetch_done='1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- =================================================== SUBMODULE INSTANCES
+  u0: LOCAL_READ_CNT 
+    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
+    port map(NPIPE => NPIPE,
+             CALC_DONE => calc_done,
+             FETCH_DONE => fetch_done,
+             EXEC       => exec,
+             START_AD   => start_ad,
+             NQWORD     => nqword,
+             CHIPSEL    => chipsel,
+             MEM_AD_BASE => mem_base,
+             RST => RST, CLK=>CLK);
 
 
+  u1: LOCAL_READ_IF
+    port map(EXEC        => exec,     -- from cnt
+             START_AD    => start_ad, -- from cnt
+             NQWORD      => nqword,   -- from cnt
+             CHIPSEL     => chipsel,  -- from cnt
+             MEM_AD_BASE => mem_base, -- from cnt
+             BUSY => ignore_busy,
+             DMAR_ENABLE => DMAR_ENABLE, -- output directly
+             DBUS_Port   => DBUS_Port,   -- output directly
+             DBUS_idata  => DBUS_idata,  -- output directly
+             DBUS_HiZ    => DBUS_HiZ,    -- output directly
+             MEM_ADB  => MEM_ADB,        -- output directly
+             MEM_WEHB => MEM_WEHB,       -- output directly
+             MEM_WELB => MEM_WELB,       -- output directly
+             MEM_DTIB => MEM_DTIB,       -- output directly
+             RST=>RST,CLK=>CLK);
 
-void flops_ftime_init(struct flops_member *fm){
-  (*fm).force_time = e_time();
-}
 
-void flops_ftime_save(struct flops_member *fm){
-  double dum = (*fm).force_time;
-  (*fm).force_time = e_time() - dum;
-}
-
-
+end rtl;
