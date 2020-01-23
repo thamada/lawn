@@ -1,49 +1,28 @@
-2020年  1月  8日 水曜日 10:50:40 JST
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT proj
-DESIGN proj
-DEVFAM virtex2p
-DEVFAMTIME 0
-DEVICE xc2vp70
-DEVICETIME 0
-DEVPKG ff1517
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE ..\dmaw_mem_data.vhd
-SOURCE ..\dmaw_mem_we.vhd
-SOURCE ..\dmar_mem_adr.vhd
-SOURCE ..\dmaw_mem_adr.vhd
-SOURCE ..\dmar_start_adr.vhd
-SOURCE ..\dmaw_start_adr.vhd
-SOURCE ..\dmar_dbus_hiz.vhd
-SOURCE ..\dmar.vhd
-SOURCE ..\clk_muldiv_by_xcore.vhd
-SOURCE ..\dmaw.vhd
-SOURCE ..\user.vhd
-SOURCE ..\dmar_state.vhd
-SOURCE ..\dmar_mem_re.vhd
-SOURCE ..\clk_muldiv.vhd
-SOURCE ..\dmaw_state.vhd
-SOURCE ..\top.vhd
-SOURCE ..\pgpg_mem\dpram.vhd
-SOURCE ..\pgpg_mem\pg_module.vhd
-SOURCE ..\pgpg_mem\calc.vhd
-SOURCE ..\pgpg_mem\jmem.vhd
-SOURCE ..\pgpg_mem\pgpg_mem.vhd
-SOURCE ..\pgpg_mem\adr_dec.vhd
-SOURCE ..\pgpg_mem\pg_pipe.vhd
-SOURCE ..\pgpg_mem\setn.vhd
-SOURCE ..\pgpg_mem\pipe_sts.vhd
-DEPASSOC top ..\top.ucf
-[STRATEGY-LIST]
-Normal=True
+2020年  1月 23日 木曜日 10:43:13 JST
+// Copyright(c) 2004- by PGPG
+// The original source : contrib/src_h/vi/pg_util.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#ifndef LONG
+#define LONG unsigned long long int
+#endif
+LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
+double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
+LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
+LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
+double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
+LONG extractbit_long(LONG in, int hi, int lo);
+void l2bit(LONG a);
+void putbits(LONG a);
+void putbits32(LONG a);
+void putbitsn(LONG a,int n);
+double gen_rand_abs(void);
+double gen_rand(void);
+double gen_rand_tamanizero(void);
+
+
+#include <sys/time.h>
+#include <sys/resource.h>
+double e_time(void);
