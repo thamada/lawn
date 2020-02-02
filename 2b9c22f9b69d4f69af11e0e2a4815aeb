@@ -1,68 +1,50 @@
-2020年  2月  2日 日曜日 09:42:20 JST
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
+2020年  2月  2日 日曜日 10:09:09 JST
+#!/usr/bin/env python3
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import sys
 
-entity calc is
-  port (
-    start      : in  std_logic;
-    clk        : in  std_logic;
-    pclk       : in  std_logic;
-    n          : in  std_logic_vector(31 downto 0);
-    run        : out  std_logic;
-    mem_adr    : out  std_logic_vector(31 downto 0));
-end calc;
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xf, 0xf, 0xff)
+    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    
 
-architecture rtl of calc is
 
-signal rst :  std_logic;
-signal rstn : std_logic_vector(31 downto 0);
-signal start_r : std_logic;
-signal mema_dc : std_logic_vector(17 downto 0) := (others=>'0');
-begin
+if (__name__ == '__main__'):
+    argv = sys.argv
+    devid = int(argv[1])
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
 
--- GENERATE rst PULS ------------------
-process(pclk) begin
-  if(pclk'event and pclk='1') then
-    rst <= rstn(0);
-  end if;
-end process;
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
 
-process (clk) begin
-  if(clk'event and clk='1') then
-    rstn(0) <= start_r AND (NOT start);
-    start_r <= start;
-  end if;
-end process;
----------------------------------------
+    print(cap_width, "x", cap_height, ":", cap_fps)
 
--- GENERATE run --------------------------
-process(pclk,rst) begin
-  if(rst = '1') then
-    run <= '0';
-  elsif(pclk'event and pclk='1') then
-    if(mema_dc /= "000000000000000000") then
-      run <= '1';
-    else
-      run <= '0';
-    end if;
-  end if;
-end process;
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
--- GENERATE mem_adr  ---------------------
-process(pclk,rst) begin
-  if(rst = '1') then
-    mema_dc <=  n(17 downto 0) ;
-  elsif(pclk'event and pclk='1') then
-    if(mema_dc /= "000000000000000000") then
-      mema_dc <= mema_dc - "000000000000000001";
-    end if;
-  end if;
-end process;
---hoge
-  mem_adr <= "000000000000000" & mema_dc(15 downto 0) & "0";  -- G5
---mem_adr <= "00000000000000" & mema_dc(15 downto 0) & "00";  -- SPH FirstStage
---mem_adr <= "0000000000000" & mema_dc(15 downto 0) & "000";  -- SPH SecondStage
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('frame', frame)
 
-end rtl;
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(frame, tnow)
+            ofname = mkdir.get_filename_frame('../log/', tnow)
+#            cv2.imwrite(ofname, frame)
+            print(ofname, ": TEST on devid=%d"%devid)
+            tnow0 = tnow
+ 
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
