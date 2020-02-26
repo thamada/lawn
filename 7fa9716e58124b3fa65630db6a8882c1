@@ -1,47 +1,42 @@
-2020年  2月 11日 火曜日 11:01:39 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+2020年  2月 26日 水曜日 10:27:50 JST
+#!/usr/bin/env python3
+import os
+from datetime import datetime
+import time
 
-void b3_init(int devid);
-void b3_init_config(int devid, char* fpga_conf_file);
-
-
-
-void b3_set_idata(unsigned int devid,      // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int ireg_index, // iregister index
-                  unsigned int data);      // data
-
-void b3_reset_jmem_adr();
-void b3_reset_jmem_adr_n(int nchip);
-
-void b3_set_jdata(unsigned int devid,      // device id
-                  unsigned int nword,      // number of jdata
-                  unsigned int jdata[] );  // 
-
-void b3_set_jdata_n_chip(unsigned int devid,    // device id
-			 unsigned int nchip,    // 0, 1, 2, 3
-			 unsigned int nword,    // number of jdata
-			 unsigned int jdata[]);
+# YYYYMMDD_HH_MM_SS
+def get_filename_frame(basedir, str_datetime):
+    cell = list(str_datetime)
+    str_YYYYMMDD = ''.join(cell[0:8])
+    str_HH = ''.join(cell[9:11])
+    str_MM = ''.join(cell[12:14])
+    str_SS = ''.join(cell[15:17])
+    dirname = basedir + str_YYYYMMDD + "/" + str_HH
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + "/" + str_datetime+".jpg"
+    ret = ret.replace(' ','')
+    return ret
 
 
-void b3_get_jdata(unsigned int devid,      // device id
-                  unsigned int chip_sel,   // chip_sel
-		  unsigned int jmem_adr,   // mem adr
-                  unsigned int* data );    // data 
+def get_filename_frame_simple(basedir, fname):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + fname
+    ret = ret.replace(' ','')
+    return ret
 
-void b3_start_calc(unsigned int n,
-		   unsigned int chip_sel);
+def create_dir(basedir):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
 
-void b3_start_calc_sepa4jM(unsigned int nrun[]);
+    
 
-unsigned int b3_get_calcsts(unsigned int chip_sel);
-
-
-void b3_get_fodata(unsigned int devid,     // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int fo_index,   // iregister index
-                  unsigned int* data);     // data
+if __name__ == '__main__':
+    while(True):
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        fname = get_filename_frame('../work/', tnow)
+        print (fname)
+        time.sleep(0.5)
