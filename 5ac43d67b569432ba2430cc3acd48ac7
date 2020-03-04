@@ -1,57 +1,51 @@
-2020Âπ¥  2Êúà 15Êó• ÂúüÊõúÊó• 11:43:13 JST
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
+2020Âπ¥  3Êúà  4Êó• Ê∞¥ÊõúÊó• 09:11:33 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
 
-entity pipe_sts is
+-- 0->1 : if((state==0)&&(dma_we==1))
+-- 1->2 : if (state==1)
+-- 2->3 : if((state==2) &&(dma_we==0))
+-- 3->0 : if (state==3)
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity dmaw_state is
   port (
-    rst        : in  std_logic;
-    clk        : in  std_logic;
-    run        : in  std_logic;
-    runret     : in  std_logic;
-    status     : out std_logic_vector(31 downto 0)
-  );
-end pipe_sts;
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmaw_state;
 
-architecture rtl of pipe_sts is
-signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
-signal rund,sts : std_logic;
-signal cntr : std_logic_vector(7 downto 0);
-signal irun : std_logic := '0';
+architecture rtl of dmaw_state is
 
+signal state_ff : std_logic_vector(1 downto 0);
 begin
 
--- clk    ____~~~~____~~~~____~~~~____~~~~__
--- runret _____~~~~~~~~_____________________
--- rund   _____________~~~~~~~~_____________
--- status                      <finish     >
+  STATE <= state_ff;
 
--- status
-status(31 downto 8) <= (others=>'0');
-process(clk,rst) begin
-  if(rst='1') then
-    status(7 downto 0) <= (others=>'1');
-  elsif(clk'event and clk='1') then
-    if((runret='0') AND (rund='1')) then  -- åvéZèIóπ
-      status(7 downto 0) <= (others=>'1');
-    elsif((run='1') AND (irun='0')) then -- åvéZäJén
-      status(7 downto 0) <= (others=>'0');
+  process (RST,CLK,ENABLE,state_ff) begin
+    if(RST='1') then
+      state_ff <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((state_ff="00") AND (ENABLE='1')) then
+        state_ff <= "01";
+      elsif(state_ff = "01") then
+        state_ff <= "10";
+      elsif((state_ff = "10") AND (ENABLE='0')) then
+        state_ff <= "11";
+      elsif((state_ff = "10") AND (ENABLE='1')) then
+        state_ff <= "10";
+      else -- if(state_ff = "11") then
+        state_ff <= "00";
+      end if;
     end if;
-  end if;
-end process;
-
-process(clk) begin
-  if(clk'event and clk='1') then
-    rund  <= runret;
-  end if;
-end process;
-
-process(clk) begin
-  if(clk'event and clk='1') then
-    irun  <= run;
-  end if;
-end process;
-
+  end process;
 
 end rtl;
