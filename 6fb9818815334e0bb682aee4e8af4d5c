@@ -1,56 +1,42 @@
-2020å¹´  3æœˆ  4æ—¥ æ°´æ›œæ—¥ 10:55:51 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-04 15:57:17 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2020å¹´  3æœˆ  7æ—¥ åœŸæ›œæ—¥ 09:31:32 JST
+/**
+   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
+   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
+   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
+*/
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-if (__name__ == '__main__'):
-    state = State()
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
+{
+  int i,j,d;
+  double dx[3];
 
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
+  /* a[][]‚Ì‰Šú‰» */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
 
-
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('camera: %d'%(devid), frame)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            basedir = '../log.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, frame)
-            print(ofname, "devid = %d"%devid)
-            tnow0 = tnow
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord(' '): state.is_record = not (state.is_record)
+  /* ‘ŠŒİì—p‚ÌŒvZ  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
+    }
+  }
 
 
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
+}
