@@ -1,42 +1,139 @@
-2020年  3月  7日 土曜日 10:20:41 JST
-#!/usr/bin/env python3
-import os
-from datetime import datetime
-import time
+2020年  3月  8日 日曜日 09:35:33 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=8
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-# YYYYMMDD_HH_MM_SS
-def get_filename_frame(basedir, str_datetime):
-    cell = list(str_datetime)
-    str_YYYYMMDD = ''.join(cell[0:8])
-    str_HH = ''.join(cell[9:11])
-    str_MM = ''.join(cell[12:14])
-    str_SS = ''.join(cell[15:17])
-    dirname = basedir + str_YYYYMMDD + "/" + str_HH
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + "/" + str_datetime+".jpg"
-    ret = ret.replace(' ','')
-    return ret
+learning_rate=0.001
+max_batches = 40200
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-def get_filename_frame_simple(basedir, fname):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + fname
-    ret = ret.replace(' ','')
-    return ret
+[maxpool]
+size=2
+stride=2
 
-def create_dir(basedir):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    
+[maxpool]
+size=2
+stride=2
 
-if __name__ == '__main__':
-    while(True):
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        fname = get_filename_frame('../work/', tnow)
-        print (fname)
-        time.sleep(0.5)
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=35
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=2
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
