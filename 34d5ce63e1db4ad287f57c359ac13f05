@@ -1,17 +1,2 @@
-2020年  3月 18日 水曜日 11:10:14 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+2020年  3月 19日 木曜日 09:46:44 JST
+36330	80000000000000	4	FFFFFFFFFFFFFA00	
