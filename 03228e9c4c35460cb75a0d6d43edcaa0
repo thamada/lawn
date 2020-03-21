@@ -1,40 +1,29 @@
-2020年  3月 17日 火曜日 11:18:25 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2020年  3月 21日 土曜日 10:26:55 JST
+#! /bin/sh
+# Time-stamp: <2006-11-22 17:38:27 hamada>
+# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
+#
+# init script for PGR & PROGRAPE-4 (for developers)
+#
+
+rm -rf /tmp/*
+ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
+ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
+ln -s /usr/local/src/package.20060613 /tmp/pgr
+ln -s /usr/local/src/progrape /tmp/progrape
+cd /pciDriver/src/driver/; ./insmod.sh
+
+cd /tmp/progrape/driver;  make load
 
 
-entity WRITECOMB_CHECK is
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+umount /mnt/ram
+rm -rf /mnt/ram
+mkdir /mnt/ram
+mke2fs /dev/ram0
+mount -t ext2 /dev/ram0 /mnt/ram
+chmod -R 777 /mnt/ram
 
-architecture rtl of WRITECOMB_CHECK is
+cp /usr/local/bin/xxx.log /mnt/ram
+chmod -R 777 /mnt/ram
 
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
 
-begin
-
-  IS_ERR <= cnt;
-
-  cntr <= cnt;
-
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
-      end if;
-    end if;
-  end process;
-
-end rtl;
