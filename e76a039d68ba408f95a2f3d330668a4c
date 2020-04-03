@@ -1,28 +1,22 @@
-2020年  4月  2日 木曜日 11:11:57 JST
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
-
-
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xff, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
-
-image = cv2.imread("/tmp/tmp.jpg")
-
-tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
-put_text(image, tnow)
-cv2.imshow('test', image)
-
-
-while(True):
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-print("Done.")
+2020年  4月  3日 金曜日 10:29:23 JST
+# Xilinx CORE Generator 6.2.03i
+# User = Administrator
+Initializing default project...
+Loading plug-ins...
+All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
+# busformat=BusFormatAngleBracketNotRipped
+# designflow=VHDL
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+# flowvendor=Foundation_iSE
+# formalverification=None
+# simulationoutputproducts=VHDL
+# xilinxfamily=Virtex2
+# outputoption=DesignFlow
+# overwritefiles=Default
+# simvendor=ModelSim
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+SETPROJECT .
+Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
