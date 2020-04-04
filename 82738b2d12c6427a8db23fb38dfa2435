@@ -1,24 +1,13 @@
-2020年  3月 16日 月曜日 10:05:37 JST
-// Time-stamp: "2006-12-07 19:19:22 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-
+2020年  4月  4日 土曜日 09:54:14 JST
 #include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+#include "nbodysim.h"
 
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
+void debug_position(double x[][DIM], double time,int n)
 {
-  int devid = 0;
-
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  pg4_DMAcheck(devid);
-
-  return 0;
+    int i;
+    for(i=0;i<n;i++){
+      //        printf("%d,%e,%1.8e,%1.8e,%1.8e\n",i,t,x[i][0],x[i][1],x[i][2]);
+        printf("%1.8e\t%1.8e\t%1.8e\t%1.1e\n",x[i][0],x[i][1],x[i][2],time);
+    }
 }
+
