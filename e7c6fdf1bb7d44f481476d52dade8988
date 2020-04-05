@@ -1,25 +1,17 @@
-2020年  4月  3日 金曜日 10:35:12 JST
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT tmp2
-DESIGN tmp2
-DEVFAM virtex2
-DEVFAMTIME 0
-DEVICE xc2v1000
-DEVICETIME 0
-DEVPKG fg456
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE pfpga_config.vhd
-STIMULUS sim.tbw
-[STRATEGY-LIST]
-Normal=True
+2020年  4月  5日 日曜日 10:03:00 JST
+#!/usr/bin/perl
+
+my $N = 300;
+my $XSCALE = 1.0;
+my $YSCALE = 1.0;
+
+srand(12345);
+
+print $N ."\n";
+
+for(my $i=0;$i<$N;$i++){
+    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
+    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
+    my $s = sprintf("%e\t%e\n",$x,$y);
+    print $s;
+}
