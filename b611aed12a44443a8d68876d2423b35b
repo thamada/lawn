@@ -1,261 +1,103 @@
-2020年  4月  3日 金曜日 10:43:28 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-12 07:43:27 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2020年  4月  5日 日曜日 10:36:14 JST
+# Current time Tue Jan 04 17:06:01 2005
+# ModelSim Stack Trace
+# Program = vish
+# Id = "5.7g"
+# Version = "2003.10"
+# Date = "Oct 13 2003"
+# Platform = win32pe
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
-        self.drawing = False
-        self.moving = False
-        self.posi0 = [-1,-1]
-        self.posi1 = [-1,-1]
-        self.posi2 = [-1,-1]
-        self.image = -1
-        self.image_size = [-1, -1] # [height, width]
-        self.image_orig = -1
-        self.class_num = 777
-        self.image_num = 0
+Exception c0000005 has occurred at address 0060b1ac. Traceback:
+# 0    0x0060b1ac: 'TclpAlloc + 0x9c'
+# 1    0x0060f6ae: 'Tcl_Alloc + 0xe'
+# 2    0x006370a1: 'Tcl_ListObjReplace + 0x321'
+# 3    0x0063b669: 'Tcl_DuplicateObj + 0xd9'
+# 4    0x0061414d: 'Tcl_LreplaceObjCmd + 0x10d'
+# 5    0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 6    0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 7    0x006427ef: 'TclObjInterpProc + 0x26f'
+# 8    0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 9    0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 10   0x0063d426: 'Tcl_Eval + 0x16'
+# 11   0x10002ad3: 'Itk_ArchetypeInit + 0x1ad3'
+# 12   0x100019a0: 'Itk_ArchetypeInit + 0x9a0'
+# 13   0x0033b67c: 'Itcl_EvalMemberCode + 0x206'
+# 14   0x0033c346: 'Itcl_ExecMethod + 0x18d'
+# 15   0x00344657: 'Itcl_EvalArgs + 0x133'
+# 16   0x0033e4b1: 'Itcl_HandleInstance + 0x1f2'
+# 17   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 18   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 19   0x0063a5ba: 'Tcl_NamespaceObjCmd + 0xb2a'
+# 20   0x00639ba9: 'Tcl_NamespaceObjCmd + 0x119'
+# 21   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 22   0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 23   0x0063d426: 'Tcl_Eval + 0x16'
+# 24   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
+# 25   0x00530d70: 'Tk_BindEvent + 0x99c'
+# 26   0x00553635: 'TkBindEventProc + 0x18f'
+# 27   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
+# 28   0x005acff7: 'Tk_DestroyWindow + 0x204'
+# 29   0x005acf2a: 'Tk_DestroyWindow + 0x137'
+# 30   0x005acf2a: 'Tk_DestroyWindow + 0x137'
+# 31   0x005acf2a: 'Tk_DestroyWindow + 0x137'
+# 32   0x005ae2f1: 'Tk_GetNumMainWindows + 0x70'
+# 33   0x00622f8d: 'Tcl_Finalize + 0x4d'
+# 34   0x0061060e: 'Tcl_ExitObjCmd + 0x3e'
+# 35   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 36   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 37   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 38   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 39   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 40   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 41   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 42   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 43   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 44   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 45   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 46   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 47   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 48   0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 49   0x0060cc62: 'Tcl_EvalObjEx + 0x342'
+# 50   0x0061059c: 'Tcl_EvalObjCmd + 0x6c'
+# 51   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 52   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 53   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 54   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 55   0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 56   0x0063d426: 'Tcl_Eval + 0x16'
+# 57   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
+# 58   0x0042d1f7: '<unknown (@0x42d1f7)>'
+# 59   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
+# 60   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 61   0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 62   0x0063d426: 'Tcl_Eval + 0x16'
+# 63   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
+# 64   0x0042cfd2: '<unknown (@0x42cfd2)>'
+# 65   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
+# 66   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 67   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 68   0x00623a73: 'TclExecuteByteCode + 0x743'
+# 69   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 70   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 71   0x006238e4: 'TclExecuteByteCode + 0x5b4'
+# 72   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
+# 73   0x006427ef: 'TclObjInterpProc + 0x26f'
+# 74   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
+# 75   0x0063d18a: 'Tcl_EvalEx + 0x11a'
+# 76   0x0063d426: 'Tcl_Eval + 0x16'
+# 77   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
+# 78   0x00530d70: 'Tk_BindEvent + 0x99c'
+# 79   0x00553635: 'TkBindEventProc + 0x18f'
+# 80   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
+# 81   0x0055d6d2: 'TkQueueEventForAllChildren + 0xcf'
+# 82   0x0063af20: 'Tcl_ServiceEvent + 0x60'
+# 83   0x0063b191: 'Tcl_DoOneEvent + 0x111'
+# 84   0x0055d73c: 'Tk_MainLoop + 0x14'
+# 85   0x0057ce48: 'Tk_MainEx + 0x438'
+# 86   0x0042eed4: '<unknown (@0x42eed4)>'
+# 87   0x0042f3e9: '<unknown (@0x42f3e9)>'
+# 88   0x004c0925: '<unknown (@0x4c0925)>'
+# 89   0x77e7893d: '<unknown (@0x77e7893d)>'
+StackWalk failed 487
+# End of Stack Trace
 
-    def draw_rect(self):
-        # print ("posi0, posi1: ", self.posi0, self.posi1)
-        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
-
-    def draw_text(self):
-        if(self.is_record):
-            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
-            font_size = 0.8
-            text = "<<%d>>"% (self.image_num)
-            color = (0x0, 0x0, 0xBF)
-            px = int(self.image_size[1]/2)
-            py = 30
-            cv2.putText(self.image, text,(px, py), font, font_size, color)
-
-state = State()
-
-def mouse_event(event,x,y,flags,param):
-    global state
-
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
-
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
-
-    if event == (cv2.EVENT_RBUTTONDOWN): 
-        state.moving = True
-        state.posi2[0] = x
-        state.posi2[1] = y
-
-    if event == (cv2.EVENT_RBUTTONUP): 
-        state.moving = False
-        state.posi2[0] = x
-        state.posi2[1] = y
-    
-
-    if event == (cv2.EVENT_MOUSEMOVE):
-        if state.moving == True:
-            width  = abs(state.posi0[0] - state.posi1[0])
-            height = abs(state.posi0[1] - state.posi1[1])
-            x0 = x - int(width/2)
-            x1 = x + int(width/2)
-            y0 = y - int(height/2)
-            y1 = y + int(height/2)
-
-            x_min = min(x0, x1)
-            x_max = max(x0, x1)
-            y_min = min(y0, y1)
-            y_max = max(y0, y1)
-
-            if x_min < 0: x_min = 0
-            if y_min < 0: y_min = 0
-            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
-            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
-
-            state.posi0[0] = x_min
-            state.posi0[1] = y_min
-            state.posi1[0] = x_max
-            state.posi1[1] = y_max
-
-def __mouse_event(event,x,y,flags,param):
-    global state
-
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
-
-
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
-
-#------------------------------------------------------------------------ save_data
-def save_data_bbox(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4bbox/'
-    fname_body = "image_%08d" % fnum
-
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"Images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
-
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
-
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"Labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    with open(ofname_labels, "w") as file:
-        file.write("1\n")
-        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-def save_data_darknet(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4darknet/'
-    fname_body = "image_%08d" % fnum
-
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    #print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
-
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    #print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
-
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    
-    label_format = 'BBox'
-    label_format = 'darknet'
-
-    if label_format == 'BBox': 
-        with open(ofname_labels, "w") as file:
-            file.write("1\n")
-            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-    if label_format == 'darknet': 
-        img_h, img_w = image_orig.shape[:2]
-        dh = float(img_h)
-        dw = float(img_w)
-        x0 = bbox_posi[0]
-        y0 = bbox_posi[1]
-        x1 = bbox_posi[2]
-        y1 = bbox_posi[3]
-        dnet_x = (x0 + x1)/(2.0*dw)
-        dnet_y = (y0 + y1)/(2.0*dh)
-        dnet_w = (x1 - x0)/dw
-        dnet_h = (y1 - y0)/dh
-        with open(ofname_labels, "w") as file:
-            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
-
-
-def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
-    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
-    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
-
-#------------------------------------------------------------------------ save_data./
-
-if (__name__ == '__main__'):
-
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        state.image_orig = frame.copy()
-        state.image      = frame.copy()
-        state.image_size[0], state.image_size[1] = frame.shape[:2]
-        state.draw_rect()
-        state.draw_text()
-        cv2.imshow("THBox-Auto.py", state.image)
-        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            if False:
-                basedir = '../log.%d/'% (devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, state.image)
-                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
-                tnow0 = tnow
-            save_data(state.image, state.image_orig, state.image_num)
-            state.image_num += 1
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if ( (key == ord(' ')) or 
-             (key == 34) or # Muhenkan
-             (key == 35) or # Henkan
-             (key == 39) or # katakana
-             (key == 10)    # Enter
-        ):
-            state.is_record = not (state.is_record)
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
