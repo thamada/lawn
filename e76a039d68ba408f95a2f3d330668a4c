@@ -1,16 +1,15 @@
-2020年  4月 15日 水曜日 10:24:34 JST
+2020年  4月 15日 水曜日 10:30:44 JST
 #!/usr/bin/env python3
-
+import cv2
 import glob
-import sys
-import random
+from datetime import datetime
+import time 
 
-fname = sys.argv[1]
-random.seed()
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
 
-with open(fname, "r") as fd:
-    lines = fd.readlines()
-    random.shuffle(lines)
-    for l in lines:
-        l = l.replace("\n",'')
-        print (l)
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
+
+    time.sleep(3)
