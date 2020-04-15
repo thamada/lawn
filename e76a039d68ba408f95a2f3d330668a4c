@@ -1,19 +1,16 @@
-2020年  4月 12日 日曜日 09:17:40 JST
-//============================================================================
-struct flops_member {
-  double Gflops;
-  double start_time;
-  double force_time;
-  int nbody;
-  int times;
-  int nstep;
-  int nskip;
-};
+2020年  4月 15日 水曜日 10:24:34 JST
+#!/usr/bin/env python3
 
-void flops_initialize(struct flops_member *fm, int n, int nskip);
-void flops_check(struct flops_member *fm);
+import glob
+import sys
+import random
 
-void flops_ftime_init(struct flops_member *fm);
-void flops_ftime_save(struct flops_member *fm);
+fname = sys.argv[1]
+random.seed()
 
-
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
