@@ -1,134 +1,192 @@
-2020年  4月 12日 日曜日 11:03:28 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <math.h>
-#include "pg_util.h"
+2020年  4月 15日 水曜日 10:08:27 JST
+/*
+ * progrape.h -- the device driver header for PROGRAPE-4
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada.
+ *                                All rights reserved.
+ *
+ * The source code in this file can be freely used, 
+ * so long as an acknowledgment from Tsuyoshi Hamada.
+ * 
+ * The source code in this file can be modified, branched, and
+ * redistributed in source or binary form in the following situation.  
+ * If you want to modify, redistribute or make another version based on
+ * this source code, you should get distinct agreement from Tsuyoshi
+ * Hamada.  The modified, redistributed or branched(another version based
+ * on this source code) source code should include the citation that the
+ * code comes from the "progrape.c by Tsuyoshi Hamada".
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
+#ifndef _PROGRAPE_H_
+#define _PROGRAPE_H_
 
-#include "pgrapi.h"
+#include <linux/ioctl.h> /* for the _IOW etc */
 
-// #define DEBUG
-
-#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
-#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
-
-#define NJMAX 16384
-
-#define NPIPE_PER_CHIP  1
-#define NCHIP_PER_BOARD 4
-
-#define NFLO 26
-#define NMAN 16
-#define RMODE 6
-
-static int      devid = 0;
-static int      __first = 0;
-
-static unsigned long long int fdata[NJMAX][FDIM];
-
-void
-force(double x[][3], double m[], double eps2, double a[][3], int n)
-{
-    double          log2(double);
-    int             i, j;
-    unsigned int    npipe, npipe_per_chip;
-    unsigned int    nchip;
-    unsigned int    jdata[JDIM];
-    if (__first == 0) {
-	b3open(devid);
-	pgr_reset(devid);
-	pgr_set_npipe_per_chip(devid, NPIPE_PER_CHIP);
-	pgr_set_jwidth(devid, 16);	// change manually 4 if grape
-	pgr_set_nchip(NCHIP_PER_BOARD);
-	__first = 1;
-    }
-
-    npipe_per_chip = NPIPE_PER_CHIP;
-    nchip = NCHIP_PER_BOARD;
-    npipe = nchip * npipe_per_chip;
-
-    for (j = 0; j < n; j++) {
-	unsigned int    xj[4];
-	xj[0] = (unsigned int) (double2pgpgfloat_r(x[j][0], 26, 16, 6));
-	xj[1] = (unsigned int) (double2pgpgfloat_r(x[j][1], 26, 16, 6));
-	xj[2] = (unsigned int) (double2pgpgfloat_r(x[j][2], 26, 16, 6));
-	xj[3] = (unsigned int) (double2pgpgfloat_r(m[j], 26, 16, 6));
-	for (i = 0; i < JDIM; i++)   jdata[i] = 0x0;
-	jdata[0] |= (0x3ffffff & xj[0]) << 0;	// mask(26)
-	jdata[0] |= (0x3f & xj[1]) << 26;	// mask(6)
-	jdata[1] |= (0xfffff & (xj[1] >> 6));	// mask(20)
-	jdata[1] |= (0xfff & xj[2]) << 20;	// mask(12)
-	jdata[2] |= (0x3fff & (xj[2] >> 12));	// mask(14)
-	jdata[2] |= (0x3ffff & xj[3]) << 14;	// mask(18)
-	jdata[3] |= (0xff & (xj[3] >> 18));	// mask(8)
-	pgr_setjpset_one(devid, j, jdata);
-    }
-
-    for (i = 0; i < n; i += npipe) {
-	int             nn, ii, ichip;
-	nn = MIN(npipe, n - i);
-
+// -------------------------------------------------------------------- for DEBUG
+/*
+ * Macros to help debugging
+ */
+#undef PDEBUG             /* undef it, just in case */
 #ifdef DEBUG
-	dum = e_time();
+#  ifdef __KERNEL__
+     /* This one if debugging is on, and kernel space */
+#    define PDEBUG(fmt, args...) printk( KERN_DEBUG "progrape: " fmt, ## args)
+#  else
+     /* This one for user space */
+#    define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
+#  endif
+#else
+#  define PDEBUG(fmt, args...) /* not debugging: nothing */
 #endif
 
-	for (ii = 0; ii < nn; ii += npipe_per_chip) {
-	    int             nnn, iii;
-	    ichip = ii / npipe_per_chip;
+#undef _PDEBUG
+#define _PDEBUG(fmt, args...) /* nothing: it's a placeholder */
+// -------------------------------------------------------------------- for DEBUG. 
 
-	    nnn = MIN(npipe_per_chip, nn - ii);
-	    for (iii = 0; iii < nnn; iii++) {
-		unsigned int    idata[4];
-		idata[0] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][0], 26, 16,
-					      6));
-		idata[1] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][1], 26, 16,
-					      6));
-		idata[2] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][2], 26, 16,
-					      6));
-		idata[3] =
-		    (unsigned int) (double2pgpgfloat_r(eps2, 26, 16, 6));
-		pgr_setipset_one(devid, ichip, iii, idata, 4);
-	    }
-	}
-#ifdef DEBUG
-	_t[2] += e_time() - dum;
-	dum = e_time();
+/* 
+ * IOCTL definitions
+ */
+
+#define PG_IOC_MAGIC (7)
+/*
+ * SP : Set by Pointer
+ * SV : Set by Value
+ * GP : Get by Pointer
+ * GV : Get by Value
+ */
+#define IOC_SV_MMAPMODE  _IOW(PG_IOC_MAGIC,  1, unsigned)
+#define IOC_GV_REG_ADR   _IOR(PG_IOC_MAGIC,  2, unsigned long)
+#define IOC_GV_REG_SIZE  _IOR(PG_IOC_MAGIC,  3, unsigned long)
+#define IOC_GV_MEM_ADR   _IOR(PG_IOC_MAGIC,  4, unsigned long)
+#define IOC_GV_MEM_SIZE  _IOR(PG_IOC_MAGIC,  5, unsigned long)
+#define IOC_SP_FPGA_INFO _IOW(PG_IOC_MAGIC,  6, char* )
+#define IOC_GP_FPGA_INFO _IOR(PG_IOC_MAGIC,  7, char* )
+#define IOC_GV_PCICFG    _IOR(PG_IOC_MAGIC,  8, unsigned long)
+#define IOC_SV_DMAW      _IOW(PG_IOC_MAGIC,  9, unsigned long)
+#define IOC_SV_DMAR      _IOW(PG_IOC_MAGIC, 10, unsigned long)
+#define IOC_GV_DMA_SIZE  _IOR(PG_IOC_MAGIC, 11, unsigned long)
+
+#define PG_IOC_MAXNR (11)
+
+/*
+ * modes for pg_mmap
+ * "pcidev->mmap_mode" has one of these mode.
+ */
+enum {
+  MMAP_REG_PIOW = 0,      // bar0 for PG4, 0
+  MMAP_REG_PIOR,          // bar0 for PG4, 1
+  MMAP_REG_PIORW,         // bar0 for PG4, 2
+  MMAP_MEM_PIOW,          // bar1 for PG4, 3
+  MMAP_MEM_PIOR,          // bar1 for PG4, 4
+  MMAP_MEM_PIORW,         // bar1 for PG4, 5
+  MMAP_MEM_PIOW_PREFETCH, // bar1 for PG4, 6
+  MMAP_BUF_DMAW,          // DMABUF for Host->Device direction, 7
+  MMAP_BUF_DMAR,          // DMABUF for Device->Host direction, 8
+};
+
+#define NB_FPGA_INFO (256)  // Length(Bytes) of the FPGA information
+
+
+/* 
+ * IFPGA register definitions
+ */
+#define REG_PFPGA_RST         (0x04)
+#define REG_INT_STAT          (0x10)
+#define REG_INT_MASK          (0x14)
+#define REG_DMA_PCI_ADRS      (0x20)
+#define REG_DMA_LOCAL_ADRS    (0x24)
+#define REG_DMA_COUNT         (0x28)
+#define REG_DMA_CTRL          (0x2C)
+#define REG_DMA_INTERVAL      (0x30)
+#define REG_DMA_STAT          (0x34)
+
+
+#ifdef __KERNEL__
+// -------------------------------------------------------------------- Private Members
+#include <linux/cdev.h>
+#include <asm/semaphore.h> // struct semaphore
+#include <linux/wait.h>    // wait_queue_head_t
+
+struct pg_dev {
+  struct pci_dev *pcidev;  // only for my debugging. Don't use it.
+  unsigned long *buf_dmar; // Kernel logical address     ,also called CPU address
+  unsigned long *buf_dmaw; // Kernel logical address     ,also called CPU address
+  dma_addr_t buf_dmar_pa;  // bus address (type) for DMA ,also called physical address
+  dma_addr_t buf_dmaw_pa;  // bus address (type) for DMA ,also called physical address
+  unsigned long pci_reg_adr;
+  unsigned long pci_reg_size;
+  unsigned long pci_reg_flag;
+  unsigned long pci_mem_adr;
+  unsigned long pci_mem_size;
+  unsigned long pci_mem_flag;  // IORESOURCE_{IO,MEM,PREFETCH,READONLY} @<linux/ioport.h>
+  unsigned long pci_irq_num;
+  unsigned long mmap_mode;
+  wait_queue_head_t wq;        // wait queue for interrupt handler -> tasklet in future
+  unsigned long wq_count;      // wait counter for interrupt handler
+  struct semaphore sem;        // mutual exclusion semaphore
+  struct semaphore sem_open;   // lock device while a person is opening it.
+  unsigned long ntimes_open;   // the number of times for pg_open()
+  struct cdev cdev;	       // Char device structure
+  char fpga_info[NB_FPGA_INFO];// text for FPGA information (for bitfile)
+};
+
+#ifndef PROGRAPE_MAJOR
+#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
+#endif 
+
+#ifndef PROGRAPE_MAJOR
+#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
+#endif 
+
+// Number of maximum character device
+#ifndef PROGRAPE_NR_DEVS
+#    define PROGRAPE_NR_DEVS 1
+#endif 
+
+// -------------------------------------------------------------------- Private Members.
 #endif
 
-	pgr_start_calc(devid, n);
-#ifdef DEBUG
-	_t[3] += e_time() - dum;
-	dum = e_time();
-#endif
 
-	pgr_getfoset(devid, fdata);
-	for (ii = 0; ii < nn; ii++) {
-	    a[i + ii][0] =
-		((double) ((long long int) fdata[ii][0] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	    a[i + ii][1] =
-		((double) ((long long int) fdata[ii][1] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	    a[i + ii][2] =
-		((double) ((long long int) fdata[ii][2] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	}
-#ifdef DEBUG
-	_t[4] += e_time() - dum;
-#endif
+// for the different configurable parameters
+extern int pg_major;
+extern int pg_minor;
+extern int pg_nr_devs;
 
-    }
-#ifdef DEBUG
-    _t[0] = e_time() - _t[0];
-    fprintf(stderr, "total %g sec (jp %g, ip %g, c %g, fo %g %%)\n", _t[0],
-	    100.0 * _t[1] / _t[0], 100.0 * _t[2] / _t[0],
-	    100.0 * _t[3] / _t[0], 100.0 * _t[4] / _t[0]);
-#endif
-}
+// Prototyepes for shared functions
+int check_license(void);
+int get_license(void);
+
+
+// --- ISA bridge: Advanced Micro Devices [AMD] AMD-8111 LPC (rev 05)
+#undef PCI_VENDOR_ID_PG
+#undef PCI_DEVICE_ID_PG
+#undef PCI_REVISION_ID_PG
+#define PCI_VENDOR_ID_PG   (0x1022)
+#define PCI_DEVICE_ID_PG   (0x7468)
+#define PCI_REVISION_ID_PG (0x05)
+
+// --- PCI bridge: Advanced Micro Devices [AMD] AMD-8131 PCI-X Bridge (rev 12)
+#undef PCI_VENDOR_ID_PG
+#undef PCI_DEVICE_ID_PG
+#undef PCI_REVISION_ID_PG
+#define PCI_VENDOR_ID_PG   (0x1022)
+#define PCI_DEVICE_ID_PG   (0x7450)
+#define PCI_REVISION_ID_PG (0x12)
+
+// --- PROGRAPE-4 
+#undef PCI_VENDOR_ID_PG
+#undef PCI_DEVICE_ID_PG
+#undef PCI_REVISION_ID_PG
+#define PCI_VENDOR_ID_PG   (0x1679)
+#define PCI_DEVICE_ID_PG   (0x0005)
+#define PCI_REVISION_ID_PG (0x00)
+
+
+#define PG_DMA_BUFSIZE (0x1<<16) // 64 KB : IFPGA Block-RAM size 
+//#define PG_DMA_BUFSIZE (0x1<<12) // 4 KB : IFPGA Block-RAM size 
+#define PG_PCITRANS_64BIT (1)    // 1: 64-bit / 0: 32-bit
+
+#endif // _PROGRAPE_H_
