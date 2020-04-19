@@ -1,192 +1,206 @@
-2020年  4月 15日 水曜日 10:08:27 JST
-/*
- * progrape.h -- the device driver header for PROGRAPE-4
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada.
- *                                All rights reserved.
- *
- * The source code in this file can be freely used, 
- * so long as an acknowledgment from Tsuyoshi Hamada.
- * 
- * The source code in this file can be modified, branched, and
- * redistributed in source or binary form in the following situation.  
- * If you want to modify, redistribute or make another version based on
- * this source code, you should get distinct agreement from Tsuyoshi
- * Hamada.  The modified, redistributed or branched(another version based
- * on this source code) source code should include the citation that the
- * code comes from the "progrape.c by Tsuyoshi Hamada".
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
-#ifndef _PROGRAPE_H_
-#define _PROGRAPE_H_
+2020年  4月 19日 日曜日 09:56:01 JST
+#include <stdio.h>
+#include <GL/glut.h>
+#include <string.h> // strtok(),strcpy()
+#include <stdlib.h> // atof()
+#include <math.h>
+#define NMAX 210000
+#define XSCALE 2.0
+#define YSCALE 2.0
+//#define IS_PRESET 0
+#define IS_PRESET 1
+#define PRESET_NBODY 4096
+//#define PRESET_NBODY 16384
+//#define PRESET_NBODY 3
 
-#include <linux/ioctl.h> /* for the _IOW etc */
+#define PRESET_NWRITE 1
+#define PRESET_NSKIP 1
 
-// -------------------------------------------------------------------- for DEBUG
-/*
- * Macros to help debugging
- */
-#undef PDEBUG             /* undef it, just in case */
-#ifdef DEBUG
-#  ifdef __KERNEL__
-     /* This one if debugging is on, and kernel space */
-#    define PDEBUG(fmt, args...) printk( KERN_DEBUG "progrape: " fmt, ## args)
-#  else
-     /* This one for user space */
-#    define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
-#  endif
-#else
-#  define PDEBUG(fmt, args...) /* not debugging: nothing */
-#endif
+static char ifile[256];
+static int istep;
+static FILE *fp;
 
-#undef _PDEBUG
-#define _PDEBUG(fmt, args...) /* nothing: it's a placeholder */
-// -------------------------------------------------------------------- for DEBUG. 
+int imax;
+double x[NMAX];
+double y[NMAX];
+int NBODY;
+int SKIP_STEP;
 
-/* 
- * IOCTL definitions
- */
+void reset_fp()
+{
+    printf("restart\n");
+    fclose(fp);
+    fp = fopen(ifile,"r");
+    istep=0;
+}
 
-#define PG_IOC_MAGIC (7)
-/*
- * SP : Set by Pointer
- * SV : Set by Value
- * GP : Get by Pointer
- * GV : Get by Value
- */
-#define IOC_SV_MMAPMODE  _IOW(PG_IOC_MAGIC,  1, unsigned)
-#define IOC_GV_REG_ADR   _IOR(PG_IOC_MAGIC,  2, unsigned long)
-#define IOC_GV_REG_SIZE  _IOR(PG_IOC_MAGIC,  3, unsigned long)
-#define IOC_GV_MEM_ADR   _IOR(PG_IOC_MAGIC,  4, unsigned long)
-#define IOC_GV_MEM_SIZE  _IOR(PG_IOC_MAGIC,  5, unsigned long)
-#define IOC_SP_FPGA_INFO _IOW(PG_IOC_MAGIC,  6, char* )
-#define IOC_GP_FPGA_INFO _IOR(PG_IOC_MAGIC,  7, char* )
-#define IOC_GV_PCICFG    _IOR(PG_IOC_MAGIC,  8, unsigned long)
-#define IOC_SV_DMAW      _IOW(PG_IOC_MAGIC,  9, unsigned long)
-#define IOC_SV_DMAR      _IOW(PG_IOC_MAGIC, 10, unsigned long)
-#define IOC_GV_DMA_SIZE  _IOR(PG_IOC_MAGIC, 11, unsigned long)
+void skip_step()
+{
+  int i;
+  char line[101];
+  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
+}
 
-#define PG_IOC_MAXNR (11)
+void myidle()
+{
+  istep++;
+  if((istep%SKIP_STEP) != 0){
+    skip_step();
+  }else{
+    glutPostRedisplay();
+  }
+  //  printf("%d step\n",(istep*SKIP_STEP));
+}
 
-/*
- * modes for pg_mmap
- * "pcidev->mmap_mode" has one of these mode.
- */
-enum {
-  MMAP_REG_PIOW = 0,      // bar0 for PG4, 0
-  MMAP_REG_PIOR,          // bar0 for PG4, 1
-  MMAP_REG_PIORW,         // bar0 for PG4, 2
-  MMAP_MEM_PIOW,          // bar1 for PG4, 3
-  MMAP_MEM_PIOR,          // bar1 for PG4, 4
-  MMAP_MEM_PIORW,         // bar1 for PG4, 5
-  MMAP_MEM_PIOW_PREFETCH, // bar1 for PG4, 6
-  MMAP_BUF_DMAW,          // DMABUF for Host->Device direction, 7
-  MMAP_BUF_DMAR,          // DMABUF for Device->Host direction, 8
-};
+void display();
 
-#define NB_FPGA_INFO (256)  // Length(Bytes) of the FPGA information
+void init()
+{
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glColor3f(1.0,1.0,1.0);
+}
 
 
-/* 
- * IFPGA register definitions
- */
-#define REG_PFPGA_RST         (0x04)
-#define REG_INT_STAT          (0x10)
-#define REG_INT_MASK          (0x14)
-#define REG_DMA_PCI_ADRS      (0x20)
-#define REG_DMA_LOCAL_ADRS    (0x24)
-#define REG_DMA_COUNT         (0x28)
-#define REG_DMA_CTRL          (0x2C)
-#define REG_DMA_INTERVAL      (0x30)
-#define REG_DMA_STAT          (0x34)
+int main(int argc, char** argv)
+{
+
+  if(IS_PRESET){
+    NBODY = PRESET_NBODY*PRESET_NWRITE;
+    SKIP_STEP=PRESET_NSKIP;
+  }else{
+    int nb,nw;
+    printf("enter NBODY:");  scanf("%d",&nb);  //$BN3;R?t$r;XDj(B
+    printf("enter Nwrite:");  scanf("%d",&nw);  //$BO"B3=q9~$_%3%^?t(B
+    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
+    NBODY = (int)(nb * nw);
+    SKIP_STEP=1; // Fixed
+  }
+  istep=0;
+  if(argc <2){printf("no inputfile.\n"); exit(0); }
+  strcpy(ifile,argv[1]);
+  fp = fopen(ifile,"r");
+
+  glutInit(&argc,argv);
+  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
+  glutInitWindowSize(400,400);
+  glutInitWindowPosition(600,0);
+  glutCreateWindow("NBODYH-2003/11/08");
+  glutDisplayFunc(display);
+  glutIdleFunc(myidle);
+  init();
+  glutMainLoop();
+
+  fclose(fp);
+  return 0;
+}
 
 
-#ifdef __KERNEL__
-// -------------------------------------------------------------------- Private Members
-#include <linux/cdev.h>
-#include <asm/semaphore.h> // struct semaphore
-#include <linux/wait.h>    // wait_queue_head_t
-
-struct pg_dev {
-  struct pci_dev *pcidev;  // only for my debugging. Don't use it.
-  unsigned long *buf_dmar; // Kernel logical address     ,also called CPU address
-  unsigned long *buf_dmaw; // Kernel logical address     ,also called CPU address
-  dma_addr_t buf_dmar_pa;  // bus address (type) for DMA ,also called physical address
-  dma_addr_t buf_dmaw_pa;  // bus address (type) for DMA ,also called physical address
-  unsigned long pci_reg_adr;
-  unsigned long pci_reg_size;
-  unsigned long pci_reg_flag;
-  unsigned long pci_mem_adr;
-  unsigned long pci_mem_size;
-  unsigned long pci_mem_flag;  // IORESOURCE_{IO,MEM,PREFETCH,READONLY} @<linux/ioport.h>
-  unsigned long pci_irq_num;
-  unsigned long mmap_mode;
-  wait_queue_head_t wq;        // wait queue for interrupt handler -> tasklet in future
-  unsigned long wq_count;      // wait counter for interrupt handler
-  struct semaphore sem;        // mutual exclusion semaphore
-  struct semaphore sem_open;   // lock device while a person is opening it.
-  unsigned long ntimes_open;   // the number of times for pg_open()
-  struct cdev cdev;	       // Char device structure
-  char fpga_info[NB_FPGA_INFO];// text for FPGA information (for bitfile)
-};
-
-#ifndef PROGRAPE_MAJOR
-#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
-#endif 
-
-#ifndef PROGRAPE_MAJOR
-#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
-#endif 
-
-// Number of maximum character device
-#ifndef PROGRAPE_NR_DEVS
-#    define PROGRAPE_NR_DEVS 1
-#endif 
-
-// -------------------------------------------------------------------- Private Members.
-#endif
 
 
-// for the different configurable parameters
-extern int pg_major;
-extern int pg_minor;
-extern int pg_nr_devs;
+void display()
+{
+  static int flag=0;
+  void display_set_GL_LINES();
+  void display_get_position();
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPointSize(1.0);
 
-// Prototyepes for shared functions
-int check_license(void);
-int get_license(void);
+  { //--- TIME METER ---
+    char p[10];
+    int i,nketa;
+    nketa = 6;
+    sprintf(p,"%06d",istep);
+    glColor3f(0.1 ,0.2,0.3);
+    for(i=0;i<nketa;i++){
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
+      glRasterPos2f(-0.70-0.06*i, -0.95);
+    }
+  }
+
+  display_set_GL_LINES();
+  glBegin(GL_POINTS);
+  //  glColor3f(1.0 ,0.8,0.0);
+  if(flag != 0){
+    int n;
+    display_get_position();
+    for(n=0;n<NBODY;n++){
+      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
+      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
+    }
+  }
+  flag=1;
+  glEnd();
+  glutSwapBuffers();
+}
 
 
-// --- ISA bridge: Advanced Micro Devices [AMD] AMD-8111 LPC (rev 05)
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1022)
-#define PCI_DEVICE_ID_PG   (0x7468)
-#define PCI_REVISION_ID_PG (0x05)
+/* display$B4X?tMQ(B */
+void display_set_GL_LINES()
+{ // --- MEMORI ---
 
-// --- PCI bridge: Advanced Micro Devices [AMD] AMD-8131 PCI-X Bridge (rev 12)
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1022)
-#define PCI_DEVICE_ID_PG   (0x7450)
-#define PCI_REVISION_ID_PG (0x12)
+  glBegin(GL_LINES);
 
-// --- PROGRAPE-4 
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1679)
-#define PCI_DEVICE_ID_PG   (0x0005)
-#define PCI_REVISION_ID_PG (0x00)
+  glColor3f(0.7,0.0,0.0);
+  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
+  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
 
+  glColor3f(0.0,0.2,0.5);
+  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
+  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
+  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
+  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
 
-#define PG_DMA_BUFSIZE (0x1<<16) // 64 KB : IFPGA Block-RAM size 
-//#define PG_DMA_BUFSIZE (0x1<<12) // 4 KB : IFPGA Block-RAM size 
-#define PG_PCITRANS_64BIT (1)    // 1: 64-bit / 0: 32-bit
+  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
+  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
+  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
+  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
 
-#endif // _PROGRAPE_H_
+  {
+    double tiny=0.04;
+    double small=0.04;
+    glColor3f(0.9,0.4,0.8);
+    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
+    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
+    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
+    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
+
+    glColor3f(0.38, 0.01, 0.8);
+    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
+    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
+    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
+    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
+    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
+    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
+    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
+    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
+
+    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
+    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
+    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
+    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
+    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
+    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
+    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
+    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
+  }
+  glEnd(); // --- End GL_LINES;
+}
+
+void display_get_position()
+{
+  int i;
+  char line[1024];
+  char* p;
+  double _x,_y,_z;
+  for(i=0;i<NBODY;i++){
+    if(fgets(line,100,fp)!=NULL){
+      p = (char* )strtok(line,"\t"); _x = atof(p);
+      p = (char* )strtok(NULL,"\t"); _y = atof(p);
+      p = (char* )strtok(NULL,"\t"); _z = atof(p);
+      x[i] = _x;
+      y[i] = _y;
+    }else{
+      reset_fp();
+    }
+  }
+}
