@@ -1,59 +1,127 @@
-2020年  4月  5日 日曜日 09:55:13 JST
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+2020年  4月 19日 日曜日 11:01:57 JST
+//-------------------------
+#define NMAX (1<<17)
+#include <cstdio>
+#include <cstdlib>
+#define USE_CUDA_MALLOC_HOST (yes)
+#define IDIM (4)
+#define JDIM (4)
+#define FDIM (3)
+#define NJ_SHMEM (NTHRE)
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+float4* h_xj;
+float* h_xi;
+float* h_fo;
+float4* d_xj;
+float* d_xi;
+float* d_fo;
 
-int main()
+extern "C" void 
+force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
 {
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
+  static bool is_open = false;
+  int devid = 0;
+  int ndev;
+  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
 
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
+  if( ni > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" ni > %d : ni=%d\n",ni, NMAX);
+    exit(-1);
+  }
 
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
+  if( nj > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" nj > %d : nj=%d\n",nj, NMAX);
+    exit(-1);
+  }
 
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
+  unsigned int ip_size = sizeof(float) * ni * IDIM;
+  unsigned int jp_size = sizeof(float4) * nj1;
+  unsigned int fo_size = sizeof(float) * ni * FDIM;
 
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
-
-    cout.precision(16);
-
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
+  if(is_open == false){
+    char gpu_name[256];
+    CUDA_SAFE_CALL(cudaSetDevice(devid));
+    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
+    if(ndev == 0){
+      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
+      exit(-1);
+    }else{
+      int dev = devid;
+      cudaDeviceProp deviceProp;
+      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
+      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
+	printf("There is no device supporting CUDA.\n");
+      }
+      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
+      sprintf(gpu_name,"%s", deviceProp.name);
     }
+
+    unsigned int _nmax = NMAX;
+    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
+    unsigned int _jp_size = sizeof(float4) * _nmax;
+    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
+
+#if defined(USE_CUDA_MALLOC_HOST)
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
+#else
+    h_xj = (float4*) malloc(_jp_size);
+    h_xi = (float*)  malloc(_ip_size);
+    h_fo = (float*)  malloc(_fo_size);
+#endif
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
+    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
+    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
+    is_open = true;
+  }
+  for(int i = 0; i < nj; i++){
+    h_xj[i].x = (float) xj[i][0];
+    h_xj[i].y = (float) xj[i][1];
+    h_xj[i].z = (float) xj[i][2];
+    h_xj[i].w = (float) mj[i];
+    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
+  }
+  if(nj < nj1){
+    for(int i = nj; i < nj1; i++){
+      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
+    }
+  }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
+  for(int i = 0; i < ni; i++){
+    h_xi[i     ] = (float) xi[i][0];
+    h_xi[i+ni  ] = (float) xi[i][1];
+    h_xi[i+ni*2] = (float) xi[i][2];
+    h_xi[i+ni*3] = (float) eps2;
+    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
+  }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
+
+  //  printf("Nj=%d\n",nj1);
+  /*
+  dim3 grid((ni+NTHRE)/NTHRE);
+  dim3 threads  (NTHRE);
+  */
+  //  printf("------------------------ %d, %d\n",ni, nj1);
+  dim3 grid(ni/128);
+  dim3 threads  (128);
+  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
+  CUT_CHECK_ERROR("Kernel execution failed");
+
+  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
+
+  for(int i=0;i<ni; i++){
+    a[i][0] = (double)h_fo[i];
+    a[i][1] = (double)h_fo[i+ni];
+    a[i][2] = (double)h_fo[i+ni*2];
+    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
+  }
 }
-//-----------------------------------------------------------------------------
