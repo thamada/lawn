@@ -1,2 +1,12 @@
-2020年  4月 18日 土曜日 10:33:06 JST
-set allSynthModules {pcim_lc.MOD cfg.MOD pci_targetcnt.MOD pci_rdtfifo.MOD pci_dmacnt.MOD pcicnt.MOD regcnt.MOD dp32b8192w.MOD dpram.MOD user.MOD pfpga_config.MOD local_write.MOD local_read_cnt.MOD local_read_if.MOD local_read.MOD local_io.MOD writecomb_check.MOD fifofifo.MOD dcm_ps_f.MOD ifpga.MOD}
+2020年  4月 21日 火曜日 11:23:15 JST
+10
+2.253285e-01	9.191831e-01
+2.068413e-01	7.247797e-01
+7.321991e-01	9.064824e-01
+3.479571e-01	8.578809e-01
+4.151849e-01	1.941677e-01
+6.856104e-01	5.243755e-01
+1.596357e-01	9.547575e-01
+1.269843e-01	4.339532e-03
+3.826915e-01	2.507929e-01
+6.552879e-01	5.344908e-01
