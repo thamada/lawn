@@ -1,30 +1,5 @@
-2020年  4月 15日 水曜日 10:16:32 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
-my $cmd ="cat ". $kbuf_dir ."/kbuffers";
-my $exe = `$cmd`;
-print $exe;
-
-my $nbuf = `$cmd | wc -l`;
-chomp($nbuf);
-$nbuf--;
-
-print $nbuf ." buffers exists\n";
-
-for(my $i=0;$i<$nbuf;$i++){
-    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
-    print $cmd ."\n";
-    $exe = `$cmd`;
-    print $exe;
-}
-
-1;
+2020年  4月 21日 火曜日 09:24:50 JST
+-- ProjNav VHDL simulation template: sim_pfpga_dma.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
