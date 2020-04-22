@@ -1,12 +1,47 @@
-2020年  4月 11日 土曜日 10:57:20 JST
-
-all:
-	cp top.ucf.ISE6.3i_Synplify top.ucf
-	rm -rf proj
-	tar xvf proj.synplify.tar
-	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
-
+2020年  4月 22日 水曜日 10:25:50 JST
+./db/images/ID.0005/image_00000657.jpg
+./db/images/ID.0006/image_00000651.jpg
+./db/images/ID.0004/image_00001568.jpg
+./db/images/ID.0004/image_00000563.jpg
+./db/images/ID.0006/image_00000301.jpg
+./db/images/ID.0004/image_00000578.jpg
+./db/images/ID.0004/image_00000975.jpg
+./db/images/ID.0004/image_00000848.jpg
+./db/images/ID.0006/image_00000436.jpg
+./db/images/ID.0005/image_00000884.jpg
+./db/images/ID.0005/image_00000878.jpg
+./db/images/ID.0005/image_00000840.jpg
+./db/images/ID.0004/image_00000108.jpg
+./db/images/ID.0005/image_00001203.jpg
+./db/images/ID.0006/image_00000088.jpg
+./db/images/ID.0004/image_00001495.jpg
+./db/images/ID.0005/image_00000063.jpg
+./db/images/ID.0006/image_00000696.jpg
+./db/images/ID.0005/image_00001257.jpg
+./db/images/ID.0006/image_00000821.jpg
+./db/images/ID.0005/image_00000153.jpg
+./db/images/ID.0004/image_00001053.jpg
+./db/images/ID.0004/image_00001427.jpg
+./db/images/ID.0006/image_00000815.jpg
+./db/images/ID.0005/image_00000904.jpg
+./db/images/ID.0004/image_00000694.jpg
+./db/images/ID.0004/image_00001043.jpg
+./db/images/ID.0004/image_00000761.jpg
+./db/images/ID.0006/image_00000289.jpg
+./db/images/ID.0006/image_00000739.jpg
+./db/images/ID.0005/image_00001072.jpg
+./db/images/ID.0006/image_00000890.jpg
+./db/images/ID.0005/image_00000903.jpg
+./db/images/ID.0004/image_00001045.jpg
+./db/images/ID.0004/image_00000576.jpg
+./db/images/ID.0005/image_00001009.jpg
+./db/images/ID.0004/image_00001569.jpg
+./db/images/ID.0004/image_00000916.jpg
+./db/images/ID.0004/image_00000687.jpg
+./db/images/ID.0005/image_00001261.jpg
+./db/images/ID.0004/image_00000316.jpg
+./db/images/ID.0005/image_00000288.jpg
+./db/images/ID.0004/image_00001514.jpg
+./db/images/ID.0004/image_00000456.jpg
+./db/images/ID.0004/image_00000191.jpg
+./db/images/ID.0004/image_00000533.jpg
