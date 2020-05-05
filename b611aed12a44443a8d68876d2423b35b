@@ -1,29 +1,15 @@
-2020年  5月  3日 日曜日 09:48:43 JST
-#! /bin/sh
-# Time-stamp: <2006-11-22 17:38:27 hamada>
-# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-#
-# init script for PGR & PROGRAPE-4 (for developers)
-#
+2020年  5月  5日 火曜日 11:14:04 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
 
-rm -rf /tmp/*
-ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
-ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
-ln -s /usr/local/src/package.20060613 /tmp/pgr
-ln -s /usr/local/src/progrape /tmp/progrape
-cd /pciDriver/src/driver/; ./insmod.sh
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
 
-cd /tmp/progrape/driver;  make load
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
 
-
-umount /mnt/ram
-rm -rf /mnt/ram
-mkdir /mnt/ram
-mke2fs /dev/ram0
-mount -t ext2 /dev/ram0 /mnt/ram
-chmod -R 777 /mnt/ram
-
-cp /usr/local/bin/xxx.log /mnt/ram
-chmod -R 777 /mnt/ram
-
-
+    time.sleep(3)
