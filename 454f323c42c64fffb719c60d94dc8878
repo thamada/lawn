@@ -1,53 +1,44 @@
-2020年  4月 25日 土曜日 10:55:58 JST
-/*
- * ifpga_bram_clear.c
+2020年  5月 24日 日曜日 09:30:04 JST
+////////////////////////////////////// ADDRESS OF IFPGA REGISTERS
+#define PIPE_DMA_STAT      0x0   // gpreg0(0) : pipe calc sts | available but not used in api
+#define PIPE_RST           0x4
+#define CNF_CMD_ADR       0x80
+#define CNF_DAT_ADR       0x84
+#define PIPE_DMA_WRITE    0x88   // unused
+#define PIPE_DMA_READ     0x8C   // unused
+#define NPIPE_IFPGA       0x8C  // PGPG_REG3 @ ifpga.vhd
+
+/********************************************************************
+ * PIPE_DMA_WRITE (31 downto 28) : pfpga chip select
+ *       "        (27 downto 19) : num of 64-bit WARD
+ *       "        (18 downto  0) : offset of pfpga address
  *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+ * PIPE_DMA_READ  (31 downto 28) : pfpga chip select
+ *       "        (27 downto 19) : num of 64-bit WARD
+ *       "        (18 downto  0) : offset of pfpga address
+ ********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+/*****************************************************
+0x5000 - 0x501f : i 0
+0x5020 - 0x503f : i 1
+0x5040 - 0x505f : i 2
+0x5060 - 0x507f : i 3
+0x5080 - 0x5fff : -- none --
 
-//#define NMAX (0x1<<10) // 4KB
-//#define NMAX (0x1<<11) // 8KB
-//#define NMAX (0x1<<12) // 16KB
-//#define NMAX (0x1<<13) // 32KB
-#define NMAX (0x1<<14) // 64KB
+0x6000 - 0x60ff : f 0
+0x6100 - 0x61ff : f 1
+0x6200 - 0x62ff : f 2
+0x6300 - 0x63ff : f 3
+0x6400 - 0x6fff : -- none --
 
-unsigned int* ptr;
-unsigned int* bar1;
+0x7000          : set n
+0x7001          : run
 
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int n = NMAX;
-  int val = 0x1234567;
-  int i;
+0x40000 -       : j
+********************************************/
+#define ADR_IPSET 0x5000
+#define ADR_FOSET 0x6000
+#define ADR_SETN  0x7000
+#define ADR_RUN   0x7008
 
-  if(argc > 1){
-    n = atoi(argv[1]);
-  }
-  if(argc > 2){
-    val = atoi(argv[2]);
-  }
-
-  printf("n = %d\n",n);
-  printf("filled by %x\n",val);
-
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  for(i = 0; i < n; i++) {
-    pg4_writebase1(devid, i, val);
-  }
-
-  return 0;
-}
+#define ADR_JPSET 0x40000
