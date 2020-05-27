@@ -1,91 +1,50 @@
-2020年  5月 17日 日曜日 10:41:30 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
-
---  ena0      _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---  ena1           _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- acnt                0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_ADR                   0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                     <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---MEM_WE                   ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmaw is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    MEM_WE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : out std_logic_vector(63 downto 0)   );
-end dmaw;
-
-architecture rtl of dmaw is
-
-signal ena0,ena1,ena2,ena3,ena4 : std_logic :='0';
-signal acnt,acntr : std_logic_vector(18 downto 0) :=(others=>'0');
-signal we : std_logic :='0';
-
-begin
-
-  -- MEM_DATA --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_DATA <= DBUS;
-    end if;
-  end process;
-
-  -- MEM_WE --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_WE <= ena1;
-    end if;
-  end process;
-
-  -- MEM_ADR --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_ADR <= acnt;
-    end if;
-  end process;
-
-  -- acnt
-  acntr <= acnt;
-  process (RST,CLK,ena0,ena1) begin
-    if(RST = '1') then
-      acnt  <= (others=>'0');
-    elsif(CLK'event and CLK = '1') then
-      if((ena0='1') AND (ena1='0')) then
-        acnt <= DBUS(18 downto 0);
-      elsif((ena0='1') AND (ena1='1')) then
-        acnt <= acntr + "0000000000000000001";
-      else
-        acnt <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-
-
-  -- ENABLE delays
-  ena0 <= ENABLE;
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      ena4 <= ena3;
-      ena3 <= ena2;
-      ena2 <= ena1;
-      ena1 <= ena0;
-    end if;
-  end process;
-
-
-end rtl;
+2020年  5月 27日 水曜日 11:06:43 JST
+/EQNINJ
+/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
+/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
+/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/NPIPE 1
+/NVMP 1
+void force(double x[][3], double m[], double eps2, double a[][3], int n){
+  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
+  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
+  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
+  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
+  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
+  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
+  pg_log_shift(1,dx_0,x2_0,17)
+  pg_log_shift(1,dx_1,x2_1,17)
+  pg_log_shift(1,dx_2,x2_2,17)
+  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
+  pg_log_shift(-1,r2,r1,17)
+  pg_log_muldiv(MUL,r2,r1,r3,17,2)
+  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
+  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
+  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
+  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
+  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
+  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
+  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
+  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
+  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
+  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
+  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
+  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
+  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
+  pg_pdelay(ieps2,ieps2r,17,7)
+  pg_pdelay(mj,mjr,17,27)
+  pg_pdelay(dx_0,dx_0r,17,22)
+  pg_pdelay(dx_1,dx_1r,17,22)
+  pg_pdelay(dx_2,dx_2r,17,22)
+  pg_rundelay(41)
+}
