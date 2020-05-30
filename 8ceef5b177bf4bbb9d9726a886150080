@@ -1,50 +1,30 @@
-2020ๅนด  5ๆ 30ๆ—ฅ ๅๆๆ—ฅ 09:19:15 JST
-#include <math.h>
-#define DIM (3)              /* ณ” */
-#define NMAX (65536)         /* ล‘ๅ—ฑq” */
-//#define NTOTAL 1000      /* —ฑq” (NTOTAL <= NMAX) */
+2020ๅนด  5ๆ 30ๆ—ฅ ๅๆๆ—ฅ 11:03:24 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
+entity setn is
+  port (
+    clk       : in std_logic;
+    we        : in std_logic;
+    idata     : in std_logic_vector(31 downto 0);
+    odata     : out std_logic_vector(31 downto 0));
+end setn;
 
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
+architecture rtl of setn is
+signal nreg :  std_logic_vector(31 downto 0) := "00000000000000000000000000000011"; -- default 3
+begin
 
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+odata <= nreg;
+--odata <= "00000000000000000000000000000011";
 
+process (clk) begin
+  if(clk'event and clk='1') then
+    if(we = '1') then
+      nreg <= idata;
+    end if;
+  end if;
+end process;
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
-
-
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
-
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
-
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
-
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
+end rtl;
