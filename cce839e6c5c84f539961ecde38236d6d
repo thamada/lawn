@@ -1,180 +1,114 @@
-2020å¹´  5æœˆ 29æ—¥ é‡‘æ›œæ—¥ 11:16:29 JST
-/*
-  Copyright(c) 2003-2004 by Tsuyoshi Hamada
-  Nbody program for programmable GRAPE
-  Last Modified at 2004/04/13
-*/
-#include <stdio.h>
-#include <stdlib.h> // exit()
-#include <string.h> // strcpy()
-#include "nbodysim.h"
+2020å¹´  6æœˆ  7æ—¥ æ—¥æ›œæ—¥ 11:00:08 JST
+-- multiple clock generator
+-- by Tsuyoshi Hamada
+-- Last Modified at 2004/01/11
+-- ===== COMPONENT SAMPLE =======================================
+--component CLK_MULDIV
+--  generic (CLKFX_MULTIPLY : integer :=3;
+--           CLKFX_DIVIDE : integer := 2);
+--  port (ICLK : in std_logic;
+--        OCLK : out std_logic;
+--        OCLK_FX : out std_logic;
+--        LOCKED : out std_logic);
+--end component;
+--
+-- ===== INSTANCIATION SAMPLE ====================================
+--dcm0 : CLK_MULDIV
+----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
+----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
+----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
+----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
+----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
+----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
+----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
+----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
+--  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
+--  port map (
+--	ICLK=>SYS_CLK,
+--	OCLK=>clk,
+--	OCLK_FX=>pclk,
+--	LOCKED=>dcm_locked);
 
 
-#define PI (3.1415926535897932)
-//#define TRIALS_PER_R (6000)
-//#define TRIALS_PER_R (300)
+library ieee;
+LIBRARY UNISIM;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+USE UNISIM.Vcomponents.ALL;
 
+entity CLK_MULDIV is
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end CLK_MULDIV;
 
-//#define N_PLOTS (1920)
-//#define N_PLOTS (640)
+architecture rtl of CLK_MULDIV is
+component BUFG port (I: in  std_logic;  O: out  std_logic); 
+end component;
+component IBUFG port(I: in std_logic; O: out std_logic);
+end component;
+component DCM
+  generic ( 
+       CLKFX_MULTIPLY : integer := 3;
+       CLKFX_DIVIDE : integer := 2;
+       CLKIN_PERIOD : real := 15.000000;
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "FIXED";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+  port ( CLKIN   : in  std_logic;
+       CLKFB   : in  std_logic;
+       DSSEN   : in  std_logic;
+       PSINCDEC   : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK   : in  std_logic;
+       RST     : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90   : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X   : out std_logic;
+       CLK2X180   : out std_logic;
+       CLKDV   : out std_logic;
+       CLKFX   : out std_logic;
+       CLKFX180   : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
 
+signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
 
-#define TRIALS_PER_R (300)
-#define N_PLOTS (640)
+begin
 
+dcm0 : DCM
+  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
+	CLKFX_DIVIDE=>CLKFX_DIVIDE,
+        CLKIN_PERIOD => 15.000000,
+	DUTY_CYCLE_CORRECTION=>TRUE)
+  port map(
+    RST          => '0',         -- ƒŠƒZƒbƒg
+    CLKIN        => dcm_in,      -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
+    CLKFB        => dcm_fb,         -- FB“ü—Í
+    DSSEN        => '0',
+    PSINCDEC     => '0',
+    PSEN         => '0',         -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
+    PSCLK        => '0',         -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
+    LOCKED       => LOCKED,
+    CLKFX        => dcm_fx,      -- ICLK x N
+    CLK0         => dcm_out      -- PHASE SHIFTo—ÍƒNƒƒbƒN
+  );
 
-#define XSIZE (1.0)
-#define RMAX (XSIZE*2.0)
-//#define EPS2 (pow((RMAX*9e-7),2.0))
-#define EPS2 (pow((RMAX*1e-6),2.0))
+U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
+U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
+U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
+OCLK <= dcm_fb;
+end rtl;
 
-
-#define MASS (1.0)
-
-//#define R_START (6.6)  //-- for G3
-#define R_START (9.9)  //-- for G5
-
-void get_xi(double x[])
-{
-  x[0] = XSIZE*rand()/(RAND_MAX+1.0);
-  x[1] = XSIZE*rand()/(RAND_MAX+1.0);
-  x[2] = XSIZE*rand()/(RAND_MAX+1.0);
-  if(rand()/(RAND_MAX+1.0)<0.5) x[0] *= -1.0;
-  if(rand()/(RAND_MAX+1.0)<0.5) x[1] *= -1.0;
-  if(rand()/(RAND_MAX+1.0)<0.5) x[2] *= -1.0;
-}
-
-int check_position(double xi[],double xj[],double r)
-{
-  static unsigned int count=0;
-  int d;
-  if(r>= RMAX){
-    fprintf(stderr,"r(%f)>%f, finished\n",r,RMAX);
-    exit(0);
-  }
-  if(count > 0x4000){
-    fprintf(stderr,"r %f\tlog(r/RMAX) %f\n",r,log(r/RMAX)/log(10.0));
-    exit(0);
-  }
-  count++;
-  for(d=0;d<3;d++){
-    if((xi[d]>=XSIZE)||(xi[d]<=-XSIZE)){
-      //      fprintf(stderr,"xi bad \t %f\t%f\t%f\n",xi[0],xi[1],xi[2]);
-      return 0;
-    }
-    if((xj[d]>=XSIZE)||(xj[d]<=-XSIZE)){
-      //      fprintf(stderr,"xj bad \t %f\t%f\t%f\n",xj[0],xj[1],xj[2]);
-      return 0;
-    }
-  }
-  count=0;
-  return 1;
-}
-
-void get_xj(double xi[],double r,double theta,double phi,double xj[])
-{
-  xj[0] = xi[0] + r*cos(phi)*cos(theta);
-  xj[1] = xi[1] + r*cos(phi)*sin(theta);
-  xj[2] = xi[2] + r*sin(phi);
-}
-
-int main(int argc,char** argv)
-{
-  double x[NMAX][DIM];
-  double m[NMAX];
-  double radmax=TRIALS_PER_R;
-  double r=R_START;
-  double eps2 = EPS2;
-  int i,k,n=2;
-
-  srand(0x1192296);
-  m[0]=MASS;  m[1]=MASS;
-
-  for(k=0;k<N_PLOTS;k++){
-    double Sr=0.0;
-    double a_host[2][DIM];
-    double a_b3[2][DIM];
-
-    r = pow(10,R_START*(k-N_PLOTS)/N_PLOTS)*RMAX;
-    for(i=0;i<radmax;i++){
-      int j,d, is_in_range;
-      double theta,phi;
-      is_in_range=0;
-
-      while(is_in_range==0){
-	get_xi(x[0]);
-	phi   = 2.0*PI*(double)(rand()/(RAND_MAX+1.0));
-	theta = 2.0*PI*(double)(rand()/(RAND_MAX+1.0));
-	get_xj(x[0],r,theta,phi,x[1]);
-	is_in_range = check_position(x[0],x[1],r);
-      }
-
-      force_on_host(x,m,eps2,a_host,n);
-      force(x,m,eps2,a_b3,n);
-      /*************************
-      if(0){
-	void scale_1f(int n, double x[],    double s, double z[]);
-	void scale_3f(int n, double x[][3], double s, double z[][3]);
-	double _m[NMAX];
-	double _a[NMAX][3];
-	double _e;
-	double s;
-	s = 1.0;
-	s = pow(2.0,-18.0);
-	scale_1f(n, m, s,             _m);
-	force(x,_m,_e,_a, n);
-	scale_3f(n, _a, 1.0/s, a_b3);
-      }
-      *****************************/
-      {
-	double df2,f2;
-	df2 = f2 = 0.0;
-	for(d=0;d<DIM;d++) df2 += (a_b3[0][d]-a_host[0][d])*(a_b3[0][d]-a_host[0][d]);
-	for(d=0;d<DIM;d++) f2 += a_host[0][d]*a_host[0][d];
-	Sr += df2/f2;
-      }
-    }
-    //    exit(0);
-
-    Sr /= (double)(radmax);
-    Sr = pow(Sr,0.5);
-    printf("%e\t",log(r/XSIZE)/log(10.0));
-    printf("%e\t",Sr);
-    printf("%e\t",r);
-
-
-    /****
-      printf("%e\t",a_host[0][1]);
-      printf("%e |\t",  a_b3[0][1]);
-      printf("%e\t",a_host[0][2]);
-      printf("%e |\t",  a_b3[0][2]);
-      printf("%e\t",a_host[0][3]);
-      printf("%e\n",  a_b3[0][3]);
-    ***/
-    printf("%e\t",a_host[0][0]);
-    printf("%e\t",  a_b3[0][0]);
-    puts("");    
-
-
-  }
-  return 0;
-}
-
-
-
-/////////////////////////////////////////
-void scale_1f(int n, double x[], double scale, double z[])
-{
-  int i;
-  for(i=0;i<n;i++) z[i] = x[i]*scale;
-}
-
-void scale_3f(int n, double x[][3], double scale, double z[][3])
-{
-  int i;
-  for(i=0;i<n;i++){
-    z[i][0] = x[i][0]*scale;
-    z[i][1] = x[i][1]*scale;
-    z[i][2] = x[i][2]*scale;
-  }
-}
