@@ -1,16 +1,16 @@
-2020年  6月  7日 日曜日 10:51:00 JST
-#include<stdio.h>
-#define LONG long long int 
-// bit level check between emulator and hardware(pg2)
-void check_pg2emu(LONG accel[][3],LONG accel_pg2[][3],int n)
+2020年  6月  7日 日曜日 11:26:49 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
+
+#include <stdio.h>
+#include "nbodysim.h"
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
 {
-  int i,j;
-  for(i=0;i<n;i++){
-    for(j=0;i<3;j++){
-      LONG a_emu,a_pg2;
-      a_emu = accel[i][j];
-      a_pg2 = accel_pg2[i][j];
-      if(a_emu != a_pg2){fprintf(stderr,"error\n");}
-    }
-  }
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
 }
