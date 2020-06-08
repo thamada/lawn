@@ -1,129 +1,53 @@
-2020年  5月 29日 金曜日 11:52:25 JST
-#!/bin/sh
-#
-# An example hook script to blocks unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
-#
-# To enable this hook, rename this file to "update".
-#
-# Config
-# ------
-# hooks.allowunannotated
-#   This boolean sets whether unannotated tags will be allowed into the
-#   repository.  By default they won't be.
-# hooks.allowdeletetag
-#   This boolean sets whether deleting tags will be allowed in the
-#   repository.  By default they won't be.
-# hooks.allowmodifytag
-#   This boolean sets whether a tag may be modified after creation. By default
-#   it won't be.
-# hooks.allowdeletebranch
-#   This boolean sets whether deleting branches will be allowed in the
-#   repository.  By default they won't be.
-# hooks.denycreatebranch
-#   This boolean sets whether remotely creating branches will be denied
-#   in the repository.  By default this is allowed.
-#
-
-# --- Command line
-refname="$1"
-oldrev="$2"
-newrev="$3"
-
-# --- Safety check
-if [ -z "$GIT_DIR" ]; then
-	echo "Don't run this script from the command line." >&2
-	echo " (if you want, you could supply GIT_DIR then run" >&2
-	echo "  $0 <ref> <oldrev> <newrev>)" >&2
-	exit 1
-fi
-
-if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
-	exit 1
-fi
-
-# --- Config
-allowunannotated=$(git config --bool hooks.allowunannotated)
-allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --bool hooks.denycreatebranch)
-allowdeletetag=$(git config --bool hooks.allowdeletetag)
-allowmodifytag=$(git config --bool hooks.allowmodifytag)
-
-# check for no description
-projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-case "$projectdesc" in
-"Unnamed repository"* | "")
-	echo "*** Project description file hasn't been set" >&2
-	exit 1
-	;;
-esac
-
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
-zero="0000000000000000000000000000000000000000"
-if [ "$newrev" = "$zero" ]; then
-	newrev_type=delete
-else
-	newrev_type=$(git cat-file -t $newrev)
-fi
-
-case "$refname","$newrev_type" in
-	refs/tags/*,commit)
-		# un-annotated tag
-		short_refname=${refname##refs/tags/}
-		if [ "$allowunannotated" != "true" ]; then
-			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,delete)
-		# delete tag
-		if [ "$allowdeletetag" != "true" ]; then
-			echo "*** Deleting a tag is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,tag)
-		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
-		then
-			echo "*** Tag '$refname' already exists." >&2
-			echo "*** Modifying a tag is not allowed in this repository." >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,commit)
-		# branch
-		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
-			echo "*** Creating a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,delete)
-		# delete branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/remotes/*,commit)
-		# tracking branch
-		;;
-	refs/remotes/*,delete)
-		# delete tracking branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	*)
-		# Anything else (is there anything else?)
-		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
-		exit 1
-		;;
-esac
-
-# --- Finished
-exit 0
+2020年  6月  8日 月曜日 11:50:45 JST
+info x 45 510 0 0 0 0 0 0 0 0 0 0 0 0 0 0 VHDL
+col x 292 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+radix x 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+entity name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 pfpga_config
+term mark 255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+vlib save 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+var add 1 0 0 226 12 0 292 100 50 50 5 5 0 0 0 0 clkInstd_logicRISING_EDGEclk
+var add 2 0 0 162 13 0 276 100 50 50 5 5 0 0 0 0 rst_nInstd_logicRISING_EDGEclk
+var add 3 8 0 164 14 0 276 100 50 50 5 5 0 0 0 0 cmd_regInstd_logic_vectorRISING_EDGEclk
+var add 4 31 0 164 15 0 276 100 50 50 5 5 0 0 0 0 data_regInstd_logic_vectorRISING_EDGEclk
+var add 5 7 0 164 17 0 276 100 50 50 5 5 0 0 0 0 CFG_DOutstd_logic_vectorRISING_EDGEclk
+var add 6 0 0 162 18 0 276 100 50 50 5 5 0 0 0 0 CFG_CCLKOutstd_logicRISING_EDGEclk
+var add 7 0 0 162 19 0 276 100 50 50 5 5 0 0 0 0 CFG_PROG_B0Outstd_logicRISING_EDGEclk
+var add 8 0 0 162 20 0 276 100 50 50 5 5 0 0 0 0 CFG_PROG_B1Outstd_logicRISING_EDGEclk
+var add 9 0 0 162 21 0 276 100 50 50 5 5 0 0 0 0 CFG_PROG_B2Outstd_logicRISING_EDGEclk
+var add 10 0 0 162 22 0 276 100 50 50 5 5 0 0 0 0 CFG_PROG_B3Outstd_logicRISING_EDGEclk
+var add 11 0 0 162 23 0 276 100 50 50 5 5 0 0 0 0 CFG_CS_B0Outstd_logicRISING_EDGEclk
+var add 12 0 0 162 24 0 276 100 50 50 5 5 0 0 0 0 CFG_CS_B1Outstd_logicRISING_EDGEclk
+var add 13 0 0 162 25 0 276 100 50 50 5 5 0 0 0 0 CFG_CS_B2Outstd_logicRISING_EDGEclk
+var add 14 0 0 162 26 0 276 100 50 50 5 5 0 0 0 0 CFG_CS_B3Outstd_logicRISING_EDGEclk
+var add 15 0 0 162 27 0 276 100 50 50 5 5 0 0 0 0 CFG_RDWR_BOutstd_logicRISING_EDGEclk
+vdone xxx 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+npos xxx 137 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cell fill 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 2 12 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 000000000
+cell fill 3 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 011110001
+cell fill 3 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 011100001
+cell fill 3 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 011110001
+cell fill 3 124 0 0 0 0 0 0 0 0 0 0 0 0 0 0 111110001
+cell fill 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000000000000000000000000000000
+cell fill 4 96 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000000100000001000000011111111
+time info 50 50 5 5 50 50 1 1 0 0 0 0 0 0 0 0 usclk
+font save -14 0 400 49 0 0 0 0 0 0 0 0 0 0 0 0 Times New Roman
+src mod 0 261533364 29673166 0 0 0 0 0 0 0 0 0 0 0 0 0 pfpga_config.vhd
+utd true 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cellenab on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+grid on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+com add 1 1 0 169 17 0 -67 0 0 0 0 0 0 0 0 0 Waveform created by
+HDL Bencher 6.1i
+Source = pfpga_config.vhd
+Wed Nov 10 11:36:42 2004
+type info 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logicBITDOWNTO
+type info 31 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logic_vectorVECTORDOWNTO
+opt vhdl87 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+NumClocks x 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+clock_1 name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 clk
+Zoom_level x 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.00000000000000
