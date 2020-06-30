@@ -1,15 +1,3 @@
-2020年  6月 14日 日曜日 10:35:06 JST
-#!/usr/bin/perl
-
-my $nloop = 16;
-my $logbase = "log.GTX";
-
-for(my $ni=2; $ni<131073; $ni = $ni*2){
-    my $bin = "\$\(BIN\)";
-    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
-    my $log = "\$LOG";
-    my $cmd = "$bin $ifile $nloop >> $log";
-    print "\t".$cmd ."\n";
-}
-
-1;
+2020年  6月 30日 火曜日 11:11:52 JST
+# XST flow : Creating project file
+top.prj
