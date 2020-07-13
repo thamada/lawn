@@ -1,47 +1,50 @@
-2020年  7月  3日 金曜日 11:39:45 JST
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+2020年  7月 13日 月曜日 11:23:48 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[DMAR_ENABLE] _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--en0                _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--en1                     _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--en2                          _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--en3                               _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--DBUS_HiZ            ~~~~~~~~~~~~~~\_________________________________________________/~~~~
 
-/*
- * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-#include "pg4.h"
+entity dmar_dbus_hiz is
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS_HiZ  : out std_logic :='1');
+end dmar_dbus_hiz;
 
-int main(int argc, char* argv[])
-{
-  int devid  = 0;
-  int bar    = 0;
-  int is_size = 0;
-  unsigned long z = 0;
+architecture rtl of dmar_dbus_hiz is
+signal en0,en1,en2,en3 : std_logic :='0';
+begin
 
-  if (argc < 3) {
-    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
-    exit(-1);
-  }
-  
-  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
+  process(CLK) begin
+    if(CLK'event and CLK = '1') then
+      en3 <= en2;
+      en2 <= en1;
+      en1 <= en0;
+      en0 <= ENABLE;
+    end if;
+  end process;
 
-  devid = atoi(argv[1]);
-  bar   = atoi(argv[2]);
-  
-  pg4_open(devid);
 
-  if(is_size)
-    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
-  else
-    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
+  process(RST,CLK,en2,en3) begin
+    if(RST='1') then
+      DBUS_HiZ <= '1';
+    elsif(CLK'event and CLK = '1') then
+     if( (en1='1') AND (en2='0') ) then
+       DBUS_HiZ <= '0';
+     elsif( (en2='0') AND (en3='1') ) then
+       DBUS_HiZ <= '1';
+     end if;
+    end if;
+  end process;
 
-  printf("0x%08lx\n",z);
-  pg4_close(devid);
-
-  return 1;
-}
+end rtl;
