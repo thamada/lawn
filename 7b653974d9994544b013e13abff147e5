@@ -1,12 +1,11 @@
-2020年  7月 13日 月曜日 10:23:45 JST
+2020年  7月 13日 月曜日 11:33:03 JST
 [net]
 # Testing
 #batch=1
 #subdivisions=1
 # Training
 batch=64
-subdivisions=16
-
+subdivisions=8
 width=416
 height=416
 channels=3
@@ -18,8 +17,7 @@ exposure = 1.5
 hue=.1
 
 learning_rate=0.001
-max_batches = 2000001
-#max_batches = 50
+max_batches = 40200
 policy=steps
 steps=-1,100,20000,30000
 scales=.1,10,.1,.1
@@ -118,15 +116,13 @@ activation=leaky
 size=1
 stride=1
 pad=1
-# filters = (classes + coords + 1) * num
-## (10+5)*5
-filters=75
+filters=35
 activation=linear
 
 [region]
 anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
 bias_match=1
-classes=10
+classes=2
 coords=4
 num=5
 softmax=1
