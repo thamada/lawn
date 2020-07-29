@@ -1,1 +1,7 @@
-2020年  6月 30日 火曜日 10:14:03 JST
+2020年  7月 29日 水曜日 10:40:42 JST
+classes= 10
+train  = ./etc/list.train.txt
+valid  = ./etc/list.valid.txt
+names =  ./etc/list.classname.txt
+backup = ./backup
+
