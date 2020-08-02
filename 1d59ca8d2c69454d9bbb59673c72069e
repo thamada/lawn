@@ -1,44 +1,91 @@
-2020Âπ¥  8Êúà  1Êó• ÂúüÊõúÊó• 10:39:09 JST
-#!/usr/bin/env python3
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+2020Âπ¥  8Êúà  2Êó• Êó•ÊõúÊó• 10:40:53 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
+--MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+--MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
+--MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
 
-class Message(object):
-    def __init__(self):
-        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
-        self.is_update = False
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-#D95CBBF2 7 41 53 28 48 50 R->
-def read_log_one(msg):
+entity dmar is
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_RE    : out std_logic;
+    MEM_ADR   : out std_logic_vector(18 downto 0);
+    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
+end dmar;
 
-    fname = '/dev/shm/log.txt'
-    with open(fname, 'r') as fh:
-        lines = fh.readlines()
-        l = lines[-2]
-        l = l.rstrip()
-        cols = l.split(' ')
-        if cols[0] != msg.last[0]:
-            msg.last = cols
-            msg.is_update = True
-        else:
-            msg.is_update = False
+architecture rtl of dmar is
+
+component dmar_dbus_hiz
+  port (
+    RST       : in std_logic;
+    CLK       : in std_logic;
+    ENABLE    : in std_logic;
+    DBUS_HiZ  : out std_logic);
+end component;
+
+component dmar_state
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end component;
+
+component dmar_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+
+component dmar_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
 
 
-fig = plt.figure()
-msg = Message()
+component dmar_mem_re
+  port (
+    CLK       : in std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    MEM_RE    : out std_logic );
+end component;
 
-def plot(data):
-    global msg, fig
-    read_log_one(msg)
-    if msg.is_update :
-        print (msg.last)
+signal state : std_logic_vector(1 downto 0);
+signal start_adr : std_logic_vector(18 downto 0);
 
-    plt.cla() # clear graph
-    rand = np.random.randn(100)
-    im = plt.plot(rand)
+begin
+
+-- DBUSÇÃÉgÉâÉCÉXÉeÅ[ÉgèàóùÇÕè„à Ç≈çsÇ§
+-- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
+
+ u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
+ u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
+ u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
+ u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
+
+ u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
+ DBUS_Port <= MEM_DATA;
 
 
-ani = animation.FuncAnimation(fig, plot, interval=100)
-plt.show()
-
+end rtl;
