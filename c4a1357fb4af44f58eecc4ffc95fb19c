@@ -1,7 +1,3 @@
-2020年  8月  2日 日曜日 09:16:36 JST
-classes= 10
-train  = ./etc/list.train.txt
-valid  = ./etc/list.valid.txt
-names =  ./etc/list.classname.txt
-backup = ./backup
-
+2020年  8月  5日 水曜日 11:19:11 JST
+MODULE local_write
+SUBMODULE local_write
