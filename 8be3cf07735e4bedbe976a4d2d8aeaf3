@@ -1,6 +1,13 @@
-2020年  8月  6日 木曜日 10:00:47 JST
-3
-0
-1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
-1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
-1 0 0 0 -0.93240737 -0.86473146 -0
+2020年  8月  7日 金曜日 10:06:37 JST
+#!/usr/bin/env python3
+# ./mov.py <fps> <start_number>
+import sys
+
+
+if __name__ == '__main__':
+	 args = sys.argv
+	 assert len(args) == 3
+	 fps          = int(args[1])
+	 start_number = int(args[2])
+	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
+	 print (cmd)
