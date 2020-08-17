@@ -1,42 +1,68 @@
-2020年  8月 16日 日曜日 10:03:23 JST
-#!/usr/bin/env python3
-import os
-from datetime import datetime
-import time
+2020年  8月 17日 月曜日 11:10:23 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "flops.h"
+//#include "pg_util.h" // double e_time(void)
 
-# YYYYMMDD_HH_MM_SS
-def get_filename_frame(basedir, str_datetime):
-    cell = list(str_datetime)
-    str_YYYYMMDD = ''.join(cell[0:8])
-    str_HH = ''.join(cell[9:11])
-    str_MM = ''.join(cell[12:14])
-    str_SS = ''.join(cell[15:17])
-    dirname = basedir + str_YYYYMMDD + "/" + str_HH
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + "/" + str_datetime+".jpg"
-    ret = ret.replace(' ','')
-    return ret
+extern double e_time(void);
+
+void flops_initialize(struct flops_member* fm, int n, int nskip)
+{
+  (*fm).nbody = n;
+  (*fm).nskip = nskip;
+  (*fm).times = 0;
+  (*fm).nstep = 0;
+  (*fm).force_time = 0.0;
+  (*fm).start_time = e_time();
+}
+
+void flops_check(struct flops_member* fm)
+{
+  int n = (*fm).nbody;
+  int nskip = (*fm).nskip;
+  int nstep = (*fm).nstep;
+  int times = (*fm).times;
+  double t_start = (*fm).start_time;
+  double tmisc,tall;
+  double nope,Gflops;
+  double t_end;
+  nstep++;
+
+  if((times % nskip) != (nskip-1)){
+    times++;
+  } else {
+    double tforce = (*fm).force_time;
+    t_end = e_time();
+    tall = t_end - t_start;
+    tmisc = tall - tforce;
+    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
+    //       GRAVITY,  LEAPFLOG
+    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
+    fprintf(stderr,"[%d steps]\t",nstep);
+    fprintf(stderr,"LapTime %2.2f sec\t",tall);
+    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+
+    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
+    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
+
+    times = 0;
+    t_start = e_time();
+  }
+  (*fm).times = times;
+  (*fm).nstep = nstep;
+  (*fm).start_time = t_start;
+}
 
 
-def get_filename_frame_simple(basedir, fname):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + fname
-    ret = ret.replace(' ','')
-    return ret
 
-def create_dir(basedir):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
+void flops_ftime_init(struct flops_member *fm){
+  (*fm).force_time = e_time();
+}
 
-    
+void flops_ftime_save(struct flops_member *fm){
+  double dum = (*fm).force_time;
+  (*fm).force_time = e_time() - dum;
+}
 
-if __name__ == '__main__':
-    while(True):
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        fname = get_filename_frame('../work/', tnow)
-        print (fname)
-        time.sleep(0.5)
+
