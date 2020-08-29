@@ -1,17 +1,22 @@
-2020年  8月 19日 水曜日 09:34:27 JST
-#!/usr/bin/perl
-
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
-
-srand(12345);
-
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
-}
+2020年  8月 29日 土曜日 11:16:20 JST
+# Xilinx CORE Generator 6.2.03i
+# User = Administrator
+Initializing default project...
+Loading plug-ins...
+All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
+# busformat=BusFormatAngleBracketNotRipped
+# designflow=VHDL
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+# flowvendor=Foundation_iSE
+# formalverification=None
+# simulationoutputproducts=VHDL
+# xilinxfamily=Virtex2
+# outputoption=DesignFlow
+# overwritefiles=Default
+# simvendor=ModelSim
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+SETPROJECT .
+Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
