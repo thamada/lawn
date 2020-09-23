@@ -1,69 +1,68 @@
-2020Âπ¥  9Êúà 20Êó• Êó•ÊõúÊó• 10:20:28 JST
--- Copyright (c) by PGR project
--- All rights reserved.
--- Auther Tsuyoshi Hamada
--- for JDIM=4 (JDATA_WIDTH =< 128)
--- but DEPTH=16384
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+2020Âπ¥  9Êúà 23Êó• Ê∞¥ÊõúÊó• 09:30:40 JST
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-entity jmem is
-  port (
-    rst        : in  std_logic; -- not used
-    we         : in  std_logic;
-    wclk       : in  std_logic;
-    wadr       : in  std_logic_vector(15 downto 0);
-    rclk       : in  std_logic;
-    radr       : in  std_logic_vector(15 downto 0);
-    idata      : in  std_logic_vector(63 downto 0);
-    odata      : out  std_logic_vector(127 downto 0)  -- for G5
---  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
---  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
-  );
-end jmem;
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
+{
+  int i,j,d;
+  double v2,r2;
+  double dx[3];
+  double Ep;        /* äeó±éqÇÃà íuÉGÉlÉãÉMÅ[ */
+  double Em;        /* äeó±éqÇÃâ^ìÆÉGÉlÉãÉMÅ[ */
+  double Ea;        /* äeó±éqÇÃëSóÕäwìIÉGÉlÉãÉMÅ[ */
+  static double Ea_init;
+  static int flag=0;
+  //  double a[NMAX][DIM];
 
-architecture rtl of jmem is
 
-component dpram
-	port (
-	wadr: IN std_logic_VECTOR(13 downto 0);
-	radr: IN std_logic_VECTOR(13 downto 0);
-	wclk: IN std_logic;
-	rclk: IN std_logic;
-	din: IN std_logic_VECTOR(63 downto 0);
-	dout: OUT std_logic_VECTOR(63 downto 0);
-	we: IN std_logic);
-end component;
+  /******************************************************  FORCE
+  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] =  m[j]*dx[d]/r3;
+	a[j][d] = -m[i]*dx[d]/r3;
+      }
+    }
+  }
+  ***********************************************************/
 
-signal we0,we1,we2,we3 : std_logic;
-signal adr0,adr1,nadr0,nadr1 : std_logic;
+  Ea = 0.0;
+  for(i=0;i<n;i++){
+    Ep=0.0;     // Potential Energy
+    for(j=0;j<n;j++){
+      r2 = eps2;           /* ëäëŒãóó£èâä˙âª */
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
+    }
 
-begin
+    v2=0.0;    /* ê‚ëŒë¨ìx2èÊílèâä˙âª */
+    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
+    Em = 0.5 * m[i] * v2;
 
-adr0  <= wadr(0);
-nadr0 <= NOT wadr(0);
+    Ea += Em + Ep;
+    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
+    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
+    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
+  }
 
-we0  <= we and nadr0;  -- we & wadr(0)="0"
-we1  <= we and  adr0;  -- we & wadr(0)="1"
-
-u0 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata,
-      dout=> odata(63 downto 0),
-      we  => we0);
-
-u1 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata, 
-      dout=> odata(127 downto 64),
-      we  => we1);
-
-end rtl;
+  if(flag==0){
+    Ea_init = Ea;
+    flag = 1;
+  }
+  printf("Eall = %e\t",Ea);
+  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
+  printf("\n");
+  return;
+}
