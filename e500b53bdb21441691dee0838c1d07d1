@@ -1,3 +1,18 @@
-2020年  8月 22日 土曜日 10:32:44 JST
-# XST (Creating Lso File) : 
-top.lso
+2020年  9月 30日 水曜日 10:34:11 JST
+FILES
+{
+	VHDL_FILE = pgfpga.vhd;
+}
+COMPILER_SETTINGS_LIST
+{
+	COMPILER_SETTINGS = pgfpga;
+}
+SIMULATOR_SETTINGS_LIST
+{
+	SIMULATOR_SETTINGS = pgfpga;
+}
+SOFTWARE_SETTINGS_LIST
+{
+	SOFTWARE_SETTINGS = Debug;
+	SOFTWARE_SETTINGS = Release;
+}
