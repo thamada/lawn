@@ -1,292 +1,210 @@
-2020年  9月 30日 水曜日 11:32:29 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-12 07:42:18 hamada>
-import cv2
-import urllib.request
-import numpy as np
-import argparse
-from datetime import datetime
-import mkdir
-import math
-
-class DroidCam(object):
-    def __init__(self):
-        self.droidapp = 'IP Webcam'
-        self.ipadr  = '192.168.43.1'
-#        self.ipadr  = '133.45.9.162'
-        self.port  = '3389'
-        self.stream = -1
-        self.URL = -1
-        self.image = -1
-    def get_stream(self):
-        stub = ''
-        if (self.droidapp == 'DroidCam'):
-            stub = '/mjpegfeed?960x720'
-        elif (self.droidapp == 'IP Webcam'):
-            stub = '/video?dummy=param.mjpg'
-        else:
-            stub = '/mjpegfeed?640x480'
-
-        url = 'http://'+self.ipadr+':'+self.port + stub
-
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
-
-    def get_stream_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
-
-    def get_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        urlObj = urllib.request.urlopen(url)
-        #print ('URL: ', url, urlObj.getcode())
-        ofname = '/dev/shm/now.jpg'
-        with open(ofname, "wb") as file:
-            file.write(urlObj.read())
-        self.image = cv2.imread(ofname)
-        return (self.image)
-        
-    def set_focus(self):
-        stub = '/focus'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('focus: ', url)
-        urlObj = urllib.request.urlopen(url)
-        
-
-class State(object):
-    def __init__(self):
-        self.is_record = False
-        self.drawing = False
-        self.moving = False
-        self.posi0 = [-1,-1]
-        self.posi1 = [-1,-1]
-        self.posi2 = [-1,-1]
-        self.image = -1
-        self.image_size = [-1, -1] # [height, width]
-        self.image_orig = -1
-        self.class_num = 777
-        self.image_num = 0
-
-    def draw_rect(self):
-        # print ("posi0, posi1: ", self.posi0, self.posi1)
-        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
-
-    def draw_text(self):
-        if(self.is_record):
-            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
-            font_size = 0.8
-            text = "<<%d>>"% (self.image_num)
-            color = (0x0, 0x0, 0xBF)
-            px = int(self.image_size[1]/2)
-            py = 30
-            cv2.putText(self.image, text,(px, py), font, font_size, color)
-
-state = State()
-
-def mouse_event(event,x,y,flags,param):
-    global state
-
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
-
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
-
-    if event == (cv2.EVENT_RBUTTONDOWN): 
-        state.moving = True
-        state.posi2[0] = x
-        state.posi2[1] = y
-
-    if event == (cv2.EVENT_RBUTTONUP): 
-        state.moving = False
-        state.posi2[0] = x
-        state.posi2[1] = y
-    
-
-    if event == (cv2.EVENT_MOUSEMOVE):
-        if state.moving == True:
-            width  = abs(state.posi0[0] - state.posi1[0])
-            height = abs(state.posi0[1] - state.posi1[1])
-            x0 = x - int(width/2)
-            x1 = x + int(width/2)
-            y0 = y - int(height/2)
-            y1 = y + int(height/2)
-
-            x_min = min(x0, x1)
-            x_max = max(x0, x1)
-            y_min = min(y0, y1)
-            y_max = max(y0, y1)
-
-            if x_min < 0: x_min = 0
-            if y_min < 0: y_min = 0
-            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
-            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
-
-            state.posi0[0] = x_min
-            state.posi0[1] = y_min
-            state.posi1[0] = x_max
-            state.posi1[1] = y_max
-
-
-#------------------------------------------------------------------------ save_data
-def save_data_bbox(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4bbox/'
-    fname_body = "image_%08d" % fnum
-
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"Images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
-
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
-
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"Labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    with open(ofname_labels, "w") as file:
-        file.write("1\n")
-        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-def save_data_darknet(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4darknet/'
-    fname_body = "image_%08d" % fnum
-
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    #print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
-
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    #print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
-
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    
-    label_format = 'BBox'
-    label_format = 'darknet'
-
-    if label_format == 'BBox': 
-        with open(ofname_labels, "w") as file:
-            file.write("1\n")
-            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-    if label_format == 'darknet': 
-        img_h, img_w = image_orig.shape[:2]
-        dh = float(img_h)
-        dw = float(img_w)
-        x0 = bbox_posi[0]
-        y0 = bbox_posi[1]
-        x1 = bbox_posi[2]
-        y1 = bbox_posi[3]
-        dnet_x = (x0 + x1)/(2.0*dw)
-        dnet_y = (y0 + y1)/(2.0*dh)
-        dnet_w = (x1 - x0)/dw
-        dnet_h = (y1 - y0)/dh
-        with open(ofname_labels, "w") as file:
-            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
-
-
-def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
-    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
-    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
-
-#------------------------------------------------------------------------ save_data./
-
-
-if (__name__ == '__main__'):
-
-    droidcam = DroidCam()
-#    stream = droidcam.get_stream()
-
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-    while True:
-        frame = droidcam.get_jpg()
-        state.image_orig = frame.copy()
-        state.image      = frame.copy()
-        state.image_size[0], state.image_size[1] = frame.shape[:2]
-        state.draw_rect()
-        state.draw_text()
-        cv2.imshow('droidcam',state.image)
-        cv2.setMouseCallback("droidcam", mouse_event)
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            if False:
-                basedir = '../log.%d/'% (devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, state.image)
-                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
-                tnow0 = tnow
-            save_data(state.image, state.image_orig, state.image_num)
-            state.image_num += 1
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if ( (key == ord(' ')) or 
-             (key == 34) or # Muhenkan
-             (key == 35) or # Henkan
-             (key == 39) or # katakana
-             (key == 10)    # Enter
-        ):
-            state.is_record = not (state.is_record)
-        if key == ord('f'): droidcam.set_focus()
-
-
-    cv2.destroyAllWindows()
-    print("Done.")
-
+2020年 10月  3日 土曜日 11:03:42 JST
+#COREGen Project File
+#Tue Nov 09 19:41:17 JST 2004
+overwritefiles=Default
+blkmemsp_v5_0|Xilinx,\ Inc.|5.0=true
+sid_v3_1|Xilinx,\ Inc.|3.1=true
+decode_8b10b_v5_0|Xilinx,\ Inc.|5.0=true
+C_REG_FD_V6_0|Xilinx,\ Inc.|6.0=true
+C_REG_FD_V3_0|Xilinx,\ Inc.|3.0=false
+C_MUX_BIT_V5_0|Xilinx,\ Inc.|5.0=false
+convolution_v2_0|Xilinx,\ Inc.|2.0=false
+pci32_v3_0|Xilinx,\ Inc.|3.0=true
+C_TWOS_COMP_V4_0|Xilinx,\ Inc.|4.0=false
+C_SHIFT_FD_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_PCI32sII|Xilinx,\ Inc.|3.0=false
+gig_eth_pcs_pma_v4_0|Xilinx,\ Inc.|4.0=true
+C_DDS_V4_2|Xilinx,\ Inc.|4.2=true
+ten_gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
+C_ACCUM_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_pci_express_x1|Xilinx,\ Inc.|1.0=true
+C_GATE_BIT_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+xilinxfamily=Virtex2
+C_COUNTER_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
+C_DIST_MEM_V4_1|Xilinx,\ Inc.|4.1=false
+C_COUNTER_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
+C_ADDSUB_V4_0|Xilinx,\ Inc.|4.0=false
+outputoption=DesignFlow
+C_MUX_SLICE_BUFE_V2_0|Xilinx,\ Inc.|2.0=false
+dividervht|Xilinx,\ Inc.|2.0=true
+C_GATE_BIT_V4_0|Xilinx,\ Inc.|4.0=false
+simvendor=ModelSim
+mult_gen_v6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+vfft64v2|Xilinx,\ Inc.|2.0=true
+C_DA_FIR_V7_0|Xilinx,\ Inc.|7.0=false
+C_REG_LD_V6_0|Xilinx,\ Inc.|6.0=true
+mac_v2_0|Xilinx,\ Inc.|2.0=true
+C_REG_LD_V3_0|Xilinx,\ Inc.|3.0=false
+sid_v2_0|Xilinx,\ Inc.|2.0=false
+C_SHIFT_RAM_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_SLICE_BUFT_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFE_V5_0|Xilinx,\ Inc.|5.0=false
+C_SHIFT_RAM_V3_0|Xilinx,\ Inc.|3.0=false
+ADPCM32_catalog|Xilinx,\ Inc.|1.0=true
+C_MUX_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+outputproducts=ImpNetlist;ASYSymbol;VHDLSim
+cam_v4_0|Xilinx,\ Inc.|4.0=true
+C_MAC_FIR_V2_0|Xilinx,\ Inc.|2.0=false
+C_COMPARE_V4_0|Xilinx,\ Inc.|4.0=false
+C_DA_2D_DCT_V2_0|Xilinx,\ Inc.|2.0=true
+C_BIT_CORRELATOR_V3_0|Xilinx,\ Inc.|3.0=true
+cordic_v2_0|Xilinx,\ Inc.|2.0=true
+xlnx_PCI64v|Xilinx,\ Inc.|3.0=false
+fileversion=4
+C_DIST_MEM_V3_0|Xilinx,\ Inc.|3.0=false
+decode_8b10b_v4_0|Xilinx,\ Inc.|4.0=false
+viterbi_v3_0|Xilinx,\ Inc.|3.0=true
+C_MUX_SLICE_BUFT_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_FD_V2_0|Xilinx,\ Inc.|2.0=false
+encode_8b10b_v4_0|Xilinx,\ Inc.|4.0=true
+xapp265|Xilinx,\ Inc.|1.1=true
+C_DECODE_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
+C_SHIFT_FD_V2_0|Xilinx,\ Inc.|2.0=false
+rs_decoder_v4_0|Xilinx,\ Inc.|4.0=false
+C_DECODE_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
+C_GATE_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+blkmemdp_v3_0|Xilinx,\ Inc.|3.0=false
+C_MAC_V3_0|Xilinx,\ Inc.|3.0=true
+posphyl3_link_v1_0|Xilinx,\ Inc.|3.2=true
+sync_fifo_v2_0|Xilinx,\ Inc.|2.0=false
+blkmemsp_v4_0|Xilinx,\ Inc.|4.0=false
+C_DIST_MEM_V6_0|Xilinx,\ Inc.|6.0=true
+C_REG_FD_V5_0|Xilinx,\ Inc.|5.0=false
+C_MUX_BIT_V4_0|Xilinx,\ Inc.|4.0=false
+C_TWOS_COMP_V3_0|Xilinx,\ Inc.|3.0=false
+C_SHIFT_FD_V5_0|Xilinx,\ Inc.|5.0=false
+posphyl4_v6_0_1|Xilinx,\ Inc.|6.0.1=true
+formalverification=None
+C_ACCUM_V4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BIT_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+vfft1024|Xilinx,\ Inc.|1.0=true
+C_COUNTER_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
+C_ADDSUB_V3_0|Xilinx,\ Inc.|3.0=false
+vfft1024v2|Xilinx,\ Inc.|2.0=true
+C_MUX_SLICE_BUFE_V4_0|Xilinx,\ Inc.|4.0=false
+C_SHIFT_RAM_V2_0|Xilinx,\ Inc.|2.0=false
+xfft_v2_0|Xilinx,\ Inc.|2.0=false
+designflow=VHDL
+C_GATE_BIT_V3_0|Xilinx,\ Inc.|3.0=false
+rs_decoder_v4_1|Xilinx,\ Inc.|4.1=true
+mult_gen_v5_0|Xilinx,\ Inc.|5.0=false
+C_TWOS_COMP_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_pci64_dk|Xilinx,\ Inc.|1.0=true
+vfft64|Xilinx,\ Inc.|1.0=true
+C_DDC_V1_0|Xilinx,\ Inc.|1.0=true
+C_DA_FIR_V6_0|Xilinx,\ Inc.|6.0=false
+C_REG_LD_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_LD_V2_0|Xilinx,\ Inc.|2.0=false
+lockedprops=
+lfsr_v3_0|Xilinx,\ Inc.|3.0=true
+C_ADDSUB_V6_0|Xilinx,\ Inc.|6.0=true
+xfft_v2_1|Xilinx,\ Inc.|2.1=true
+C_CIC_V3_0|Xilinx,\ Inc.|3.0=true
+C_SHIFT_RAM_V5_0|Xilinx,\ Inc.|5.0=false
+async_fifo_v5_0|Xilinx,\ Inc.|5.0=false
+blkmemdp_v3_2|Xilinx,\ Inc.|3.2=false
+C_GATE_BIT_V6_0|Xilinx,\ Inc.|6.0=true
+simulationoutputproducts=VHDL
+C_MUX_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+C_SIN_COS_V4_0|Xilinx,\ Inc.|4.0=false
+HDLC32_catalog|Xilinx,\ Inc.|1.0=true
+busformat=BusFormatAngleBracketNotRipped
+cam_v3_0|Xilinx,\ Inc.|3.0=false
+vfft256v2|Xilinx,\ Inc.|2.0=true
+C_MAC_FIR_V1_0|Xilinx,\ Inc.|1.0=false
+C_COMPARE_V3_0|Xilinx,\ Inc.|3.0=false
+vfft16|Xilinx,\ Inc.|1.0=true
+xlnx_PCI64s2|Xilinx,\ Inc.|3.0=false
+cordic_v1_0|Xilinx,\ Inc.|1.0=false
+flowvendor=Foundation_iSE
+magicnumber=-1172307782
+viterbi_v2_0|Xilinx,\ Inc.|2.0=false
+C_DIST_MEM_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFT_V4_0|Xilinx,\ Inc.|4.0=false
+encode_8b10b_v3_0|Xilinx,\ Inc.|3.0=false
+C_SIN_COS_V4_1|Xilinx,\ Inc.|4.1=false
+HDLC1_catalog|Xilinx,\ Inc.|1.0=true
+C_DECODE_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
+rs_encoder_v4_0|Xilinx,\ Inc.|4.0=false
+rs_decoder_v3_0|Xilinx,\ Inc.|3.0=false
+blkmemdp_v5_0|Xilinx,\ Inc.|5.0=true
+C_GATE_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+sync_fifo_v4_0|Xilinx,\ Inc.|4.0=true
+tcc_decoder_v1_0|Xilinx,\ Inc.|1.0=true
+C_MAC_FIR_V4_0|Xilinx,\ Inc.|4.0=false
+C_ACCUM_V3_0|Xilinx,\ Inc.|3.0=false
+sync_fifo_v1_0|Xilinx,\ Inc.|1.0=false
+C_COMPARE_V6_0|Xilinx,\ Inc.|6.0=true
+cordic_v1_1|Xilinx,\ Inc.|1.1=false
+blkmemsp_v3_0|Xilinx,\ Inc.|3.0=false
+async_fifo_v5_1|Xilinx,\ Inc.|5.1=true
+C_DIST_MEM_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_FD_V4_0|Xilinx,\ Inc.|4.0=false
+C_MUX_BIT_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_BIT_V3_0|Xilinx,\ Inc.|3.0=false
+convolution_v3_0|Xilinx,\ Inc.|3.0=true
+rs_encoder_v4_1|Xilinx,\ Inc.|4.1=true
+mult_gen_v4_0|Xilinx,\ Inc.|4.0=false
+xfft1024_v1_1|Xilinx,\ Inc.|1.1=true
+C_TWOS_COMP_V2_0|Xilinx,\ Inc.|2.0=false
+flexbus4_v1_0|Xilinx,\ Inc.|1.0=false
+C_SHIFT_FD_V4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+C_ACCUM_V6_0|Xilinx,\ Inc.|6.0=true
+C_GATE_BIT_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+C_DIST_MEM_V5_1|Xilinx,\ Inc.|5.1=false
+C_ADDSUB_V5_0|Xilinx,\ Inc.|5.0=false
+lfsr_v2_0|Xilinx,\ Inc.|2.0=false
+C_COUNTER_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
+C_ADDSUB_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFE_V3_0|Xilinx,\ Inc.|3.0=false
+C_SIN_COS_V4_2|Xilinx,\ Inc.|4.2=true
+xaui_v4_0|Xilinx,\ Inc.|4.0=true
+vfft16v2|Xilinx,\ Inc.|2.0=true
+xlnx_PCIX64_virtex_e_ii|Xilinx,\ Inc.|5.0=true
+C_GATE_BIT_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+C_TWOS_COMP_V5_0|Xilinx,\ Inc.|5.0=false
+posphyl4_lite_v2_0|Xilinx,\ Inc.|2.0=true
+C_DA_FIR_V8_0|Xilinx,\ Inc.|8.0=true
+C_DA_FIR_V5_0|Xilinx,\ Inc.|5.0=false
+xlnx_PCI64|Xilinx,\ Inc.|3.0=true
+C_DDS_V4_0|Xilinx,\ Inc.|4.0=false
+C_REG_LD_V4_0|Xilinx,\ Inc.|4.0=false
+C_DA_1D_DCT_V2_1|Xilinx,\ Inc.|2.1=true
+C_COUNTER_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_SLICE_BUFE_V6_0|Xilinx,\ Inc.|6.0=true
+C_SHIFT_RAM_V4_0|Xilinx,\ Inc.|4.0=false
+async_fifo_v4_0|Xilinx,\ Inc.|4.0=false
+xlnx_PCI32v|Xilinx,\ Inc.|3.0=false
+vfft32_v3_0|Xilinx,\ Inc.|3.0=true
+C_MUX_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+blkmemsp_v3_2|Xilinx,\ Inc.|3.2=false
+C_COMPARE_V2_0|Xilinx,\ Inc.|2.0=false
+C_DDS_V4_1|Xilinx,\ Inc.|4.1=false
+vfft256|Xilinx,\ Inc.|1.0=true
+simelaboptions=
+C_DIST_MEM_V4_0|Xilinx,\ Inc.|4.0=false
+C_MUX_SLICE_BUFT_V6_0|Xilinx,\ Inc.|6.0=true
+sid_v3_0|Xilinx,\ Inc.|3.0=false
+xilinxsubfamily=Virtex2
+C_MUX_SLICE_BUFT_V3_0|Xilinx,\ Inc.|3.0=false
+C_MUX_BIT_V2_0|Xilinx,\ Inc.|2.0=false
+gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
+C_DECODE_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
+C_SHIFT_FD_V3_0|Xilinx,\ Inc.|3.0=false
+corelibraryid=0
+C_DECODE_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
+rs_encoder_v3_0|Xilinx,\ Inc.|3.0=false
+C_GATE_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+blkmemdp_v4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+sync_fifo_v3_0|Xilinx,\ Inc.|3.0=false
+tcc_encoder_v1_0|Xilinx,\ Inc.|1.0=true
+C_MAC_FIR_V3_0|Xilinx,\ Inc.|3.0=true
+C_ACCUM_V2_0|Xilinx,\ Inc.|2.0=false
+C_COMPARE_V5_0|Xilinx,\ Inc.|5.0=false
