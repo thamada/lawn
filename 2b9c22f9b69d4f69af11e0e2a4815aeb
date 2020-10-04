@@ -1,75 +1,50 @@
-2020å¹´  9æœˆ 27æ—¥ æ—¥æ›œæ—¥ 09:32:46 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2020å¹´ 10æœˆ  4æ—¥ æ—¥æ›œæ—¥ 09:53:10 JST
+#include <math.h>
+#define DIM (3)              /* ŸŒ³” */
+#define NMAX (65536)         /* Å‘å—±q” */
+//#define NTOTAL 1000      /* —±q” (NTOTAL <= NMAX) */
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+//b3_force_sepaj4.c
+void b3_force_sepaj4(double x[][3],
+		     double m[],
+		     double eps2,
+		     double a[][3],
+		     int n);
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
-}
+//pg_pipe.c
+void force_gravity_on_emulator(double x[][3],
+			       double m[],
+			       double eps2,
+			       double a[][3],
+			       int n);
 
-$bar = 1;
-
-my $adr=0, $size;
-
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
-
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
+//force_gravity_on_b3.c
+void force(double x[][3],
+	   double m[],
+	   double eps2,
+	   double a[][3],
+	   int n);
 
 
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
+//check_pg2emu.c
+void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
 
 
-1;
+//
+void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
+void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
+
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
+void debug_position(double x[][DIM], double dt, int n);
+
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void init_particles(char* fname,
+		    int* npar,
+		    double mass[],
+		    double posi[][DIM],
+		    double veloc[][DIM]);
