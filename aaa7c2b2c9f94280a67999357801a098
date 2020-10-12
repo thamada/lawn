@@ -1,34 +1,42 @@
-2020å¹´ 10æœˆ 11æ—¥ æ—¥æ›œæ—¥ 09:42:31 JST
+2020å¹´ 10æœˆ 12æ—¥ æœˆæ›œæ—¥ 11:25:33 JST
+/**
+   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
+   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
+   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
+*/
+
 #include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
 {
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+  int i,j,d;
+  double dx[3];
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
+  /* a[][]‚Ì‰Šú‰» */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+
+  /* ‘ŠŒİì—p‚ÌŒvZ  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
     }
+  }
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
 
-    fwrite(x, n*24,1,fp);
-
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
-
-    //    fclose(fp);
-    fflush(fp);
 }
-
