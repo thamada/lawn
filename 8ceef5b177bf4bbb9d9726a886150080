@@ -1,4 +1,4 @@
-2020年 10月  7日 水曜日 09:37:10 JST
+2020年 10月 28日 水曜日 11:54:26 JST
 -- 2005/06/13
 #define NPOS 32
 #define NLOG 17
@@ -26,7 +26,7 @@
 #define fshift pow(2.0,-1.0*(double)NEXAD)
 #define fscale (-xscale*xscale*fshift/mscale)
 
-/NPIPE 2;
+/NPIPE 5;
 /NVMP 1;
 
 /JPSET xj[3], x[][], fix,      NPOS,xscale;
@@ -39,18 +39,14 @@ pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           D_FSU);
 pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, D_FTL);
 pg_log_shift(1,dx,x2,                  NLOG);
 
---pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,  D_LAD,NCUT);
---pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,  D_LAD,NCUT);
---pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,  D_LAD,NCUT);
-pg_log_unsigned_add(x2[0],x2[1], x2y2, NLOG,NMAN,      D_LAD);
-pg_log_unsigned_add(x2[2],ieps2, z2e2, NLOG,NMAN,      D_LAD);
-pg_log_unsigned_add(x2y2,z2e2,   r2,   NLOG,NMAN,      D_LAD);
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,D_LAD,NCUT);
 
 pg_log_shift(-1,r2,       r1,          NLOG);
 pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,           D_LMU);
 pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,           D_LMU);
 pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,           D_LMU);
---pg_log_muldiv(SDIV,fx,f_shift, fxs,    NLOG,           D_LMU);
 pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN, D_LMU);
 
 pg_conv_ltof(fxs,  ffx,                NLOG,NMAN,NFOR, D_LTF);
