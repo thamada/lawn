@@ -1,29 +1,20 @@
-2020年 10月 25日 日曜日 10:26:06 JST
-#!/usr/bin/env python3
-#Time-stamp: <>
-import fnmatch
-import functools
-import os
-import re
-
-def find(path, pattern):
-
-    if isinstance(pattern, str): 
-        match = functools.partial(fnmatch.fnmatch, pat=pattern)
-    elif isinstance(pattern, re._pattern_type):
-        match = pattern.match
-    elif callable(pattern):
-        match = pattern
-    else:
-        raise TypeError
-
-    for root, dirs, files in os.walk(path):
-        for file_ in files:
-            if match(file_):
-                yield os.path.join(root, file_)
+2020年 10月 30日 金曜日 09:45:46 JST
 
 
-if __name__ == '__main__':
-    for i in find('../log/', '*.jpg'):
-        print (i)
+all:
+	cp top.ucf.ISE6.3i top.ucf
+	rm -rf proj
+	tar xvf proj.ise6.3i.tar
+	cd proj;xst -intstyle ise -ifn __projnav/top.xst -ofn top.syr
+	cd proj;ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.ngc top.ngd
+	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
+	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
+	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
+	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+
+
+
+clean:
+	rm -rf proj top.ucf *~ .*~
+
 
