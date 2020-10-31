@@ -1,49 +1,71 @@
-2020年 10月 30日 金曜日 09:52:02 JST
-//Time-stamp: <2006-09-07 13:50:20 hamada>
+2020年 10月 31日 土曜日 09:07:57 JST
+#Time-stamp: <2017-06-23 16:16:23 hamada>
 
-/NPIPE 1;
+CONFIG=./etc/config.txt
+MODEL=./etc/model.txt
+WEIGHTS=./backup/m10_150000.weights
+LOGFILE=./log.2gpu
+GPUID= -gpus 0,1
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
-#define xsize (2.0)
-#define mmin  (1.0e-2)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
+all:
+	@echo 'make run'
 
-#define NEXAD -31
-#define fshift pow(2.0,-1.0*(double)NEXAD)
-#define fscale (-xscale*xscale*fshift/mscale)
+r: run
 
-/MEM xj[3] <= x[][] : fix(NPOS);
-/MEM mj    <= m[]   : log(NLOG,NMAN);
-/REG xi[3] <= x[][] : fix(NPOS);
-/REG ieps2 <= eps2  : log(NLOG,NMAN);
-/REG sx[3] => a[][] : fix(NACC);
+run:
+	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
 
-/SCALE xj[3] : xscale;
-/SCALE mj    : mscale;
-/SCALE xi[3] : xscale;
-/SCALE ieps2 : escale;
-/SCALE sx[3] : fscale;
-/NVMP 1;
+run.1gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
 
-pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
-pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
-pg_log_shift(1,dx,x2,                  NLOG);
+run.2gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
 
-pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
-pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
-pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
+run.4gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
 
-pg_log_shift(-1,r2,       r1,          NLOG);
-pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
-pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
-pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
-pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
-pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
-pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
+
+
+demo:
+	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
+#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+
+
+photo:
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+
+
+clean:
+	rm -rf bad.list .*~ *~ ./predictions.jpg
+	rm -rf backup/model*
+
+
+c: clean
+
+
+0.check:
+	cd backup/;md5sum --check md5sum.txt
+
+check:
+	grep ID.000[0-3] etc/all.txt |wc -l
+	grep ID.0004 etc/all.txt |wc -l
+	grep ID.0005 etc/all.txt |wc -l
+	grep ID.0006 etc/all.txt |wc -l
+	grep ID.000[7-9] etc/all.txt |wc -l
+	grep ID.0004 etc/list.train.txt |wc -l
+	grep ID.0005 etc/list.train.txt |wc -l
+	grep ID.0006 etc/list.train.txt |wc -l
+	grep ID.0004 etc/list.valid.txt |wc -l
+	grep ID.0005 etc/list.valid.txt |wc -l
+	grep ID.0006 etc/list.valid.txt |wc -l
+
+check.iou:
+	\rm -f IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
+	\grep IOU IOU.txt
