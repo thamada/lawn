@@ -1,3 +1,16 @@
-2020年 11月  4日 水曜日 11:41:28 JST
-# XST (Creating Lso File) : 
-top.lso
+2020年 11月 11日 水曜日 11:31:04 JST
+#!/usr/bin/env python3
+
+import glob
+import sys
+import random
+
+fname = sys.argv[1]
+random.seed()
+
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
