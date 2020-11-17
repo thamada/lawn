@@ -1,34 +1,41 @@
-2020年 11月 16日 月曜日 10:54:38 JST
-#include <stdio.h>
+2020年 11月 17日 火曜日 09:37:08 JST
+Release 6.2.03i - ngdbuild G.31a
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
+Command Line: ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf -p
+xc2vp70-ff1517-5 top.ngc top.ngd 
 
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
-{
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+Reading NGO file
+"/home/hamada/pgr/Demos/PairWiseErr/pgr/ISE_PROJECT/proj/top.ngc" ...
+Reading component libraries for design expansion...
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
+Annotating constraints to design from file "../top.ucf" ...
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
+Checking timing specifications ...
+WARNING:XdmHelpers:793 - The TNM "CLK66" drives the CLKIN pin of DCM
+   "dcm0_dcm0". This TNM cannot be traced through the DCM because it is not used
+   in exactly one PERIOD specification. This TNM is used in the following user
+   groups and/or specifications:
+   <none>
+WARNING:XdmHelpers:625 - No instances driven from signal "CK66" are valid for
+   inclusion in TNM group "CLK66". A TNM property on a pin or signal marks only
+   the flip-flops, latches and/or RAMs which are directly or indirectly driven
+   by that pin or signal.
+INFO:XdmHelpers:851 - TNM "CK66", used in period specification "TS_CK66", was
+   traced into DCM instance "dcm0_dcm0". The following new TNM groups and period
+   specifications were generated at the DCM output(s):
+   CLK0: TS_dcm0_dcm_out=PERIOD dcm0_dcm_out TS_CK66*1.000000 HIGH 50.000000%
+   CLKFX: TS_dcm0_dcm_fx=PERIOD dcm0_dcm_fx TS_CK66*1.000000 HIGH 50.000000%
+WARNING:XdmHelpers:644 - No appropriate elements were found for the TNM group
+   "CLK66". This group has been removed from the design.
+Checking expanded design ...
 
-    fwrite(x, n*24,1,fp);
+NGDBUILD Design Results Summary:
+  Number of errors:     0
+  Number of warnings:   3
 
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
+Total memory usage is 67920 kilobytes
 
-    //    fclose(fp);
-    fflush(fp);
-}
+Writing NGD file "top.ngd" ...
 
+Writing NGDBUILD log file "top.bld"...
