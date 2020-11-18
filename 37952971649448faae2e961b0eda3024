@@ -1,5 +1,15 @@
-2020年 11月 14日 土曜日 11:15:44 JST
--- ProjNav VHDL simulation template: sim_local_write.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2020年 11月 18日 水曜日 09:53:30 JST
+#!/usr/bin/perl
+
+my $nloop = 16;
+my $logbase = "log.GTX";
+
+for(my $ni=2; $ni<131073; $ni = $ni*2){
+    my $bin = "\$\(BIN\)";
+    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
+    my $log = "\$LOG";
+    my $cmd = "$bin $ifile $nloop >> $log";
+    print "\t".$cmd ."\n";
+}
+
+1;
