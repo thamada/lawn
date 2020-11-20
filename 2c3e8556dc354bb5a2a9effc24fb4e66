@@ -1,139 +1,47 @@
-2020年 11月 16日 月曜日 10:04:17 JST
-[net]
-# Testing
-#batch=1
-#subdivisions=1
-# Training
-batch=64
-subdivisions=8
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+2020年 11月 20日 金曜日 10:03:18 JST
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-learning_rate=0.001
-max_batches = 40200
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+/*
+ * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+#include "pg4.h"
 
-[maxpool]
-size=2
-stride=2
+int main(int argc, char* argv[])
+{
+  int devid  = 0;
+  int bar    = 0;
+  int is_size = 0;
+  unsigned long z = 0;
 
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
+  if (argc < 3) {
+    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
+    exit(-1);
+  }
+  
+  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
 
-[maxpool]
-size=2
-stride=2
+  devid = atoi(argv[1]);
+  bar   = atoi(argv[2]);
+  
+  pg4_open(devid);
 
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
+  if(is_size)
+    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
+  else
+    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
 
-[maxpool]
-size=2
-stride=2
+  printf("0x%08lx\n",z);
+  pg4_close(devid);
 
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-filters=35
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=2
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+  return 1;
+}
