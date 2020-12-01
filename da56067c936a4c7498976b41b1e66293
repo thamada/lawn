@@ -1,69 +1,138 @@
-2020å¹´ 11æœˆ 29æ—¥ æ—¥æ›œæ—¥ 09:58:59 JST
--- Copyright (c) by PGR project
--- All rights reserved.
--- Auther Tsuyoshi Hamada
--- for JDIM=4 (JDATA_WIDTH =< 128)
--- but DEPTH=16384
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+2020å¹´ 12æœˆ  1æ—¥ ç«æ›œæ—¥ 09:30:36 JST
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
-entity jmem is
-  port (
-    rst        : in  std_logic; -- not used
-    we         : in  std_logic;
-    wclk       : in  std_logic;
-    wadr       : in  std_logic_vector(15 downto 0);
-    rclk       : in  std_logic;
-    radr       : in  std_logic_vector(15 downto 0);
-    idata      : in  std_logic_vector(63 downto 0);
-    odata      : out  std_logic_vector(127 downto 0)  -- for G5
---  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
---  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
+
+entity dcm_ps_f is
+  generic(
+    PS  : integer
   );
-end jmem;
+  port(
+    RST          : in  std_logic;              -- ƒŠƒZƒbƒg
+    CLK_IN        : in  std_logic;             -- ƒNƒƒbƒN“ü—Í
+    CLK_FB_IN      : in  std_logic;            -- ƒNƒƒbƒNFB“ü—Í
+    CLK_OUT        : out  std_logic            -- ƒNƒƒbƒNo—Í
+  );
+end dcm_ps_f;
 
-architecture rtl of jmem is
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
 
-component dpram
-	port (
-	wadr: IN std_logic_VECTOR(13 downto 0);
-	radr: IN std_logic_VECTOR(13 downto 0);
-	wclk: IN std_logic;
-	rclk: IN std_logic;
-	din: IN std_logic_VECTOR(63 downto 0);
-	dout: OUT std_logic_VECTOR(63 downto 0);
-	we: IN std_logic);
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
 end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
 
-signal we0,we1,we2,we3 : std_logic;
-signal adr0,adr1,nadr0,nadr1 : std_logic;
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
+
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0ŒÅ’èM†
+signal  CLK0_OUT      : std_logic;       -- DCMo—ÍƒNƒƒbƒN
 
 begin
 
-adr0  <= wadr(0);
-nadr0 <= NOT wadr(0);
+-- *********************************************************************
+-- ŒÅ’èM†
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0ŒÅ’èM†
 
-we0  <= we and nadr0;  -- we & wadr(0)="0"
-we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-u0 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata,
-      dout=> odata(63 downto 0),
-      we  => we0);
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ƒŠƒZƒbƒg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
+    CLKFB        => CLK_FB_IN  ,    -- FB“ü—Í
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒg‚Ì‘•ª/Œ¸•ª
+    PSEN         => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
+    PSCLK        => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTo—ÍƒNƒƒbƒN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
 
-u1 : dpram port map(
-      wadr=> wadr(14 downto 1),
-      wclk=> wclk,
-      radr=> radr(14 downto 1),
-      rclk=> rclk,
-      din => idata, 
-      dout=> odata(127 downto 64),
-      we  => we1);
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMo—ÍƒNƒƒbƒN
+    O  => CLK_OUT                   -- DCMo—ÍƒNƒƒbƒN(BUFGŒã)
+  );
 
 end rtl;
