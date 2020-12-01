@@ -1,129 +1,114 @@
-2020å¹´ 11æœˆ 14æ—¥ åœŸæ›œæ—¥ 11:08:00 JST
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
-
-class_num = 1 # annotate number for class: 001: hamada
-drawing = False
-posi0 = [-1,-1]
-posi1 = [-1,-1]
-image_size = [-1, -1] # [height, width]
-
-def mouse_event(event,x,y,flags,param):
-    global posi0, posi1, drawing
-
-    if x < 0: x = 0 
-    if y < 0: y = 0 
-    if x >= image_size[1]: x = image_size[1] - 1
-    if y >= image_size[0]: y = image_size[0] - 1
-
-
-    if event == cv2.EVENT_LBUTTONDOWN:
-        print ('Push')
-        drawing = True
-        posi0[0] = x
-        posi0[1] = y
+2020å¹´ 12æœˆ  1æ—¥ ç«æ›œæ—¥ 09:07:10 JST
+-- multiple clock generator
+-- by Tsuyoshi Hamada
+-- Last Modified at 2004/01/11
+-- ===== COMPONENT SAMPLE =======================================
+--component CLK_MULDIV
+--  generic (CLKFX_MULTIPLY : integer :=3;
+--           CLKFX_DIVIDE : integer := 2);
+--  port (ICLK : in std_logic;
+--        OCLK : out std_logic;
+--        OCLK_FX : out std_logic;
+--        LOCKED : out std_logic);
+--end component;
+--
+-- ===== INSTANCIATION SAMPLE ====================================
+--dcm0 : CLK_MULDIV
+----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
+----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
+----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
+----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
+----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
+----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
+----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
+----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
+--  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
+--  port map (
+--	ICLK=>SYS_CLK,
+--	OCLK=>clk,
+--	OCLK_FX=>pclk,
+--	LOCKED=>dcm_locked);
 
 
-    elif event == cv2.EVENT_MOUSEMOVE:
-        if drawing == True:
-            print ("Drawing... (%d, %d)" % (x, y))
-        else:
-            pass
-    elif event == cv2.EVENT_LBUTTONUP:
-        print ('Up')
-        drawing = False
-        cv2.rectangle(image, (posi0[0],posi0[1]), (x,y), (0,255,0), 1)
-        posi1[0] = x
-        posi1[1] = y
+library ieee;
+LIBRARY UNISIM;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+USE UNISIM.Vcomponents.ALL;
 
-def save_data(image_dbg, image_orig, fnum):
-    global class_num, posi0, posi1
-    basedir = '../data4bbox/'
-    fname_body = "image_%04d" % fnum
+entity CLK_MULDIV is
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end CLK_MULDIV;
 
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"Images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
+architecture rtl of CLK_MULDIV is
+component BUFG port (I: in  std_logic;  O: out  std_logic); 
+end component;
+component IBUFG port(I: in std_logic; O: out std_logic);
+end component;
+component DCM
+  generic ( 
+       CLKFX_MULTIPLY : integer := 3;
+       CLKFX_DIVIDE : integer := 2;
+       CLKIN_PERIOD : real := 15.000000;
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "FIXED";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+  port ( CLKIN   : in  std_logic;
+       CLKFB   : in  std_logic;
+       DSSEN   : in  std_logic;
+       PSINCDEC   : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK   : in  std_logic;
+       RST     : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90   : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X   : out std_logic;
+       CLK2X180   : out std_logic;
+       CLKDV   : out std_logic;
+       CLKFX   : out std_logic;
+       CLKFX180   : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
 
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
+signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
 
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"Labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    with open(ofname_labels, "w") as file:
-        file.write("1\n")
-        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
+begin
 
-if '__main__' == __name__:
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
+dcm0 : DCM
+  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
+	CLKFX_DIVIDE=>CLKFX_DIVIDE,
+        CLKIN_PERIOD => 15.000000,
+	DUTY_CYCLE_CORRECTION=>TRUE)
+  port map(
+    RST          => '0',         -- ƒŠƒZƒbƒg
+    CLKIN        => dcm_in,      -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
+    CLKFB        => dcm_fb,         -- FB“ü—Í
+    DSSEN        => '0',
+    PSINCDEC     => '0',
+    PSEN         => '0',         -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
+    PSCLK        => '0',         -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
+    LOCKED       => LOCKED,
+    CLKFX        => dcm_fx,      -- ICLK x N
+    CLK0         => dcm_out      -- PHASE SHIFTo—ÍƒNƒƒbƒN
+  );
 
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
+U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
+U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
+U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
+OCLK <= dcm_fb;
+end rtl;
 
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
-        print (fname, "%d/%d (%1.3f)"%(i, ni, i/ni))
-
-        image_orig = cv2.imread(fname, cv2.IMREAD_COLOR)
-        image = image_orig.copy()
-        image_size[0], image_size[1] = image.shape[:2]
-        is_next = False
-        while (not is_next):
-            cv2.imshow("THBox-annon.py", image)
-            cv2.namedWindow("THBox-annon.py", cv2.WINDOW_NORMAL)
-            cv2.setMouseCallback("THBox-annon.py", mouse_event)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord(' '):
-                save_data(image, image_orig, i)
-                is_next = True
-            if key  == 83:  # ->
-                is_next = True
-            if key  == 81:  # <-
-                i = i - 2
-                is_next = True
-            if key == ord('r'): # Reset
-                i = i - 1
-                is_next = True
-            if key  == ord('q'): 
-                i = ni
-                break
-        i = i+1
-
-    cv2.destroyAllWindows()
-
-
-
-
-
-    
