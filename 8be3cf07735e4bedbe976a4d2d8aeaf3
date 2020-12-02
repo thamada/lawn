@@ -1,46 +1,41 @@
-2020年 11月 16日 月曜日 11:25:36 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
+2020年 12月  2日 水曜日 09:59:15 JST
+// Time-stamp: <2006-09-04 13:41:34 hamada>
+// by T.Hamada
+//
+// <2006-09-04 13:33:47 hamada>
 
-VM_NAME="ubuntu16"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-all: check
+#include "pg4.h"
 
-c: check
+void rst(int devid, int d, int msec)
+{
+  d = 0xff & d;
+  WriteBase0(devid, 0x4, d);
+  usleep(msec*1000);
+}
 
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  int i;
 
+  pg4_open(devid);
+  
+  for(i=0;i<16;i++){
+    int x;
+    x = 0xff&(1<<(i%8));
+    rst(devid, x, 100);
+    rst(devid, 0, 1);
+  }
 
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+  rst(devid, 0xff, 1000);
+  rst(devid, 0x0, 0);
 
+  pg4_close(devid);
 
-run: start
-
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
+  return 0;
+}
