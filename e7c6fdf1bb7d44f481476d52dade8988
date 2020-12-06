@@ -1,19 +1,47 @@
-2020年 12月  6日 日曜日 09:09:56 JST
-#!Time-stamp: <2007-01-22 04:30:32 hamada>
+2020年 12月  6日 日曜日 10:47:45 JST
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-Linux device driver for the PROGRAPE-4 board,
+/*
+ * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
-including runtime libraries and HDL source for interface FPGA.
+#include "pg4.h"
 
-- Linux kernel release 2.6.x
+int main(int argc, char* argv[])
+{
+  int devid  = 0;
+  int bar    = 0;
+  int is_size = 0;
+  unsigned long z = 0;
 
-- Xilinx XC3S5000-5-FG900 FPGAs
+  if (argc < 3) {
+    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
+    exit(-1);
+  }
+  
+  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
 
-- Xilinx ISE 8.1i
--- Release 8.1.03i xst I.27
--- Release 8.1.03i par I.27
--- Release 8.1.03i Trace I.27
--- Release 8.1.03i Bitgen I.27
+  devid = atoi(argv[1]);
+  bar   = atoi(argv[2]);
+  
+  pg4_open(devid);
 
+  if(is_size)
+    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
+  else
+    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
 
-![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
+  printf("0x%08lx\n",z);
+  pg4_close(devid);
+
+  return 1;
+}
