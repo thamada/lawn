@@ -1,22 +1,15 @@
-2020年 12月  3日 木曜日 09:14:10 JST
-# Xilinx CORE Generator 6.2.03i
-# User = Administrator
-Initializing default project...
-Loading plug-ins...
-All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
-# busformat=BusFormatAngleBracketNotRipped
-# designflow=VHDL
-# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
-# flowvendor=Foundation_iSE
-# formalverification=None
-# simulationoutputproducts=VHDL
-# xilinxfamily=Virtex2
-# outputoption=DesignFlow
-# overwritefiles=Default
-# simvendor=ModelSim
-# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
-SETPROJECT .
-Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
-SET BusFormat = BusFormatAngleBracketNotRipped
-SETXIPCPORTHOST 1271
-XIPCPJSENDCORES virtex2
+2020年 12月 13日 日曜日 10:34:50 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
+
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
+
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
+
+    time.sleep(3)
