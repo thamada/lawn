@@ -1,15 +1,10 @@
-2020年 12月  2日 水曜日 11:10:06 JST
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed
-# by applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-applypatch".
-
-. git-sh-setup
-test -x "$GIT_DIR/hooks/pre-commit" &&
-	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
-:
+2020年 12月 20日 日曜日 09:15:42 JST
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
