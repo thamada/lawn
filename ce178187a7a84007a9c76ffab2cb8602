@@ -1,17 +1,34 @@
-2020年 12月 23日 水曜日 11:26:48 JST
-Release 8.1.03i - par I.27
-Copyright (c) 1995-2005 Xilinx, Inc.  All rights reserved.
-
-Sun Nov 19 22:38:31 2006
-
-There are 0 unrouted networks: 
+2020年 12月 24日 木曜日 11:48:44 JST
+#include <stdio.h>
 
 
-There are 6 sourceless or loadless networks: 
+void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
+{
+  //    int i;
+    static int flag=0;
+    static FILE* fp;
 
-   CBUS<2>_IBUF
-   CBUS<3>_IBUF
-   CBUS<4>_IBUF
-   CBUS<5>_IBUF
-   CBUS<6>_IBUF
-   FPGA_NO<2>_IBUF
+    if(flag==0){
+      fp = fopen("/mnt/ram/xxx.log","w");
+      //      fp = fopen("xxx.log","w");
+      flag = 1;
+    }else{
+      rewind(fp);
+    }
+
+    fprintf(fp,"%d\n",nstep);
+    fprintf(fp,"%e\n",Gflops);
+    fprintf(fp,"%d\n",n);
+
+    fwrite(x, n*24,1,fp);
+
+    /*
+    for(i=0;i<n;i++){
+      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
+    }
+    */
+
+    //    fclose(fp);
+    fflush(fp);
+}
+
