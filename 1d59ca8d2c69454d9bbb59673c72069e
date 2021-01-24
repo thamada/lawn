@@ -1,138 +1,121 @@
-2021Âπ¥  1Êúà  3Êó• Êó•ÊõúÊó• 11:25:03 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+2021Âπ¥  1Êúà 24Êó• Êó•ÊõúÊó• 10:37:26 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:59:29 hamada>
+import Message
+import WebCam
+import numpy as np
+import cv2
+from datetime import datetime
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
-
-entity dcm_ps_f is
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;              -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
-  );
-end dcm_ps_f;
-
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
-
---------------------------------------------------
--- Components
---------------------------------------------------
-
-component BUFG 
-  port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
-
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
-
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
-
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
-signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
-
-begin
-
--- *********************************************************************
--- å≈íËêMçÜ
--- *********************************************************************
-  logic_0 <= '0';                   -- 0å≈íËêMçÜ
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
 
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ÉäÉZÉbÉg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
-    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
-    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
-    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
-    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
-  );
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-end rtl;
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+
+
+
+def draw_text_time(msg, image):
+    font = cv2.FONT_HERSHEY_PLAIN 
+    font_size = 3.0
+    color = (0x0f, 0xff, 0x1f)
+    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    cv2.putText(image, text, (30, 65), font, font_size, color)
+    cv2.putText(image, text, (31, 65), font, font_size, color)
+
+
+def draw_text(msg, image, text):
+    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
+    font_size = 2.5
+    color = (int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)))
+
+    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
+    py = int(image.shape[0]/2. + np.random.normal(25, 3))
+    cv2.putText(image, text, (px, py), font, font_size, color)
+
+
+if __name__ == '__main__':
+    webcam = WebCam.WebCam()
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 300)
+    image  = image0.copy()
+
+    window_title = "AI sensor by T. Hamada 2017/07/04"
+    x = 0
+    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+
+    i_found = 0
+    while(True):
+        is_detect = msg.scan_object("person")
+        draw_text_time(msg, image)
+
+        if is_detect != True:
+            webcam.clear_cache()
+        else:
+            webcam.save_photo()
+            for i in range(8):
+                draw_text(msg, image, "I found you")
+
+            i_found += 1
+            if(i_found > 5):
+                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                with open("./log.person.txt", 'a') as fh:
+                    fh.write(tnow + " - detects 'Person'\n")
+                i_found = 0
+
+
+
+
+        x = 0
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
