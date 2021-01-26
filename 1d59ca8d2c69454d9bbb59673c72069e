@@ -1,121 +1,80 @@
-2021年  1月 24日 日曜日 10:37:26 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:59:29 hamada>
-import Message
-import WebCam
-import numpy as np
-import cv2
-from datetime import datetime
+2021年  1月 26日 火曜日 09:21:28 JST
+-- Last Modifiled at 2004/12/27
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
+entity adr_dec is
+  port (
+    clk        : in std_logic;
+    adr        : in std_logic_vector(18 downto 0);
+    is_jpw     : out std_logic;
+    is_ipw     : out std_logic;
+    is_fo      : out std_logic;
+    is_setn    : out std_logic;
+    is_run     : out std_logic;
+    FPGA_NO    : in std_logic_vector(1 downto 0));
+end adr_dec;
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
+architecture rtl of adr_dec is
+signal cmd_h : std_logic_vector(6 downto 0);
+signal cmd_l : std_logic_vector(11 downto 0);
 
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
+begin
 
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
+cmd_h <= adr(18 downto 12);
+cmd_l <= adr(11 downto 0);
 
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+-- is_jpw ----------------------
+process(cmd_h,cmd_l) begin -- BroadCast Only
+--if (cmd_h(3) = '1') then -- 4096w * 512bit = 256KByte
+--if (cmd_h(4) = '1') then -- 8192w * 512bit = 512KByte
+--if (cmd_h(5) = '1') then --16384w * 512bit =   1MByte
+  if (cmd_h(6) = '1') then --32768w * 512bit =   2MByte
+     is_jpw <= '1';
+  else
+     is_jpw <= '0';
+  end if;
+end process;
 
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+-- is_ipw ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000101") AND (cmd_l(11 downto 10)=FPGA_NO)) then
+     is_ipw <= '1';
+  else
+     is_ipw <= '0';
+  end if;
+end process;
 
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+-- is_fo -----------------------
+process(cmd_h,cmd_l) begin
+--  if((cmd_h = "0000110") AND (cmd_l(9 downto 8) = FPGA_NO)) then
+  if((cmd_h = "0000110") AND (cmd_l(10 downto 9) = FPGA_NO)) then
+     is_fo <= '1';
+  else
+     is_fo <= '0';
+  end if;
+end process;
 
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
+-- is_setn ---------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0111") AND (cmd_l(11 downto 0) = "000000000000")) then
+     is_setn <= '1';
+  else
+     is_setn <= '0';
+  end if;
+end process;
 
-
-
-def draw_text_time(msg, image):
-    font = cv2.FONT_HERSHEY_PLAIN 
-    font_size = 3.0
-    color = (0x0f, 0xff, 0x1f)
-    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    cv2.putText(image, text, (30, 65), font, font_size, color)
-    cv2.putText(image, text, (31, 65), font, font_size, color)
-
-
-def draw_text(msg, image, text):
-    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
-    font_size = 2.5
-    color = (int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)),
-             int (np.random.normal(0xEF, 0xFF)))
-
-    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
-    py = int(image.shape[0]/2. + np.random.normal(25, 3))
-    cv2.putText(image, text, (px, py), font, font_size, color)
-
-
-if __name__ == '__main__':
-    webcam = WebCam.WebCam()
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 300)
-    image  = image0.copy()
-
-    window_title = "AI sensor by T. Hamada 2017/07/04"
-    x = 0
-    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
-
-    i_found = 0
-    while(True):
-        is_detect = msg.scan_object("person")
-        draw_text_time(msg, image)
-
-        if is_detect != True:
-            webcam.clear_cache()
-        else:
-            webcam.save_photo()
-            for i in range(8):
-                draw_text(msg, image, "I found you")
-
-            i_found += 1
-            if(i_found > 5):
-                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                with open("./log.person.txt", 'a') as fh:
-                    fh.write(tnow + " - detects 'Person'\n")
-                i_found = 0
+-- is_run ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000111") AND (cmd_l(11 downto 0) = "000000000011")) then
+     is_run <= '1';
+  else
+     is_run <= '0';
+  end if;
+end process;
 
 
-
-
-        x = 0
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
+end rtl;
