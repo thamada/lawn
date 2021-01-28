@@ -1,46 +1,44 @@
-2021年  1月 26日 火曜日 09:40:43 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
+2021年  1月 28日 木曜日 10:55:53 JST
+// Time-stamp: " "
+#include <stdio.h> 
+#include <string.h>
+#include <stdlib.h>
 
-VM_NAME="ubuntu16"
+void read_data(char* fname, int* nbody, double posi[][2])
+{
+  int idx,n;
+  char line[2560];
+  FILE *fp;
+  fp = fopen(fname,"r");
+  idx=0;
 
-all: check
+  { // get N (number of particles)
+    char* p;
+    fgets(line,100,fp);
+    p = (char* )strtok(line,"\n");
+    sscanf(p,"%d",&n);
+    *nbody = n;
+  }
 
-c: check
+  // get all data
+  for(idx=0;idx<n;idx++){
+    char* p;
+    char col[10][400];
+    int i=0;
+    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
+    p = (char* )strtok(line,"\t");
+    strcpy(col[i],p);
+    i++;
+    while((p = (char* )strtok(NULL, "\t"))!=NULL){
+      strcpy(col[i],p);
+      i++;
+    }
+    //--- for debug ---
+    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
+    //    printf("\n");
 
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-run: start
-
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
+    posi[idx][0]=atof(col[0]);
+    posi[idx][1]=atof(col[1]);
+  }
+  fclose(fp);
+}
