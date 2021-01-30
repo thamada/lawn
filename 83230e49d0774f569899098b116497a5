@@ -1,49 +1,59 @@
-2021年  1月 27日 水曜日 11:16:19 JST
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT proj
-DESIGN proj
-DEVFAM virtex2p
-DEVFAMTIME 0
-DEVICE xc2vp70
-DEVICETIME 0
-DEVPKG ff1517
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE ..\dmaw_mem_data.vhd
-SOURCE ..\dmaw_mem_we.vhd
-SOURCE ..\dmar_mem_adr.vhd
-SOURCE ..\dmaw_mem_adr.vhd
-SOURCE ..\dmar_start_adr.vhd
-SOURCE ..\dmaw_start_adr.vhd
-SOURCE ..\dmar_dbus_hiz.vhd
-SOURCE ..\dmar.vhd
-SOURCE ..\clk_muldiv_by_xcore.vhd
-SOURCE ..\dmaw.vhd
-SOURCE ..\user.vhd
-SOURCE ..\dmar_state.vhd
-SOURCE ..\dmar_mem_re.vhd
-SOURCE ..\clk_muldiv.vhd
-SOURCE ..\dmaw_state.vhd
-SOURCE ..\top.vhd
-SOURCE ..\pgpg_mem\dpram.vhd
-SOURCE ..\pgpg_mem\pg_module.vhd
-SOURCE ..\pgpg_mem\calc.vhd
-SOURCE ..\pgpg_mem\jmem.vhd
-SOURCE ..\pgpg_mem\pgpg_mem.vhd
-SOURCE ..\pgpg_mem\adr_dec.vhd
-SOURCE ..\pgpg_mem\pg_pipe.vhd
-SOURCE ..\pgpg_mem\setn.vhd
-SOURCE ..\pgpg_mem\pipe_sts.vhd
-DEPASSOC top ..\top.ucf
-[STRATEGY-LIST]
-Normal=True
+2021年  1月 30日 土曜日 10:11:00 JST
+//-----------------------------------------------------------------------------
+// mk_eight.C:  prints initial conditions for the figure eight
+//              of the three-body problem
+//-----------------------------------------------------------------------------
+#include  <iostream>
+using namespace std;
+
+typedef double  real;                      // "real" as a general name for the
+                                           // standard floating-point data type
+#define  NDIM     3                        // number of spatial dimensions
+
+int main()
+{
+    const int n = 3;           // number of particles
+    const real t = 0;          // time
+    real r[n][NDIM];           // r[i][k] : position component k for particle i
+    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
+    real m[n];                 // m[i] : mass for particle i
+
+    m[0] = 1;
+    m[1] = 1;
+    m[2] = 1;
+
+    r[0][0] = 0.9700436;
+    r[0][1] = -0.24308753;
+    r[0][2] = 0;
+    v[0][0] = 0.466203685;
+    v[0][1] = 0.43236573;
+    v[0][2] = 0;
+
+    r[1][0] = -r[0][0];
+    r[1][1] = -r[0][1];
+    r[1][2] = -r[0][2];
+    v[1][0] = v[0][0];
+    v[1][1] = v[0][1];
+    v[1][2] = v[0][2];
+
+    r[2][0] = 0;
+    r[2][1] = 0;
+    r[2][2] = 0;
+    v[2][0] = -2 * v[0][0];
+    v[2][1] = -2 * v[0][1];
+    v[2][2] = -2 * v[0][2];
+
+    cout.precision(16);
+
+    cout << n << endl;                      // first output line:  N
+    cout << t << endl;                      // second output line:  time
+    for (int i = 0; i < n; i++){
+        cout << m[i];                       // each next output line:
+        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
+            cout << ' ' << r[i][k];
+        for (int k = 0; k < NDIM; k++)
+            cout << ' ' << v[i][k];
+        cout << endl;
+    }
+}
+//-----------------------------------------------------------------------------
