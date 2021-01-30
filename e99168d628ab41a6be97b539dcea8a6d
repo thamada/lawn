@@ -1,85 +1,47 @@
-2021年  1月  6日 水曜日 10:41:58 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-05-30 09:51:10 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2021年  1月 30日 土曜日 09:13:57 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xaf, 0xdf, 0xf)
-    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
-
-if (__name__ == '__main__'):
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-    log_base = '../log/'
-    cap = []
-    for i in range(3):
-        cap.append(cv2.VideoCapture(i))
-
-    # -- swap cap --
-    if True:
-        cap_tmp = cap[0]
-        cap[0] = cap[2]
-        cap[2] = cap_tmp
+void b3_init(int devid);
+void b3_init_config(int devid, char* fpga_conf_file);
 
 
-    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
-    size = (int(cap_width/2), int(cap_height/2))
+void b3_set_idata(unsigned int devid,      // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int ireg_index, // iregister index
+                  unsigned int data);      // data
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+void b3_reset_jmem_adr();
+void b3_reset_jmem_adr_n(int nchip);
 
-    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
-        frame = [0,0,0]
-        for (i, fm) in enumerate(frame):
-            ret, fm = cap[i].read()
-            smallimg = cv2.resize(fm, size)
-            if False: cv2.imshow('camera: %d'%(i), smallimg)
-            frame[i] = smallimg
+void b3_set_jdata(unsigned int devid,      // device id
+                  unsigned int nword,      // number of jdata
+                  unsigned int jdata[] );  // 
 
-        # ----------------------------------------------------------------
-        frame_height, frame_width = frame[0].shape[:2]
-        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
+void b3_set_jdata_n_chip(unsigned int devid,    // device id
+			 unsigned int nchip,    // 0, 1, 2, 3
+			 unsigned int nword,    // number of jdata
+			 unsigned int jdata[]);
 
-        for (i, fm) in enumerate(frame):
-            sx = frame_width * i
-            sy = 0
-            ex = frame_width * (i+1)
-            ey = frame_height
-            image[sy:ey,sx:ex] = fm
 
-        cv2.imshow('pycam', image)
+void b3_get_jdata(unsigned int devid,      // device id
+                  unsigned int chip_sel,   // chip_sel
+		  unsigned int jmem_adr,   // mem adr
+                  unsigned int* data );    // data 
 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        if(tnow != tnow0):
-            put_text(image, tnow)
-            basedir = '../log/'
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, image)
-            print(ofname)
-            tnow0 = tnow
+void b3_start_calc(unsigned int n,
+		   unsigned int chip_sel);
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+void b3_start_calc_sepa4jM(unsigned int nrun[]);
 
-    for (i, fm) in enumerate(frame):
-        cap[i].release()
+unsigned int b3_get_calcsts(unsigned int chip_sel);
 
-    cv2.destroyAllWindows()
 
-    print("Done.")
+void b3_get_fodata(unsigned int devid,     // device id
+		  unsigned int chip_sel,   // chip select
+                  unsigned int npipe,      // pipeline number
+                  unsigned int fo_index,   // iregister index
+                  unsigned int* data);     // data
