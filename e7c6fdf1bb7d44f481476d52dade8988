@@ -1,16 +1,30 @@
-2021年  1月 27日 水曜日 10:51:23 JST
-/** 
-# v��1/2���ƥå׿ʤ��
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
+2021年  3月  2日 火曜日 10:16:54 JST
+#!/usr/bin/perl
 
-#include <stdio.h>
-#include "nbodysim.h"
 
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
 }
+
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
+
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
+
+print $nbuf ." buffers exists\n";
+
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
+
+1;
