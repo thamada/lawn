@@ -1,36 +1,16 @@
-2021年  3月 27日 土曜日 09:41:02 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---
--- DMAR_STATE is used only 
---                dmar_mem_adr.vhd  
---                dmar_mem_re.vhd
---                dmar_start_adr.vhd
--- dmar_dbus_hiz and dma_mem_data do not used DMAR_STATE.
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmar_state is
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end dmar_state;
-
-architecture rtl of dmar_state is
-
-component dmaw_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-begin
-  u0 : dmaw_state port map(RST=>RST, CLK=>CLK, ENABLE=>ENABLE, STATE=>STATE);
-end rtl;
+2021年  3月 28日 日曜日 09:51:06 JST
+#include<stdio.h>
+#define LONG long long int 
+// bit level check between emulator and hardware(pg2)
+void check_pg2emu(LONG accel[][3],LONG accel_pg2[][3],int n)
+{
+  int i,j;
+  for(i=0;i<n;i++){
+    for(j=0;i<3;j++){
+      LONG a_emu,a_pg2;
+      a_emu = accel[i][j];
+      a_pg2 = accel_pg2[i][j];
+      if(a_emu != a_pg2){fprintf(stderr,"error\n");}
+    }
+  }
+}
