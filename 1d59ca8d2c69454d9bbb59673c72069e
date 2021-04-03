@@ -1,17 +1,15 @@
-2021年  3月 17日 水曜日 10:01:13 JST
-#!/usr/bin/perl
+2021年  4月  3日 土曜日 11:39:39 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
 
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
 
-srand(12345);
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
 
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
-}
+    time.sleep(3)
