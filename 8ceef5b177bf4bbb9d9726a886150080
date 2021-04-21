@@ -1,91 +1,265 @@
-2021年  4月 10日 土曜日 11:11:54 JST
-//-----------------------------------------------------------------------------
-// Output Pair-Wise Error
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2021年  4月 21日 水曜日 09:39:02 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 18:45:17 2005
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+ENTITY sim_local_read IS
+END sim_local_read;
 
-#define NMAX 1024
+ARCHITECTURE testbench_arch OF sim_local_read IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read.ano";
+	COMPONENT local_read
+		GENERIC (
+			NBIT_L_ADRO : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_STS : In  std_logic;
+			BUSY : Out  std_logic;
+			DMAR_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			DBUS_idata : In  std_logic_vector (63 DOWNTO 0);
+			DBUS_HiZ : Out  std_logic;
+			MEM_ADB : Out  std_logic_vector (12 DOWNTO 0);
+			MEM_WEHB : Out  std_logic;
+			MEM_WELB : Out  std_logic;
+			MEM_DTIB : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-double rsv[65536][3];
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_STS : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_idata : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_HiZ : std_logic;
+	SIGNAL MEM_ADB : std_logic_vector (12 DOWNTO 0);
+	SIGNAL MEM_WEHB : std_logic;
+	SIGNAL MEM_WELB : std_logic;
+	SIGNAL MEM_DTIB : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-int main(int argc, char *argv[]) {
-  int index;
-  int n = 2;
+BEGIN
+	UUT : local_read
+	GENERIC MAP (
+		NBIT_L_ADRO => 1
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_STS => CALC_STS,
+		BUSY => BUSY,
+		DMAR_ENABLE => DMAR_ENABLE,
+		DBUS_Port => DBUS_Port,
+		DBUS_idata => DBUS_idata,
+		DBUS_HiZ => DBUS_HiZ,
+		MEM_ADB => MEM_ADB,
+		MEM_WEHB => MEM_WEHB,
+		MEM_WELB => MEM_WELB,
+		MEM_DTIB => MEM_DTIB,
+		RST => RST,
+		CLK => CLK
+	);
 
-  double m[NMAX];
-  double r[NMAX][3];
-  double v[NMAX][3];
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-  double p[NMAX];
-  double a[NMAX][3];
-  double jk[NMAX][3];
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double _p[NMAX];
-  double _a[NMAX][3];
-  double _jk[NMAX][3];
+		PROCEDURE ANNOTATE_DMAR_ENABLE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DMAR_ENABLE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAR_ENABLE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  m[0] = m[1] = 1.0;
+		PROCEDURE ANNOTATE_DBUS_Port(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
+		PROCEDURE ANNOTATE_DBUS_HiZ(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_HiZ,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_HiZ);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  index=0;
-  srand(0x12345);
+		PROCEDURE ANNOTATE_MEM_ADB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_ADB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_ADB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  for (int t = 0; t < 1000 ; t++){
-    
+		PROCEDURE ANNOTATE_MEM_WEHB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WEHB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WEHB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
+		PROCEDURE ANNOTATE_MEM_WELB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WELB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WELB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_MEM_DTIB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_DTIB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_DTIB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_DMAR_ENABLE(TX_TIME);
+		ANNOTATE_DBUS_Port(TX_TIME);
+		ANNOTATE_DBUS_HiZ(TX_TIME);
+		ANNOTATE_MEM_ADB(TX_TIME);
+		ANNOTATE_MEM_WEHB(TX_TIME);
+		ANNOTATE_MEM_WELB(TX_TIME);
+		ANNOTATE_MEM_DTIB(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
-    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
-    index++;
+		BEGIN
+		-- --------------------
+		CALC_STS <= transport '0';
+		DBUS_idata <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		NPIPE <= transport std_logic_vector'("00010001"); --11
+		-- --------------------
+		WAIT FOR 600 ns; -- Time=800 ns
+		CALC_STS <= transport '1';
+		-- --------------------
+		WAIT FOR 4400 ns; -- Time=5200 ns
+		CALC_STS <= transport '0';
+		-- --------------------
+		WAIT FOR 60275 ns; -- Time=65475 ns
+		-- --------------------
 
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-    _force(r, v, m, _p, _a, _jk, n);
-     force(r, v, m,  p,  a,  jk, n);
-
-     double err_p, err_a[3], err_jk[3];
-     double rad;
-     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
-     err_p = fabs(p[0]-_p[0])/_p[0];
-
-    
-     for (int k = 0; k < 3; k++){
-       double host  = _a[0][k];
-       double pipe  =  a[0][k];
-       double err = sqrt((host - pipe)*(host - pipe))/host;
-
-       cout << setw(8);
-       cout.precision(6);
-       cout << rad  << "\t";
-       cout.precision(6);
-       cout << err  << "\t";
-       cout.precision(6);
-       cout << host << "\t";
-       cout.precision(6);
-       cout << pipe << endl;
-
-     }
-
-  }
-  
-
-  debug_position_snap(rsv, 123.456, index, 10);
-
-  return 0;
-}
+CONFIGURATION local_read_cfg OF sim_local_read IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cfg;
