@@ -1,2 +1,15 @@
-2021年  4月 25日 日曜日 11:22:50 JST
-work
+2021年  5月 12日 水曜日 11:22:47 JST
+#!/usr/bin/env python3
+import cv2
+import glob
+from datetime import datetime
+import time 
+
+while(True):
+    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+    print(tnow)
+
+    with open(".tc~", "w") as file:
+        file.write(tnow +"\n")
+
+    time.sleep(3)
