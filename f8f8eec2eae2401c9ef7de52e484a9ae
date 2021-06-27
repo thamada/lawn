@@ -1,517 +1,974 @@
-2021年  6月 14日 月曜日 10:42:52 JST
-DEFAULT_DEVICE_OPTIONS
+2021年  6月 27日 日曜日 10:15:42 JST
+#define FIXED_IRQN (18)
+
+/*
+ * progrape.c -- the device driver for PROGRAPE(-4,...)
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada(hamada@progrape.jp).
+ * All rights reserved.
+ *
+ * The source code in this file can be freely used, 
+ * so long as an acknowledgment from Tsuyoshi Hamada.
+ * 
+ * The source code in this file can be modified, branched, and
+ * redistributed in source or binary form under the following situations.
+ * If you want to modify, redistribute or make another version based on
+ * this source code, you should get distinct agreement from Tsuyoshi
+ * Hamada.  The modified, redistributed or branched(another version based
+ * on this source code) source code should include the citation that the
+ * code comes from the "progrape.c by Tsuyoshi Hamada".
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/config.h>
+#include <linux/pci.h>      // Symbols for pci_{read,write}_config_
+#include <linux/types.h>    // u8,u16,u32,u64 
+#include <linux/ioport.h>   // IORESOURCE_IO
+#include <linux/dma-mapping.h>
+#include <linux/sched.h>
+#include <linux/version.h>
+#include <linux/interrupt.h>// request_irq(), free_irq()
+#include <asm/io.h>         // ioremap(), iounmap(), iowrite32()
+#include <asm/pgtable.h>    // pgprot_noncached()
+#include <asm/page.h>       // get_order(), virt_to_page()
+#include <asm/uaccess.h>    // access_ok()
+
+
+/* history
+ *
+ * 2006/07/11: developping start by Tsuyoshi Hamada
+ */
+
+#include "progrape.h"
+
+#ifndef PG_MODULE_NAME
+#define PG_MODULE_NAME "progrape"
+#endif
+
+
+int pg_major =   PROGRAPE_MAJOR;
+int pg_minor =   0;
+int pg_nr_devs = PROGRAPE_NR_DEVS; // number of char devs
+module_param(pg_major,   int, S_IRUGO);
+module_param(pg_minor,   int, S_IRUGO);
+module_param(pg_nr_devs, int, S_IRUGO);
+
+int pg_nr_pci_devs = 0;            // number of devices founded by kernel pci core
+
+static struct pg_dev *pg_devices;  // allocated in progrape_init_module
+
+
+int pg_ioctl(struct inode *i, struct file *fp, unsigned int c, unsigned long a);
+static int pg_open       (struct inode *inode, struct file *file);
+static int pg_close      (struct inode *inode, struct file *file);
+static int pg_mmap       (struct file *fp, struct vm_area_struct *vma);
+
+struct file_operations pg_fops = {
+	.owner   = THIS_MODULE,
+	.ioctl   = pg_ioctl,
+	.open    = pg_open,
+	.release = pg_close,
+	.mmap    = pg_mmap,
+};
+
+static void pg_vma_open                (struct vm_area_struct *v);
+static void pg_vma_close               (struct vm_area_struct *v);
+static struct page  *pg_vma_nopage     (struct vm_area_struct *v, unsigned long adr, int *t);
+static struct page  *pg_dmar_vma_nopage(struct vm_area_struct *v, unsigned long adr, int *t);
+static struct page  *pg_dmaw_vma_nopage(struct vm_area_struct *v, unsigned long adr, int *t);
+
+static struct vm_operations_struct pg_remap_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_vma_nopage,
+};
+
+static struct vm_operations_struct pg_dmar_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_dmar_vma_nopage,
+};
+
+static struct vm_operations_struct pg_dmaw_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_dmaw_vma_nopage,
+};
+
+static inline unsigned long pg_get_dmabufsize(void)
 {
-	RESERVE_PIN = "AS INPUT TRI-STATED";
-	RESERVE_ALL_UNUSED_PINS = "AS OUTPUT DRIVING GROUND";
-	HEXOUT_FILE_COUNT_DIRECTION = UP;
-	HEXOUT_FILE_START_ADDRESS = 0;
-	GENERATE_HEX_FILE = OFF;
-	GENERATE_RBF_FILE = OFF;
-	GENERATE_TTF_FILE = OFF;
-	RESERVE_DATA7_THROUGH_DATA1_AFTER_CONFIGURATION = OFF;
-	RESERVE_RDYNBUSY_AFTER_CONFIGURATION = OFF;
-	RESERVE_NWS_NRS_NCS_CS_AFTER_CONFIGURATION = OFF;
-	DISABLE_CONF_DONE_AND_NSTATUS_PULLUPS_ON_CONFIG_DEVICE = OFF;
-	AUTO_INCREMENT_CONFIG_DEVICE_JTAG_USER_CODE = ON;
-	APEX20K_CONFIG_DEVICE_JTAG_USER_CODE = FFFFFFFF;
-	APEX20K_CONFIGURATION_DEVICE = EPC2LC20;
-	USE_CONFIGURATION_DEVICE = ON;
-	ENABLE_INIT_DONE_OUTPUT = OFF;
-	ENABLE_LOCK_OUTPUT = OFF;
-	ENABLE_DEVICE_WIDE_OE = OFF;
-	ENABLE_COMPACT_PCI = OFF;
-	ENABLE_DEVICE_WIDE_RESET = OFF;
-	RELEASE_CLEARS_BEFORE_TRI_STATES = OFF;
-	AUTO_RESTART_CONFIGURATION = ON;
-	USER_START_UP_CLOCK = OFF;
-	APEX20K_CONFIGURATION_SCHEME = "PASSIVE SERIAL";
-	APEX20K_JTAG_USER_CODE = FFFFFFFF;
-	RESERVE_NCEO_AFTER_CONFIGURATION = "AS OUTPUT DRIVING GROUND";
-	RESERVE_CLKUSR_AFTER_CONFIGURATION = OFF;
-	ENABLE_LOW_VOLTAGE_MODE_ON_CONFIG_DEVICE = OFF;
-	ENABLE_JTAG_BST_SUPPORT = ON;
+  // << PG4 ifpga BRAM = 64KBytes = (0x1<<16) Bytes >>
+  //  return ((unsigned long)(0x1<<16));           // 64 KB : BRAM
+  //  return ((unsigned long)(0x1<<12));           //  4 KB : x86 linux
+  //  return ((unsigned long)(dev->pci_mem_size)); // 16 MB : BAR0
+  //  return ((unsigned long)(PAGE_SIZE));         // system 1 page
+  return ((unsigned long)(PG_DMA_BUFSIZE));
 }
-AUTO_INSERT_ELA_ENTITY(bc_ela)
+
+// DANGER! it's from /usr/src/linux/mm/internal.h
+static inline void set_page_count(struct page *page, int v)
 {
-	ELA_ENTITY_NAME = bc_ela;
-	AUTO_INSERT_ELA_ENTITY = DISABLE;
-	SOURCE_FILE = bc_ela.tdf;
+  atomic_set(&page->_count, v);
 }
-REPORT_FOLDER_SETTINGS("||Compilation Report")
+
+static void free_dmabuf(int order, struct pci_dev *dev,  unsigned long *va, dma_addr_t pa)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+
+  {
+    ///////// set_page_count() @ <linux/mm.h>,
+    ///////// try to use dma_free_coherent() for future version.
+    int i;
+    struct page *page_top = virt_to_page((unsigned long)va);
+    for(i=1;i<(1<<order);i++) set_page_count(page_top + i, 0);
+    pci_free_consistent(dev, PAGE_SIZE * (1<<order), va, pa);
+  }
+
+  //  dma_free_coherent(dev, PAGE_SIZE * (1<<order), va, pa);
+
 }
-REPORT_FOLDER_SETTINGS("||Compilation Report||Project Settings")
+
+void pg_vma_open(struct vm_area_struct *vma)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  _PDEBUG("called pg_vma open, virtual %lx, physical %lx\n", vma->vm_start, vma->vm_pgoff << PAGE_SHIFT);
 }
-REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings")
+
+void pg_vma_close(struct vm_area_struct *vma)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  _PDEBUG("called pg_vma_close()\n");
 }
-REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section")
+
+static struct page *pg_vma_nopage     (struct vm_area_struct *vma, unsigned long address, int *type)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  _PDEBUG("Called: pg_vma_nopage()\n");
+  return (NOPAGE_SIGBUS);
 }
-REPORT_FOLDER_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses")
+
+
+static struct page *pg_dmar_vma_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  ////////// See Linux Device Drivers Vol. 3 pp. 435
+  struct pg_dev *dev = vma->vm_file->private_data;
+  struct page* page_ptr;
+  unsigned long offset;
+  _PDEBUG("Called: pg_dmar_vma_nopage()\n");
+
+  offset = address - vma->vm_start + ((vma->vm_pgoff)<<PAGE_SHIFT);
+  page_ptr = virt_to_page((unsigned long)(dev->buf_dmar) + offset);
+  get_page(page_ptr);
+
+  return (page_ptr);
 }
-REPORT_TEXT_SETTINGS("||Compilation Report||Legal Notice")
+
+static struct page *pg_dmaw_vma_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev = vma->vm_file->private_data;
+  struct page* page_ptr;
+  unsigned long offset;
+  _PDEBUG("Called: pg_dmaw_vma_nopage()\n");
+
+  offset = address - vma->vm_start + ((vma->vm_pgoff)<<PAGE_SHIFT);
+  page_ptr = virt_to_page((unsigned long)(dev->buf_dmaw) + offset);
+  get_page(page_ptr);
+
+  return (page_ptr);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Project Settings||General Settings")
+
+static int pg_mmap (struct file *fp, struct vm_area_struct *vma)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev = fp->private_data;
+  int retval = 0;
+  unsigned long off       = (vma->vm_pgoff) << PAGE_SHIFT;
+  unsigned long vsize     = (vma->vm_end) - (vma->vm_start);
+  unsigned long virtual   = vma->vm_start;
+  unsigned long physical  = 0;
+  unsigned long mmap_mode = dev->mmap_mode;
+
+  _PDEBUG("called mmap, MMAP_MODE = %ld\n",mmap_mode);
+
+  // Set physical for BAR's mmap
+  switch (mmap_mode){
+  case MMAP_REG_PIOW : // for REG (BAR0) Write Only
+  case MMAP_REG_PIOR : // for REG (BAR0) Read Only
+  case MMAP_REG_PIORW: // for REG (BAR0)
+    physical = dev->pci_reg_adr & PCI_BASE_ADDRESS_MEM_MASK;
+    break;
+  case MMAP_MEM_PIOW : // for MEM (BAR1) Write Only
+  case MMAP_MEM_PIOR : // for MEM (BAR1) Read Only
+  case MMAP_MEM_PIORW: // for MEM (BAR1)
+  case MMAP_MEM_PIOW_PREFETCH:
+    physical = dev->pci_mem_adr & PCI_BASE_ADDRESS_MEM_MASK;
+    break;
+  default:
+    physical = dev->pci_reg_adr & PCI_BASE_ADDRESS_MEM_MASK;
+  }
+
+  switch (mmap_mode){
+  case MMAP_REG_PIOW : // for REG (BAR0) Write Only
+  case MMAP_REG_PIOR : // for REG (BAR0) Read Only
+  case MMAP_REG_PIORW: // for REG (BAR0)
+  case MMAP_MEM_PIOW : // for MEM (BAR1) Write Only
+  case MMAP_MEM_PIOR : // for MEM (BAR1) Read Only
+  case MMAP_MEM_PIORW: // for MEM (BAR1)
+  case MMAP_MEM_PIOW_PREFETCH:
+    {
+      //unsigned long psize = dev->pci_reg_size - off;
+      physical += off;
+      vma->vm_flags |= VM_RESERVED;  
+      _PDEBUG("called pg_mmap\n");
+      _PDEBUG(" + vsize 0x%lx\n", vsize);
+      _PDEBUG(" + psize 0x%lx\n", psize);
+      _PDEBUG(" + off   0x%lx\n", off);
+      _PDEBUG(" + virt  0x%lx\n", virtual);
+      _PDEBUG(" + phys  0x%lx\n", physical);
+      /* --------------------------------------------
+      if(vsize > psize){
+	PDEBUG("vsize > psize: return (-EINVAL)\n");
+	return (-EINVAL); // range is too short.
+      }
+      ----------------------------------------------- */
+      retval = remap_pfn_range(vma, virtual, 
+			       (physical>>PAGE_SHIFT), vsize, vma->vm_page_prot);
+      if(retval){
+	PDEBUG("error remap_pfn_range()\n ");
+	return (-EAGAIN); 
+      }
+      vma->vm_ops = &pg_remap_vm_ops;
+      pg_vma_open(vma);
+    }
+    break;
+
+  case MMAP_BUF_DMAW:
+    vma->vm_ops = &pg_dmaw_vm_ops;
+    /*******************************************************  NON Coherency **
+    **************************************************************************/
+
+    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+
+    ////////////                    <asm/pgtable.h>
+    ////////////                    to mark a page protection value as "uncacheable".
+    vma->vm_flags |= (VM_RESERVED | VM_IO);
+    pg_vma_open(vma);
+    break;
+
+  case MMAP_BUF_DMAR:
+    vma->vm_ops = &pg_dmar_vm_ops;
+    vma->vm_flags |= VM_RESERVED | VM_IO;
+    pg_vma_open(vma);
+    break;
+
+  default:
+    PDEBUG("incompatible mmap mode(%lx) @ %s:%d\n",mmap_mode,__FILE__, __LINE__);
+    return (-EINVAL);
+  }
+    
+  if(retval) retval = (-EAGAIN);
+
+  return (retval);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Compiler Settings")
+
+void __usleep(unsigned int usec)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  wait_queue_head_t w;
+  init_waitqueue_head(&w);
+  wait_event_interruptible_timeout(w, 0, usec*HZ/1000000);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Device Options")
+
+int pg_dmatransfer(struct pg_dev* dev, dma_addr_t bus_adr, unsigned long size, int is_write)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  unsigned char *bar0buf;
+  _PDEBUG("called pg_dmatransfer(). size = 0x%lx.\n",size);
+
+  { // I-O memory mapping
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+  }
+
+  { // DMA_PCI_ADRS:
+    // LOCAL_ADRS:
+    // DMA_COUNT:
+    unsigned long sram_ad = 0; // address for Block-RAM on the IFPGA.
+    iowrite32(((u32)(bus_adr)), (void __iomem *)(bar0buf+  REG_DMA_PCI_ADRS  ));
+    iowrite32(((u32)(sram_ad)), (void __iomem *)(bar0buf+  REG_DMA_LOCAL_ADRS));
+
+    size &= (~(PG_PCITRANS_64BIT<<2));
+    iowrite32(((u32)(size)),    (void __iomem *)(bar0buf+  REG_DMA_COUNT     )); // (size) bytes!
+
+    _PDEBUG(" + DMA buf phys adr %lx\n", (unsigned long)bus_adr);
+    _PDEBUG(" + SRAM adr %lx\n", sram_ad);
+  }
+
+  { // DMA_INTERVAL:
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    u32 cmd = (u32)((burst<<16)|(inter));
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_INTERVAL));
+  }
+
+  { // Prepare DMA
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_STAT)); // ... clear
+    iowrite32(1,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  }
+
+  { // DMA_CTRL and start ...
+    //////////////////////            reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = is_write;          // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1;               // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = PG_PCITRANS_64BIT; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1;               // DMA_CTRL(0)
+    u32 cmd = (u32)((dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start);
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // start DMA
+  }
+
+  { //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+    int ret;
+    (dev->wq_count) = 0;
+    _PDEBUG("Wait Interrupt ....\n");
+    ret = wait_event_interruptible(dev->wq,  (dev->wq_count) > 0 );
+    if(ret){
+      PDEBUG("wait_event_interruptible return %d.  %s:%d\n", ret, __FILE__, __LINE__);
+      return (-ERESTARTSYS);
+    }
+    _PDEBUG("%ld times interrupt asserted.\n", dev->wq_count);
+  } //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+
+  iounmap((void __iomem *)bar0buf);
+  return (0);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Resource Usage Summary")
+
+// ---------------------
+// NO INTERRUPT VERSION
+// ---------------------
+int __pg_dmatransfer(struct pg_dev* dev, dma_addr_t bus_adr, unsigned long size, int is_write)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  unsigned char *bar0buf;
+  _PDEBUG("called pg_dmatransfer(). size = 0x%lx.\n",size);
+
+  { // I-O memory mapping
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+  }
+
+  { // DMA_PCI_ADRS:
+    // LOCAL_ADRS:
+    // DMA_COUNT:
+    unsigned long sram_ad = 0; // address for Block-RAM on the IFPGA.
+    iowrite32(((u32)(bus_adr)), (void __iomem *)(bar0buf+  REG_DMA_PCI_ADRS  ));
+    iowrite32(((u32)(sram_ad)), (void __iomem *)(bar0buf+  REG_DMA_LOCAL_ADRS));
+
+    size &= (~(PG_PCITRANS_64BIT<<2));
+    iowrite32(((u32)(size)),    (void __iomem *)(bar0buf+  REG_DMA_COUNT     )); // (size) bytes!
+
+    _PDEBUG(" + DMA buf phys adr %lx\n", (unsigned long)bus_adr);
+    _PDEBUG(" + SRAM adr %lx\n", sram_ad);
+  }
+
+  { // DMA_INTERVAL:
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    u32 cmd = (u32)((burst<<16)|(inter));
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_INTERVAL));
+  }
+
+  { // Prepare DMA
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  }
+
+  { // DMA_CTRL and start ...
+    //////////////////////            reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = is_write;          // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1;               // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = PG_PCITRANS_64BIT; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1;               // DMA_CTRL(0)
+    u32 cmd = (u32)((dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start);
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // start DMA
+  }
+
+  { //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+    if(is_write)
+      __usleep(1000);      
+    else 
+      __usleep(1000000);
+  } //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+  iounmap((void __iomem *)bar0buf);
+  return (0);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Input Pins")
+
+
+
+void do_test(struct pg_dev *dev){
+  int i;
+  unsigned long dmabuf_size = pg_get_dmabufsize();
+
+  PDEBUG("* do_test() !!!!!!!!!!!!!!!\n");
+
+  for(i=0;i<(dmabuf_size>>2);i++){
+    dev->buf_dmaw[i] = 0x07070707;
+    dev->buf_dmar[i] = 0x77778888;
+  }
+  dev->buf_dmaw[(dmabuf_size>>2)-1] = 0xCCCC9999;
+
+}
+
+int pg_ioctl(struct inode *inode, struct file *fp,
+		unsigned int cmd, unsigned long arg)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev = fp->private_data;
+  int err = 0, retval = 0;
+  
+  // Decode & Check cmd before access_ok() 
+  if (_IOC_TYPE(cmd) != PG_IOC_MAGIC) return (-ENOTTY);
+  if (_IOC_NR(cmd) > PG_IOC_MAXNR)    return (-ENOTTY);
+
+  // Verify the arg with access_ok()
+  //   -> See Linux Device Drivers Vol. 3 pp. 141-142 about access_ok()
+  if (_IOC_DIR(cmd) & _IOC_READ)
+    err = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
+  else if (_IOC_DIR(cmd) & _IOC_WRITE)
+    err = !access_ok(VERIFY_READ,  (void __user *)arg, _IOC_SIZE(cmd));
+  if (err) return (-EFAULT);
+
+  switch(cmd) {
+
+  case IOC_SV_MMAPMODE:
+    dev->mmap_mode = (unsigned long)arg;
+    _PDEBUG("IOC_SV_MMAPMODE : %lx\n", dev->mmap_mode);
+    break;
+
+  case IOC_GV_REG_ADR:
+    retval = dev->pci_reg_adr;
+    break;
+
+  case IOC_GV_REG_SIZE:
+    retval = dev->pci_reg_size;
+    break;
+
+  case IOC_GV_MEM_ADR:
+    retval = dev->pci_mem_adr;
+    break;
+
+  case IOC_GV_MEM_SIZE:
+    retval = dev->pci_mem_size;
+    break;
+
+  case IOC_SP_FPGA_INFO:
+    {
+      char s[NB_FPGA_INFO];
+      /* --- if root only, uncomment ----------------
+	if (! capable (CAP_SYS_ADMIN)) return (-EPERM); 
+       ---------------------------------------------- */
+      retval = __copy_from_user(s,(char __user *)arg, sizeof(s));
+      strcpy(dev->fpga_info, s);
+    }
+    break;
+
+  case IOC_GP_FPGA_INFO:
+    {
+      char s[NB_FPGA_INFO];
+      strcpy(s, dev->fpga_info);
+      retval = __copy_to_user((char __user *)arg,  s, sizeof(s));
+    }
+
+    break;
+
+  case IOC_GV_PCICFG:
+    {
+      u32 val;
+      int dword_adr = (((int)arg)<<2); // for DWORD addressing(I hate Byte addressing)
+      if(pci_read_config_dword(dev->pcidev,dword_adr, &val)){
+	PDEBUG("IOC_GV_PCICFG failed (%d) @ %s:%d\n",retval,__FILE__ ,__LINE__);
+	retval = (-EAGAIN);
+      }
+      retval = (int)val;
+    }
+    break;
+
+  case IOC_SV_DMAW:
+    {
+      int is_write       = 1;
+      unsigned long size = (unsigned long) arg;
+      dma_addr_t bus_adr = dev->buf_dmaw_pa;
+      retval = pg_dmatransfer(dev, bus_adr, size, is_write);
+
+      if(retval){
+	PDEBUG("IOC_SV_DMAW. Something goes wrong at %s:%d.\n", __FILE__, __LINE__);
+	retval = (-EAGAIN);
+      }
+      break;
+    }
+
+  case IOC_SV_DMAR:
+    {
+      int is_write       = 0;
+      unsigned long size = (unsigned long) arg;
+      dma_addr_t bus_adr = dev->buf_dmar_pa;
+      retval = pg_dmatransfer(dev, bus_adr, size, is_write);
+      break;
+    }
+
+  case IOC_GV_DMA_SIZE:
+    retval = pg_get_dmabufsize();
+    return (retval);
+    break;
+
+  default:  /* redundant, as cmd was checked against MAXNR */
+    return (-ENOTTY);
+  }
+
+  return (retval);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Output Pins")
+
+static irqreturn_t pg_interrupt_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev = dev_id;
+
+  _PDEBUG("          <-------- interrupt handler on IRQ(%d).\n",irq);
+
+  { // diasseert Interrupt signal
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    unsigned char *bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iounmap((void __iomem *)bar0buf);
+  }
+
+  (dev->wq_count)++;
+  //  PDEBUG("          <-------- interrupt handler on IRQ(%d) %d.\n",irq, dev->wq_count);
+  //  __usleep(300);
+  wake_up_interruptible(&(dev->wq));
+
+  return (IRQ_HANDLED);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Bidir Pins")
+
+    
+static int pg_open(struct inode *inode, struct file *file)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev;
+  dev = container_of(inode->i_cdev, struct pg_dev, cdev); // find me
+  file->private_data = dev;                               // backup me
+
+  if(down_interruptible(&(dev->sem_open))) return (-ERESTARTSYS);
+
+  { // install interrupt handler
+    int ret;
+    u8 irq_num;
+    unsigned long flag;
+    //    pci_read_config_byte(dev->pcidev, PCI_INTERRUPT_LINE, &irq_num);
+    irq_num = dev->pci_irq_num;
+
+    //    flag = SA_SHIRQ | SA_INTERRUPT | SA_TRIGGER_HIGH;
+    flag = SA_SHIRQ;
+    ret = request_irq((unsigned int)irq_num, pg_interrupt_handler, flag, PG_MODULE_NAME, (void*)dev);
+    if(ret) return (-EBUSY);
+  }
+
+  (dev->ntimes_open)++;
+  PDEBUG("'%s' opens %s%d : %ld times\n", current->comm, PG_MODULE_NAME, iminor(inode), dev->ntimes_open);
+  return (0); // 0: success
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||All Package Pins")
+
+static int pg_close(struct inode *inode, struct file *file)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  struct pg_dev *dev;
+  dev = file->private_data;
+
+  { // uninstall interrupt handler
+    u8 irq_num;
+    //    pci_read_config_byte(dev->pcidev, PCI_INTERRUPT_LINE, &irq_num);
+    irq_num = dev->pci_irq_num;
+
+    free_irq((unsigned int)irq_num, (void *)dev);
+  }
+
+  up(&(dev->sem_open));
+  PDEBUG("'%s' closes %s%d.\n", current->comm, PG_MODULE_NAME, iminor(inode));
+  return (0); // 0: success
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Control Signals")
+
+
+
+/* ----------------------------------------------------------- *
+ * The module stuff 
+ * ----------------------------------------------------------- */
+
+
+// The list of pci_device_id. It should be registerd to the pci_driver->id_table
+static struct pci_device_id
+pg_ids[  ] = {{PCI_DEVICE(PCI_VENDOR_ID_PG,PCI_DEVICE_ID_PG), },{ 0,}};
+
+// pci_device_id should be exported to user space. 
+MODULE_DEVICE_TABLE(pci, pg_ids);
+
+
+static int pg_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  // Do probing type stuff here. Like calling request_region();
+  // This function called by pci_register_driver() at init_module.
+  int err = 0;
+  static int nth_probes = 0;
+  PDEBUG("%d-th device probed by kernel.\n", nth_probes);
+  err = pci_enable_device(dev);
+  if(err){
+    PDEBUG("Error pci_enable_device(dev); %s|%d\n",__FILE__, __LINE__);
+  }
+
+  {
+    u32 base_adr[6];
+    u16 vendor_id,  device_id, cmd, status;
+    u8 revision_id, max_lat, min_gnt, int_line, int_pin;
+    pci_read_config_word(dev, PCI_VENDOR_ID,    &vendor_id);
+    pci_read_config_word(dev, PCI_DEVICE_ID,    &device_id);
+    pci_read_config_word(dev, PCI_STATUS,       &status);
+    pci_read_config_word(dev, PCI_COMMAND, &cmd);
+    pci_read_config_byte(dev, PCI_REVISION_ID,  &revision_id);
+    pci_read_config_byte(dev, PCI_MIN_GNT, &min_gnt);
+    pci_read_config_byte(dev, PCI_MAX_LAT, &max_lat);
+    pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &int_line);
+    pci_read_config_byte(dev, PCI_INTERRUPT_PIN,  &int_pin);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_0, &base_adr[0]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_1, &base_adr[1]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_2, &base_adr[2]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_3, &base_adr[3]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_4, &base_adr[4]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_5, &base_adr[5]);
+
+    PDEBUG("--- IFPGA PCI CONFIG SPACE   ---\n");
+    PDEBUG("PCI_VENDOR_ID      : 0x%04X\n",vendor_id);
+    PDEBUG("PCI_DEVICE_ID      : 0x%04X\n",device_id);
+    PDEBUG("PCI_REVISION_ID    : 0x%02X\n",revision_id);
+    PDEBUG("PCI_INTERRUPT_LINE : 0x%X\n",int_line);
+    PDEBUG("PCI_INTERRUPT_PIN  : 0x%X\n",int_pin);
+    _PDEBUG("PCI_STATUS         : 0x%04X\n",status);
+    _PDEBUG(" + 66MHZ CAPABLE   : %X\n",0x1U & (status>>5));
+    _PDEBUG(" + DEVCEL TIMING   : %X\n",0x3U & (status>>9));
+    _PDEBUG("PCI_MIN_GNT        : 0x%02X\n",min_gnt);
+    _PDEBUG("PCI_MAX_LAT        : 0x%02X\n",max_lat);
+    _PDEBUG("PCI_COMMAND        : 0x%04X\n",cmd);
+    _PDEBUG(" + ENABLE BUSMASTER: %01X\n",0x1U&(cmd>>2));
+    _PDEBUG(" + ENABLE MEMORY   : %01X\n",0x1U&(cmd>>1));
+    _PDEBUG(" + ENABLE I/O      : %01X\n",0x1U&(cmd));
+    PDEBUG("PCI_BASE_ADDRESS_0 : 0x%08X\n",base_adr[0]);
+    PDEBUG("PCI_BASE_ADDRESS_1 : 0x%08X\n",base_adr[1]);
+    _PDEBUG("PCI_BASE_ADDRESS_2 : 0x%08X\n",base_adr[2]);
+    _PDEBUG("PCI_BASE_ADDRESS_3 : 0x%08X\n",base_adr[3]);
+    _PDEBUG("PCI_BASE_ADDRESS_4 : 0x%08X\n",base_adr[4]);
+    _PDEBUG("PCI_BASE_ADDRESS_5 : 0x%08X\n",base_adr[5]);
+    _PDEBUG("--------------------------------\n");
+  }
+  if(0){
+    u8 revision;
+    pci_read_config_byte(dev, PCI_REVISION_ID, &revision);
+    if (PCI_REVISION_ID_PG != revision) {
+      PDEBUG("REVISION MISSING: 0x%X != 0x%X\n",revision, PCI_REVISION_ID_PG);
+      return (-ENODEV);
+    }
+  }
+
+  // Install a pci_devices
+  if( PROGRAPE_NR_DEVS > nth_probes ){
+    unsigned long start, end, size, flag;
+    u8 irq_num;
+
+    pg_devices[nth_probes].pcidev       = dev;  // Don't use after pci_unregister_driver().
+
+    pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &irq_num);
+    //    irq_num = FIXED_IRQN;
+    //    irq_num = 28;
+    PDEBUG("@@@@@@@@@@@@@@@@@@@@@@ IRQ_NUM = %d\n",irq_num);
+
+    pg_devices[nth_probes].pci_irq_num  = (unsigned long)irq_num;
+
+
+    start = pci_resource_start (dev, 0);  // @ <linux/pci.h>
+    end   = pci_resource_end   (dev, 0);  // @ <linux/pci.h>
+    flag  = pci_resource_flags (dev, 0);  // @ <linux/pci.h>
+    if(end != start) size = end - start + 1; else size = 0;
+    pg_devices[nth_probes].pci_reg_adr  = 0xffffffff & start;
+    pg_devices[nth_probes].pci_reg_size = 0xffffffff & size;
+    pg_devices[nth_probes].pci_reg_flag = 0xffffffff & flag;
+
+    start = pci_resource_start (dev, 1);
+    end   = pci_resource_end   (dev, 1);
+    flag  = pci_resource_flags (dev, 1);
+    if(end != start) size = end - start + 1; else size = 0;
+    pg_devices[nth_probes].pci_mem_adr  = 0xffffffff & start;
+    pg_devices[nth_probes].pci_mem_size = 0xffffffff & size;
+    pg_devices[nth_probes].pci_mem_flag = 0xffffffff & flag;
+
+
+    pci_set_master(dev);
+
+  }else{
+    return (-ENODEV);
+  }
+
+
+  {
+    nth_probes++;
+    pg_nr_pci_devs = nth_probes;
+  }
+
+
+  return (0);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Global & Other Fast Signals")
+
+static void pg_pci_remove(struct pci_dev *dev)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  // clean up any allocated resources and stuff here. like call release_region();
+  PDEBUG("call pci_driver.remove()\n");
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Cascade Chains")
+
+static struct pci_driver pci_driver = {
+  .name     = PG_MODULE_NAME,
+  .id_table = pg_ids,
+  .probe    = pg_pci_probe,
+  .remove   = pg_pci_remove,
+};
+
+
+/*
+ * Set up the char_dev structure for this device to Kernel.
+ */
+static void pg_setup_cdev(struct pg_dev *dev, int index)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  int err;
+  dev_t devno = MKDEV(pg_major, pg_minor + index);
+  cdev_init(&dev->cdev, &pg_fops);
+
+  dev->cdev.owner = THIS_MODULE;
+  dev->cdev.ops = &pg_fops;
+  err = cdev_add (&dev->cdev, devno, 1);
+  if(err){
+    PDEBUG( "Error %d adding %s%d", err, PG_MODULE_NAME, index);
+  }
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Non-Global High Fan-Out Signals")
+
+
+
+/* 
+ * The cleanup function.
+ */
+static void pg_cleanup_module(void)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  { // ---------------------------- about DMA buffer
+    unsigned long dmabuf_size = pg_get_dmabufsize();
+    int i;
+    for(i=0; i<pg_nr_pci_devs; i++){
+      struct pg_dev *dev = &(pg_devices[i]);
+      free_dmabuf(get_order(dmabuf_size), dev->pcidev,  dev->buf_dmar, dev->buf_dmar_pa);
+      free_dmabuf(get_order(dmabuf_size), dev->pcidev,  dev->buf_dmaw, dev->buf_dmaw_pa);
+    }
+  } // ---------------------------- about DMA buffer
+
+
+  { // ---------------------------- about kernel pci core
+    pci_unregister_driver(&pci_driver);
+  } // ---------------------------- about kernel pci core
+
+
+  { // ---------------------------- about char dev
+    int i;
+    dev_t devno = MKDEV(pg_major, pg_minor);
+    if (pg_devices) {
+      for (i = 0; i < pg_nr_devs; i++) {
+	cdev_del(&pg_devices[i].cdev);
+      }
+      kfree(pg_devices);
+    }
+    unregister_chrdev_region(devno, pg_nr_devs);
+  } // ---------------------------- about char dev
+
+  PDEBUG("module unloaded.\n\n");
+  PDEBUG("bye (- u -)/~~~~~~~\n");
+  PDEBUG("bye (*'> v <'*)\n");
+  PDEBUG("bye (.^_^.)\n");
+  PDEBUG("bye........\n\n");
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Peripheral Signals")
+
+
+/* 
+ * The initialization function.
+ */
+static int pg_init_module(void)
 {
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
+  int result;
+
+  { // ---------------------------- about char dev
+    int i;
+    dev_t dev = 0;
+
+    if (pg_major) {
+      dev = MKDEV(pg_major, pg_minor);
+      result = register_chrdev_region(dev, pg_nr_devs, PG_MODULE_NAME);
+    } else {
+      result = alloc_chrdev_region(&dev, pg_minor, pg_nr_devs, PG_MODULE_NAME);
+      pg_major = MAJOR(dev);
+    }
+    if (result < 0) {
+      PDEBUG("can't get major %d\n", pg_major);
+      return (result);
+    }
+
+
+    // allocate the devices
+    pg_devices = kmalloc(pg_nr_devs * sizeof(struct pg_dev), GFP_KERNEL);
+    if (!pg_devices) {
+      result = (-ENOMEM);
+      goto init_fail;
+    }
+    memset(pg_devices, 0, pg_nr_devs * sizeof(struct pg_dev));
+
+    /* Initialize each device. */
+    for (i = 0; i < pg_nr_devs; i++) {
+      init_MUTEX(&pg_devices[i].sem);
+      init_MUTEX(&pg_devices[i].sem_open);
+      init_waitqueue_head(&pg_devices[i].wq);
+      pg_setup_cdev(&pg_devices[i], i);
+      pg_devices[i].ntimes_open = 0;
+      pg_devices[i].mmap_mode = MMAP_REG_PIORW;
+      strcpy(pg_devices[i].fpga_info, "no bitfile loaded");
+    }
+  } // ---------------------------- about char dev
+
+
+  { // ---------------------------- about kernel pci core
+    int i;
+    result = pci_register_driver(&pci_driver); // This function calls pg_pci_probe()
+    if(result<0){
+      PDEBUG("failed to pci_register_driver %d\n",result);
+      goto init_fail;
+    }
+    if(pg_nr_pci_devs ==1) PDEBUG("Kernel found 1 device.\n");
+    if(pg_nr_pci_devs > 1) PDEBUG("Kernel found %d devices.\n", pg_nr_devs);
+
+    for(i=0;i<pg_nr_pci_devs;i++){
+      PDEBUG("DEV %d BAR0 = 0x%lx (%ld bytes)\n",
+	     i, pg_devices[i].pci_reg_adr, pg_devices[i].pci_reg_size);
+      PDEBUG("DEV %d BAR1 = 0x%lx (%ld bytes)\n",
+	     i, pg_devices[i].pci_mem_adr, pg_devices[i].pci_mem_size);
+    }
+
+  } // ---------------------------- about kernel pci core
+
+  { // ---------------------------- about DMA buffers
+    int i;
+    for(i=0; i<pg_nr_pci_devs; i++){
+      struct pg_dev *dev = &(pg_devices[i]);
+      struct page *page_ptr;
+      u64 dma_mask = 0xFFFFFFFF;
+      unsigned long dmabuf_size = pg_get_dmabufsize();
+      int ii;
+
+      if(  pci_set_dma_mask(dev->pcidev, dma_mask)  ){
+	PDEBUG("pci_set_dma_mask() bad. %s:%d\n",__FILE__, __LINE__);
+	return (-ENODEV);
+      }
+      _PDEBUG("DMA mask = 0x%llx.\n",dma_mask);
+
+      if(  pci_set_consistent_dma_mask(dev->pcidev, dma_mask)  ){
+	PDEBUG("pci_set_consistent_dma_mask() bad. %s:%d\n",__FILE__, __LINE__);
+	return (-ENODEV);
+      }
+      _PDEBUG("consistent DMA mask = 0x%llx.\n",dma_mask);
+
+      // ----------------- Buffer for DMAR 
+      (dev->buf_dmar) = pci_alloc_consistent(dev->pcidev, dmabuf_size, &(dev->buf_dmar_pa));
+      /* -------------------------------------------------------------------------------------
+	 (dev->buf_dmar) = dma_alloc_coherent  (dev->pcidev, dmabuf_size, &(dev->buf_dmar_pa));
+	 ------------------------------------------------------------------------------------- */
+      if (dev->buf_dmar == NULL){
+	PDEBUG("failed dma_alloc_coherent(). %s:%d\n",__FILE__, __LINE__);
+	for(ii=i-1; ii>= 0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmar, x->buf_dmar_pa);
+	}
+	for(ii=i-1; ii>=0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmaw, x->buf_dmaw_pa);
+	}
+	return (-ENOMEM);
+      }
+      page_ptr = virt_to_page((unsigned long)(dev->buf_dmar));
+      for(ii=1; ii<(1 << get_order(dmabuf_size)); ii++){
+	set_page_count(page_ptr + ii, 1);
+      }
+
+      // ----------------- Buffer for DMAW 
+      (dev->buf_dmaw) = pci_alloc_consistent(dev->pcidev, dmabuf_size, &(dev->buf_dmaw_pa));
+      /* -------------------------------------------------------------------------------------
+	 (dev->buf_dmaw) = dma_alloc_coherent  (dev->pcidev, dmabuf_size, &(dev->buf_dmaw_pa));
+	 ------------------------------------------------------------------------------------- */
+      if (dev->buf_dmaw == NULL){
+	PDEBUG("failed dma_alloc_coherent(). %s:%d\n",__FILE__, __LINE__);
+	for(ii=i; ii>=0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmar, x->buf_dmar_pa);
+	}
+	for (ii = i-1; ii >= 0; ii--) {
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmaw, x->buf_dmaw_pa);
+	}
+	return (-ENOMEM);
+      }
+      page_ptr = virt_to_page((unsigned long)(dev->buf_dmaw));
+      for (ii = 1; ii < (1 << get_order(dmabuf_size)); ii++) {
+	set_page_count(page_ptr + ii, 1);
+      }
+
+      PDEBUG("Alloc DMAW buf (va 0x%08lx),(pa 0x%08lx),(size %ld KB)\n",
+	     (unsigned long)dev->buf_dmaw, (unsigned long)dev->buf_dmaw_pa, dmabuf_size/1024);
+
+      PDEBUG("Alloc DMAR buf (va 0x%08lx),(pa 0x%08lx),(size %ld KB)\n",
+	     (unsigned long)dev->buf_dmar, (unsigned long)dev->buf_dmar_pa, dmabuf_size/1024);
+
+
+      { // Initialize buffers for DMA-W and DMA-R
+	int i;
+	for(i=0;i<(dmabuf_size>>2);i++){
+	  dev->buf_dmaw[i] = 0x10000002;
+	  dev->buf_dmar[i] = 0x69696969;
+	}
+	dev->buf_dmaw[(dmabuf_size>>2)-1] = 0xCCCC9999;
+      }
+
+
+    }
+  } // ---------------------------- about DMA buffer
+
+  if(PG_PCITRANS_64BIT){
+    PDEBUG("module loaded with PCI Trans 64-bit.\n");
+  }else{
+    PDEBUG("module loaded with PCI Trans 32-bit.\n");
+  }
+  return (0); // 0 : succeed
+
+  // --- if any fails ---
+ init_fail:
+  pg_cleanup_module();
+  return (result);
 }
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||MegaLAB Usage Summary")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Row Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||LAB Column Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||ESB Column Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||ClockLock")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Timing Settings")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Clock Requirement: 'altclklock:upll|pll' ( 25.0 MHz, -1.5 ns )")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||Clock Requirement: 'altclklock:upll|pll~CLK1' ( 50.0 MHz, -1.5 ns )")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_TABLE_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Processing Time")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_CMP_SUMMARY_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Summary")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Hierarchy")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Floorplan View")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Messages")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Equations")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_EMBEDDED_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Pin File")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-}
-REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Carry Chains")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	REPORT_CHART_TYPE = BAR;
-}
-REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||Local Routing Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	REPORT_CHART_TYPE = BAR;
-}
-REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||MegaLAB Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	REPORT_CHART_TYPE = BAR;
-}
-REPORT_CHART_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Resource Section||LAB External Interconnect")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	REPORT_CHART_TYPE = BAR;
-}
-REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||tsu (Input Setup Times)")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	NODE_LIMIT = "-1";
-}
-REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||th (Input Hold Times)")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	NODE_LIMIT = "-1";
-}
-REPORT_TAN_TSU_SETTINGS("||Compilation Report||Results for \"pgfpga\" Compiler Settings||Timing Analyses||tco (Clock to Output Delays)")
-{
-	REPORT_OUTPUT_SECTION = ON;
-	PAGE_ORIENTATION = PORTRAIT;
-	NODE_LIMIT = "-1";
-}
-REPORT_SETTINGS(general)
-{
-	ALWAYS_USE_PORTRAIT_HEADER_FOOTER = OFF;
-	RIGHT_MARGIN = 1.000000;
-	LEFT_MARGIN = 1.000000;
-	BOTTOM_MARGIN = 1.000000;
-	TOP_MARGIN = 1.000000;
-}
-CHIP(pgfpga)
-{
-	"altclklock:upll|pll" : LOCATION = PLL_1;
-	"altclklock:upll|pll~1" : LOCATION = PLL_1;
-	"altclklock:upll|pll~CLK1" : LOCATION = PLL_1;
-	e_active : LOCATION = Pin_K8;
-	e_clk : LOCATION = Pin_N8;
-	e_fod[0] : LOCATION = Pin_J5;
-	e_fod[10] : LOCATION = Pin_F5;
-	e_fod[11] : LOCATION = Pin_F6;
-	e_fod[12] : LOCATION = Pin_F7;
-	e_fod[13] : LOCATION = Pin_E5;
-	e_fod[14] : LOCATION = Pin_E6;
-	e_fod[15] : LOCATION = Pin_E7;
-	e_fod[16] : LOCATION = Pin_G8;
-	e_fod[17] : LOCATION = Pin_F8;
-	e_fod[18] : LOCATION = Pin_E8;
-	e_fod[19] : LOCATION = Pin_H9;
-	e_fod[1] : LOCATION = Pin_J6;
-	e_fod[20] : LOCATION = Pin_D9;
-	e_fod[21] : LOCATION = Pin_D8;
-	e_fod[22] : LOCATION = Pin_E9;
-	e_fod[23] : LOCATION = Pin_H10;
-	e_fod[24] : LOCATION = Pin_G10;
-	e_fod[25] : LOCATION = Pin_D10;
-	e_fod[26] : LOCATION = Pin_F10;
-	e_fod[27] : LOCATION = Pin_H11;
-	e_fod[28] : LOCATION = Pin_G11;
-	e_fod[29] : LOCATION = Pin_F11;
-	e_fod[2] : LOCATION = Pin_J7;
-	e_fod[30] : LOCATION = Pin_E11;
-	e_fod[31] : LOCATION = Pin_H12;
-	e_fod[32] : LOCATION = Pin_G12;
-	e_fod[33] : LOCATION = Pin_E12;
-	e_fod[34] : LOCATION = Pin_H13;
-	e_fod[35] : LOCATION = Pin_E13;
-	e_fod[3] : LOCATION = Pin_J8;
-	e_fod[4] : LOCATION = Pin_H5;
-	e_fod[5] : LOCATION = Pin_H6;
-	e_fod[6] : LOCATION = Pin_H7;
-	e_fod[7] : LOCATION = Pin_G5;
-	e_fod[8] : LOCATION = Pin_G6;
-	e_fod[9] : LOCATION = Pin_G7;
-	e_ipd[0] : LOCATION = Pin_AB15;
-	e_ipd[10] : LOCATION = Pin_W12;
-	e_ipd[11] : LOCATION = Pin_K6;
-	e_ipd[12] : LOCATION = Pin_AA11;
-	e_ipd[13] : LOCATION = Pin_Y11;
-	e_ipd[14] : LOCATION = Pin_W11;
-	e_ipd[15] : LOCATION = Pin_AB10;
-	e_ipd[16] : LOCATION = Pin_Y10;
-	e_ipd[17] : LOCATION = Pin_W10;
-	e_ipd[18] : LOCATION = Pin_AB9;
-	e_ipd[19] : LOCATION = Pin_W9;
-	e_ipd[1] : LOCATION = Pin_V15;
-	e_ipd[20] : LOCATION = Pin_AB8;
-	e_ipd[21] : LOCATION = Pin_AA8;
-	e_ipd[22] : LOCATION = Pin_Y8;
-	e_ipd[23] : LOCATION = Pin_AB7;
-	e_ipd[24] : LOCATION = Pin_AA7;
-	e_ipd[25] : LOCATION = Pin_Y7;
-	e_ipd[26] : LOCATION = Pin_W7;
-	e_ipd[27] : LOCATION = Pin_AB6;
-	e_ipd[28] : LOCATION = Pin_Y6;
-	e_ipd[29] : LOCATION = Pin_W6;
-	e_ipd[2] : LOCATION = Pin_Y15;
-	e_ipd[30] : LOCATION = Pin_V6;
-	e_ipd[31] : LOCATION = Pin_AB5;
-	e_ipd[32] : LOCATION = Pin_AA5;
-	e_ipd[33] : LOCATION = Pin_Y5;
-	e_ipd[34] : LOCATION = Pin_W5;
-	e_ipd[35] : LOCATION = Pin_V5;
-	e_ipd[3] : LOCATION = Pin_W15;
-	e_ipd[4] : LOCATION = Pin_AB14;
-	e_ipd[5] : LOCATION = Pin_AB13;
-	e_ipd[6] : LOCATION = Pin_W13;
-	e_ipd[7] : LOCATION = Pin_AB12;
-	e_ipd[8] : LOCATION = Pin_V12;
-	e_ipd[9] : LOCATION = Pin_Y12;
-	e_ipwe : LOCATION = Pin_V7;
-	e_jpwe : LOCATION = Pin_L9;
-	e_nd : LOCATION = Pin_L5;
-	e_pid[0] : LOCATION = Pin_V8;
-	e_pid[1] : LOCATION = Pin_U5;
-	e_pid[2] : LOCATION = Pin_U6;
-	e_pid[3] : LOCATION = Pin_U7;
-	e_pid[4] : LOCATION = Pin_U8;
-	e_pid[5] : LOCATION = Pin_T5;
-	e_pid[6] : LOCATION = Pin_T6;
-	e_pid[7] : LOCATION = Pin_T7;
-	e_pid[8] : LOCATION = Pin_T8;
-	e_pid[9] : LOCATION = Pin_T9;
-	e_rst : LOCATION = Pin_H14;
-	e_sts : LOCATION = Pin_K7;
-	e_sysclk : LOCATION = Pin_F13;
-	e_vd : LOCATION = Pin_K5;
-	e_wd : LOCATION = Pin_L7;
-	m_ah[0] : LOCATION = Pin_H24;
-	m_ah[10] : LOCATION = Pin_F25;
-	m_ah[11] : LOCATION = Pin_F26;
-	m_ah[12] : LOCATION = Pin_H20;
-	m_ah[13] : LOCATION = Pin_H25;
-	m_ah[14] : LOCATION = Pin_H26;
-	m_ah[15] : LOCATION = Pin_K23;
-	m_ah[16] : LOCATION = Pin_K24;
-	m_ah[17] : LOCATION = Pin_H21;
-	m_ah[18] : LOCATION = Pin_H22;
-	m_ah[1] : LOCATION = Pin_H23;
-	m_ah[2] : LOCATION = Pin_K26;
-	m_ah[3] : LOCATION = Pin_K25;
-	m_ah[4] : LOCATION = Pin_F20;
-	m_ah[5] : LOCATION = Pin_D26;
-	m_ah[6] : LOCATION = Pin_F21;
-	m_ah[7] : LOCATION = Pin_F22;
-	m_ah[8] : LOCATION = Pin_G24;
-	m_ah[9] : LOCATION = Pin_F24;
-	m_al[0] : LOCATION = Pin_AA21;
-	m_al[10] : LOCATION = Pin_W22;
-	m_al[11] : LOCATION = Pin_W23;
-	m_al[12] : LOCATION = Pin_W24;
-	m_al[13] : LOCATION = Pin_AA22;
-	m_al[14] : LOCATION = Pin_AA23;
-	m_al[15] : LOCATION = Pin_AA24;
-	m_al[16] : LOCATION = Pin_AA25;
-	m_al[17] : LOCATION = Pin_W25;
-	m_al[18] : LOCATION = Pin_W26;
-	m_al[1] : LOCATION = Pin_AA20;
-	m_al[2] : LOCATION = Pin_AC26;
-	m_al[3] : LOCATION = Pin_AA26;
-	m_al[4] : LOCATION = Pin_U24;
-	m_al[5] : LOCATION = Pin_U23;
-	m_al[6] : LOCATION = Pin_V26;
-	m_al[7] : LOCATION = Pin_U26;
-	m_al[8] : LOCATION = Pin_W20;
-	m_al[9] : LOCATION = Pin_W21;
-	m_clk[0] : LOCATION = Pin_T26;
-	m_clk[1] : LOCATION = Pin_M26;
-	m_dh[0] : LOCATION = Pin_L18;
-	m_dh[10] : LOCATION = Pin_E15;
-	m_dh[11] : LOCATION = Pin_E14;
-	m_dh[12] : LOCATION = Pin_M22;
-	m_dh[13] : LOCATION = Pin_L20;
-	m_dh[14] : LOCATION = Pin_G15;
-	m_dh[15] : LOCATION = Pin_J14;
-	m_dh[16] : LOCATION = Pin_M20;
-	m_dh[17] : LOCATION = Pin_N22;
-	m_dh[18] : LOCATION = Pin_J15;
-	m_dh[19] : LOCATION = Pin_H15;
-	m_dh[1] : LOCATION = Pin_K20;
-	m_dh[20] : LOCATION = Pin_M18;
-	m_dh[21] : LOCATION = Pin_M21;
-	m_dh[22] : LOCATION = Pin_E16;
-	m_dh[23] : LOCATION = Pin_M19;
-	m_dh[24] : LOCATION = Pin_G16;
-	m_dh[25] : LOCATION = Pin_N19;
-	m_dh[26] : LOCATION = Pin_F16;
-	m_dh[27] : LOCATION = Pin_J16;
-	m_dh[28] : LOCATION = Pin_H16;
-	m_dh[29] : LOCATION = Pin_G17;
-	m_dh[2] : LOCATION = Pin_K22;
-	m_dh[30] : LOCATION = Pin_F17;
-	m_dh[31] : LOCATION = Pin_E17;
-	m_dh[32] : LOCATION = Pin_G18;
-	m_dh[33] : LOCATION = Pin_N18;
-	m_dh[34] : LOCATION = Pin_H17;
-	m_dh[35] : LOCATION = Pin_H18;
-	m_dh[3] : LOCATION = Pin_L21;
-	m_dh[4] : LOCATION = Pin_L19;
-	m_dh[5] : LOCATION = Pin_L22;
-	m_dh[6] : LOCATION = Pin_J19;
-	m_dh[7] : LOCATION = Pin_K21;
-	m_dh[8] : LOCATION = Pin_D14;
-	m_dh[9] : LOCATION = Pin_K19;
-	m_dl[0] : LOCATION = Pin_W17;
-	m_dl[10] : LOCATION = Pin_R22;
-	m_dl[11] : LOCATION = Pin_P22;
-	m_dl[12] : LOCATION = Pin_Y17;
-	m_dl[13] : LOCATION = Pin_AB18;
-	m_dl[14] : LOCATION = Pin_R21;
-	m_dl[15] : LOCATION = Pin_L14;
-	m_dl[16] : LOCATION = Pin_AB17;
-	m_dl[17] : LOCATION = Pin_Y16;
-	m_dl[18] : LOCATION = Pin_D15;
-	m_dl[19] : LOCATION = Pin_R20;
-	m_dl[1] : LOCATION = Pin_AA19;
-	m_dl[20] : LOCATION = Pin_W16;
-	m_dl[21] : LOCATION = Pin_AA17;
-	m_dl[22] : LOCATION = Pin_R18;
-	m_dl[23] : LOCATION = Pin_V16;
-	m_dl[24] : LOCATION = Pin_T21;
-	m_dl[25] : LOCATION = Pin_AA16;
-	m_dl[26] : LOCATION = Pin_T22;
-	m_dl[27] : LOCATION = Pin_T19;
-	m_dl[28] : LOCATION = Pin_T20;
-	m_dl[29] : LOCATION = Pin_U20;
-	m_dl[2] : LOCATION = Pin_Y19;
-	m_dl[30] : LOCATION = Pin_U22;
-	m_dl[31] : LOCATION = Pin_T18;
-	m_dl[32] : LOCATION = Pin_U21;
-	m_dl[33] : LOCATION = Pin_AB16;
-	m_dl[34] : LOCATION = Pin_V19;
-	m_dl[35] : LOCATION = Pin_U19;
-	m_dl[3] : LOCATION = Pin_AB19;
-	m_dl[4] : LOCATION = Pin_R17;
-	m_dl[5] : LOCATION = Pin_AB20;
-	m_dl[6] : LOCATION = Pin_W18;
-	m_dl[7] : LOCATION = Pin_Y18;
-	m_dl[8] : LOCATION = Pin_P19;
-	m_dl[9] : LOCATION = Pin_AA18;
-	m_oe[0] : LOCATION = Pin_R24;
-	m_oe[1] : LOCATION = Pin_M24;
-	m_we[0] : LOCATION = Pin_R23;
-	m_we[1] : LOCATION = Pin_L23;
-	RESERVE_ALL_UNUSED_PINS = "AS OUTPUT DRIVING GROUND";
-	HEXOUT_FILE_COUNT_DIRECTION = UP;
-	HEXOUT_FILE_START_ADDRESS = 0;
-	GENERATE_HEX_FILE = OFF;
-	GENERATE_RBF_FILE = OFF;
-	GENERATE_TTF_FILE = ON;
-	RESERVE_DATA7_THROUGH_DATA1_AFTER_CONFIGURATION = OFF;
-	RESERVE_RDYNBUSY_AFTER_CONFIGURATION = OFF;
-	RESERVE_NWS_NRS_NCS_CS_AFTER_CONFIGURATION = OFF;
-	DISABLE_CONF_DONE_AND_NSTATUS_PULLUPS_ON_CONFIG_DEVICE = OFF;
-	AUTO_INCREMENT_CONFIG_DEVICE_JTAG_USER_CODE = ON;
-	APEX20K_CONFIG_DEVICE_JTAG_USER_CODE = FFFFFFFF;
-	APEX20K_CONFIGURATION_DEVICE = EPC2LC20;
-	USE_CONFIGURATION_DEVICE = ON;
-	ENABLE_INIT_DONE_OUTPUT = OFF;
-	ENABLE_LOCK_OUTPUT = OFF;
-	ENABLE_DEVICE_WIDE_OE = OFF;
-	ENABLE_DEVICE_WIDE_RESET = OFF;
-	RELEASE_CLEARS_BEFORE_TRI_STATES = OFF;
-	AUTO_RESTART_CONFIGURATION = ON;
-	USER_START_UP_CLOCK = OFF;
-	APEX20K_CONFIGURATION_SCHEME = "PASSIVE SERIAL";
-	APEX20K_JTAG_USER_CODE = FFFFFFFF;
-	RESERVE_NCEO_AFTER_CONFIGURATION = "AS OUTPUT DRIVING GROUND";
-	RESERVE_CLKUSR_AFTER_CONFIGURATION = OFF;
-	ENABLE_LOW_VOLTAGE_MODE_ON_CONFIG_DEVICE = OFF;
-	ENABLE_JTAG_BST_SUPPORT = ON;
-	DEVICE_FILTER_SPEED_GRADE = "-2X";
-	DEVICE_FILTER_PIN_COUNT = 672;
-	DEVICE_FILTER_PACKAGE = FBGA;
-	BASE_PIN_OUT_FILE_ON_SAMEFRAME_DEVICE = OFF;
-	DEVICE = "EP20K400FC672-2X";
-}
-COMPILER_SETTINGS
-{
-	FOCUS_ENTITY_NAME = |pgfpga;
-	RUN_TIMING_ANALYSES = ON;
-	FAMILY = APEX20K;
-	APEX_FITTER_TYPE = ADVANCED;
-	OPTIMIZE_IO_TIMING = OFF;
-	OPTIMIZE_INTERNAL_TIMING = NORMAL_COMPILATION;
-	COMPILATION_LEVEL = FULL;
-	SAVE_DISK_SPACE = ON;
-	SPEED_DISK_USAGE_TRADEOFF = NORMAL;
-}
+
+MODULE_AUTHOR("Tsuyoshi Hamada");
+MODULE_LICENSE("Dual BSD/GPL");
+
+module_init(pg_init_module);
+module_exit(pg_cleanup_module);
