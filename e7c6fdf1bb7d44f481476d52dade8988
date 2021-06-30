@@ -1,41 +1,68 @@
-2021å¹´  6æœˆ 29æ—¥ ç«æ›œæ—¥ 11:36:53 JST
-Release 6.2.03i - ngdbuild G.31a
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+2021å¹´  6æœˆ 30æ—¥ æ°´æ›œæ—¥ 10:50:24 JST
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-Command Line: ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf -p
-xc2vp70-ff1517-5 top.ngc top.ngd 
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
+{
+  int i,j,d;
+  double v2,r2;
+  double dx[3];
+  double Ep;        /* Še—±q‚ÌˆÊ’uƒGƒlƒ‹ƒM[ */
+  double Em;        /* Še—±q‚Ì‰^“®ƒGƒlƒ‹ƒM[ */
+  double Ea;        /* Še—±q‚Ì‘S—ÍŠw“IƒGƒlƒ‹ƒM[ */
+  static double Ea_init;
+  static int flag=0;
+  //  double a[NMAX][DIM];
 
-Reading NGO file
-"/home/hamada/pgr/Demos/PairWiseErr/pgr/ISE_PROJECT/proj/top.ngc" ...
-Reading component libraries for design expansion...
 
-Annotating constraints to design from file "../top.ucf" ...
+  /******************************************************  FORCE
+  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] =  m[j]*dx[d]/r3;
+	a[j][d] = -m[i]*dx[d]/r3;
+      }
+    }
+  }
+  ***********************************************************/
 
-Checking timing specifications ...
-WARNING:XdmHelpers:793 - The TNM "CLK66" drives the CLKIN pin of DCM
-   "dcm0_dcm0". This TNM cannot be traced through the DCM because it is not used
-   in exactly one PERIOD specification. This TNM is used in the following user
-   groups and/or specifications:
-   <none>
-WARNING:XdmHelpers:625 - No instances driven from signal "CK66" are valid for
-   inclusion in TNM group "CLK66". A TNM property on a pin or signal marks only
-   the flip-flops, latches and/or RAMs which are directly or indirectly driven
-   by that pin or signal.
-INFO:XdmHelpers:851 - TNM "CK66", used in period specification "TS_CK66", was
-   traced into DCM instance "dcm0_dcm0". The following new TNM groups and period
-   specifications were generated at the DCM output(s):
-   CLK0: TS_dcm0_dcm_out=PERIOD dcm0_dcm_out TS_CK66*1.000000 HIGH 50.000000%
-   CLKFX: TS_dcm0_dcm_fx=PERIOD dcm0_dcm_fx TS_CK66*1.000000 HIGH 50.000000%
-WARNING:XdmHelpers:644 - No appropriate elements were found for the TNM group
-   "CLK66". This group has been removed from the design.
-Checking expanded design ...
+  Ea = 0.0;
+  for(i=0;i<n;i++){
+    Ep=0.0;     // Potential Energy
+    for(j=0;j<n;j++){
+      r2 = eps2;           /* ‘Š‘Î‹——£‰Šú‰» */
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
+    }
 
-NGDBUILD Design Results Summary:
-  Number of errors:     0
-  Number of warnings:   3
+    v2=0.0;    /* â‘Î‘¬“x2æ’l‰Šú‰» */
+    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
+    Em = 0.5 * m[i] * v2;
 
-Total memory usage is 67920 kilobytes
+    Ea += Em + Ep;
+    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
+    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
+    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
+  }
 
-Writing NGD file "top.ngd" ...
-
-Writing NGDBUILD log file "top.bld"...
+  if(flag==0){
+    Ea_init = Ea;
+    flag = 1;
+  }
+  printf("Eall = %e\t",Ea);
+  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
+  printf("\n");
+  return;
+}
