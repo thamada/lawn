@@ -1,36 +1,12 @@
-2021年  6月 30日 水曜日 10:18:21 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---
--- DMAR_STATE is used only 
---                dmar_mem_adr.vhd  
---                dmar_mem_re.vhd
---                dmar_start_adr.vhd
--- dmar_dbus_hiz and dma_mem_data do not used DMAR_STATE.
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmar_state is
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end dmar_state;
-
-architecture rtl of dmar_state is
-
-component dmaw_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-begin
-  u0 : dmaw_state port map(RST=>RST, CLK=>CLK, ENABLE=>ENABLE, STATE=>STATE);
-end rtl;
+2021年  7月  1日 木曜日 09:31:22 JST
+10
+2.253285e-01	9.191831e-01
+2.068413e-01	7.247797e-01
+7.321991e-01	9.064824e-01
+3.479571e-01	8.578809e-01
+4.151849e-01	1.941677e-01
+6.856104e-01	5.243755e-01
+1.596357e-01	9.547575e-01
+1.269843e-01	4.339532e-03
+3.826915e-01	2.507929e-01
+6.552879e-01	5.344908e-01
