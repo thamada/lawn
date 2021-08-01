@@ -1,124 +1,265 @@
-2021年  7月 24日 土曜日 11:04:23 JST
-#include "pg_util.h"
-// Funtion Prototyping
-void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_sub_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_unsigned_add_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_sqrt_26_16(LONG x, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_recipro_26_16(LONG x, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_expadd_31_26_16(LONG x, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_mult_26_16(LONG x, LONG y, LONG * z);
-void            pg_float_fixaccum_26_16(LONG x, LONG * z);
-void            pg_float_fixaccum_26_16(LONG x, LONG * z);
-void            pg_float_fixaccum_26_16(LONG x, LONG * z);
+2021年  8月  1日 日曜日 11:22:58 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 18:45:17 2005
 
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-// API
-void
-force(double x[][3], double m[], double eps2, double a[][3], int n)
-{
-    int             i, j;
-    LONG            sx_0;
-    LONG            sx_1;
-    LONG            sx_2;
-    LONG            xi_0;
-    LONG            xj_0;
-    LONG            xi_1;
-    LONG            xj_1;
-    LONG            xi_2;
-    LONG            xj_2;
-    LONG            dx2_0;
-    LONG            dx2_1;
-    LONG            dx2_2;
-    LONG            ieps2;
-    LONG            x2y2;
-    LONG            z2e2;
-    LONG            r2;
-    LONG            r1;
-    LONG            r3;
-    LONG            r3i;
-    LONG            mj;
-    LONG            mf;
-    LONG            dx_0;
-    LONG            dx_1;
-    LONG            fs;
-    LONG            dx_2;
-    LONG            fx_0;
-    LONG            fx_1;
-    LONG            fx_2;
+ENTITY sim_local_read IS
+END sim_local_read;
 
+ARCHITECTURE testbench_arch OF sim_local_read IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read.ano";
+	COMPONENT local_read
+		GENERIC (
+			NBIT_L_ADRO : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_STS : In  std_logic;
+			BUSY : Out  std_logic;
+			DMAR_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			DBUS_idata : In  std_logic_vector (63 DOWNTO 0);
+			DBUS_HiZ : Out  std_logic;
+			MEM_ADB : Out  std_logic_vector (12 DOWNTO 0);
+			MEM_WEHB : Out  std_logic;
+			MEM_WELB : Out  std_logic;
+			MEM_DTIB : Out  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-    for (i = 0; i < n; i++) {
-	/*
-	 * CONVERT(xi_0,float) 
-	 */ xi_0 = double2pgpgfloat_r(x[i][0], 26, 16, 6);
-	/*
-	 * CONVERT(xi_1,float) 
-	 */ xi_1 = double2pgpgfloat_r(x[i][1], 26, 16, 6);
-	/*
-	 * CONVERT(xi_2,float) 
-	 */ xi_2 = double2pgpgfloat_r(x[i][2], 26, 16, 6);
-	/*
-	 * CONVERT(ieps2,float) 
-	 */ ieps2 = double2pgpgfloat_r(eps2, 26, 16, 6);
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_STS : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_idata : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_HiZ : std_logic;
+	SIGNAL MEM_ADB : std_logic_vector (12 DOWNTO 0);
+	SIGNAL MEM_WEHB : std_logic;
+	SIGNAL MEM_WELB : std_logic;
+	SIGNAL MEM_DTIB : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-	sx_0 = 0;
-	sx_1 = 0;
-	sx_2 = 0;
+BEGIN
+	UUT : local_read
+	GENERIC MAP (
+		NBIT_L_ADRO => 1
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_STS => CALC_STS,
+		BUSY => BUSY,
+		DMAR_ENABLE => DMAR_ENABLE,
+		DBUS_Port => DBUS_Port,
+		DBUS_idata => DBUS_idata,
+		DBUS_HiZ => DBUS_HiZ,
+		MEM_ADB => MEM_ADB,
+		MEM_WEHB => MEM_WEHB,
+		MEM_WELB => MEM_WELB,
+		MEM_DTIB => MEM_DTIB,
+		RST => RST,
+		CLK => CLK
+	);
 
-	for (j = n - 1; j >= 0; j--) {
-	    /*
-	     * CONVERT(xj_0,float) 
-	     */ xj_0 = double2pgpgfloat_r(x[j][0], 26, 16, 6);
-	    /*
-	     * CONVERT(xj_1,float) 
-	     */ xj_1 = double2pgpgfloat_r(x[j][1], 26, 16, 6);
-	    /*
-	     * CONVERT(xj_2,float) 
-	     */ xj_2 = double2pgpgfloat_r(x[j][2], 26, 16, 6);
-	    /*
-	     * CONVERT(mj,float) 
-	     */ mj = double2pgpgfloat_r(m[j], 26, 16, 6);
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-	    pg_float_sub_26_16(xi_0, xj_0, &dx_0);
-	    pg_float_sub_26_16(xi_1, xj_1, &dx_1);
-	    pg_float_sub_26_16(xi_2, xj_2, &dx_2);
-	    pg_float_mult_26_16(dx_0, dx_0, &dx2_0);
-	    pg_float_mult_26_16(dx_1, dx_1, &dx2_1);
-	    pg_float_mult_26_16(dx_2, dx_2, &dx2_2);
-	    pg_float_unsigned_add_26_16(dx2_0, dx2_1, &x2y2);
-	    pg_float_unsigned_add_26_16(dx2_2, ieps2, &z2e2);
-	    pg_float_unsigned_add_26_16(x2y2, z2e2, &r2);
-	    pg_float_sqrt_26_16(r2, &r1);
-	    pg_float_mult_26_16(r2, r1, &r3);
-	    pg_float_recipro_26_16(r3, &r3i);
-	    pg_float_mult_26_16(r3i, mj, &mf);
-	    pg_float_expadd_31_26_16(mf, &fs);
-	    pg_float_mult_26_16(fs, dx_0, &fx_0);
-	    pg_float_mult_26_16(fs, dx_1, &fx_1);
-	    pg_float_mult_26_16(fs, dx_2, &fx_2);
-	    pg_float_fixaccum_26_16_57_64(fx_0, &sx_0);
-	    pg_float_fixaccum_26_16_57_64(fx_1, &sx_1);
-	    pg_float_fixaccum_26_16_57_64(fx_2, &sx_2);
-	}
-	a[i][0] =
-	    ((double) (((long long int) sx_0) << 0)) *
-	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	a[i][1] =
-	    ((double) (((long long int) sx_1) << 0)) *
-	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	a[i][2] =
-	    ((double) (((long long int) sx_2) << 0)) *
-	    ((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-    }
-}
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_DMAR_ENABLE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DMAR_ENABLE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAR_ENABLE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_DBUS_Port(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_DBUS_HiZ(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",DBUS_HiZ,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_HiZ);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_MEM_ADB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_ADB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_ADB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_MEM_WEHB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WEHB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WEHB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_MEM_WELB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_WELB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WELB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+		PROCEDURE ANNOTATE_MEM_DTIB(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_DTIB,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_DTIB);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
+
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_DMAR_ENABLE(TX_TIME);
+		ANNOTATE_DBUS_Port(TX_TIME);
+		ANNOTATE_DBUS_HiZ(TX_TIME);
+		ANNOTATE_MEM_ADB(TX_TIME);
+		ANNOTATE_MEM_WEHB(TX_TIME);
+		ANNOTATE_MEM_WELB(TX_TIME);
+		ANNOTATE_MEM_DTIB(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
+
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
+
+		BEGIN
+		-- --------------------
+		CALC_STS <= transport '0';
+		DBUS_idata <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		NPIPE <= transport std_logic_vector'("00010001"); --11
+		-- --------------------
+		WAIT FOR 600 ns; -- Time=800 ns
+		CALC_STS <= transport '1';
+		-- --------------------
+		WAIT FOR 4400 ns; -- Time=5200 ns
+		CALC_STS <= transport '0';
+		-- --------------------
+		WAIT FOR 60275 ns; -- Time=65475 ns
+		-- --------------------
+
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
+
+CONFIGURATION local_read_cfg OF sim_local_read IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cfg;
