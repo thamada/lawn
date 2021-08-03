@@ -1,2 +1,30 @@
-2021年  7月 10日 土曜日 11:21:37 JST
-set allSynthModules {pcim_lc.MOD cfg.MOD pci_targetcnt.MOD pci_rdtfifo.MOD pci_dmacnt.MOD pcicnt.MOD regcnt.MOD dp32b8192w.MOD dpram.MOD user.MOD pfpga_config.MOD local_write.MOD local_read_cnt.MOD local_read_if.MOD local_read.MOD local_io.MOD writecomb_check.MOD fifofifo.MOD dcm_ps_f.MOD ifpga.MOD}
+2021年  8月  3日 火曜日 09:23:37 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+
+entity setn is
+  port (
+    clk       : in std_logic;
+    we        : in std_logic;
+    idata     : in std_logic_vector(31 downto 0);
+    odata     : out std_logic_vector(31 downto 0));
+end setn;
+
+architecture rtl of setn is
+signal nreg :  std_logic_vector(31 downto 0) := "00000000000000000000000000000011"; -- default 3
+begin
+
+odata <= nreg;
+--odata <= "00000000000000000000000000000011";
+
+process (clk) begin
+  if(clk'event and clk='1') then
+    if(we = '1') then
+      nreg <= idata;
+    end if;
+  end if;
+end process;
+
+end rtl;
