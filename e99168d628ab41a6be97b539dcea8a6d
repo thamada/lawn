@@ -1,74 +1,68 @@
-2021年 10月 20日 水曜日 09:37:09 JST
---------------------------------------------------------------------------------
-Release 6.2.03i Trace G.28
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+2021年 10月 24日 日曜日 09:23:35 JST
+#!/usr/bin/env python3
+# ----------------------------------------------------------------------
+# BBox-Label-Tool
+#1
+#231 204 403 455
+# ----------------------------------------------------------------------
+# darknet 
+#0 0.49531250000000004 0.6864583333333333 0.26875 0.5229166666666667
+# ----------------------------------------------------------------------
+import glob
 
-trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-
-
-Design file:              top.ncd
-Physical constraint file: top.pcf
-Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
-Report level:             error report
-
-Environment Variable      Effect 
---------------------      ------ 
-NONE                      No environment variables were set
---------------------------------------------------------------------------------
-
-INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
-   option. All paths that are not constrained will be reported in the
-   unconstrained paths section(s) of the report.
-
-================================================================================
-Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
-
- 0 items analyzed, 0 timing errors detected.
---------------------------------------------------------------------------------
-
-================================================================================
-Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
-
- 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  19.569ns.
---------------------------------------------------------------------------------
-
-================================================================================
-Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
-
- 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
- Minimum period is  14.739ns.
---------------------------------------------------------------------------------
+def convert(size, box):
+    dw = (size[0])
+    dh = (size[1])
+    x = (box[0] + box[2])/2.0
+    y = (box[1] + box[3])/2.0
+    w = box[2] - box[0]
+    h = box[3] - box[1]
+    x = x/dw
+    w = w/dw
+    y = y/dh
+    h = h/dh
+    return (x,y,w,h)
 
 
-All constraints were met.
+def _convert(size, box):
+    dw = 1./(size[0])
+    dh = 1./(size[1])
+    x = (box[0] + box[2])/2.0 - 1
+    y = (box[1] + box[3])/2.0 - 1
+    w = box[2] - box[0]
+    h = box[3] - box[1]
+    x = x*dw
+    w = w*dw
+    y = y*dh
+    h = h*dh
+    return (x,y,w,h)
+
+flist = glob.glob("../data4bbox/Labels/777/image*.txt")
+flist.sort()
+
+for fname in flist:
+    with open(fname, "r") as fd:
+        lines = fd.readlines()
+        l = lines[1].replace('\n','')
+        box_str = l.split(' ')
+        box = []
+        for v in box_str:
+            box.append(float(int(v)))
+
+        size = [640.0, 480.0]
+        x, y, w, h = convert(size, box)
+
+        if False:
+        #if True:
+            x0 = box[0]
+            y0 = box[1]
+            x1 = box[2]
+            y1 = box[3]
+            x = (x0 + x1)/2.0/size[0]
+            y = (y0 + y1)/2.0/size[1]
 
 
-Data Sheet report:
------------------
-All values displayed in nanoseconds (ns)
+        #print(fname, lines[1], box, x, y, w, h)
+        print("%1.17f %1.17f %1.17f %1.17f " %(x, y, w, h))
 
-Clock to Setup on destination clock CK66
----------------+---------+---------+---------+---------+
-               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
-Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
----------------+---------+---------+---------+---------+
-CK66           |   19.959|         |         |         |
----------------+---------+---------+---------+---------+
-
-
-Timing summary:
----------------
-
-Timing errors: 0  Score: 0
-
-Constraints cover 1709651 paths, 0 nets, and 63904 connections
-
-Design statistics:
-   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
-
-
-Analysis completed Mon Jun 13 23:42:18 2005
---------------------------------------------------------------------------------
-
-Peak Memory Usage: 279 MB
+    
