@@ -1,52 +1,26 @@
-2021年 10月 17日 日曜日 10:04:23 JST
-set -tmpdir __projnav
-set -xsthdpdir ./xst
-run
--ifn top.prj
--ifmt mixed
--ofn top
--ofmt NGC
--p xc2vp70-5-ff1517
--top top
--opt_mode Speed
--opt_level 1
--iuc NO
--lso top.lso
--keep_hierarchy NO
--glob_opt AllClockNets
--rtlview Yes
--read_cores YES
--write_timing_constraints NO
--cross_clock_analysis NO
--hierarchy_separator _
--bus_delimiter <>
--case maintain
--slice_utilization_ratio 100
--verilog2001 YES
--vlgincdir 
--fsm_extract YES -fsm_encoding Auto
--fsm_style lut
--ram_extract Yes
--ram_style Auto
--rom_extract Yes
--rom_style Auto
--mux_extract YES
--mux_style Auto
--decoder_extract YES
--priority_extract YES
--shreg_extract YES
--shift_extract YES
--xor_collapse YES
--resource_sharing YES
--mult_style auto
--iobuf YES
--max_fanout 500
--bufg 16
--register_duplication YES
--equivalent_register_removal YES
--register_balancing No
--slice_packing YES
--optimize_primitives NO
--tristate2logic No
--iob auto
--slice_utilization_ratio_maxmargin 5
+2021年 10月 27日 水曜日 10:26:55 JST
+#include <stdio.h>
+#include "nbodysim.h"
+
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
+
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
+
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
+
+  fflush(fp);
+}
+
