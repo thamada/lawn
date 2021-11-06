@@ -1,25 +1,29 @@
-2021年 11月  5日 金曜日 09:07:02 JST
-#!/bin/sh
+2021年 11月  6日 土曜日 10:07:19 JST
+#! /bin/sh
+# Time-stamp: <2006-11-22 17:38:27 hamada>
+# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 #
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
+# init script for PGR & PROGRAPE-4 (for developers)
 #
-# To enable this hook, rename this file to "commit-msg".
 
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
-#
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+rm -rf /tmp/*
+ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
+ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
+ln -s /usr/local/src/package.20060613 /tmp/pgr
+ln -s /usr/local/src/progrape /tmp/progrape
+cd /pciDriver/src/driver/; ./insmod.sh
 
-# This example catches duplicate Signed-off-by lines.
+cd /tmp/progrape/driver;  make load
 
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
-	exit 1
-}
+
+umount /mnt/ram
+rm -rf /mnt/ram
+mkdir /mnt/ram
+mke2fs /dev/ram0
+mount -t ext2 /dev/ram0 /mnt/ram
+chmod -R 777 /mnt/ram
+
+cp /usr/local/bin/xxx.log /mnt/ram
+chmod -R 777 /mnt/ram
+
+
