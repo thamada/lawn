@@ -1,71 +1,54 @@
-2021年 11月 14日 日曜日 11:52:14 JST
-#Time-stamp: <2017-06-23 16:16:23 hamada>
+2021年 11月 15日 月曜日 10:09:39 JST
+#!/bin/sh
 
-CONFIG=./etc/config.txt
-MODEL=./etc/model.txt
-WEIGHTS=./backup/m10_150000.weights
-LOGFILE=./log.2gpu
-GPUID= -gpus 0,1
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local sha1> <remote ref> <remote sha1>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
 
-all:
-	@echo 'make run'
+remote="$1"
+url="$2"
 
-r: run
+z40=0000000000000000000000000000000000000000
 
-run:
-	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
+IFS=' '
+while read local_ref local_sha remote_ref remote_sha
+do
+	if [ "$local_sha" = $z40 ]
+	then
+		# Handle delete
+	else
+		if [ "$remote_sha" = $z40 ]
+		then
+			# New branch, examine all commits
+			range="$local_sha"
+		else
+			# Update to existing branch, examine new commits
+			range="$remote_sha..$local_sha"
+		fi
 
-run.1gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
+		# Check for WIP commit
+		commit=`git rev-list -n 1 --grep '^WIP' "$range"`
+		if [ -n "$commit" ]
+		then
+			echo "Found WIP commit in $local_ref, not pushing"
+			exit 1
+		fi
+	fi
+done
 
-run.2gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
-
-run.4gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
-
-
-
-demo:
-	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
-#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
-
-
-photo:
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
-
-
-clean:
-	rm -rf bad.list .*~ *~ ./predictions.jpg
-	rm -rf backup/model*
-
-
-c: clean
-
-
-0.check:
-	cd backup/;md5sum --check md5sum.txt
-
-check:
-	grep ID.000[0-3] etc/all.txt |wc -l
-	grep ID.0004 etc/all.txt |wc -l
-	grep ID.0005 etc/all.txt |wc -l
-	grep ID.0006 etc/all.txt |wc -l
-	grep ID.000[7-9] etc/all.txt |wc -l
-	grep ID.0004 etc/list.train.txt |wc -l
-	grep ID.0005 etc/list.train.txt |wc -l
-	grep ID.0006 etc/list.train.txt |wc -l
-	grep ID.0004 etc/list.valid.txt |wc -l
-	grep ID.0005 etc/list.valid.txt |wc -l
-	grep ID.0006 etc/list.valid.txt |wc -l
-
-check.iou:
-	\rm -f IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
-	\grep IOU IOU.txt
+exit 0
