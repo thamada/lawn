@@ -1,25 +1,15 @@
-2021年 10月 24日 日曜日 11:02:39 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 00:45:13 hamada>
-import cv2
-import glob
-import aieye_find
-from datetime import datetime
+2021年 11月 24日 水曜日 09:22:06 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed
+# by applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-applypatch".
 
-iflist = [] 
-for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
-    iflist.append(fname)
-
-iflist.sort()
-i = 0
-index = 0
-
-for fname in iflist:
-    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
-    fname_dst = fname.replace('sss_', 'CanonG1X_')
-    if( i % 1 == 0):  # every 30 sec 
-#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
-        cmd =  "mv " + fname_src + " " + fname_dst
-        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
-        index += 1
-    i += 1
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-commit" &&
+	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
+:
