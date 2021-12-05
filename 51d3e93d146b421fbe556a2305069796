@@ -1,53 +1,75 @@
-2021年 12月  4日 土曜日 10:40:47 JST
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- *
- ***************************************************/
+2021年 12月  5日 日曜日 10:07:57 JST
+#!/usr/bin/perl
+#
+# mtrr : MTRR register resetting script for PROGRAPE-4
+#
+# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
+# 
+# No warranty is attached; 
+#
 
-inline unsigned int    ReadBase0 (int devid, unsigned int addr);
-inline unsigned int    ReadBase1 (int devid, unsigned int addr);
-inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
-inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
+my $devid   = 0;
+my $bar;
+my $cmd;
+my $exe;
 
-void                   pg4_close (int id);
+if(@ARGV){
+    sprintf($devid, "%d", $ARGV[0]);
+}
 
-int                    pg4_DMAput (int devid, unsigned int size);
-int                    pg4_DMAget (int devid, unsigned int size);
-void                   pg4_DMAcheck (int devid);
-int                    pg4_DMAretry (int devid);
+$bar = 1;
 
-unsigned long          pg4_getbaseaddr (int devid, int j);
-unsigned long          pg4_getbaseaddr_size (int devid, int bar);
-unsigned int*          pg4_get_bar0ptr(int devid);
-unsigned int*          pg4_get_bar1ptr(int devid);
-unsigned int*          pg4_get_dmawptr (int devid);
-unsigned int*          pg4_get_dmarptr (int devid);
-unsigned int           pg4_get_dma_size (int devid);
-void                   pg4_get_pfpga_info (int devid, char *info);
+my $adr=0, $size;
 
-int                    pg4_open (int id);
+$cmd = "ifpga_get_barinfo $devid $bar";
+$exe = `$cmd`;
+chomp($exe);
+$adr = $exe;
 
-inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
-inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
-unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+$cmd = "ifpga_get_barinfo $devid $bar 1";
+$exe = `$cmd`;
+chomp($exe);
+$size = $exe;
 
-void                   pg4_set_pfpga_info (int devid, char *info);
+print "BAR1 start at $adr, size $size bytes\n";
 
-inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
-inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
+if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
+    print "discontinued\n";
+    exit(-1);
+}
 
 
+open(RD,"/proc/mtrr");
+my $hit_line = '';
+while(<RD>){
+    my $s = $_;
+    chomp($s);
+    if($s =~ /$adr/){
+	$hit_line = $s;
+    }
+}
+close(RD);
 
-// --- following are removed. ---
-int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void                   pg4_wait (int devid, int n);
+if($hit_line ne ''){
+    print "Hit: ". $hit_line ."\n";
+}else{
+    $cmd = "cat /proc/mtrr";
+    print `$cmd` ."\n";
+    print "Can't find the mtrr register for bar1($adr)\n";
+    print "discontinued\n";
+    exit(-1);
+}
+
+my ($reg_nr, ) = split(/\:/,$hit_line);
+$reg_nr =~ s/reg//;
+$reg_nr = sprintf("%d",$reg_nr);
+
+$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
+print  $cmd. "\n";
+print  `$cmd`. "\n";
+
+$cmd = "cat /proc/mtrr";
+print `$cmd`;
 
 
+1;
