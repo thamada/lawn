@@ -1,3 +1,2 @@
-2021年 11月  5日 金曜日 11:25:36 JST
-MODULE sim
-SUBMODULE pfpga_config
+2021年 12月  9日 木曜日 10:25:15 JST
+set ADucfFile {../rtl/ifpga.ucf}
