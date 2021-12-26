@@ -1,2 +1,16 @@
-2021年 12月 19日 日曜日 10:19:37 JST
-set ADucfFile {../rtl/ifpga.ucf}
+2021年 12月 26日 日曜日 11:21:12 JST
+#!/usr/bin/env python3
+
+import glob
+import sys
+import random
+
+fname = sys.argv[1]
+random.seed()
+
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
