@@ -1,50 +1,57 @@
-2021年 12月  9日 木曜日 10:15:21 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[DMAR_ENABLE] _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en0                _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en1                     _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en2                          _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en3                               _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS_HiZ            ~~~~~~~~~~~~~~\_________________________________________________/~~~~
+2021年 12月 29日 水曜日 10:08:55 JST
+-- 2005/06/13
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define D_FSU  1
+#define D_FTL  2
+#define D_LAD  4
+#define D_LMU  1
+#define D_LTF  2
+#define D_FAC  1
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+// -1 < xbox < 1.0,
+// mmin > 1.0 (1e-2 < m < 1.0 ==> underflow around large R)
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+//mmin 0xdf61
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-entity dmar_dbus_hiz is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic :='1');
-end dmar_dbus_hiz;
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
-architecture rtl of dmar_dbus_hiz is
-signal en0,en1,en2,en3 : std_logic :='0';
-begin
+/NPIPE 2;
+/NVMP 1;
 
-  process(CLK) begin
-    if(CLK'event and CLK = '1') then
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-      en0 <= ENABLE;
-    end if;
-  end process;
+/JPSET xj[3], x[][], fix,      NPOS,xscale;
+/JPSET mj,    m[],   log,      NLOG,NMAN,mscale;
+/IPSET xi[3], x[][], fix,      NPOS,xscale;
+/IPSET ieps2, eps2,  log,      NLOG,NMAN,escale;
+/FOSET sx[3], a[][], fix,      NACC,fscale;
 
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           D_FSU);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, D_FTL);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-  process(RST,CLK,en2,en3) begin
-    if(RST='1') then
-      DBUS_HiZ <= '1';
-    elsif(CLK'event and CLK = '1') then
-     if( (en1='1') AND (en2='0') ) then
-       DBUS_HiZ <= '0';
-     elsif( (en2='0') AND (en3='1') ) then
-       DBUS_HiZ <= '1';
-     end if;
-    end if;
-  end process;
+--pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,  D_LAD,NCUT);
+--pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,  D_LAD,NCUT);
+--pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,  D_LAD,NCUT);
+pg_log_unsigned_add(x2[0],x2[1], x2y2, NLOG,NMAN,      D_LAD);
+pg_log_unsigned_add(x2[2],ieps2, z2e2, NLOG,NMAN,      D_LAD);
+pg_log_unsigned_add(x2y2,z2e2,   r2,   NLOG,NMAN,      D_LAD);
 
-end rtl;
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,           D_LMU);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,           D_LMU);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,           D_LMU);
+--pg_log_muldiv(SDIV,fx,f_shift, fxs,    NLOG,           D_LMU);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN, D_LMU);
+
+pg_conv_ltof(fxs,  ffx,                NLOG,NMAN,NFOR, D_LTF);
+pg_fix_accum(ffx,  sx,                 NFOR,NACC,      D_FAC);
