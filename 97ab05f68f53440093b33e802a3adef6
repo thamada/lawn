@@ -1,3 +1,30 @@
-2021年 12月 26日 日曜日 10:14:01 JST
-MODULE local_write
-SUBMODULE local_write
+2022年  1月  1日 土曜日 10:15:45 JST
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
+my $cmd ="cat ". $kbuf_dir ."/kbuffers";
+my $exe = `$cmd`;
+print $exe;
+
+my $nbuf = `$cmd | wc -l`;
+chomp($nbuf);
+$nbuf--;
+
+print $nbuf ." buffers exists\n";
+
+for(my $i=0;$i<$nbuf;$i++){
+    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
+    print $cmd ."\n";
+    $exe = `$cmd`;
+    print $exe;
+}
+
+1;
