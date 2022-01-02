@@ -1,51 +1,113 @@
-2021年 12月 25日 土曜日 09:20:26 JST
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed.
-# Called by "git commit" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message if
-# it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
+2022年  1月  2日 日曜日 09:51:05 JST
+-- LOCAL WRITE ( ifpga -> pfpga )
+-- by Tsuyoshi Hamada
+--
+-- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
+-- MEM_WE            __/~~~~~~~~~~\_____ 
+-- MEM_AD              < a0 >< a1 >
+-- MEM_DTI             < d0 >< d1 >
+-- DMAW_ENABLE                      __/~~~~~~~~~~\___  
+-- DBUS_Port                     < a0 >< d0 >< d1 >
 
-if git rev-parse --verify HEAD >/dev/null 2>&1
-then
-	against=HEAD
-else
-	# Initial commit: diff against an empty tree object
-	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-fi
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-# If you want to allow non-ascii filenames set this variable to true.
-allownonascii=$(git config hooks.allownonascii)
+entity LOCAL_WRITE is
+  port (
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
 
-# Redirect output to stderr.
-exec 1>&2
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_WRITE;
 
-# Cross platform projects tend to avoid non-ascii filenames; prevent
-# them from being added to the repository. We exploit the fact that the
-# printable range starts at the space character and ends with tilde.
-if [ "$allownonascii" != "true" ] &&
-	# Note that the use of brackets around a tr range is ok here, (it's
-	# even required, for portability to Solaris 10's /usr/bin/tr), since
-	# the square bracket bytes happen to fall in the designated range.
-	test $(git diff --cached --name-only --diff-filter=A -z $against |
-	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
-then
-	echo "Error: Attempt to add a non-ascii file name."
-	echo
-	echo "This can cause problems if you want to work"
-	echo "with people on other platforms."
-	echo
-	echo "To be portable it is advisable to rename the file ..."
-	echo
-	echo "If you know what you are doing you can disable this"
-	echo "check using:"
-	echo
-	echo "  git config hooks.allownonascii true"
-	echo
-	exit 1
-fi
+architecture rtl of LOCAL_WRITE is
 
-# If there are whitespace errors, print the offending file names and fail.
-exec git diff-index --check --cached $against --
+  signal we0  : std_logic := '0';
+  signal we1  : std_logic := '0';
+  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
+  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
+  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
+
+begin
+  ------------------------------
+  --- we0,1                  ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      we0 <= '0';
+    elsif(CLK'event and CLK='1') then
+      we0 <= MEM_WE;
+    end if;
+  end process;
+
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      we1 <= we0;
+    end if;
+  end process;
+  
+  ------------------------------
+  --- adr                    ---
+  ------------------------------
+  process (RST,CLK,MEM_WE,we0) begin
+    if(RST='1') then
+      adr <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if((MEM_WE = '1') and (we0 = '0')) then
+        adr(18 downto 0) <= MEM_AD(19 downto 1);
+      end if;
+      adr(63 downto 19) <= (others=>'0');
+    end if;
+  end process;
+
+  ------------------------------
+  --- data delay             ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      data1 <= (others=>'0');
+      data0 <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      data1 <= data0;
+      data0 <= MEM_DTI;
+    end if;
+  end process;
+
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (RST,CLK,we0,we1) begin
+    if(RST='1') then
+      DBUS_Port <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(we0 = '1' and we1 = '0') then
+        DBUS_Port <= adr;
+      else
+        DBUS_Port <= data1;
+      end if;
+    end if;
+  end process;
+
+  --- DMAW_ENABLE
+  process (RST,CLK) begin
+    if(RST='1') then
+      DMAW_ENABLE    <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      DMAW_ENABLE(0) <= we1;
+      DMAW_ENABLE(1) <= we1;
+      DMAW_ENABLE(2) <= we1;
+      DMAW_ENABLE(3) <= we1;
+    end if;
+  end process;
+
+
+end rtl;
