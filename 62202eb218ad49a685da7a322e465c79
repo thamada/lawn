@@ -1,138 +1,168 @@
-2021Âπ¥ 12Êúà 19Êó• Êó•ÊõúÊó• 09:37:14 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+2022Âπ¥  1Êúà  5Êó• Ê∞¥ÊõúÊó• 09:45:50 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Wed Dec 29 19:47:04 2004
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-entity dcm_ps_f is
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;              -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
-  );
-end dcm_ps_f;
+ENTITY sim_writecomb_check IS
+END sim_writecomb_check;
 
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
+ARCHITECTURE testbench_arch OF sim_writecomb_check IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_writecomb_check.ano";
+	COMPONENT writecomb_check
+		PORT (
+			MEM_WEHA : In  std_logic;
+			MEM_WELA : In  std_logic;
+			IS_ERR : Out  std_logic_vector (1 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
---------------------------------------------------
--- Components
---------------------------------------------------
+	SIGNAL MEM_WEHA : std_logic;
+	SIGNAL MEM_WELA : std_logic;
+	SIGNAL IS_ERR : std_logic_vector (1 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-component BUFG 
-  port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
+BEGIN
+	UUT : writecomb_check
+	PORT MAP (
+		MEM_WEHA => MEM_WEHA,
+		MEM_WELA => MEM_WELA,
+		IS_ERR => IS_ERR,
+		RST => RST,
+		CLK => CLK
+	);
 
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+		PROCEDURE ANNOTATE_IS_ERR(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",IS_ERR,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, IS_ERR);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
-signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		TX_TIME := TX_TIME + 5;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		TX_TIME := TX_TIME + 50;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		TX_TIME := TX_TIME + 35;
+		ANNOTATE_IS_ERR(TX_TIME);
+		WAIT FOR 10 ns;
+		TX_TIME := TX_TIME + 10;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-begin
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
--- *********************************************************************
--- å≈íËêMçÜ
--- *********************************************************************
-  logic_0 <= '0';                   -- 0å≈íËêMçÜ
+		BEGIN
+		-- --------------------
+		RST <= transport '0';
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=200 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=900 ns
+		RST <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1000 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 1900 ns; -- Time=2900 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=3400 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1100 ns; -- Time=4500 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 200 ns; -- Time=4700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=6000 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6100 ns
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6200 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 300 ns; -- Time=6500 ns
+		MEM_WEHA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=6600 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 1300 ns; -- Time=7900 ns
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8000 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8100 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8200 ns
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=8300 ns
+		MEM_WEHA <= transport '0';
+		-- --------------------
+		WAIT FOR 2005 ns; -- Time=10305 ns
+		-- --------------------
 
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ÉäÉZÉbÉg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
-    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
-    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
-    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
-
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
-    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
-  );
-
-end rtl;
+CONFIGURATION writecomb_check_cfg OF sim_writecomb_check IS
+	FOR testbench_arch
+	END FOR;
+END writecomb_check_cfg;
