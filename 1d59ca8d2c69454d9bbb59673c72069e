@@ -1,27 +1,20 @@
-2021年 12月 26日 日曜日 09:38:02 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-10 01:52:29 hamada>
-import cv2
-import urllib.request
-import numpy as np
+2022年  1月  5日 水曜日 10:54:50 JST
 
-#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
-stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-bytes = b''
-while True:
-    raw = stream.read(1024)
-    bytes += raw
-    #print (bytes)
-    a = bytes.find(b'\xff\xd8')
-    b = bytes.find(b'\xff\xd9')
-    if a!=-1 and b!=-1:
-        jpg = bytes[a:b+2]
-        bytes= bytes[b+2:]
-        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
-        cv2.imshow('droidcam',image)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
+all:
+	cp top.ucf.ISE6.3i top.ucf
+	rm -rf proj
+	tar xvf proj.ise6.3i.tar
+	cd proj;xst -intstyle ise -ifn __projnav/top.xst -ofn top.syr
+	cd proj;ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.ngc top.ngd
+	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
+	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
+	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
+	cd proj;bitgen -intstyle ise -f top.ut top.ncd
 
-cv2.destroyAllWindows()
+
+
+clean:
+	rm -rf proj top.ucf *~ .*~
+
 
