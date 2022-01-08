@@ -1,71 +1,63 @@
-2022年  1月  1日 土曜日 09:25:26 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:28:33 hamada>
-import numpy as np
-import cv2
-
-class Message(object):
-    def __init__(self):
-        self.class_num = 80
-        self.last = [0 for i in range(8)]
-        self.log_previous = ''
-        self.is_update = False
-#        self.filename = '/dev/shm/log.txt'
-        self.filename = '/tmp/log.draw_detections.txt'
-        self.class_count = []
-
-    def reset(self):
-        self.is_update = False
-        self.class_count = [0 for i in range(self.class_num)]
-        self.get_classId()
-        self.class_count = [0 for i in range(self.class_num)]
-
-    def get_message(self):
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            l = lines[-2]
-            l = l.rstrip()
-            cols = l.split(' ')
-            if cols[0] != self.last[0]:
-                self.last = cols
-                self.is_update = True
-            else:
-                self.is_update = False
-        
-
-    def check_log_update(self):
-        self.is_update = False
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            current = lines[-2]
-            if current != self.log_previous:
-                self.is_update = True
-                self.log_previous = current
-        return (self.is_update)
-
-    def scan_object(self, cl_name):
-        is_detect = False
-
-        if self.check_log_update():
-            with open(self.filename, 'r') as fh:
-                lines = fh.readlines()
-                for i in range(2, 20):
-                    l = lines[-i]
-                    l = l.rstrip()
-                    cols = l.split(' ')
-                    if cols[-1] == cl_name:
-                        is_detect = True
-
-        return (is_detect)
-
-    def get_classId(self):
-        self.get_message()
-
-        if True == self.is_update:
-            z = int(self.last[1])
-            self.class_count[z] += 1
-        else:
-            z = -1
-
-        return (z)
-
+2022年  1月  8日 土曜日 11:36:35 JST
+info x 55 510 0 0 0 0 0 0 0 0 0 0 0 0 0 0 VHDL
+col x 772 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+radix x 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+entity name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 writecomb_check
+term mark 409 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+vlib save 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+var add 4 0 0 162 12 0 772 100 50 50 5 85 0 0 0 0 RSTInstd_logicRISING_EDGECLK
+var add 5 0 0 226 13 0 772 100 50 50 5 85 0 0 0 0 CLKInstd_logicRISING_EDGECLK
+var add 1 0 0 162 9 0 772 100 50 50 5 85 0 0 0 0 MEM_WEHAInstd_logicRISING_EDGECLK
+var add 2 0 0 162 10 0 772 100 50 50 5 85 0 0 0 0 MEM_WELAInstd_logicRISING_EDGECLK
+var add 3 1 0 164 11 0 772 100 50 50 5 85 0 0 0 0 IS_ERROutstd_logic_vectorRISING_EDGECLK
+vdone xxx 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+npos xxx 125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cell fill 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 1 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 1 36 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 1 40 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 28 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 136 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 180 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 188 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 248 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 260 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 264 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 320 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 324 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 3 328 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 3 332 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 28 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 4 136 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 180 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 4 188 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 240 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 4 244 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 316 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 4 320 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cell fill 4 324 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+cell fill 4 328 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+time info 50 50 5 85 50 50 1 1 0 0 0 0 0 0 0 0 nsCLK
+font save -14 0 400 49 0 0 0 0 0 0 0 0 0 0 0 0 Times New Roman
+src mod 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 c:\cygwin\home\administrator\fkit\pci64\rtl\writecomb_check.vhd
+utd true 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+cellenab on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+grid on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+com add 1 1 0 442 7 0 -67 0 0 0 0 0 0 0 0 0 Waveform created by
+HDL Bencher 6.1i
+Source = c:\cygwin\home\administrator\fkit\pci64\rtl\writecomb_check.vhd
+Wed Dec 29 19:45:47 2004
+type info 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logicBITDOWNTO
+type info 31 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logic_vectorVECTORDOWNTO
+opt vhdl87 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+NumClocks x 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+clock_1 name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 CLK
+Zoom_level x 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.00000000000000
