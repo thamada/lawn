@@ -1,139 +1,29 @@
-2022年  1月  5日 水曜日 10:48:26 JST
-[net]
-# Testing
-#batch=1
-#subdivisions=1
-# Training
-batch=64
-subdivisions=8
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+2022年  1月  8日 土曜日 09:56:59 JST
+//Time-stamp: "2006-11-21 00:17:47 hamada"
 
-learning_rate=0.001
-max_batches = 40200
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
+#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
+#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+int pgr_open(int);
+void pgr_close(int);
 
-[maxpool]
-size=2
-stride=2
+void pgr_reset(int devid);
+int  pgr_get_writecomb_err(int devid);
 
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
+void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
+void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
 
-[maxpool]
-size=2
-stride=2
+void pgr_setipset(int devid, unsigned int *idata, int num);
+void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
+void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
 
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
+void pgr_start_calc(int devid, unsigned int n);
+void pgr_calc_start(int devid, unsigned int n);
+void pgr_calc_finish(int devid);
 
-[maxpool]
-size=2
-stride=2
+void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
 
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-filters=35
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=2
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+void pgr_set_npipe_per_chip(int devid, int n);
+void pgr_set_jwidth(int devid, int n);
+void pgr_set_nchip(int nchip);
