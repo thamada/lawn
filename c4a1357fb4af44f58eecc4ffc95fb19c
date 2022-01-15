@@ -1,91 +1,40 @@
-2022å¹´  1æœˆ 13æ—¥ æœ¨æ›œæ—¥ 10:02:03 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS               X   >< n ><HHH>----------<d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_Port                              <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---DBUS_HiZ           ~~~~~~~~~~~~~~~\_________________________________________________/~~~~
---MEM_RE                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
---MEM_ADR                        0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                               <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
-
+2022å¹´  1æœˆ 15æ—¥ åœŸæ›œæ—¥ 11:40:29 JST
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity dmar is
+
+entity WRITECOMB_CHECK is
   port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_RE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : in std_logic_vector(63 downto 0)  ); 
-end dmar;
-
-architecture rtl of dmar is
-
-component dmar_dbus_hiz
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic);
-end component;
-
-component dmar_state
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end component;
-
-component dmar_start_adr
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end component;
-
-component dmar_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    IS_ERR : out std_logic_vector(25 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
     );
-end component;
+end WRITECOMB_CHECK;
 
+architecture rtl of WRITECOMB_CHECK is
 
-component dmar_mem_re
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end component;
-
-signal state : std_logic_vector(1 downto 0);
-signal start_adr : std_logic_vector(18 downto 0);
+signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
 
 begin
 
--- DBUS‚Ìƒgƒ‰ƒCƒXƒe[ƒgˆ—‚ÍãˆÊ‚Ås‚¤
--- DBUS <= (others=>'Z') when DBUS_HiZ = '1' else DBUS_Port;
+  IS_ERR <= cnt;
 
- u0 : dmar_state     port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       STATE=>state);
- u1 : dmar_start_adr port map(CLK=>CLK, STATE=>state, DBUS=>DBUS,           START_ADR=>start_adr);
- u2 : dmar_mem_adr   port map(CLK=>CLK, STATE=>state, START_ADR=>start_adr, MEM_ADR  => MEM_ADR);
- u3 : dmar_mem_re    port map(CLK=>CLK, STATE=>state,                       MEM_RE   => MEM_RE);
+  cntr <= cnt;
 
- u4 : dmar_dbus_hiz  port map(RST=>RST, CLK=>CLK,     ENABLE=>ENABLE,       DBUS_HiZ=>DBUS_HiZ);
- DBUS_Port <= MEM_DATA;
-
+  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
+    if(RST = '1') then
+      cnt <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='0') then
+        cnt <= cntr + "00000000000000000000000001";
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        cnt <= cntr + "00000000000000000000000001";
+      end if;
+    end if;
+  end process;
 
 end rtl;
