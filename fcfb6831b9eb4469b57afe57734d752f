@@ -1,56 +1,26 @@
-2022年  3月  5日 土曜日 10:03:58 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-04 15:57:17 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2022年  3月  6日 日曜日 09:25:51 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
+entity dmar_start_adr is
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmar_start_adr;
 
-if (__name__ == '__main__'):
-    state = State()
-
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
-
-
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('camera: %d'%(devid), frame)
-
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            basedir = '../log.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, frame)
-            print(ofname, "devid = %d"%devid)
-            tnow0 = tnow
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord(' '): state.is_record = not (state.is_record)
-
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    print("Done.")
+architecture rtl of dmar_start_adr is
+component dmaw_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+begin
+  u0 : dmaw_start_adr port map(CLK=>CLK, DBUS=>DBUS, STATE=>STATE, START_ADR=>START_ADR);
+end rtl;
