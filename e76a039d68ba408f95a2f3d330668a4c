@@ -1,25 +1,49 @@
-2022年  2月 18日 金曜日 11:15:36 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 00:45:13 hamada>
-import cv2
-import glob
-import aieye_find
-from datetime import datetime
+2022年  3月  6日 日曜日 10:28:48 JST
+//Time-stamp: <2006-09-07 13:50:20 hamada>
 
-iflist = [] 
-for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
-    iflist.append(fname)
+/NPIPE 1;
 
-iflist.sort()
-i = 0
-index = 0
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-for fname in iflist:
-    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
-    fname_dst = fname.replace('sss_', 'CanonG1X_')
-    if( i % 1 == 0):  # every 30 sec 
-#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
-        cmd =  "mv " + fname_src + " " + fname_dst
-        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
-        index += 1
-    i += 1
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
+
+/MEM xj[3] <= x[][] : fix(NPOS);
+/MEM mj    <= m[]   : log(NLOG,NMAN);
+/REG xi[3] <= x[][] : fix(NPOS);
+/REG ieps2 <= eps2  : log(NLOG,NMAN);
+/REG sx[3] => a[][] : fix(NACC);
+
+/SCALE xj[3] : xscale;
+/SCALE mj    : mscale;
+/SCALE xi[3] : xscale;
+/SCALE ieps2 : escale;
+/SCALE sx[3] : fscale;
+/NVMP 1;
+
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
+pg_log_shift(1,dx,x2,                  NLOG);
+
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
+
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
+pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
+pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
