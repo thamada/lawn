@@ -1,344 +1,279 @@
-2022年  3月  9日 水曜日 11:36:38 JST
-#ChipScope Core Inserter Project File Version 3.0
-#Thu Nov 18 14:25:10 JST 2004
-Project.device.designInputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
-Project.device.designOutputFile=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\ifpga.ngc
-Project.device.deviceFamily=2
-Project.device.enableRPMs=true
-Project.device.outputDirectory=c\:\\cygwin\\home\\administrator\\fkit\\pci64\\proj\\_ngo
-Project.device.useSRL16=true
-Project.filter.dimension=19
-Project.filter<0>=*DTO*
-Project.filter<10>=DBUS*
-Project.filter<11>=GPREG*
-Project.filter<12>=dmaw_state*
-Project.filter<13>=dmaw_state
-Project.filter<14>=Hit*PGPG_REG*
-Project.filter<15>=PGPG_REG*
-Project.filter<16>=DMAR_ENABLE*
-Project.filter<17>=DMAR_*
-Project.filter<18>=dmar_*
-Project.filter<1>=DMAW*ENA*
-Project.filter<2>=*ENA*
-Project.filter<3>=DMAW_ENA*
-Project.filter<4>=
-Project.filter<5>=*HiZ*
-Project.filter<6>=DEBUG_CS*
-Project.filter<7>=DBUS_P*
-Project.filter<8>=PFPGA_RS*
-Project.filter<9>=PFPGA_RE*
-Project.icon.boundaryScanChain=0
-Project.icon.disableBUFGInsertion=false
-Project.icon.enableExtTriggerIn=false
-Project.icon.enableExtTriggerOut=false
-Project.icon.triggerInPinName=
-Project.icon.triggerOutPinName=
-Project.unit.dimension=1
-Project.unit<0>.clockChannel=CK66_DCM
-Project.unit<0>.clockEdge=Rising
-Project.unit<0>.dataChannel<0>=DEBUG_CS_CLK0
-Project.unit<0>.dataChannel<100>=DBUS_Port<9>
-Project.unit<0>.dataChannel<101>=DBUS_Port<10>
-Project.unit<0>.dataChannel<102>=DBUS_Port<11>
-Project.unit<0>.dataChannel<103>=DBUS_Port<12>
-Project.unit<0>.dataChannel<104>=DBUS_Port<13>
-Project.unit<0>.dataChannel<105>=DBUS_Port<14>
-Project.unit<0>.dataChannel<106>=DBUS_Port<15>
-Project.unit<0>.dataChannel<107>=DBUS_Port<16>
-Project.unit<0>.dataChannel<108>=DBUS_Port<17>
-Project.unit<0>.dataChannel<109>=DBUS_Port<18>
-Project.unit<0>.dataChannel<10>=pgpg1 MEM_ADB<2>
-Project.unit<0>.dataChannel<110>=DBUS_Port<19>
-Project.unit<0>.dataChannel<111>=DBUS_Port<20>
-Project.unit<0>.dataChannel<112>=DBUS_Port<21>
-Project.unit<0>.dataChannel<113>=DBUS_Port<22>
-Project.unit<0>.dataChannel<114>=DBUS_Port<23>
-Project.unit<0>.dataChannel<115>=DBUS_Port<24>
-Project.unit<0>.dataChannel<116>=DBUS_Port<25>
-Project.unit<0>.dataChannel<117>=DBUS_Port<26>
-Project.unit<0>.dataChannel<118>=DBUS_Port<27>
-Project.unit<0>.dataChannel<119>=DBUS_Port<28>
-Project.unit<0>.dataChannel<11>=pgpg1 MEM_ADB<3>
-Project.unit<0>.dataChannel<120>=DBUS_Port<29>
-Project.unit<0>.dataChannel<121>=DBUS_Port<30>
-Project.unit<0>.dataChannel<122>=DBUS_Port<31>
-Project.unit<0>.dataChannel<123>=DBUS_Port<32>
-Project.unit<0>.dataChannel<124>=PFPGA_RST_0_OBUF
-Project.unit<0>.dataChannel<125>=DBUS_HiZ
-Project.unit<0>.dataChannel<12>=pgpg1 MEM_ADB<4>
-Project.unit<0>.dataChannel<13>=pgpg1 MEM_ADB<5>
-Project.unit<0>.dataChannel<14>=pgpg1 MEM_ADB<6>
-Project.unit<0>.dataChannel<15>=pgpg1 MEM_ADB<7>
-Project.unit<0>.dataChannel<16>=pgpg1 MEM_ADB<8>
-Project.unit<0>.dataChannel<17>=pgpg1 MEM_DTIB<0>
-Project.unit<0>.dataChannel<18>=pgpg1 MEM_DTIB<1>
-Project.unit<0>.dataChannel<19>=pgpg1 MEM_DTIB<2>
-Project.unit<0>.dataChannel<1>=pgpg1 Hit_PGPG_REG3
-Project.unit<0>.dataChannel<20>=pgpg1 MEM_DTIB<3>
-Project.unit<0>.dataChannel<21>=pgpg1 MEM_DTIB<4>
-Project.unit<0>.dataChannel<22>=pgpg1 MEM_DTIB<5>
-Project.unit<0>.dataChannel<23>=pgpg1 MEM_DTIB<6>
-Project.unit<0>.dataChannel<24>=pgpg1 MEM_DTIB<7>
-Project.unit<0>.dataChannel<25>=pgpg1 MEM_DTIB<8>
-Project.unit<0>.dataChannel<26>=pgpg1 MEM_DTIB<9>
-Project.unit<0>.dataChannel<27>=pgpg1 MEM_DTIB<10>
-Project.unit<0>.dataChannel<28>=pgpg1 MEM_DTIB<11>
-Project.unit<0>.dataChannel<29>=pgpg1 MEM_DTIB<12>
-Project.unit<0>.dataChannel<2>=pgpg1 GPREG0<3>
-Project.unit<0>.dataChannel<30>=pgpg1 MEM_DTIB<13>
-Project.unit<0>.dataChannel<31>=pgpg1 MEM_DTIB<14>
-Project.unit<0>.dataChannel<32>=pgpg1 MEM_DTIB<15>
-Project.unit<0>.dataChannel<33>=pgpg1 MEM_DTIB<16>
-Project.unit<0>.dataChannel<34>=pgpg1 MEM_DTIB<17>
-Project.unit<0>.dataChannel<35>=pgpg1 MEM_DTIB<18>
-Project.unit<0>.dataChannel<36>=pgpg1 MEM_DTIB<19>
-Project.unit<0>.dataChannel<37>=pgpg1 MEM_DTIB<20>
-Project.unit<0>.dataChannel<38>=pgpg1 MEM_DTIB<21>
-Project.unit<0>.dataChannel<39>=pgpg1 MEM_DTIB<22>
-Project.unit<0>.dataChannel<3>=pgpg1 GPREG0<4>
-Project.unit<0>.dataChannel<40>=pgpg1 MEM_DTIB<23>
-Project.unit<0>.dataChannel<41>=pgpg1 MEM_DTIB<24>
-Project.unit<0>.dataChannel<42>=pgpg1 MEM_DTIB<25>
-Project.unit<0>.dataChannel<43>=pgpg1 MEM_DTIB<26>
-Project.unit<0>.dataChannel<44>=pgpg1 MEM_DTIB<27>
-Project.unit<0>.dataChannel<45>=pgpg1 MEM_DTIB<28>
-Project.unit<0>.dataChannel<46>=pgpg1 MEM_DTIB<29>
-Project.unit<0>.dataChannel<47>=pgpg1 MEM_DTIB<30>
-Project.unit<0>.dataChannel<48>=pgpg1 MEM_DTIB<31>
-Project.unit<0>.dataChannel<49>=pgpg1 MEM_DTIB<32>
-Project.unit<0>.dataChannel<4>=pgpg1 GPREG0<5>
-Project.unit<0>.dataChannel<50>=pgpg1 DBUS_idata<0>
-Project.unit<0>.dataChannel<51>=pgpg1 DBUS_idata<1>
-Project.unit<0>.dataChannel<52>=pgpg1 DBUS_idata<2>
-Project.unit<0>.dataChannel<53>=pgpg1 DBUS_idata<3>
-Project.unit<0>.dataChannel<54>=pgpg1 DBUS_idata<4>
-Project.unit<0>.dataChannel<55>=pgpg1 DBUS_idata<5>
-Project.unit<0>.dataChannel<56>=pgpg1 DBUS_idata<6>
-Project.unit<0>.dataChannel<57>=pgpg1 DBUS_idata<7>
-Project.unit<0>.dataChannel<58>=pgpg1 DBUS_idata<8>
-Project.unit<0>.dataChannel<59>=pgpg1 DBUS_idata<9>
-Project.unit<0>.dataChannel<5>=pgpg1 GPREG0<6>
-Project.unit<0>.dataChannel<60>=pgpg1 DBUS_idata<10>
-Project.unit<0>.dataChannel<61>=pgpg1 DBUS_idata<11>
-Project.unit<0>.dataChannel<62>=pgpg1 DBUS_idata<12>
-Project.unit<0>.dataChannel<63>=pgpg1 DBUS_idata<13>
-Project.unit<0>.dataChannel<64>=pgpg1 DBUS_idata<14>
-Project.unit<0>.dataChannel<65>=pgpg1 DBUS_idata<15>
-Project.unit<0>.dataChannel<66>=pgpg1 DBUS_idata<16>
-Project.unit<0>.dataChannel<67>=pgpg1 DBUS_idata<17>
-Project.unit<0>.dataChannel<68>=pgpg1 DBUS_idata<18>
-Project.unit<0>.dataChannel<69>=pgpg1 DBUS_idata<19>
-Project.unit<0>.dataChannel<6>=pgpg1 GPREG0<7>
-Project.unit<0>.dataChannel<70>=pgpg1 DBUS_idata<20>
-Project.unit<0>.dataChannel<71>=pgpg1 DBUS_idata<21>
-Project.unit<0>.dataChannel<72>=pgpg1 DBUS_idata<22>
-Project.unit<0>.dataChannel<73>=pgpg1 DBUS_idata<23>
-Project.unit<0>.dataChannel<74>=pgpg1 DBUS_idata<24>
-Project.unit<0>.dataChannel<75>=pgpg1 DBUS_idata<25>
-Project.unit<0>.dataChannel<76>=pgpg1 DBUS_idata<26>
-Project.unit<0>.dataChannel<77>=pgpg1 DBUS_idata<27>
-Project.unit<0>.dataChannel<78>=pgpg1 DBUS_idata<28>
-Project.unit<0>.dataChannel<79>=pgpg1 DBUS_idata<29>
-Project.unit<0>.dataChannel<7>=pgpg1 MEM_WELB
-Project.unit<0>.dataChannel<80>=pgpg1 DBUS_idata<30>
-Project.unit<0>.dataChannel<81>=pgpg1 DBUS_idata<31>
-Project.unit<0>.dataChannel<82>=pgpg1 DBUS_idata<32>
-Project.unit<0>.dataChannel<83>=pgpg1 DMAR_ENABLE<0>
-Project.unit<0>.dataChannel<84>=pgpg1 DMAR_ENABLE<1>
-Project.unit<0>.dataChannel<85>=pgpg1 DMAR_ENABLE<2>
-Project.unit<0>.dataChannel<86>=pgpg1 DMAR_ENABLE<3>
-Project.unit<0>.dataChannel<87>=pgpg1 Hit_PGPG_REG2
-Project.unit<0>.dataChannel<88>=pgpg1 GPREG0<0>
-Project.unit<0>.dataChannel<89>=pgpg1 GPREG0<1>
-Project.unit<0>.dataChannel<8>=pgpg1 MEM_ADB<0>
-Project.unit<0>.dataChannel<90>=pgpg1 GPREG0<2>
-Project.unit<0>.dataChannel<91>=DBUS_Port<0>
-Project.unit<0>.dataChannel<92>=DBUS_Port<1>
-Project.unit<0>.dataChannel<93>=DBUS_Port<2>
-Project.unit<0>.dataChannel<94>=DBUS_Port<3>
-Project.unit<0>.dataChannel<95>=DBUS_Port<4>
-Project.unit<0>.dataChannel<96>=DBUS_Port<5>
-Project.unit<0>.dataChannel<97>=DBUS_Port<6>
-Project.unit<0>.dataChannel<98>=DBUS_Port<7>
-Project.unit<0>.dataChannel<99>=DBUS_Port<8>
-Project.unit<0>.dataChannel<9>=pgpg1 MEM_ADB<1>
-Project.unit<0>.dataDepth=2048
-Project.unit<0>.dataEqualsTrigger=true
-Project.unit<0>.dataPortWidth=126
-Project.unit<0>.enableGaps=false
-Project.unit<0>.enableTimestamps=false
-Project.unit<0>.timestampDepth=0
-Project.unit<0>.timestampWidth=0
-Project.unit<0>.triggerChannel<0><0>=DEBUG_CS_CLK0
-Project.unit<0>.triggerChannel<0><100>=DBUS_Port<9>
-Project.unit<0>.triggerChannel<0><101>=DBUS_Port<10>
-Project.unit<0>.triggerChannel<0><102>=DBUS_Port<11>
-Project.unit<0>.triggerChannel<0><103>=DBUS_Port<12>
-Project.unit<0>.triggerChannel<0><104>=DBUS_Port<13>
-Project.unit<0>.triggerChannel<0><105>=DBUS_Port<14>
-Project.unit<0>.triggerChannel<0><106>=DBUS_Port<15>
-Project.unit<0>.triggerChannel<0><107>=DBUS_Port<16>
-Project.unit<0>.triggerChannel<0><108>=DBUS_Port<17>
-Project.unit<0>.triggerChannel<0><109>=DBUS_Port<18>
-Project.unit<0>.triggerChannel<0><10>=pgpg1 MEM_ADB<2>
-Project.unit<0>.triggerChannel<0><110>=DBUS_Port<19>
-Project.unit<0>.triggerChannel<0><111>=DBUS_Port<20>
-Project.unit<0>.triggerChannel<0><112>=DBUS_Port<21>
-Project.unit<0>.triggerChannel<0><113>=DBUS_Port<22>
-Project.unit<0>.triggerChannel<0><114>=DBUS_Port<23>
-Project.unit<0>.triggerChannel<0><115>=DBUS_Port<24>
-Project.unit<0>.triggerChannel<0><116>=DBUS_Port<25>
-Project.unit<0>.triggerChannel<0><117>=DBUS_Port<26>
-Project.unit<0>.triggerChannel<0><118>=DBUS_Port<27>
-Project.unit<0>.triggerChannel<0><119>=DBUS_Port<28>
-Project.unit<0>.triggerChannel<0><11>=pgpg1 MEM_ADB<3>
-Project.unit<0>.triggerChannel<0><120>=DBUS_Port<29>
-Project.unit<0>.triggerChannel<0><121>=DBUS_Port<30>
-Project.unit<0>.triggerChannel<0><122>=DBUS_Port<31>
-Project.unit<0>.triggerChannel<0><123>=DBUS_Port<32>
-Project.unit<0>.triggerChannel<0><124>=PFPGA_RST_0_OBUF
-Project.unit<0>.triggerChannel<0><125>=DBUS_HiZ
-Project.unit<0>.triggerChannel<0><126>=pgpg1 DMAW_ENABLE<0>
-Project.unit<0>.triggerChannel<0><127>=pgpg1 DMAW_ENABLE<1>
-Project.unit<0>.triggerChannel<0><128>=pgpg1 DMAW_ENABLE<2>
-Project.unit<0>.triggerChannel<0><129>=pgpg1 DMAW_ENABLE<3>
-Project.unit<0>.triggerChannel<0><12>=pgpg1 MEM_ADB<4>
-Project.unit<0>.triggerChannel<0><130>=pgpg1 MEM_DTOB<0>
-Project.unit<0>.triggerChannel<0><131>=pgpg1 MEM_DTOB<1>
-Project.unit<0>.triggerChannel<0><132>=pgpg1 MEM_DTOB<2>
-Project.unit<0>.triggerChannel<0><133>=pgpg1 MEM_DTOB<3>
-Project.unit<0>.triggerChannel<0><134>=pgpg1 MEM_DTOB<4>
-Project.unit<0>.triggerChannel<0><135>=pgpg1 MEM_DTOB<5>
-Project.unit<0>.triggerChannel<0><136>=pgpg1 MEM_DTOB<6>
-Project.unit<0>.triggerChannel<0><137>=pgpg1 MEM_DTOB<7>
-Project.unit<0>.triggerChannel<0><138>=pgpg1 MEM_DTOB<8>
-Project.unit<0>.triggerChannel<0><139>=pgpg1 MEM_DTOB<9>
-Project.unit<0>.triggerChannel<0><13>=pgpg1 MEM_ADB<5>
-Project.unit<0>.triggerChannel<0><140>=pgpg1 MEM_DTOB<10>
-Project.unit<0>.triggerChannel<0><141>=pgpg1 MEM_DTOB<11>
-Project.unit<0>.triggerChannel<0><142>=pgpg1 MEM_DTOB<12>
-Project.unit<0>.triggerChannel<0><143>=pgpg1 MEM_DTOB<13>
-Project.unit<0>.triggerChannel<0><144>=pgpg1 MEM_DTOB<14>
-Project.unit<0>.triggerChannel<0><145>=pgpg1 MEM_DTOB<15>
-Project.unit<0>.triggerChannel<0><146>=pgpg1 MEM_DTOB<16>
-Project.unit<0>.triggerChannel<0><147>=pgpg1 MEM_DTOB<17>
-Project.unit<0>.triggerChannel<0><148>=pgpg1 MEM_DTOB<18>
-Project.unit<0>.triggerChannel<0><149>=pgpg1 MEM_DTOB<19>
-Project.unit<0>.triggerChannel<0><14>=pgpg1 MEM_ADB<6>
-Project.unit<0>.triggerChannel<0><150>=pgpg1 MEM_DTOB<20>
-Project.unit<0>.triggerChannel<0><151>=pgpg1 MEM_DTOB<21>
-Project.unit<0>.triggerChannel<0><152>=pgpg1 MEM_DTOB<22>
-Project.unit<0>.triggerChannel<0><153>=pgpg1 MEM_DTOB<23>
-Project.unit<0>.triggerChannel<0><154>=pgpg1 MEM_DTOB<24>
-Project.unit<0>.triggerChannel<0><155>=pgpg1 MEM_DTOB<25>
-Project.unit<0>.triggerChannel<0><156>=pgpg1 MEM_DTOB<26>
-Project.unit<0>.triggerChannel<0><157>=pgpg1 MEM_DTOB<27>
-Project.unit<0>.triggerChannel<0><158>=pgpg1 MEM_DTOB<28>
-Project.unit<0>.triggerChannel<0><159>=pgpg1 MEM_DTOB<29>
-Project.unit<0>.triggerChannel<0><15>=pgpg1 MEM_ADB<7>
-Project.unit<0>.triggerChannel<0><160>=pgpg1 MEM_DTOB<30>
-Project.unit<0>.triggerChannel<0><161>=pgpg1 MEM_DTOB<31>
-Project.unit<0>.triggerChannel<0><162>=pgpg1 MEM_DTOB<32>
-Project.unit<0>.triggerChannel<0><16>=pgpg1 MEM_ADB<8>
-Project.unit<0>.triggerChannel<0><17>=pgpg1 MEM_DTIB<0>
-Project.unit<0>.triggerChannel<0><18>=pgpg1 MEM_DTIB<1>
-Project.unit<0>.triggerChannel<0><19>=pgpg1 MEM_DTIB<2>
-Project.unit<0>.triggerChannel<0><1>=pgpg1 Hit_PGPG_REG3
-Project.unit<0>.triggerChannel<0><20>=pgpg1 MEM_DTIB<3>
-Project.unit<0>.triggerChannel<0><21>=pgpg1 MEM_DTIB<4>
-Project.unit<0>.triggerChannel<0><22>=pgpg1 MEM_DTIB<5>
-Project.unit<0>.triggerChannel<0><23>=pgpg1 MEM_DTIB<6>
-Project.unit<0>.triggerChannel<0><24>=pgpg1 MEM_DTIB<7>
-Project.unit<0>.triggerChannel<0><25>=pgpg1 MEM_DTIB<8>
-Project.unit<0>.triggerChannel<0><26>=pgpg1 MEM_DTIB<9>
-Project.unit<0>.triggerChannel<0><27>=pgpg1 MEM_DTIB<10>
-Project.unit<0>.triggerChannel<0><28>=pgpg1 MEM_DTIB<11>
-Project.unit<0>.triggerChannel<0><29>=pgpg1 MEM_DTIB<12>
-Project.unit<0>.triggerChannel<0><2>=pgpg1 GPREG0<3>
-Project.unit<0>.triggerChannel<0><30>=pgpg1 MEM_DTIB<13>
-Project.unit<0>.triggerChannel<0><31>=pgpg1 MEM_DTIB<14>
-Project.unit<0>.triggerChannel<0><32>=pgpg1 MEM_DTIB<15>
-Project.unit<0>.triggerChannel<0><33>=pgpg1 MEM_DTIB<16>
-Project.unit<0>.triggerChannel<0><34>=pgpg1 MEM_DTIB<17>
-Project.unit<0>.triggerChannel<0><35>=pgpg1 MEM_DTIB<18>
-Project.unit<0>.triggerChannel<0><36>=pgpg1 MEM_DTIB<19>
-Project.unit<0>.triggerChannel<0><37>=pgpg1 MEM_DTIB<20>
-Project.unit<0>.triggerChannel<0><38>=pgpg1 MEM_DTIB<21>
-Project.unit<0>.triggerChannel<0><39>=pgpg1 MEM_DTIB<22>
-Project.unit<0>.triggerChannel<0><3>=pgpg1 GPREG0<4>
-Project.unit<0>.triggerChannel<0><40>=pgpg1 MEM_DTIB<23>
-Project.unit<0>.triggerChannel<0><41>=pgpg1 MEM_DTIB<24>
-Project.unit<0>.triggerChannel<0><42>=pgpg1 MEM_DTIB<25>
-Project.unit<0>.triggerChannel<0><43>=pgpg1 MEM_DTIB<26>
-Project.unit<0>.triggerChannel<0><44>=pgpg1 MEM_DTIB<27>
-Project.unit<0>.triggerChannel<0><45>=pgpg1 MEM_DTIB<28>
-Project.unit<0>.triggerChannel<0><46>=pgpg1 MEM_DTIB<29>
-Project.unit<0>.triggerChannel<0><47>=pgpg1 MEM_DTIB<30>
-Project.unit<0>.triggerChannel<0><48>=pgpg1 MEM_DTIB<31>
-Project.unit<0>.triggerChannel<0><49>=pgpg1 MEM_DTIB<32>
-Project.unit<0>.triggerChannel<0><4>=pgpg1 GPREG0<5>
-Project.unit<0>.triggerChannel<0><50>=pgpg1 DBUS_idata<0>
-Project.unit<0>.triggerChannel<0><51>=pgpg1 DBUS_idata<1>
-Project.unit<0>.triggerChannel<0><52>=pgpg1 DBUS_idata<2>
-Project.unit<0>.triggerChannel<0><53>=pgpg1 DBUS_idata<3>
-Project.unit<0>.triggerChannel<0><54>=pgpg1 DBUS_idata<4>
-Project.unit<0>.triggerChannel<0><55>=pgpg1 DBUS_idata<5>
-Project.unit<0>.triggerChannel<0><56>=pgpg1 DBUS_idata<6>
-Project.unit<0>.triggerChannel<0><57>=pgpg1 DBUS_idata<7>
-Project.unit<0>.triggerChannel<0><58>=pgpg1 DBUS_idata<8>
-Project.unit<0>.triggerChannel<0><59>=pgpg1 DBUS_idata<9>
-Project.unit<0>.triggerChannel<0><5>=pgpg1 GPREG0<6>
-Project.unit<0>.triggerChannel<0><60>=pgpg1 DBUS_idata<10>
-Project.unit<0>.triggerChannel<0><61>=pgpg1 DBUS_idata<11>
-Project.unit<0>.triggerChannel<0><62>=pgpg1 DBUS_idata<12>
-Project.unit<0>.triggerChannel<0><63>=pgpg1 DBUS_idata<13>
-Project.unit<0>.triggerChannel<0><64>=pgpg1 DBUS_idata<14>
-Project.unit<0>.triggerChannel<0><65>=pgpg1 DBUS_idata<15>
-Project.unit<0>.triggerChannel<0><66>=pgpg1 DBUS_idata<16>
-Project.unit<0>.triggerChannel<0><67>=pgpg1 DBUS_idata<17>
-Project.unit<0>.triggerChannel<0><68>=pgpg1 DBUS_idata<18>
-Project.unit<0>.triggerChannel<0><69>=pgpg1 DBUS_idata<19>
-Project.unit<0>.triggerChannel<0><6>=pgpg1 GPREG0<7>
-Project.unit<0>.triggerChannel<0><70>=pgpg1 DBUS_idata<20>
-Project.unit<0>.triggerChannel<0><71>=pgpg1 DBUS_idata<21>
-Project.unit<0>.triggerChannel<0><72>=pgpg1 DBUS_idata<22>
-Project.unit<0>.triggerChannel<0><73>=pgpg1 DBUS_idata<23>
-Project.unit<0>.triggerChannel<0><74>=pgpg1 DBUS_idata<24>
-Project.unit<0>.triggerChannel<0><75>=pgpg1 DBUS_idata<25>
-Project.unit<0>.triggerChannel<0><76>=pgpg1 DBUS_idata<26>
-Project.unit<0>.triggerChannel<0><77>=pgpg1 DBUS_idata<27>
-Project.unit<0>.triggerChannel<0><78>=pgpg1 DBUS_idata<28>
-Project.unit<0>.triggerChannel<0><79>=pgpg1 DBUS_idata<29>
-Project.unit<0>.triggerChannel<0><7>=pgpg1 MEM_WELB
-Project.unit<0>.triggerChannel<0><80>=pgpg1 DBUS_idata<30>
-Project.unit<0>.triggerChannel<0><81>=pgpg1 DBUS_idata<31>
-Project.unit<0>.triggerChannel<0><82>=pgpg1 DBUS_idata<32>
-Project.unit<0>.triggerChannel<0><83>=pgpg1 DMAR_ENABLE<0>
-Project.unit<0>.triggerChannel<0><84>=pgpg1 DMAR_ENABLE<1>
-Project.unit<0>.triggerChannel<0><85>=pgpg1 DMAR_ENABLE<2>
-Project.unit<0>.triggerChannel<0><86>=pgpg1 DMAR_ENABLE<3>
-Project.unit<0>.triggerChannel<0><87>=pgpg1 Hit_PGPG_REG2
-Project.unit<0>.triggerChannel<0><88>=pgpg1 GPREG0<0>
-Project.unit<0>.triggerChannel<0><89>=pgpg1 GPREG0<1>
-Project.unit<0>.triggerChannel<0><8>=pgpg1 MEM_ADB<0>
-Project.unit<0>.triggerChannel<0><90>=pgpg1 GPREG0<2>
-Project.unit<0>.triggerChannel<0><91>=DBUS_Port<0>
-Project.unit<0>.triggerChannel<0><92>=DBUS_Port<1>
-Project.unit<0>.triggerChannel<0><93>=DBUS_Port<2>
-Project.unit<0>.triggerChannel<0><94>=DBUS_Port<3>
-Project.unit<0>.triggerChannel<0><95>=DBUS_Port<4>
-Project.unit<0>.triggerChannel<0><96>=DBUS_Port<5>
-Project.unit<0>.triggerChannel<0><97>=DBUS_Port<6>
-Project.unit<0>.triggerChannel<0><98>=DBUS_Port<7>
-Project.unit<0>.triggerChannel<0><99>=DBUS_Port<8>
-Project.unit<0>.triggerChannel<0><9>=pgpg1 MEM_ADB<1>
-Project.unit<0>.triggerConditionCountWidth=0
-Project.unit<0>.triggerMatchCount<0>=1
-Project.unit<0>.triggerMatchCountWidth<0><0>=0
-Project.unit<0>.triggerMatchType<0><0>=1
-Project.unit<0>.triggerPortCount=1
-Project.unit<0>.triggerPortIsData<0>=true
-Project.unit<0>.triggerPortWidth<0>=163
-Project.unit<0>.triggerSequencerLevels=16
-Project.unit<0>.triggerSequencerType=1
-Project.unit<0>.type=ilapro
+2022年  3月 12日 土曜日 10:39:10 JST
+Release 6.2.03i Par G.31a
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+
+a1::  Mon Jun 13 23:37:32 2005
+
+
+par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf 
+
+
+Constraints file: top.pcf
+
+Loading device database for application Par from file "top_map.ncd".
+   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
+Loading device for application Par from file '2vp70.nph' in environment
+/export/home/opt/xilinx.
+Device speed data version:  PRODUCTION 1.86 2004-05-01.
+
+
+Resolved that IOB <TPIN<0>> must be placed at site Y36.
+Resolved that IOB <TPIN<1>> must be placed at site W27.
+Resolved that IOB <TPIN<2>> must be placed at site Y37.
+Resolved that IOB <TPIN<3>> must be placed at site W28.
+Resolved that IOB <TPIN<4>> must be placed at site Y31.
+Resolved that IOB <TPIN<5>> must be placed at site W34.
+Resolved that IOB <TPIN<6>> must be placed at site W31.
+Resolved that IOB <TPIN<7>> must be placed at site W35.
+Resolved that IOB <TPIN<10>> must be placed at site Y33.
+Resolved that IOB <TPIN<11>> must be placed at site G39.
+Resolved that IOB <TPIN<12>> must be placed at site W36.
+Resolved that IOB <TPIN<13>> must be placed at site G36.
+Resolved that IOB <TPIN<14>> must be placed at site W37.
+Resolved that IOB <TPIN<15>> must be placed at site G37.
+Resolved that IOB <RST> must be placed at site AR19.
+Resolved that IOB <CK66> must be placed at site AG20.
+Resolved that IOB <CK133> must be placed at site AK20.
+Resolved that IOB <LED<0>> must be placed at site P34.
+Resolved that IOB <LED<1>> must be placed at site P33.
+Resolved that IOB <LED<2>> must be placed at site R27.
+Resolved that IOB <LED<3>> must be placed at site T27.
+Resolved that IOB <LED<4>> must be placed at site P36.
+Resolved that IOB <LED<5>> must be placed at site P35.
+Resolved that IOB <LED<6>> must be placed at site P37.
+Resolved that IOB <LED<7>> must be placed at site N37.
+Resolved that IOB <DSW<0>> must be placed at site T30.
+Resolved that IOB <DSW<1>> must be placed at site T29.
+Resolved that IOB <DSW<2>> must be placed at site P39.
+Resolved that IOB <DSW<3>> must be placed at site P38.
+Resolved that IOB <DSW<4>> must be placed at site R33.
+Resolved that IOB <DSW<5>> must be placed at site R32.
+Resolved that IOB <DSW<6>> must be placed at site T28.
+Resolved that IOB <DSW<7>> must be placed at site U28.
+Resolved that IOB <FPGA_NO<0>> must be placed at site AP19.
+Resolved that IOB <FPGA_NO<1>> must be placed at site AN19.
+Resolved that IOB <DBUS<10>> must be placed at site AT12.
+Resolved that IOB <DBUS<11>> must be placed at site AR12.
+Resolved that IOB <DBUS<20>> must be placed at site AT13.
+Resolved that IOB <DBUS<12>> must be placed at site AJ14.
+Resolved that IOB <DBUS<21>> must be placed at site AR13.
+Resolved that IOB <DBUS<13>> must be placed at site AJ15.
+Resolved that IOB <DBUS<30>> must be placed at site AH17.
+Resolved that IOB <DBUS<22>> must be placed at site AN14.
+Resolved that IOB <DBUS<14>> must be placed at site AM13.
+Resolved that IOB <DBUS<31>> must be placed at site AG17.
+Resolved that IOB <DBUS<23>> must be placed at site AM14.
+Resolved that IOB <DBUS<15>> must be placed at site AL13.
+Resolved that IOB <DBUS<40>> must be placed at site AM16.
+Resolved that IOB <DBUS<32>> must be placed at site AN15.
+Resolved that IOB <DBUS<24>> must be placed at site AH15.
+Resolved that IOB <DBUS<16>> must be placed at site AP12.
+Resolved that IOB <DBUS<41>> must be placed at site AL16.
+Resolved that IOB <DBUS<33>> must be placed at site AM15.
+Resolved that IOB <DBUS<25>> must be placed at site AH16.
+Resolved that IOB <DBUS<17>> must be placed at site AN13.
+Resolved that IOB <DBUS<50>> must be placed at site AM18.
+Resolved that IOB <DBUS<42>> must be placed at site AM17.
+Resolved that IOB <DBUS<34>> must be placed at site AR15.
+Resolved that IOB <DBUS<26>> must be placed at site AR14.
+Resolved that IOB <DBUS<18>> must be placed at site AL15.
+Resolved that IOB <DBUS<51>> must be placed at site AL18.
+Resolved that IOB <DBUS<43>> must be placed at site AL17.
+Resolved that IOB <DBUS<35>> must be placed at site AP15.
+Resolved that IOB <DBUS<27>> must be placed at site AP14.
+Resolved that IOB <DBUS<19>> must be placed at site AK15.
+Resolved that IOB <DBUS<60>> must be placed at site AU18.
+Resolved that IOB <DBUS<52>> must be placed at site AK18.
+Resolved that IOB <DBUS<44>> must be placed at site AR16.
+Resolved that IOB <DBUS<36>> must be placed at site AK16.
+Resolved that IOB <DBUS<28>> must be placed at site AU14.
+Resolved that IOB <DBUS<61>> must be placed at site AU19.
+Resolved that IOB <DBUS<53>> must be placed at site AJ18.
+Resolved that IOB <DBUS<45>> must be placed at site AR17.
+Resolved that IOB <DBUS<37>> must be placed at site AJ17.
+Resolved that IOB <DBUS<29>> must be placed at site AT14.
+Resolved that IOB <DBUS<62>> must be placed at site AM19.
+Resolved that IOB <DBUS<54>> must be placed at site AP18.
+Resolved that IOB <DBUS<46>> must be placed at site AH18.
+Resolved that IOB <DBUS<38>> must be placed at site AU15.
+Resolved that IOB <DBUS<63>> must be placed at site AL19.
+Resolved that IOB <DBUS<55>> must be placed at site AN18.
+Resolved that IOB <DBUS<47>> must be placed at site AG18.
+Resolved that IOB <DBUS<39>> must be placed at site AT15.
+Resolved that IOB <DBUS<56>> must be placed at site AT18.
+Resolved that IOB <DBUS<48>> must be placed at site AU17.
+Resolved that IOB <DBUS<57>> must be placed at site AR18.
+Resolved that IOB <DBUS<49>> must be placed at site AT17.
+Resolved that IOB <DBUS<58>> must be placed at site AH19.
+Resolved that IOB <DBUS<59>> must be placed at site AG19.
+Resolved that IOB <CBUS<0>> must be placed at site AU10.
+Resolved that IOB <CBUS<1>> must be placed at site AT10.
+Resolved that IOB <CBUS<2>> must be placed at site AJ12.
+Resolved that IOB <CBUS<3>> must be placed at site AJ13.
+Resolved that IOB <CBUS<4>> must be placed at site AL10.
+Resolved that IOB <CBUS<5>> must be placed at site AL11.
+Resolved that IOB <CBUS<6>> must be placed at site AN11.
+Resolved that IOB <CBUS<7>> must be placed at site AM11.
+Resolved that IOB <DBUS<0>> must be placed at site AH13.
+Resolved that IOB <DBUS<1>> must be placed at site AH14.
+Resolved that IOB <DBUS<2>> must be placed at site AR11.
+Resolved that IOB <DBUS<3>> must be placed at site AP11.
+Resolved that IOB <DBUS<4>> must be placed at site AU11.
+Resolved that IOB <DBUS<5>> must be placed at site AT11.
+Resolved that IOB <DBUS<6>> must be placed at site AL14.
+Resolved that IOB <DBUS<7>> must be placed at site AK14.
+Resolved that IOB <DBUS<8>> must be placed at site AM12.
+Resolved that IOB <DBUS<9>> must be placed at site AL12.
+
+
+Device utilization summary:
+
+   Number of External IOBs           107 out of 964    11%
+      Number of LOCed External IOBs  107 out of 107   100%
+
+   Number of MULT18X18s               15 out of 328     4%
+   Number of RAMB16s                 143 out of 328    43%
+   Number of SLICEs                 9450 out of 33088  28%
+
+   Number of BUFGMUXs                  2 out of 16     12%
+   Number of DCMs                      1 out of 8      12%
+
+
+
+Overall effort level (-ol):   Standard (set by user)
+Placer effort level (-pl):    Standard (set by user)
+Placer cost table entry (-t): 1
+Router effort level (-rl):    Standard (set by user)
+
+Starting initial Timing Analysis.  REAL time: 5 secs 
+Finished initial Timing Analysis.  REAL time: 17 secs 
+
+
+Phase 1.1
+WARNING:Place - Use of the left PPC405 has been detected. The left processor
+   requires specialdesign considerations when operating above 350 MHz in the -7
+   speed grade part.Please see Xilinx Application Note XAPP755 for details.
+Phase 1.1 (Checksum:9a3864) REAL time: 19 secs 
+
+Phase 2.2
+.
+Phase 2.2 (Checksum:1312cfe) REAL time: 40 secs 
+
+Phase 3.3
+Phase 3.3 (Checksum:1c9c37d) REAL time: 41 secs 
+
+Phase 4.5
+Phase 4.5 (Checksum:26259fc) REAL time: 41 secs 
+
+Phase 5.8
+..................................................................................................................................................................
+...
+Phase 5.8 (Checksum:13ca16c) REAL time: 1 mins 35 secs 
+
+Phase 6.5
+Phase 6.5 (Checksum:39386fa) REAL time: 1 mins 35 secs 
+
+Phase 7.18
+Phase 7.18 (Checksum:42c1d79) REAL time: 2 mins 1 secs 
+
+Phase 8.24
+Phase 8.24 (Checksum:4c4b3f8) REAL time: 2 mins 1 secs 
+
+Phase 9.27
+Phase 9.27 (Checksum:55d4a77) REAL time: 2 mins 7 secs 
+
+Writing design to file top.ncd.
+
+Total REAL time to Placer completion: 2 mins 12 secs 
+Total CPU time to Placer completion: 2 mins 12 secs 
+
+
+Phase 1: 67799 unrouted;       REAL time: 2 mins 16 secs 
+
+Phase 2: 58070 unrouted;       REAL time: 3 mins 2 secs 
+
+Phase 3: 12914 unrouted;       REAL time: 3 mins 11 secs 
+
+Phase 4: 12914 unrouted; (15928)      REAL time: 3 mins 12 secs 
+
+Phase 5: 12990 unrouted; (0)      REAL time: 3 mins 38 secs 
+
+Phase 6: 12990 unrouted; (0)      REAL time: 3 mins 39 secs 
+
+Phase 7: 0 unrouted; (0)      REAL time: 4 mins 7 secs 
+
+Total REAL time to Router completion: 4 mins 17 secs 
+Total CPU time to Router completion: 4 mins 16 secs 
+
+Generating "par" statistics.
+
+**************************
+Generating Clock Report
+**************************
+
++-------------------------+----------+------+------+------------+-------------+
+|        Clock Net        | Resource |Locked|Fanout|Net Skew(ns)|Max Delay(ns)|
++-------------------------+----------+------+------+------------+-------------+
+|              CLK1       | BUFGMUX0P| No   | 4371 |  0.920     |  2.402      |
++-------------------------+----------+------+------+------------+-------------+
+|              CLK0       | BUFGMUX2P| No   |  949 |  0.919     |  2.401      |
++-------------------------+----------+------+------+------------+-------------+
+
+
+   The Delay Summary Report
+
+   The SCORE FOR THIS DESIGN is: 429
+
+
+The NUMBER OF SIGNALS NOT COMPLETELY ROUTED for this design is: 0
+
+   The AVERAGE CONNECTION DELAY for this design is:        1.575
+   The MAXIMUM PIN DELAY IS:                              14.387
+   The AVERAGE CONNECTION DELAY on the 10 WORST NETS is:  13.600
+
+   Listing Pin Delays by value: (nsec)
+
+    d < 3.00   < d < 6.00  < d < 9.00  < d < 12.00  < d < 15.00  d >= 15.00
+   ---------   ---------   ---------   ---------   ---------   ---------
+       60630        5087        1328         617         137           0
+
+Timing Score: 0
+
+Asterisk (*) preceding a constraint indicates it was not met.
+   This may be due to a setup or hold violation.
+
+--------------------------------------------------------------------------------
+  Constraint                                | Requested  | Actual     | Logic 
+                                            |            |            | Levels
+--------------------------------------------------------------------------------
+  TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS    | N/A        | N/A        | N/A  
+  HIGH 50.000000 %                          |            |            |      
+--------------------------------------------------------------------------------
+  TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dc | 20.000ns   | 19.569ns   | 2    
+  m_out" TS_CK66 * 1.000000  HIGH 50.000 %  |            |            |      
+--------------------------------------------------------------------------------
+  TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm | 20.000ns   | 14.739ns   | 0    
+  _fx" TS_CK66 * 1.000000  HIGH 50.000 %    |            |            |      
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+INFO:Timing:2761 - N/A entries in the Constraints list may indicate that the
+   constraint does not cover any paths or that it has no requested value.
+Generating Pad Report.
+
+All signals are completely routed.
+
+Total REAL time to PAR completion: 4 mins 24 secs 
+Total CPU time to PAR completion: 4 mins 23 secs 
+
+Peak Memory Usage:  537 MB
+
+Placement: Completed - No errors found.
+Routing: Completed - No errors found.
+Timing: Completed - No errors found.
+
+Writing design to file top.ncd.
+
+
+PAR done.
