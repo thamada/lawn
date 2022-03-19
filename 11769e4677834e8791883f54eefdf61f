@@ -1,127 +1,57 @@
-2022年  3月 13日 日曜日 11:34:56 JST
-//-------------------------
-#define NMAX (1<<17)
-#include <cstdio>
-#include <cstdlib>
-#define USE_CUDA_MALLOC_HOST (yes)
-#define IDIM (4)
-#define JDIM (4)
-#define FDIM (3)
-#define NJ_SHMEM (NTHRE)
-
-float4* h_xj;
-float* h_xi;
-float* h_fo;
-float4* d_xj;
-float* d_xi;
-float* d_fo;
-
-extern "C" void 
-force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
-{
-  static bool is_open = false;
-  int devid = 0;
-  int ndev;
-  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
-
-  if( ni > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" ni > %d : ni=%d\n",ni, NMAX);
-    exit(-1);
-  }
-
-  if( nj > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" nj > %d : nj=%d\n",nj, NMAX);
-    exit(-1);
-  }
-
-  unsigned int ip_size = sizeof(float) * ni * IDIM;
-  unsigned int jp_size = sizeof(float4) * nj1;
-  unsigned int fo_size = sizeof(float) * ni * FDIM;
-
-  if(is_open == false){
-    char gpu_name[256];
-    CUDA_SAFE_CALL(cudaSetDevice(devid));
-    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
-    if(ndev == 0){
-      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
-      exit(-1);
-    }else{
-      int dev = devid;
-      cudaDeviceProp deviceProp;
-      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
-      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
-	printf("There is no device supporting CUDA.\n");
-      }
-      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
-      sprintf(gpu_name,"%s", deviceProp.name);
-    }
-
-    unsigned int _nmax = NMAX;
-    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
-    unsigned int _jp_size = sizeof(float4) * _nmax;
-    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
-
-#if defined(USE_CUDA_MALLOC_HOST)
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
-#else
-    h_xj = (float4*) malloc(_jp_size);
-    h_xi = (float*)  malloc(_ip_size);
-    h_fo = (float*)  malloc(_fo_size);
-#endif
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
-    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
-    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
-    is_open = true;
-  }
-  for(int i = 0; i < nj; i++){
-    h_xj[i].x = (float) xj[i][0];
-    h_xj[i].y = (float) xj[i][1];
-    h_xj[i].z = (float) xj[i][2];
-    h_xj[i].w = (float) mj[i];
-    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-  }
-  if(nj < nj1){
-    for(int i = nj; i < nj1; i++){
-      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-    }
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
-  for(int i = 0; i < ni; i++){
-    h_xi[i     ] = (float) xi[i][0];
-    h_xi[i+ni  ] = (float) xi[i][1];
-    h_xi[i+ni*2] = (float) xi[i][2];
-    h_xi[i+ni*3] = (float) eps2;
-    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
-
-  //  printf("Nj=%d\n",nj1);
-  /*
-  dim3 grid((ni+NTHRE)/NTHRE);
-  dim3 threads  (NTHRE);
-  */
-  //  printf("------------------------ %d, %d\n",ni, nj1);
-  dim3 grid(ni/128);
-  dim3 threads  (128);
-  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
-  CUT_CHECK_ERROR("Kernel execution failed");
-
-  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
-
-  for(int i=0;i<ni; i++){
-    a[i][0] = (double)h_fo[i];
-    a[i][1] = (double)h_fo[i+ni];
-    a[i][2] = (double)h_fo[i+ni*2];
-    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
-  }
-}
+2022年  3月 19日 土曜日 09:31:17 JST
+1
+0.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-2.746715e-01	4.191831e-01
+-2.931587e-01	2.247797e-01
+2.321991e-01	4.064824e-01
+-1.520429e-01	3.578809e-01
+-8.481506e-02	-3.058323e-01
+1.856104e-01	2.437552e-02
+-3.403643e-01	4.547575e-01
+-3.730157e-01	-4.956605e-01
+-1.173085e-01	-2.492071e-01
+1.552879e-01	3.449078e-02
+1.099664e-01	-2.121421e-01
+4.092620e-01	2.361288e-01
+-3.788992e-01	1.148062e-01
+-2.340848e-01	4.453564e-01
+-7.531051e-02	-2.516460e-01
+1.772955e-01	-4.287967e-01
+-4.426001e-02	-3.237644e-04
+-4.797312e-01	3.861750e-01
+1.545830e-01	5.970007e-02
+4.850480e-01	-1.605443e-01
+-4.632017e-01	-2.009751e-01
+4.881687e-01	-5.634217e-02
+-3.708808e-01	4.150378e-01
+-1.135756e-01	-4.695678e-01
+-3.155564e-01	4.356883e-01
+-1.920876e-02	9.783734e-02
+-6.385236e-02	-3.949834e-01
+2.275205e-01	-3.768423e-01
+1.721155e-01	-4.660092e-01
+4.644338e-01	-4.804784e-01
+-4.553355e-01	-7.876486e-02
+2.642185e-01	4.444889e-01
+5.434882e-02	1.171663e-01
+1.465040e-01	-1.143288e-01
+4.021194e-01	-1.771178e-01
+-7.684997e-02	-4.504972e-02
+7.223762e-02	-4.515364e-01
+-2.392842e-02	-3.878574e-01
+3.425949e-01	-1.136164e-01
+-4.632521e-01	2.447992e-01
+2.661087e-03	-2.676771e-01
+-2.328564e-01	-3.223420e-01
+-4.466751e-01	-1.286633e-01
+-4.479510e-01	-6.189542e-02
+-4.433532e-01	1.711145e-01
+-2.251056e-01	-4.814771e-01
+1.644014e-01	3.307433e-01
+-4.618902e-01	1.489123e-01
+7.775744e-02	3.332788e-01
+3.334003e-01	-1.894713e-01
