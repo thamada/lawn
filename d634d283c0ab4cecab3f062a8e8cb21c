@@ -1,59 +1,71 @@
-2022年  3月 26日 土曜日 10:51:23 JST
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+2022年  4月 24日 日曜日 10:37:22 JST
+#Time-stamp: <2017-06-23 16:16:23 hamada>
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+CONFIG=./etc/config.txt
+MODEL=./etc/model.txt
+WEIGHTS=./backup/m10_150000.weights
+LOGFILE=./log.2gpu
+GPUID= -gpus 0,1
 
-int main()
-{
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
+all:
+	@echo 'make run'
 
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
+r: run
 
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
+run:
+	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
 
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
+run.1gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
 
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
+run.2gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
 
-    cout.precision(16);
+run.4gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
 
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
-    }
-}
-//-----------------------------------------------------------------------------
+
+
+demo:
+	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
+#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+
+
+photo:
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+
+
+clean:
+	rm -rf bad.list .*~ *~ ./predictions.jpg
+	rm -rf backup/model*
+
+
+c: clean
+
+
+0.check:
+	cd backup/;md5sum --check md5sum.txt
+
+check:
+	grep ID.000[0-3] etc/all.txt |wc -l
+	grep ID.0004 etc/all.txt |wc -l
+	grep ID.0005 etc/all.txt |wc -l
+	grep ID.0006 etc/all.txt |wc -l
+	grep ID.000[7-9] etc/all.txt |wc -l
+	grep ID.0004 etc/list.train.txt |wc -l
+	grep ID.0005 etc/list.train.txt |wc -l
+	grep ID.0006 etc/list.train.txt |wc -l
+	grep ID.0004 etc/list.valid.txt |wc -l
+	grep ID.0005 etc/list.valid.txt |wc -l
+	grep ID.0006 etc/list.valid.txt |wc -l
+
+check.iou:
+	\rm -f IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
+	\grep IOU IOU.txt
