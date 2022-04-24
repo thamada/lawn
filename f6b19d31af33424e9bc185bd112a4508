@@ -1,12 +1,71 @@
-2022年  3月 16日 水曜日 11:41:18 JST
-10
-2.253285e-01	9.191831e-01
-2.068413e-01	7.247797e-01
-7.321991e-01	9.064824e-01
-3.479571e-01	8.578809e-01
-4.151849e-01	1.941677e-01
-6.856104e-01	5.243755e-01
-1.596357e-01	9.547575e-01
-1.269843e-01	4.339532e-03
-3.826915e-01	2.507929e-01
-6.552879e-01	5.344908e-01
+2022年  4月 24日 日曜日 09:41:36 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:28:33 hamada>
+import numpy as np
+import cv2
+
+class Message(object):
+    def __init__(self):
+        self.class_num = 80
+        self.last = [0 for i in range(8)]
+        self.log_previous = ''
+        self.is_update = False
+#        self.filename = '/dev/shm/log.txt'
+        self.filename = '/tmp/log.draw_detections.txt'
+        self.class_count = []
+
+    def reset(self):
+        self.is_update = False
+        self.class_count = [0 for i in range(self.class_num)]
+        self.get_classId()
+        self.class_count = [0 for i in range(self.class_num)]
+
+    def get_message(self):
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            l = lines[-2]
+            l = l.rstrip()
+            cols = l.split(' ')
+            if cols[0] != self.last[0]:
+                self.last = cols
+                self.is_update = True
+            else:
+                self.is_update = False
+        
+
+    def check_log_update(self):
+        self.is_update = False
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            current = lines[-2]
+            if current != self.log_previous:
+                self.is_update = True
+                self.log_previous = current
+        return (self.is_update)
+
+    def scan_object(self, cl_name):
+        is_detect = False
+
+        if self.check_log_update():
+            with open(self.filename, 'r') as fh:
+                lines = fh.readlines()
+                for i in range(2, 20):
+                    l = lines[-i]
+                    l = l.rstrip()
+                    cols = l.split(' ')
+                    if cols[-1] == cl_name:
+                        is_detect = True
+
+        return (is_detect)
+
+    def get_classId(self):
+        self.get_message()
+
+        if True == self.is_update:
+            z = int(self.last[1])
+            self.class_count[z] += 1
+        else:
+            z = -1
+
+        return (z)
+
