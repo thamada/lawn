@@ -1,53 +1,25 @@
-2022年  4月 25日 月曜日 09:25:35 JST
-/*
- * ifpga_bram_clear.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+2022年  4月 27日 水曜日 10:04:35 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-03 00:45:13 hamada>
+import cv2
+import glob
+import aieye_find
+from datetime import datetime
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+iflist = [] 
+for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
+    iflist.append(fname)
 
-//#define NMAX (0x1<<10) // 4KB
-//#define NMAX (0x1<<11) // 8KB
-//#define NMAX (0x1<<12) // 16KB
-//#define NMAX (0x1<<13) // 32KB
-#define NMAX (0x1<<14) // 64KB
+iflist.sort()
+i = 0
+index = 0
 
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int n = NMAX;
-  int val = 0x1234567;
-  int i;
-
-  if(argc > 1){
-    n = atoi(argv[1]);
-  }
-  if(argc > 2){
-    val = atoi(argv[2]);
-  }
-
-  printf("n = %d\n",n);
-  printf("filled by %x\n",val);
-
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  for(i = 0; i < n; i++) {
-    pg4_writebase1(devid, i, val);
-  }
-
-  return 0;
-}
+for fname in iflist:
+    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
+    fname_dst = fname.replace('sss_', 'CanonG1X_')
+    if( i % 1 == 0):  # every 30 sec 
+#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
+        cmd =  "mv " + fname_src + " " + fname_dst
+        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
+        index += 1
+    i += 1
