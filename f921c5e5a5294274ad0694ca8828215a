@@ -1,2 +1,5 @@
-2022年  4月 26日 火曜日 10:50:35 JST
-work	c:\cygwin\home\administrator\fkit\pci64\rtl\local_io.vhd
+2022年  4月 28日 木曜日 10:56:17 JST
+SETPROJECT .
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
