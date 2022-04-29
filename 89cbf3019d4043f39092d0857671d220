@@ -1,5 +1,5 @@
-2022年  4月 26日 火曜日 10:23:52 JST
--- ProjNav VHDL simulation template: sim_local_read_if.udo
+2022年  4月 29日 金曜日 09:15:55 JST
+-- ProjNav VHDL simulation template: sim_local_read.udo
 -- You may edit this file after the line that starts with
 -- '-- START' to customize your simulation
 -- START user-defined simulation commands
