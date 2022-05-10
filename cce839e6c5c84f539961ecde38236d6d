@@ -1,71 +1,96 @@
-2022年  5月  8日 日曜日 09:45:52 JST
--- 2004/05/13 16:30
--- for matsubayashi simulation
+2022年  5月 10日 火曜日 11:09:46 JST
+//-----------------------------------------------------------------------------
+// hermite.C
+// Code: Standard 4th order Hermite integrator with constant time step
+// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
+// Author: Andreas Ernst Jan, 2006
+// Modify: Tsuyoshi Hamada, Nov, 2006
+//-----------------------------------------------------------------------------
+#include  <iostream>
+#include  <cmath>
+#include  <cstdlib>
+#include  <iomanip> // cout << setw() << setprecision() 
+using namespace std;
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
+extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
 
-#define DELAY_SUB 2     /* A */
-#define DELAY_FL  4     /* B */
-#define DELAY_X2Y2 5    /* C */
-#define DELAY_R2   5    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   2    /* I */
-#define DELAY_AC   3    /* J */
-
-#define DELAY_EPS  6    /* A+B */
-#define DELAY_DX   12   /* C+D+E+F */
-#define DELAY_M    17   /* A+B+C+D+E */
-#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  25   /* (DELAY_CLE) + J */
+extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
 
 
+// Calculate energy
+
+double energy(double m[], double r[][3], double v[][3], double p[], int n) {
+  double ekin = 0, epot = 0;
+  for (int i = 0; i < n; i++) {
+    epot -= 0.5 * m[i] * p[i];
+    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
+  }
+  return ekin + epot;
+}
+
+int main(int argc, char *argv[]) {
+
+// Read initial conditions from stdin, declaration of variables
+
+  if (argc < 3 ) {
+    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
+    return 0;
+  }
+
+  double dt = atof(argv[1]); // time step
+  double dt2 = dt*dt;
+  double dt3 = dt2*dt;
+  double dt4 = dt2*dt2;
+  double dt5 = dt4*dt;
+  double t_end = atof(argv[2]);
+  double dt_opt = atof(argv[3]);
+  double t_opt = 0.0;
+
+  int n;
+  cin >> n;
+
+  double t;
+  cin >> t;
+
+  double * m = new double[n];
+  double (* r)[3] = new double[n][3];
+  double (* v)[3] = new double[n][3];
+
+  double * p = new double[n];
+  double (* a)[3] = new double[n][3];
+  double (* jk)[3] = new double[n][3];
+
+  double * _p = new double[n];
+  double (* _a)[3] = new double[n][3];
+  double (* _jk)[3] = new double[n][3];
 
 
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
+  for (int i = 0; i < n ; i++){
+    cin >> m[i];
+    for (int k = 0; k < 3; k++) cin >> r[i][k];
+    for (int k = 0; k < 3; k++) cin >> v[i][k];
+  }
+  
+  _force(r, v, m, _p, _a, _jk, n);
+   force(r, v, m,  p,  a,  jk, n);
 
-/NPIPE 1
-/NVMP 1
 
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
+  for (int i = 0; i < n ; i++){
+    double err_p, err_a[3], err_jk[3];
+    double rad;
+    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
 
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
+    err_p = fabs(p[i]-_p[i])/_p[i];
+
+    for (int k = 0; k < 3; k++){
+      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
+      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
+    }
+    
+    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
+
+  }
+  
+  return 0;
 }
