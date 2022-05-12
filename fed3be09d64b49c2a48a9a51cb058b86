@@ -1,10 +1,5 @@
-2022年  5月 11日 水曜日 10:04:32 JST
-# ProjNav -> New Source -> TBW
-c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
-# ProjNav -> New Source -> TBW
-C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
-# Bencher Waveform : PDCL (jhdparse)
-# ModelSim : Simulate Behavioral VHDL Model
-sim.fdo
-# ModelSim : Simulate Behavioral VHDL Model
-vsim.wlf
+2022年  5月 12日 木曜日 10:54:47 JST
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
