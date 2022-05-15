@@ -1,51 +1,139 @@
-2022年  5月 14日 土曜日 10:09:19 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+2022年  5月 15日 日曜日 10:53:25 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=8
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
--- 0->1 : if((state==0)&&(dma_we==1))
--- 1->2 : if (state==1)
--- 2->3 : if((state==2) &&(dma_we==0))
--- 3->0 : if (state==3)
+learning_rate=0.001
+max_batches = 40200
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-entity dmaw_state is
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end dmaw_state;
+[maxpool]
+size=2
+stride=2
 
-architecture rtl of dmaw_state is
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-signal state_ff : std_logic_vector(1 downto 0);
-begin
+[maxpool]
+size=2
+stride=2
 
-  STATE <= state_ff;
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-  process (RST,CLK,ENABLE,state_ff) begin
-    if(RST='1') then
-      state_ff <= (others=>'0');
-    elsif(CLK'event and CLK = '1') then
-      if((state_ff="00") AND (ENABLE='1')) then
-        state_ff <= "01";
-      elsif(state_ff = "01") then
-        state_ff <= "10";
-      elsif((state_ff = "10") AND (ENABLE='0')) then
-        state_ff <= "11";
-      elsif((state_ff = "10") AND (ENABLE='1')) then
-        state_ff <= "10";
-      else -- if(state_ff = "11") then
-        state_ff <= "00";
-      end if;
-    end if;
-  end process;
+[maxpool]
+size=2
+stride=2
 
-end rtl;
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=35
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=2
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
