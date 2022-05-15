@@ -1,143 +1,53 @@
-2022年  4月 24日 日曜日 11:48:27 JST
-[net]
-# Testing
-#batch=1
-#subdivisions=1
-# Training
-batch=64
-subdivisions=16
+2022年  5月 15日 日曜日 09:51:37 JST
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ *
+ ***************************************************/
 
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+inline unsigned int    ReadBase0 (int devid, unsigned int addr);
+inline unsigned int    ReadBase1 (int devid, unsigned int addr);
+inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
+inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
 
-learning_rate=0.001
-max_batches = 2000001
-#max_batches = 50
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+void                   pg4_close (int id);
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+int                    pg4_DMAput (int devid, unsigned int size);
+int                    pg4_DMAget (int devid, unsigned int size);
+void                   pg4_DMAcheck (int devid);
+int                    pg4_DMAretry (int devid);
 
-[maxpool]
-size=2
-stride=2
+unsigned long          pg4_getbaseaddr (int devid, int j);
+unsigned long          pg4_getbaseaddr_size (int devid, int bar);
+unsigned int*          pg4_get_bar0ptr(int devid);
+unsigned int*          pg4_get_bar1ptr(int devid);
+unsigned int*          pg4_get_dmawptr (int devid);
+unsigned int*          pg4_get_dmarptr (int devid);
+unsigned int           pg4_get_dma_size (int devid);
+void                   pg4_get_pfpga_info (int devid, char *info);
 
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
+int                    pg4_open (int id);
 
-[maxpool]
-size=2
-stride=2
+inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
+inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
+unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
 
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
+void                   pg4_set_pfpga_info (int devid, char *info);
 
-[maxpool]
-size=2
-stride=2
+inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
+inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
 
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
 
-[maxpool]
-size=2
-stride=2
 
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
+// --- following are removed. ---
+int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void                   pg4_wait (int devid, int n);
 
-[maxpool]
-size=2
-stride=2
 
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-# filters = (classes + coords + 1) * num
-## (10+5)*5
-filters=75
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=10
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
