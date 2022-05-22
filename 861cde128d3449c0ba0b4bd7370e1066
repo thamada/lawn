@@ -1,52 +1,28 @@
-2022年  5月 13日 金曜日 11:11:46 JST
-set -tmpdir __projnav
-set -xsthdpdir ./xst
-run
--ifn top.prj
--ifmt mixed
--ofn top
--ofmt NGC
--p xc2vp70-5-ff1517
--top top
--opt_mode Speed
--opt_level 1
--iuc NO
--lso top.lso
--keep_hierarchy NO
--glob_opt AllClockNets
--rtlview Yes
--read_cores YES
--write_timing_constraints NO
--cross_clock_analysis NO
--hierarchy_separator _
--bus_delimiter <>
--case maintain
--slice_utilization_ratio 100
--verilog2001 YES
--vlgincdir 
--fsm_extract YES -fsm_encoding Auto
--fsm_style lut
--ram_extract Yes
--ram_style Auto
--rom_extract Yes
--rom_style Auto
--mux_extract YES
--mux_style Auto
--decoder_extract YES
--priority_extract YES
--shreg_extract YES
--shift_extract YES
--xor_collapse YES
--resource_sharing YES
--mult_style auto
--iobuf YES
--max_fanout 500
--bufg 16
--register_duplication YES
--equivalent_register_removal YES
--register_balancing No
--slice_packing YES
--optimize_primitives NO
--tristate2logic No
--iob auto
--slice_utilization_ratio_maxmargin 5
+2022年  5月 22日 日曜日 09:09:28 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity dmar_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmar_mem_adr;
+
+architecture rtl of dmar_mem_adr is
+component dmaw_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
+begin
+  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
+end rtl;
