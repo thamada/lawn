@@ -1,49 +1,37 @@
-2022年  6月 14日 火曜日 11:17:33 JST
-//Time-stamp: <2006-09-07 13:50:20 hamada>
+2022年  6月 22日 水曜日 10:29:12 JST
+#!/bin/sh
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file.  If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
 
-/NPIPE 1;
+# This hook includes three examples.  The first comments out the
+# "Conflicts:" part of a merge commit.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# commits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
-#define xsize (2.0)
-#define mmin  (1.0e-2)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
+case "$2,$3" in
+  merge,)
+    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
-#define NEXAD -31
-#define fshift pow(2.0,-1.0*(double)NEXAD)
-#define fscale (-xscale*xscale*fshift/mscale)
+# ,|template,)
+#   /usr/bin/perl -i.bak -pe '
+#      print "\n" . `git diff --cached --name-status -r`
+#	 if /^#/ && $first++ == 0' "$1" ;;
 
-/MEM xj[3] <= x[][] : fix(NPOS);
-/MEM mj    <= m[]   : log(NLOG,NMAN);
-/REG xi[3] <= x[][] : fix(NPOS);
-/REG ieps2 <= eps2  : log(NLOG,NMAN);
-/REG sx[3] => a[][] : fix(NACC);
+  *) ;;
+esac
 
-/SCALE xj[3] : xscale;
-/SCALE mj    : mscale;
-/SCALE xi[3] : xscale;
-/SCALE ieps2 : escale;
-/SCALE sx[3] : fscale;
-/NVMP 1;
-
-pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
-pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
-pg_log_shift(1,dx,x2,                  NLOG);
-
-pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
-pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
-pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
-
-pg_log_shift(-1,r2,       r1,          NLOG);
-pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
-pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
-pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
-pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
-pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
-pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
