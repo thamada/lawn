@@ -1,26 +1,29 @@
-2022年  6月 12日 日曜日 09:09:03 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+2022年  6月 22日 水曜日 09:46:58 JST
+//Time-stamp: "2006-11-21 00:17:47 hamada"
 
-entity dmar_start_adr is
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end dmar_start_adr;
+#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
+#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
+#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
 
-architecture rtl of dmar_start_adr is
-component dmaw_start_adr
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end component;
-begin
-  u0 : dmaw_start_adr port map(CLK=>CLK, DBUS=>DBUS, STATE=>STATE, START_ADR=>START_ADR);
-end rtl;
+int pgr_open(int);
+void pgr_close(int);
+
+void pgr_reset(int devid);
+int  pgr_get_writecomb_err(int devid);
+
+void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
+void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
+
+void pgr_setipset(int devid, unsigned int *idata, int num);
+void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
+void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
+
+void pgr_start_calc(int devid, unsigned int n);
+void pgr_calc_start(int devid, unsigned int n);
+void pgr_calc_finish(int devid);
+
+void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+
+void pgr_set_npipe_per_chip(int devid, int n);
+void pgr_set_jwidth(int devid, int n);
+void pgr_set_nchip(int nchip);
