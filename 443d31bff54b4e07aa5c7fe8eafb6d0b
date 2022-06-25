@@ -1,163 +1,57 @@
-2022å¹´  6æœˆ 22æ—¥ æ°´æ›œæ—¥ 09:54:36 JST
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
-
--- LOCAL READ ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
--- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
--- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ðƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJŽnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-entity LOCAL_READ is
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
-
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ;
-
-architecture rtl of LOCAL_READ is
-
-component LOCAL_READ_CNT
-  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
-  port (
-    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
-    CALC_DONE  : in std_logic;                 -- pulse
-    FETCH_DONE : out std_logic;
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-component LOCAL_READ_IF
-  port (
-    EXEC : in std_logic;
-    START_AD : in std_logic_vector(18 downto 0);
-    NQWORD   : in std_logic_vector( 8 downto 0);
-    CHIPSEL  : in std_logic_vector( 3 downto 0);
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);
-    BUSY : out std_logic;  -- to GPREG0
-    DMAR_ENABLE : out std_logic_vector(3 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_ADB     : out std_logic_vector(12 downto 0);
-    MEM_WEHB    : out std_logic;
-    MEM_WELB    : out std_logic;
-    MEM_DTIB    : out std_logic_vector(63 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-signal calc_done : std_logic :='0';   -- to cnt
-signal csts0,csts1 : std_logic :='0'; -- from pfpga
-
--- CNT
-signal fetch_done : std_logic :='0';
-signal exec : std_logic;                          -- cnt -> if
-signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
-signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
-signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
-signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
--- IF
-signal ignore_busy : std_logic; 
-
-begin
-
-  -- CALC STATUS
-  csts0 <= CALC_STS;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      csts1 <= csts0;
-    end if;
-  end process;
-
-  -- CALC DONE
-  process (RST,CLK,csts0,csts1) begin
-    if(RST='1') then
-      calc_done <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        calc_done <= '1';
-      else
-        calc_done <= '0';
-      end if;
-    end if;
-  end process;
-
-  -- BUSY
-  process (RST,CLK,csts0,csts1,fetch_done) begin
-    if (RST='1') then
-      BUSY <='1';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        BUSY <= '1';
-      elsif(fetch_done='1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
-
-  -- =================================================== SUBMODULE INSTANCES
-  u0: LOCAL_READ_CNT 
-    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
-    port map(NPIPE => NPIPE,
-             CALC_DONE => calc_done,
-             FETCH_DONE => fetch_done,
-             EXEC       => exec,
-             START_AD   => start_ad,
-             NQWORD     => nqword,
-             CHIPSEL    => chipsel,
-             MEM_AD_BASE => mem_base,
-             RST => RST, CLK=>CLK);
-
-
-  u1: LOCAL_READ_IF
-    port map(EXEC        => exec,     -- from cnt
-             START_AD    => start_ad, -- from cnt
-             NQWORD      => nqword,   -- from cnt
-             CHIPSEL     => chipsel,  -- from cnt
-             MEM_AD_BASE => mem_base, -- from cnt
-             BUSY => ignore_busy,
-             DMAR_ENABLE => DMAR_ENABLE, -- output directly
-             DBUS_Port   => DBUS_Port,   -- output directly
-             DBUS_idata  => DBUS_idata,  -- output directly
-             DBUS_HiZ    => DBUS_HiZ,    -- output directly
-             MEM_ADB  => MEM_ADB,        -- output directly
-             MEM_WEHB => MEM_WEHB,       -- output directly
-             MEM_WELB => MEM_WELB,       -- output directly
-             MEM_DTIB => MEM_DTIB,       -- output directly
-             RST=>RST,CLK=>CLK);
-
-
-end rtl;
+2022å¹´  6æœˆ 25æ—¥ åœŸæ›œæ—¥ 09:49:36 JST
+1
+0.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-2.746715e-01	4.191831e-01
+-2.931587e-01	2.247797e-01
+2.321991e-01	4.064824e-01
+-1.520429e-01	3.578809e-01
+-8.481506e-02	-3.058323e-01
+1.856104e-01	2.437552e-02
+-3.403643e-01	4.547575e-01
+-3.730157e-01	-4.956605e-01
+-1.173085e-01	-2.492071e-01
+1.552879e-01	3.449078e-02
+1.099664e-01	-2.121421e-01
+4.092620e-01	2.361288e-01
+-3.788992e-01	1.148062e-01
+-2.340848e-01	4.453564e-01
+-7.531051e-02	-2.516460e-01
+1.772955e-01	-4.287967e-01
+-4.426001e-02	-3.237644e-04
+-4.797312e-01	3.861750e-01
+1.545830e-01	5.970007e-02
+4.850480e-01	-1.605443e-01
+-4.632017e-01	-2.009751e-01
+4.881687e-01	-5.634217e-02
+-3.708808e-01	4.150378e-01
+-1.135756e-01	-4.695678e-01
+-3.155564e-01	4.356883e-01
+-1.920876e-02	9.783734e-02
+-6.385236e-02	-3.949834e-01
+2.275205e-01	-3.768423e-01
+1.721155e-01	-4.660092e-01
+4.644338e-01	-4.804784e-01
+-4.553355e-01	-7.876486e-02
+2.642185e-01	4.444889e-01
+5.434882e-02	1.171663e-01
+1.465040e-01	-1.143288e-01
+4.021194e-01	-1.771178e-01
+-7.684997e-02	-4.504972e-02
+7.223762e-02	-4.515364e-01
+-2.392842e-02	-3.878574e-01
+3.425949e-01	-1.136164e-01
+-4.632521e-01	2.447992e-01
+2.661087e-03	-2.676771e-01
+-2.328564e-01	-3.223420e-01
+-4.466751e-01	-1.286633e-01
+-4.479510e-01	-6.189542e-02
+-4.433532e-01	1.711145e-01
+-2.251056e-01	-4.814771e-01
+1.644014e-01	3.307433e-01
+-4.618902e-01	1.489123e-01
+7.775744e-02	3.332788e-01
+3.334003e-01	-1.894713e-01
