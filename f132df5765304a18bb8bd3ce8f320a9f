@@ -1,4 +1,4 @@
-2022年  6月 25日 土曜日 11:54:31 JST
+2022年  6月 29日 水曜日 09:55:43 JST
 #include "cutil.h"
 
 __device__ float4 
