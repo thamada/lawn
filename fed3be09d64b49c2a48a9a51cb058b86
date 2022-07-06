@@ -1,143 +1,46 @@
-2022年  7月  3日 日曜日 09:09:34 JST
-[net]
-# Testing
-#batch=1
-#subdivisions=1
-# Training
-batch=64
-subdivisions=16
+2022年  7月  6日 水曜日 09:06:54 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+VM_NAME="ubuntu16"
 
-learning_rate=0.001
-max_batches = 2000001
-#max_batches = 50
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+all: check
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+c: check
 
-[maxpool]
-size=2
-stride=2
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
 
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
 
-[maxpool]
-size=2
-stride=2
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
 
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
 
-[maxpool]
-size=2
-stride=2
+run: start
 
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
 
-[maxpool]
-size=2
-stride=2
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
 
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
 
-[maxpool]
-size=2
-stride=2
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
 
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
 
-[maxpool]
-size=2
-stride=1
 
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
 
-###########
 
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-# filters = (classes + coords + 1) * num
-## (10+5)*5
-filters=75
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=10
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
