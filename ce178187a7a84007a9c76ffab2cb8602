@@ -1,256 +1,158 @@
-2022年  6月 19日 日曜日 10:41:42 JST
--- LOCAL READ INTERFACE ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
---
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
--- EXEC           __/~~~~~\_____
--- BUSY           ________/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______
--- DMAR_ENABLE                   __/~~~~~~~~~~~~~~~\___ { (Ndata+1) clock }
--- DBUS_Port                       < adr ><XXXX
--- DBUS_idata                                          < d0 >< d1 >
--- DBUS                                  <adr><XXXXXXX>< d0 >< d1 >
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2022年  7月  8日 金曜日 10:14:42 JST
+#define ERROR_CHECK
 
-entity LOCAL_READ_IF is
-  port (
-    -- PGPG REG input
-    EXEC : in std_logic;                         -- Execution Pulse
-    START_AD : in std_logic_vector(18 downto 0); -- 19 bit  -- constant in transaction
-    NQWORD   : in std_logic_vector( 8 downto 0); --  9 bit  -- constant in transaction : (NQWORD + 1) words transfer
-    CHIPSEL  : in std_logic_vector( 3 downto 0); --  4 bit  -- constant in transaction
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);         -- constant in transaction
-    BUSY : out std_logic;  -- to GPREG0
+#include <iostream>
+using namespace std;
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+#define NMAX (1<<17) // 131072
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+extern "C" void force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj);
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ_IF;
+#include <time.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+double get_time(void)
+{
+  struct rusage r;
+  double sec, usec, z;
+  getrusage(RUSAGE_SELF, &r);
+  sec   = r.ru_utime.tv_sec;
+  usec  = r.ru_utime.tv_usec;
+  z = sec + usec*1.0e-6;
+  return (z);
+}
 
-architecture rtl of LOCAL_READ_IF is
+static double r[NMAX][3];
+static double m[NMAX];
+static double eps2 = 0.0001;
+static double a[NMAX][3];
+static double v[NMAX][3];
+static double a_h[NMAX][3];
 
------------------------------------------------------------------
--- DMAW/R
-  signal hit,hitr : std_logic;
-  signal csel    : std_logic_vector(3 downto 0);
-  signal s_adr : std_logic_vector(18 downto 0);
+void readfile(char* fname, int* nbody, double* m, double r[][3], double v[][3])
+{
+  ifstream f;
+  f.open(fname, ios::in);
+  if(!f) {
+    cerr << "Can't open file: " <<  fname << endl;
+    exit(-1);
+  }
+  char* buf= new char [2048];
+  f.getline(buf, 511); // *ignore*
+  int n;
+  f >> n;
+  (*nbody) = n;
+  f.getline(buf, 511); // *ignore*
 
--- DMAR
-  signal en_cnt0   : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal en_cnt0_r : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal en0,en1,en2,en3,en4,en5,en6,en7 : std_logic :='0';
-  signal lo_mem_wad, lo_mem_wad_z : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal mem_ad_offset : std_logic_vector(12 downto 0) :=(others=>'0');
-begin
+  f.scientific;
+  for(int i=0; i<n; i++){
+    f.getline(buf, 1024);
+    char ii[256];
+    double mj, x, y, z, vx, vy, vz;
+    f >> ii >> mj >> x >> y >> z >> vx >> vy >> vz;
+    //    printf("%s   %.16E   % .16E % .16E % .16E   % .16E % .16E % .16E \n", ii, m, x, y, z, vx, vy, vz);
+    m[i]    = mj;
+    r[i][0] = x;
+    r[i][1] = y;
+    r[i][2] = z;
+    v[i][0] = vx;
+    v[i][1] = vy;
+    v[i][2] = vz;
+  }
+  f.close();
 
-  -- DMA BUSY or IDLE
-  BUSY  <= hit or hitr or en0 or en1 or en2 or en3 or en4 or en5 or en6 or en7;
-  hit <= EXEC;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      hitr <= hit;
-    end if;
-  end process;
+  delete[] buf;
+}
 
-  ----------------------------
-  --- DMAR START ADR       ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      s_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        s_adr <= START_AD(18 downto 0);
-      end if;
-    end if;
-  end process;
+void force_host(double xj[][3],
+								double m[],
+								double xi[][3],
+								double eps2,
+								double a[][3],
+								int ni,
+								int nj)
+{
+  int i,j,d;
+  double dx[3];
+  for(i=0;i<ni;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
 
-  ----------------------------
-  --- DMAR START ADR       ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      mem_ad_offset <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        mem_ad_offset <= MEM_AD_BASE;
-      end if;
-    end if;
-  end process;
+  for(i=0;i<ni;i++){
+    for(j=0;j<nj;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+				dx[d] = xj[j][d] - xi[i][d];
+				r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+				a[i][d] +=  m[j]*dx[d]/r3;
+      }
+    }
+  }
+}
 
+int main(int argc,char** argv)
+{
+  int n=0;
+  int nstep = 1;
 
-  ----------------------------
-  --- CHIP SEL             ---
-  ----------------------------
-  process (CLK,hit,hitr) begin
-    if(RST='1') then
-      csel <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1')) then
-        if    (CHIPSEL(0) = '1') then
-          csel <= "0001";
-        elsif (CHIPSEL(1) = '1') then
-          csel <= "0010";
-        elsif (CHIPSEL(2) = '1') then
-          csel <= "0100";
-        else
-          csel <= "1000";
-        end if;
-      end if;
-    end if;
-  end process;
+  if((argc == 2)||(argc == 3)){
+    char ifile[256];
+    strcpy(ifile,argv[1]);
+    readfile(ifile, &n, m, r, v);
+    if(argc == 3)  nstep = atoi(argv[2]);
+  }else{
+    fprintf(stderr, "argc = %d\n",argc);
+    fprintf(stderr, "cmd <init file> <nstep>\n");
+    exit(-1);
+  }
 
-  ------------------------------
-  --- MEM_ADB                ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      MEM_ADB <= lo_mem_wad + mem_ad_offset;
-    end if;
-  end process;
+  int ni=n;
+  int nj=n;
 
-  ----------------------------
-  -- DMAR EN COUNT     ---
-  ----------------------------
-  en_cnt0_r <= en_cnt0;
-  process (RST,CLK,hit,hitr,en_cnt0_r) begin
-    if(RST='1') then
-      en_cnt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1'))then
-        en_cnt0 <= "0000" & NQWORD(8 downto 0);   -- SET NQWORD
-      elsif(en_cnt0_r /= "000000000000") then
-        en_cnt0 <= en_cnt0_r - "000000000001";
-      end if;
-    end if;
-  end process;
+  force(r, m, r, eps2, a, ni, nj);
 
-  ----------------------------
-  -- DMAR EN 0         ---
-  ----------------------------
-  process (RST,CLK,hit,hitr,en_cnt0) begin
-    if(RST='1') then
-      en0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((hit = '0') AND (hitr = '1'))then
-        en0 <= '1';
-      elsif(en_cnt0 = "000000000000") then
-        en0 <= '0';
-      end if;
-    end if;
-  end process;
+  double eps2 = (1./256.);
+  double tt = get_time();
+  for(int step = 0; step < nstep; step++) force(r, m, r, eps2, a, ni, nj);
+  tt = get_time() - tt;
 
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      en7 <= en6;
-      en6 <= en5;
-      en5 <= en4;
-      en4 <= en3;
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-    end if;
-  end process;
+  double nfloat = 38.0 * ((double)ni)*((double)nj) * ((double)nstep);
+  double gflops = nfloat * (1.e-9) / tt;
+  //  fprintf(stdout, "n=%d\t%g sec/gpucall\t%g Gflops\n", n, tt/(double)nstep, gflops );
+  fprintf(stdout, "n=%d\n", n);
+  fprintf(stdout, "%g sec/gpucall\n", tt/(double)nstep);
+  fprintf(stdout, "%g Gflops\n",  gflops );
 
 
-  ------------------------------
-  --- DMAR ENABLE            ---
-  ------------------------------
-  process (CLK,en1,en2)  begin
-    if(CLK'event and CLK='1') then
-      if((en0 = '1') OR (en1 = '1')) then
-        DMAR_ENABLE(0) <= '1' AND csel(0);
-        DMAR_ENABLE(1) <= '1' AND csel(1);
-        DMAR_ENABLE(2) <= '1' AND csel(2);
-        DMAR_ENABLE(3) <= '1' AND csel(3);
-      else
-        DMAR_ENABLE <= (others=>'0');
-      end if;
-    end if;
-  end process;
+  if(0){
+    cout << "Start Error check: " << n <<endl;
+    force_host(r, m, r, eps2, a_h, ni, nj);
+    double err_max = 0.0;
+    for(int i=0;i<ni;i++){
+      double err=0.0;
+      for(int d=0;d<3;d++){
+				double diff = fabs(a[i][d] - a_h[i][d]);
+				err += (diff*diff);
+      }
+      err = sqrt(err);
+      err = err/sqrt(a_h[i][0]*a_h[i][0]+a_h[i][1]*a_h[i][1]+a_h[i][2]*a_h[i][2]);
+      if (err > err_max){
+				err_max = err;
+				printf("[%d]:\t", i);
+				printf("%.7e:\t", err);
+				printf("%e,%e,%e:\t%e,%e,%e\n",a_h[i][0], a_h[i][1], a_h[i][2],a[i][0], a[i][1], a[i][2]);
+      }
+    }
+    printf("Max Err %.7e\n", err_max);
+  }
 
-  ------------------------------
-  --- DBUS_PORT            ---
-  ------------------------------
-  process (RST,CLK,en0,en1,en2,en3)  begin
-    if(RST='1') then
-      DBUS_Port <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(    (en0 = '1') AND (en1 = '0') ) then
-        DBUS_Port <= ("000000000000000000000000000000000000000000000" & s_adr);
-      elsif( (en1 = '1') AND (en2 = '0') ) then
---        DBUS_Port <= X"FFFFFFFFFFFFFFFF";
-        NULL;
-      elsif( (en2 = '1') AND (en3 = '0') ) then
-        DBUS_Port <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_HiZ               ---
-  ------------------------------
-  process (RST,CLK,en2,en3,en4,en5)  begin
-    if(RST='1') then
-      DBUS_HiZ <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((en2 = '1') OR (en3 = '1') OR (en4 = '1') OR (en5 = '1') ) then
-        DBUS_HiZ <= '1';
-      else
-        DBUS_HiZ <= '0';
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_DTIB               ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_DTIB <= DBUS_idata;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_WEHB, MEM_WELB     ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_WEHB <= en6;
-      MEM_WELB <= en6;
-    end if;
-  end process;
-
-  ------------------------------
-  --- lo_mem_wad             ---
-  ------------------------------
-  lo_mem_wad_z <= lo_mem_wad;
-  process (RST,CLK,en5,en6)  begin
-    if(RST='1') then
-      lo_mem_wad <= "0000000000000";
-    elsif(CLK'event and CLK='1') then
-      if((en5 = '1') AND (en6 = '0')) then
-        lo_mem_wad <= "0000000000000";
-      elsif((en5 = '1') AND (en6 = '1')) then
-        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
-      elsif((en5 = '0') AND (en6 = '1')) then
-        lo_mem_wad <= "0000000000000";
-      end if;
-    end if;
-  end process;
-
-end rtl;
+  return (0);
+}
