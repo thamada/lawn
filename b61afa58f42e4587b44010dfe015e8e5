@@ -1,5 +1,16 @@
-2022年  7月  7日 木曜日 10:07:04 JST
--- ProjNav VHDL simulation template: sim_local_read_cnt.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2022年  7月  8日 金曜日 09:23:28 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
+
+#include <stdio.h>
+#include "nbodysim.h"
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
+}
