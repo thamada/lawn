@@ -1,26 +1,28 @@
-2022年  7月  7日 木曜日 10:52:10 JST
-#include <stdio.h>
-#include "nbodysim.h"
+2022年  7月 18日 月曜日 10:06:57 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-void debug(double x[][DIM],double a[][DIM], int n, int nstep)
-{
-  int i;
-  static int flag=0;
-  static FILE* fp;
+entity dmar_mem_adr is
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end dmar_mem_adr;
 
-  if(flag==0){
-    fp = fopen("aaa.log","w");
-    flag = 1;
-  }else{
-    rewind(fp);
-  }
-
-  for(i=0;i<n;i++){
-    fprintf(fp,"%d\t",nstep);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
-  }
-
-  fflush(fp);
-}
-
+architecture rtl of dmar_mem_adr is
+component dmaw_mem_adr
+  port (
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
+    );
+end component;
+begin
+  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
+end rtl;
