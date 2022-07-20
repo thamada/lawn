@@ -1,68 +1,85 @@
-2022å¹´  7æœˆ 20æ—¥ æ°´æ›œæ—¥ 09:25:05 JST
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+2022å¹´  7æœˆ 20æ—¥ æ°´æ›œæ—¥ 10:17:04 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-05-30 09:51:10 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2 , int n)
-{
-  int i,j,d;
-  double v2,r2;
-  double dx[3];
-  double Ep;        /* Še—±q‚ÌˆÊ’uƒGƒlƒ‹ƒM[ */
-  double Em;        /* Še—±q‚Ì‰^“®ƒGƒlƒ‹ƒM[ */
-  double Ea;        /* Še—±q‚Ì‘S—ÍŠw“IƒGƒlƒ‹ƒM[ */
-  static double Ea_init;
-  static int flag=0;
-  //  double a[NMAX][DIM];
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xdf, 0xf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
+
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+    log_base = '../log/'
+    cap = []
+    for i in range(3):
+        cap.append(cv2.VideoCapture(i))
+
+    # -- swap cap --
+    if True:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
 
 
-  /******************************************************  FORCE
-  for(i=0;i<n;i++) for(d = 0;d<3;d++) a[i][d] = 0.0;
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] =  m[j]*dx[d]/r3;
-	a[j][d] = -m[i]*dx[d]/r3;
-      }
-    }
-  }
-  ***********************************************************/
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
-  Ea = 0.0;
-  for(i=0;i<n;i++){
-    Ep=0.0;     // Potential Energy
-    for(j=0;j<n;j++){
-      r2 = eps2;           /* ‘Š‘Î‹——£‰Šú‰» */
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      if(i!=j) Ep -= m[i]*m[j]*(1/sqrt(r2));
-    }
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
 
-    v2=0.0;    /* â‘Î‘¬“x2æ’l‰Šú‰» */
-    for(d=0;d<3;d++) v2 += v[i][d]*v[i][d];
-    Em = 0.5 * m[i] * v2;
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
-    Ea += Em + Ep;
-    //    printf("%1.8e\t%1.8e\t%1.8e\t%d\t%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2],i,m[i],
-    //	   (v[i][0]*v[i][0]+v[i][1]*v[i][1]),
-    //	   (a[i][0]*a[i][0]+a[i][1]*a[i][1]));
-  }
+    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
+        frame = [0,0,0]
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
 
-  if(flag==0){
-    Ea_init = Ea;
-    flag = 1;
-  }
-  printf("Eall = %e\t",Ea);
-  printf("(Eini-Eall)/Eini = %e\t",Ea_init-Ea);
-  printf("\n");
-  return;
-}
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
+
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * i
+            sy = 0
+            ex = frame_width * (i+1)
+            ey = frame_height
+            image[sy:ey,sx:ex] = fm
+
+        cv2.imshow('pycam', image)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
+
+    cv2.destroyAllWindows()
+
+    print("Done.")
