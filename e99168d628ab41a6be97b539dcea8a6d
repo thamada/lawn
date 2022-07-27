@@ -1,91 +1,104 @@
-2022年  7月 17日 日曜日 09:15:46 JST
-//-----------------------------------------------------------------------------
-// Output Pair-Wise Error
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2022年  7月 27日 水曜日 09:37:44 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-01 03:19:59 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+def get_ndev():
+    ndev = 0
+    devid = []
+    for i in range(0, 10):
+        c = cv2.VideoCapture(i)
+        if c.isOpened():
+            ndev = ndev + 1
+            devid.append(i)
+        c.release()
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+    print ("devid = ", devid)
+    return ndev
 
-#define NMAX 1024
-
-double rsv[65536][3];
-
-int main(int argc, char *argv[]) {
-  int index;
-  int n = 2;
-
-  double m[NMAX];
-  double r[NMAX][3];
-  double v[NMAX][3];
-
-  double p[NMAX];
-  double a[NMAX][3];
-  double jk[NMAX][3];
-
-  double _p[NMAX];
-  double _a[NMAX][3];
-  double _jk[NMAX][3];
-
-  m[0] = m[1] = 1.0;
-
-  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
-
-  index=0;
-  srand(0x12345);
-
-  for (int t = 0; t < 1000 ; t++){
-    
-
-    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
+def isOpened(cap):
+    ret = True
+    for c in cap:
+        ret = ret and c.isOpened()
+    return ret
 
 
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xff, 0xaf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
 
-    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
+if (__name__ == '__main__'):
+    ndev = get_ndev()
+    log_base = '../log/'
+    cap = []
+    for i in range(ndev):
+        cap.append(cv2.VideoCapture(i))
 
-    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
-    index++;
+    # -- swap cap --
+    if False:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
 
 
-    _force(r, v, m, _p, _a, _jk, n);
-     force(r, v, m,  p,  a,  jk, n);
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
 
-     double err_p, err_a[3], err_jk[3];
-     double rad;
-     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
-     err_p = fabs(p[0]-_p[0])/_p[0];
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
 
-    
-     for (int k = 0; k < 3; k++){
-       double host  = _a[0][k];
-       double pipe  =  a[0][k];
-       double err = sqrt((host - pipe)*(host - pipe))/host;
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
 
-       cout << setw(8);
-       cout.precision(6);
-       cout << rad  << "\t";
-       cout.precision(6);
-       cout << err  << "\t";
-       cout.precision(6);
-       cout << host << "\t";
-       cout.precision(6);
-       cout << pipe << endl;
+    while(isOpened(cap)):
+        frame = [0] * ndev
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
 
-     }
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
 
-  }
-  
+        nwx = 3
+        nwy = int(1.0+(ndev-1)/3.0)
 
-  debug_position_snap(rsv, 123.456, index, 10);
+        image = np.zeros((frame_height * nwy, frame_width*nwx, 3), dtype=np.uint8)
+        # image = np.zeros((frame_height, frame_width*ndev, 3), dtype=np.uint8)
 
-  return 0;
-}
+        # --- ROI ---
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * (i%nwx)
+            sy = frame_height * int(i/nwx)
+            ex = frame_width * (i%nwx+1)
+            ey = frame_height * int(1+i/nwx)
+            image[sy:ey,sx:ex] = fm
+
+        cv2.imshow(__file__, image)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
+
+    cv2.destroyAllWindows()
+
+    print("Done.")
