@@ -1,233 +1,127 @@
-2022年  7月 30日 土曜日 11:16:48 JST
-/*
- * pfpga_conf_a.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+2022年  8月  3日 水曜日 11:15:50 JST
+//-------------------------
+#define NMAX (1<<17)
+#include <cstdio>
+#include <cstdlib>
+#define USE_CUDA_MALLOC_HOST (yes)
+#define IDIM (4)
+#define JDIM (4)
+#define FDIM (3)
+#define NJ_SHMEM (NTHRE)
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>     // usleep
-#include "pg4.h"
+float4* h_xj;
+float* h_xi;
+float* h_fo;
+float4* d_xj;
+float* d_xi;
+float* d_fo;
 
-static char pfpga_info[256];
-#define CNF_CMD_ADR 0x80
-#define CNF_DAT_ADR 0x84
-
-static unsigned int *data;
-
-void get_header(char* bitfile, char* header)
+extern "C" void 
+force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
 {
-  int index=0, x;
-  char buf[128];
-  
-  index += 2 + (((0xff&bitfile[index])<<8) | (0xff&bitfile[index+1]));
-  index += 2 + (((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]));
+  static bool is_open = false;
+  int devid = 0;
+  int ndev;
+  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
 
-  // --- NCD file name ---
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-  // --- device ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- data ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- time ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- key ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-
-}
-
-
-
-int fread_config_data(char* fname, unsigned int *size)
-{
-  // -- Read Config File to 'config_bit_data'---
-  FILE* fin;
-  int ndata;
-  int i;
-
-  struct stat buf;
-  int fsize;
-
-  // read file status
-  if (stat(fname, &buf) == -1) {
-    fprintf(stderr, "fread_config_data: can't open bit file!!! %s\n", fname);
+  if( ni > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" ni > %d : ni=%d\n",ni, NMAX);
     exit(-1);
   }
 
-  fsize = buf.st_size;
-  if (data != NULL) {
-    free(data);
-  }
-  data = (unsigned int*)malloc(fsize);
-  if (data == NULL) {
-    fprintf(stderr, "fread_config_data: memory allocation error!\n");
-    exit(-1);
-  }
-  
-  fin = fopen(fname, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "fread_config_data: cannot open %s!\n", fname);
-    exit(-1);
-  }
-  fread(data,fsize,1,fin);
-  fclose(fin);
-  fprintf(stderr, "fread_config_data: read %i bytes.\n", fsize);
-
-  get_header((char*)data, pfpga_info);
-
-  
-  ndata = fsize/sizeof(unsigned int);
-
-  // CHANGE ENDIAN (LittleEndian -> BigEndian)
-  for(i = 0;i < ndata; i++){
-    unsigned int byte[8];
-    byte[0] = 0xFF&(data[i]>>24);
-    byte[1] = 0xFF&(data[i]>>16);
-    byte[2] = 0xFF&(data[i]>>8);
-    byte[3] = 0xFF&(data[i]);
-    data[i]=0x0;
-    data[i]= (byte[3]<<24)|(byte[2]<<16)|(byte[1]<<8)|byte[0];
-  }
-
-  *size = (unsigned int)ndata;
-
-  return fsize;
-}
-
-void config_onechip(int devid, unsigned int nfp, unsigned int ncfgdata)
-{
-  unsigned int i, d;
-  unsigned int *p;
-
-  if (data == NULL) return;
-  if (nfp > 0x8) {
-    fprintf(stderr, "nfp err\n");
-    exit(-1);
-  } 
-
-  // ---------------------------------------- SETUP CONFIGURATION
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(  ((0xF^nfp)<<4)   |nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  usleep(15000);
-
-  // ---------------------------------------- SEND CONFIGURATION DATA
-  p = data;
-  for(i = 0; i < ncfgdata; i++){
-    WriteBase0(devid, CNF_DAT_ADR, *(p++));
-    d = (unsigned int)(0x1f0|nfp);
-    WriteBase0(devid, CNF_CMD_ADR,      d);
-    WriteBase0(devid, CNF_CMD_ADR, 0xff&d);
-  }
-
-  // ---------------------------------------- STOP CFG_CCLK
-  d = (unsigned int)(0xf0);
-  WriteBase0(devid, CNF_CMD_ADR,d);
-}
-
-void config_pfpga_a(int devid, char* fname, int chipid)
-{
-  unsigned int i, nfp, ncfgdata;
-
-  data = NULL;
-  fread_config_data(fname, &ncfgdata);
-
-  {
-    i = chipid;
-    nfp = 0xf&(0x1<<i);
-    fprintf(stderr, "configuring chip%i ...\n", i);
-    config_onechip(devid, nfp, ncfgdata);
-  }
-
-  free(data);
-}
-
-int main(int argc, char* argv[])
-{
-  int devid, chipid;
-
-  if (argc < 2) {
-    fprintf(stderr, "%s <bitfile> <chipid> <devid>\n", argv[0]);
+  if( nj > NMAX ){
+    printf("ERROR %s|%d\n",__FILE__, __LINE__);
+    printf(" nj > %d : nj=%d\n",nj, NMAX);
     exit(-1);
   }
 
-  if (argv[2] == NULL) {
-    chipid = 0;
-  } else {
-    chipid = atoi(argv[2]);
-    if (chipid > 3) {
-      fprintf(stderr, "%s : invalid argument <chipid> %s:%d\n", argv[0], __FILE__, __LINE__);
+  unsigned int ip_size = sizeof(float) * ni * IDIM;
+  unsigned int jp_size = sizeof(float4) * nj1;
+  unsigned int fo_size = sizeof(float) * ni * FDIM;
+
+  if(is_open == false){
+    char gpu_name[256];
+    CUDA_SAFE_CALL(cudaSetDevice(devid));
+    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
+    if(ndev == 0){
+      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
       exit(-1);
+    }else{
+      int dev = devid;
+      cudaDeviceProp deviceProp;
+      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
+      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
+	printf("There is no device supporting CUDA.\n");
+      }
+      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
+      sprintf(gpu_name,"%s", deviceProp.name);
+    }
+
+    unsigned int _nmax = NMAX;
+    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
+    unsigned int _jp_size = sizeof(float4) * _nmax;
+    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
+
+#if defined(USE_CUDA_MALLOC_HOST)
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
+    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
+#else
+    h_xj = (float4*) malloc(_jp_size);
+    h_xi = (float*)  malloc(_ip_size);
+    h_fo = (float*)  malloc(_fo_size);
+#endif
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
+    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
+    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
+    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
+    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
+    is_open = true;
+  }
+  for(int i = 0; i < nj; i++){
+    h_xj[i].x = (float) xj[i][0];
+    h_xj[i].y = (float) xj[i][1];
+    h_xj[i].z = (float) xj[i][2];
+    h_xj[i].w = (float) mj[i];
+    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
+  }
+  if(nj < nj1){
+    for(int i = nj; i < nj1; i++){
+      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
+      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
     }
   }
-
-  if (argv[3] == NULL) {
-    devid = 0;
-  } else {
-    devid = atoi(argv[3]);
-    if (devid > 3) {
-      fprintf(stderr, "%s : invalid argument <devid>%s:%d\n", argv[0], __FILE__, __LINE__);
-      exit(-1);
-    }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
+  for(int i = 0; i < ni; i++){
+    h_xi[i     ] = (float) xi[i][0];
+    h_xi[i+ni  ] = (float) xi[i][1];
+    h_xi[i+ni*2] = (float) xi[i][2];
+    h_xi[i+ni*3] = (float) eps2;
+    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
   }
+  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
 
-  fprintf(stderr, "%s configures a PFPGA%i on progrape%i ...\n", argv[0], chipid, devid);
+  //  printf("Nj=%d\n",nj1);
+  /*
+  dim3 grid((ni+NTHRE)/NTHRE);
+  dim3 threads  (NTHRE);
+  */
+  //  printf("------------------------ %d, %d\n",ni, nj1);
+  dim3 grid(ni/128);
+  dim3 threads  (128);
+  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
+  CUT_CHECK_ERROR("Kernel execution failed");
 
-  pg4_open(devid);
+  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
 
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Previous config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
+  for(int i=0;i<ni; i++){
+    a[i][0] = (double)h_fo[i];
+    a[i][1] = (double)h_fo[i+ni];
+    a[i][2] = (double)h_fo[i+ni*2];
+    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
   }
-
-  {
-    sprintf(pfpga_info, "%s on <PFPGA%d>", argv[1], chipid);
-    config_pfpga_a(devid, argv[1], chipid);
-    pg4_set_pfpga_info(devid, pfpga_info);
-  }
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Current config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  pg4_close(devid);
-
-  return 0;
 }
