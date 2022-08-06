@@ -1,42 +1,36 @@
-2022年  8月  3日 水曜日 10:25:31 JST
-#!/usr/bin/env python3
-import os
-from datetime import datetime
-import time
+2022年  8月  6日 土曜日 10:44:18 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--
+-- DMAR_STATE is used only 
+--                dmar_mem_adr.vhd  
+--                dmar_mem_re.vhd
+--                dmar_start_adr.vhd
+-- dmar_dbus_hiz and dma_mem_data do not used DMAR_STATE.
 
-# YYYYMMDD_HH_MM_SS
-def get_filename_frame(basedir, str_datetime):
-    cell = list(str_datetime)
-    str_YYYYMMDD = ''.join(cell[0:8])
-    str_HH = ''.join(cell[9:11])
-    str_MM = ''.join(cell[12:14])
-    str_SS = ''.join(cell[15:17])
-    dirname = basedir + str_YYYYMMDD + "/" + str_HH
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + "/" + str_datetime+".jpg"
-    ret = ret.replace(' ','')
-    return ret
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+entity dmar_state is
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmar_state;
 
-def get_filename_frame_simple(basedir, fname):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
-    ret = dirname + fname
-    ret = ret.replace(' ','')
-    return ret
+architecture rtl of dmar_state is
 
-def create_dir(basedir):
-    dirname = basedir
-    if os.path.exists(dirname) != True:
-        os.makedirs(dirname)
+component dmaw_state
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end component;
 
-    
-
-if __name__ == '__main__':
-    while(True):
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        fname = get_filename_frame('../work/', tnow)
-        print (fname)
-        time.sleep(0.5)
+begin
+  u0 : dmaw_state port map(RST=>RST, CLK=>CLK, ENABLE=>ENABLE, STATE=>STATE);
+end rtl;
