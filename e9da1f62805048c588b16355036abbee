@@ -1,29 +1,57 @@
-2022å¹´  8æœˆ  7æ—¥ æ—¥æ›œæ—¥ 09:31:54 JST
-//Time-stamp: "2006-11-21 00:17:47 hamada"
+2022å¹´  8æœˆ  7æ—¥ æ—¥æ›œæ—¥ 11:20:56 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
-#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
-#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
+entity pipe_sts is
+  port (
+    rst        : in  std_logic;
+    clk        : in  std_logic;
+    run        : in  std_logic;
+    runret     : in  std_logic;
+    status     : out std_logic_vector(31 downto 0)
+  );
+end pipe_sts;
 
-int pgr_open(int);
-void pgr_close(int);
+architecture rtl of pipe_sts is
+signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
+signal rund,sts : std_logic;
+signal cntr : std_logic_vector(7 downto 0);
+signal irun : std_logic := '0';
 
-void pgr_reset(int devid);
-int  pgr_get_writecomb_err(int devid);
+begin
 
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
+-- clk    ____~~~~____~~~~____~~~~____~~~~__
+-- runret _____~~~~~~~~_____________________
+-- rund   _____________~~~~~~~~_____________
+-- status                      <finish     >
 
-void pgr_setipset(int devid, unsigned int *idata, int num);
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
+-- status
+status(31 downto 8) <= (others=>'0');
+process(clk,rst) begin
+  if(rst='1') then
+    status(7 downto 0) <= (others=>'1');
+  elsif(clk'event and clk='1') then
+    if((runret='0') AND (rund='1')) then  -- ŒvZI—¹
+      status(7 downto 0) <= (others=>'1');
+    elsif((run='1') AND (irun='0')) then -- ŒvZŠJn
+      status(7 downto 0) <= (others=>'0');
+    end if;
+  end if;
+end process;
 
-void pgr_start_calc(int devid, unsigned int n);
-void pgr_calc_start(int devid, unsigned int n);
-void pgr_calc_finish(int devid);
+process(clk) begin
+  if(clk'event and clk='1') then
+    rund  <= runret;
+  end if;
+end process;
 
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+process(clk) begin
+  if(clk'event and clk='1') then
+    irun  <= run;
+  end if;
+end process;
 
-void pgr_set_npipe_per_chip(int devid, int n);
-void pgr_set_jwidth(int devid, int n);
-void pgr_set_nchip(int nchip);
+
+end rtl;
