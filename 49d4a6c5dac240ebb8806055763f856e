@@ -1,192 +1,471 @@
-2022年  8月  7日 日曜日 09:55:57 JST
-/*
- * progrape.h -- the device driver header for PROGRAPE-4
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada.
- *                                All rights reserved.
- *
- * The source code in this file can be freely used, 
- * so long as an acknowledgment from Tsuyoshi Hamada.
- * 
- * The source code in this file can be modified, branched, and
- * redistributed in source or binary form in the following situation.  
- * If you want to modify, redistribute or make another version based on
- * this source code, you should get distinct agreement from Tsuyoshi
- * Hamada.  The modified, redistributed or branched(another version based
- * on this source code) source code should include the citation that the
- * code comes from the "progrape.c by Tsuyoshi Hamada".
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
-#ifndef _PROGRAPE_H_
-#define _PROGRAPE_H_
+2022年  8月  8日 月曜日 11:19:31 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Test Bench created by
+-- HDL Bencher 6.1i
+-- Thu Dec 16 15:39:41 2004
+-- 
+-- Notes:
+-- 1) This testbench has been automatically generated from
+--   your Test Bench Waveform
+-- 2) To use this as a user modifiable testbench do the following:
+--   - Save it as a file with a .vhd extension (i.e. File->Save As...)
+--   - Add it to your project as a testbench source (i.e. Project->Add Source...)
+-- 
 
-#include <linux/ioctl.h> /* for the _IOW etc */
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-// -------------------------------------------------------------------- for DEBUG
-/*
- * Macros to help debugging
- */
-#undef PDEBUG             /* undef it, just in case */
-#ifdef DEBUG
-#  ifdef __KERNEL__
-     /* This one if debugging is on, and kernel space */
-#    define PDEBUG(fmt, args...) printk( KERN_DEBUG "progrape: " fmt, ## args)
-#  else
-     /* This one for user space */
-#    define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
-#  endif
-#else
-#  define PDEBUG(fmt, args...) /* not debugging: nothing */
-#endif
+ENTITY sim_pfpga_dma IS
+END sim_pfpga_dma;
 
-#undef _PDEBUG
-#define _PDEBUG(fmt, args...) /* nothing: it's a placeholder */
-// -------------------------------------------------------------------- for DEBUG. 
+ARCHITECTURE testbench_arch OF sim_pfpga_dma IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "results.txt";
+	COMPONENT pfpga_dma
+		PORT (
+			PGPG_REG3 : In  std_logic_vector (31 DOWNTO 0);
+			GPREG0 : Out  std_logic_vector (31 DOWNTO 0);
+			Hit_PGPG_REG3 : In  std_logic;
+			MEM_ADA : In  std_logic_vector (12 DOWNTO 0);
+			MEM_WEHA : In  std_logic;
+			MEM_WELA : In  std_logic;
+			MEM_DTIA : In  std_logic_vector (63 DOWNTO 0);
+			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DMAR_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
+			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
+			DBUS_idata : In  std_logic_vector (63 DOWNTO 0);
+			DBUS_HiZ : Out  std_logic;
+			MEM_ADB : Out  std_logic_vector (12 DOWNTO 0);
+			MEM_WEHB : Out  std_logic;
+			MEM_WELB : Out  std_logic;
+			MEM_DTIB : Out  std_logic_vector (63 DOWNTO 0);
+			MEM_DTOB : In  std_logic_vector (63 DOWNTO 0);
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-/* 
- * IOCTL definitions
- */
+	SIGNAL PGPG_REG3 : std_logic_vector (31 DOWNTO 0);
+	SIGNAL GPREG0 : std_logic_vector (31 DOWNTO 0);
+	SIGNAL Hit_PGPG_REG3 : std_logic;
+	SIGNAL MEM_ADA : std_logic_vector (12 DOWNTO 0);
+	SIGNAL MEM_WEHA : std_logic;
+	SIGNAL MEM_WELA : std_logic;
+	SIGNAL MEM_DTIA : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
+	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_idata : std_logic_vector (63 DOWNTO 0);
+	SIGNAL DBUS_HiZ : std_logic;
+	SIGNAL MEM_ADB : std_logic_vector (12 DOWNTO 0);
+	SIGNAL MEM_WEHB : std_logic;
+	SIGNAL MEM_WELB : std_logic;
+	SIGNAL MEM_DTIB : std_logic_vector (63 DOWNTO 0);
+	SIGNAL MEM_DTOB : std_logic_vector (63 DOWNTO 0);
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-#define PG_IOC_MAGIC (7)
-/*
- * SP : Set by Pointer
- * SV : Set by Value
- * GP : Get by Pointer
- * GV : Get by Value
- */
-#define IOC_SV_MMAPMODE  _IOW(PG_IOC_MAGIC,  1, unsigned)
-#define IOC_GV_REG_ADR   _IOR(PG_IOC_MAGIC,  2, unsigned long)
-#define IOC_GV_REG_SIZE  _IOR(PG_IOC_MAGIC,  3, unsigned long)
-#define IOC_GV_MEM_ADR   _IOR(PG_IOC_MAGIC,  4, unsigned long)
-#define IOC_GV_MEM_SIZE  _IOR(PG_IOC_MAGIC,  5, unsigned long)
-#define IOC_SP_FPGA_INFO _IOW(PG_IOC_MAGIC,  6, char* )
-#define IOC_GP_FPGA_INFO _IOR(PG_IOC_MAGIC,  7, char* )
-#define IOC_GV_PCICFG    _IOR(PG_IOC_MAGIC,  8, unsigned long)
-#define IOC_SV_DMAW      _IOW(PG_IOC_MAGIC,  9, unsigned long)
-#define IOC_SV_DMAR      _IOW(PG_IOC_MAGIC, 10, unsigned long)
-#define IOC_GV_DMA_SIZE  _IOR(PG_IOC_MAGIC, 11, unsigned long)
+BEGIN
+	UUT : pfpga_dma
+	PORT MAP (
+		PGPG_REG3 => PGPG_REG3,
+		GPREG0 => GPREG0,
+		Hit_PGPG_REG3 => Hit_PGPG_REG3,
+		MEM_ADA => MEM_ADA,
+		MEM_WEHA => MEM_WEHA,
+		MEM_WELA => MEM_WELA,
+		MEM_DTIA => MEM_DTIA,
+		DMAW_ENABLE => DMAW_ENABLE,
+		DMAR_ENABLE => DMAR_ENABLE,
+		DBUS_Port => DBUS_Port,
+		DBUS_idata => DBUS_idata,
+		DBUS_HiZ => DBUS_HiZ,
+		MEM_ADB => MEM_ADB,
+		MEM_WEHB => MEM_WEHB,
+		MEM_WELB => MEM_WELB,
+		MEM_DTIB => MEM_DTIB,
+		MEM_DTOB => MEM_DTOB,
+		RST => RST,
+		CLK => CLK
+	);
 
-#define PG_IOC_MAXNR (11)
+	PROCESS -- clock process for CLK,
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 5 ns;
+		CLK <= transport '1';
+		WAIT FOR 50 ns;
+		CLK <= transport '0';
+		WAIT FOR 35 ns;
+		WAIT FOR 10 ns;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-/*
- * modes for pg_mmap
- * "pcidev->mmap_mode" has one of these mode.
- */
-enum {
-  MMAP_REG_PIOW = 0,      // bar0 for PG4, 0
-  MMAP_REG_PIOR,          // bar0 for PG4, 1
-  MMAP_REG_PIORW,         // bar0 for PG4, 2
-  MMAP_MEM_PIOW,          // bar1 for PG4, 3
-  MMAP_MEM_PIOR,          // bar1 for PG4, 4
-  MMAP_MEM_PIORW,         // bar1 for PG4, 5
-  MMAP_MEM_PIOW_PREFETCH, // bar1 for PG4, 6
-  MMAP_BUF_DMAW,          // DMABUF for Host->Device direction, 7
-  MMAP_BUF_DMAR,          // DMABUF for Device->Host direction, 8
-};
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
+		VARIABLE TX_ERROR : INTEGER := 0;
 
-#define NB_FPGA_INFO (256)  // Length(Bytes) of the FPGA information
+		PROCEDURE CHECK_GPREG0(
+			next_GPREG0 : std_logic_vector (31 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (GPREG0 /= next_GPREG0) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns GPREG0="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, GPREG0);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_GPREG0);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
+		PROCEDURE CHECK_DMAW_ENABLE(
+			next_DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DMAW_ENABLE /= next_DMAW_ENABLE) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DMAW_ENABLE="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DMAW_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-/* 
- * IFPGA register definitions
- */
-#define REG_PFPGA_RST         (0x04)
-#define REG_INT_STAT          (0x10)
-#define REG_INT_MASK          (0x14)
-#define REG_DMA_PCI_ADRS      (0x20)
-#define REG_DMA_LOCAL_ADRS    (0x24)
-#define REG_DMA_COUNT         (0x28)
-#define REG_DMA_CTRL          (0x2C)
-#define REG_DMA_INTERVAL      (0x30)
-#define REG_DMA_STAT          (0x34)
+		PROCEDURE CHECK_DMAR_ENABLE(
+			next_DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DMAR_ENABLE /= next_DMAR_ENABLE) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DMAR_ENABLE="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAR_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DMAR_ENABLE);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
+		PROCEDURE CHECK_DBUS_Port(
+			next_DBUS_Port : std_logic_vector (63 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DBUS_Port /= next_DBUS_Port) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DBUS_Port="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DBUS_Port);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-#ifdef __KERNEL__
-// -------------------------------------------------------------------- Private Members
-#include <linux/cdev.h>
-#include <asm/semaphore.h> // struct semaphore
-#include <linux/wait.h>    // wait_queue_head_t
+		PROCEDURE CHECK_DBUS_HiZ(
+			next_DBUS_HiZ : std_logic;
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (DBUS_HiZ /= next_DBUS_HiZ) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns DBUS_HiZ="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_HiZ);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DBUS_HiZ);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-struct pg_dev {
-  struct pci_dev *pcidev;  // only for my debugging. Don't use it.
-  unsigned long *buf_dmar; // Kernel logical address     ,also called CPU address
-  unsigned long *buf_dmaw; // Kernel logical address     ,also called CPU address
-  dma_addr_t buf_dmar_pa;  // bus address (type) for DMA ,also called physical address
-  dma_addr_t buf_dmaw_pa;  // bus address (type) for DMA ,also called physical address
-  unsigned long pci_reg_adr;
-  unsigned long pci_reg_size;
-  unsigned long pci_reg_flag;
-  unsigned long pci_mem_adr;
-  unsigned long pci_mem_size;
-  unsigned long pci_mem_flag;  // IORESOURCE_{IO,MEM,PREFETCH,READONLY} @<linux/ioport.h>
-  unsigned long pci_irq_num;
-  unsigned long mmap_mode;
-  wait_queue_head_t wq;        // wait queue for interrupt handler -> tasklet in future
-  unsigned long wq_count;      // wait counter for interrupt handler
-  struct semaphore sem;        // mutual exclusion semaphore
-  struct semaphore sem_open;   // lock device while a person is opening it.
-  unsigned long ntimes_open;   // the number of times for pg_open()
-  struct cdev cdev;	       // Char device structure
-  char fpga_info[NB_FPGA_INFO];// text for FPGA information (for bitfile)
-};
+		PROCEDURE CHECK_MEM_ADB(
+			next_MEM_ADB : std_logic_vector (12 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (MEM_ADB /= next_MEM_ADB) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns MEM_ADB="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_ADB);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_MEM_ADB);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-#ifndef PROGRAPE_MAJOR
-#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
-#endif 
+		PROCEDURE CHECK_MEM_WEHB(
+			next_MEM_WEHB : std_logic;
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (MEM_WEHB /= next_MEM_WEHB) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns MEM_WEHB="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WEHB);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_MEM_WEHB);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-#ifndef PROGRAPE_MAJOR
-#    define PROGRAPE_MAJOR 0  // dynamically allocated if 0
-#endif 
+		PROCEDURE CHECK_MEM_WELB(
+			next_MEM_WELB : std_logic;
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (MEM_WELB /= next_MEM_WELB) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns MEM_WELB="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WELB);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_MEM_WELB);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-// Number of maximum character device
-#ifndef PROGRAPE_NR_DEVS
-#    define PROGRAPE_NR_DEVS 1
-#endif 
+		PROCEDURE CHECK_MEM_DTIB(
+			next_MEM_DTIB : std_logic_vector (63 DOWNTO 0);
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
+			-- change compiler settings to use explicit declarations only
+			IF (MEM_DTIB /= next_MEM_DTIB) THEN 
+				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
+				STD.TEXTIO.write(TX_LOC, TX_TIME);
+				STD.TEXTIO.write(TX_LOC,string'("ns MEM_DTIB="));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_DTIB);
+				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
+				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_MEM_DTIB);
+				STD.TEXTIO.write(TX_LOC, string'(" "));
+				TX_STR(TX_LOC.all'range) := TX_LOC.all;
+				STD.TEXTIO.writeline(results, TX_LOC);
+				STD.TEXTIO.Deallocate(TX_LOC);
+				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
+				TX_ERROR := TX_ERROR + 1;
+			END IF;
+		END;
 
-// -------------------------------------------------------------------- Private Members.
-#endif
+		BEGIN
+		-- --------------------
+		RST <= transport '0';
+		PGPG_REG3 <= transport std_logic_vector'("00000000000000000000000000000000"); --0
+		Hit_PGPG_REG3 <= transport '0';
+		MEM_ADA <= transport std_logic_vector'("0000000000000"); --0
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		DBUS_idata <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		MEM_DTOB <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=500 ns
+		RST <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=600 ns
+		RST <= transport '0';
+		-- --------------------
+		WAIT FOR 600 ns; -- Time=1200 ns
+		MEM_ADA <= transport std_logic_vector'("0111111110000"); --FF0
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000001010"); --A
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1300 ns
+		MEM_ADA <= transport std_logic_vector'("0111111110010"); --FF2
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000001011"); --B
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1400 ns
+		MEM_ADA <= transport std_logic_vector'("0111111110100"); --FF4
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000001100"); --C
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1500 ns
+		MEM_ADA <= transport std_logic_vector'("0111111110110"); --FF6
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000001101"); --D
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=1600 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 300 ns; -- Time=1900 ns
+		MEM_ADA <= transport std_logic_vector'("0011101110000"); --770
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000001"); --FFF0001
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2000 ns
+		MEM_ADA <= transport std_logic_vector'("0011101110010"); --772
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000010"); --FFF0002
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2100 ns
+		MEM_ADA <= transport std_logic_vector'("0011101110100"); --774
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000011"); --FFF0003
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2200 ns
+		MEM_ADA <= transport std_logic_vector'("0011101110110"); --776
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000100"); --FFF0004
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2300 ns
+		MEM_ADA <= transport std_logic_vector'("0011101111000"); --778
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000101"); --FFF0005
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2400 ns
+		MEM_ADA <= transport std_logic_vector'("0011101111010"); --77A
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000110"); --FFF0006
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2500 ns
+		MEM_ADA <= transport std_logic_vector'("0011101111100"); --77C
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000000000001111111111110000000000000111"); --FFF0007
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2600 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2700 ns
+		MEM_ADA <= transport std_logic_vector'("0000000000100"); --4
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000011101110111011101110000000000000100"); --777770004
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2800 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=2900 ns
+		MEM_ADA <= transport std_logic_vector'("0000000000110"); --6
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		MEM_DTIA <= transport std_logic_vector'("0000000000000000000000000000011101110111011101110000000000000110"); --777770006
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=3000 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=3500 ns
+		MEM_ADA <= transport std_logic_vector'("0011101111000"); --778
+		MEM_WEHA <= transport '1';
+		MEM_WELA <= transport '1';
+		MEM_DTIA <= transport std_logic_vector'("1001100110011001100110011001100110001000100010001000100010001000"); --9999999988888888
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=3600 ns
+		MEM_ADA <= transport std_logic_vector'("0011101111010"); --77A
+		MEM_DTIA <= transport std_logic_vector'("1011101110111011101110111011101110101010101010101010101010101010"); --BBBBBBBBAAAAAAAA
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=3700 ns
+		MEM_WEHA <= transport '0';
+		MEM_WELA <= transport '0';
+		-- --------------------
+		WAIT FOR 1255 ns; -- Time=4955 ns
+		-- --------------------
 
+		IF (TX_ERROR = 0) THEN 
+			STD.TEXTIO.write(TX_OUT,string'("No errors or warnings"));
+			STD.TEXTIO.writeline(results, TX_OUT);
+			ASSERT (FALSE) REPORT
+				"Simulation successful (not a failure).  No problems detected. "
+				SEVERITY FAILURE;
+		ELSE
+			STD.TEXTIO.write(TX_OUT, TX_ERROR);
+			STD.TEXTIO.write(TX_OUT, string'(
+				" errors found in simulation"));
+			STD.TEXTIO.writeline(results, TX_OUT);
+			ASSERT (FALSE) REPORT
+				"Errors found during simulation"
+				SEVERITY FAILURE;
+		END IF;
+	END PROCESS;
+END testbench_arch;
 
-// for the different configurable parameters
-extern int pg_major;
-extern int pg_minor;
-extern int pg_nr_devs;
-
-// Prototyepes for shared functions
-int check_license(void);
-int get_license(void);
-
-
-// --- ISA bridge: Advanced Micro Devices [AMD] AMD-8111 LPC (rev 05)
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1022)
-#define PCI_DEVICE_ID_PG   (0x7468)
-#define PCI_REVISION_ID_PG (0x05)
-
-// --- PCI bridge: Advanced Micro Devices [AMD] AMD-8131 PCI-X Bridge (rev 12)
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1022)
-#define PCI_DEVICE_ID_PG   (0x7450)
-#define PCI_REVISION_ID_PG (0x12)
-
-// --- PROGRAPE-4 
-#undef PCI_VENDOR_ID_PG
-#undef PCI_DEVICE_ID_PG
-#undef PCI_REVISION_ID_PG
-#define PCI_VENDOR_ID_PG   (0x1679)
-#define PCI_DEVICE_ID_PG   (0x0005)
-#define PCI_REVISION_ID_PG (0x00)
-
-
-#define PG_DMA_BUFSIZE (0x1<<16) // 64 KB : IFPGA Block-RAM size 
-//#define PG_DMA_BUFSIZE (0x1<<12) // 4 KB : IFPGA Block-RAM size 
-#define PG_PCITRANS_64BIT (1)    // 1: 64-bit / 0: 32-bit
-
-#endif // _PROGRAPE_H_
+CONFIGURATION pfpga_dma_cfg OF sim_pfpga_dma IS
+	FOR testbench_arch
+	END FOR;
+END pfpga_dma_cfg;
