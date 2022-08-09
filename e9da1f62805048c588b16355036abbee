@@ -1,57 +1,24 @@
-2022å¹´  8æœˆ  7æ—¥ æ—¥æ›œæ—¥ 11:20:56 JST
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
+2022å¹´  8æœˆ  9æ—¥ ç«æ›œæ—¥ 09:21:16 JST
+// Time-stamp: "2006-12-07 19:19:22 hamada"
+// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 
-entity pipe_sts is
-  port (
-    rst        : in  std_logic;
-    clk        : in  std_logic;
-    run        : in  std_logic;
-    runret     : in  std_logic;
-    status     : out std_logic_vector(31 downto 0)
-  );
-end pipe_sts;
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
-architecture rtl of pipe_sts is
-signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
-signal rund,sts : std_logic;
-signal cntr : std_logic_vector(7 downto 0);
-signal irun : std_logic := '0';
+unsigned int* ptr;
+unsigned int* bar1;
 
-begin
+int main(int argc,char *argv[])
+{
+  int devid = 0;
 
--- clk    ____~~~~____~~~~____~~~~____~~~~__
--- runret _____~~~~~~~~_____________________
--- rund   _____________~~~~~~~~_____________
--- status                      <finish     >
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
--- status
-status(31 downto 8) <= (others=>'0');
-process(clk,rst) begin
-  if(rst='1') then
-    status(7 downto 0) <= (others=>'1');
-  elsif(clk'event and clk='1') then
-    if((runret='0') AND (rund='1')) then  -- ŒvZI—¹
-      status(7 downto 0) <= (others=>'1');
-    elsif((run='1') AND (irun='0')) then -- ŒvZŠJn
-      status(7 downto 0) <= (others=>'0');
-    end if;
-  end if;
-end process;
+  pg4_DMAcheck(devid);
 
-process(clk) begin
-  if(clk'event and clk='1') then
-    rund  <= runret;
-  end if;
-end process;
-
-process(clk) begin
-  if(clk'event and clk='1') then
-    irun  <= run;
-  end if;
-end process;
-
-
-end rtl;
+  return 0;
+}
