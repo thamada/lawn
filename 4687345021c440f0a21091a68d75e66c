@@ -1,56 +1,139 @@
-2022年  8月 10日 水曜日 11:26:33 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-11 19:17:43 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2022年  8月 10日 水曜日 11:40:58 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=8
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (440, 15), font_type, font_size, font_color)
+learning_rate=0.001
+max_batches = 40200
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-if (__name__ == '__main__'):
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
+[maxpool]
+size=2
+stride=2
 
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    print(cap_width, "x", cap_height, ":", cap_fps)
+[maxpool]
+size=2
+stride=2
 
-    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        cv2.imshow('camera: %d'%(devid), frame)
+[maxpool]
+size=2
+stride=2
 
-        #tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(tnow != tnow0):
-            put_text(frame, tnow)
-            basedir = '../log.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            cv2.imwrite(ofname, frame)
-            print(ofname, "devid = %d"%devid)
-            tnow0 = tnow
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+[maxpool]
+size=2
+stride=2
 
-    cap.release()
-    cv2.destroyAllWindows()
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
 
-    print("Done.")
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=35
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=2
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
