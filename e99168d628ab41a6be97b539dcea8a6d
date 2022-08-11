@@ -1,2 +1,9 @@
-2022年  7月 31日 日曜日 09:11:47 JST
-set ADucfFile {../rtl/ifpga.ucf}
+2022年  8月 11日 木曜日 11:10:52 JST
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
