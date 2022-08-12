@@ -1,59 +1,68 @@
-2022年  8月  9日 火曜日 09:26:17 JST
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+2022年  8月 12日 金曜日 09:46:41 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+entity calc is
+  port (
+    start      : in  std_logic;
+    clk        : in  std_logic;
+    pclk       : in  std_logic;
+    n          : in  std_logic_vector(31 downto 0);
+    run        : out  std_logic;
+    mem_adr    : out  std_logic_vector(31 downto 0));
+end calc;
 
-int main()
-{
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
+architecture rtl of calc is
 
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
+signal rst :  std_logic;
+signal rstn : std_logic_vector(31 downto 0);
+signal start_r : std_logic;
+signal mema_dc : std_logic_vector(17 downto 0) := (others=>'0');
+begin
 
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
+-- GENERATE rst PULS ------------------
+process(pclk) begin
+  if(pclk'event and pclk='1') then
+    rst <= rstn(0);
+  end if;
+end process;
 
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
+process (clk) begin
+  if(clk'event and clk='1') then
+    rstn(0) <= start_r AND (NOT start);
+    start_r <= start;
+  end if;
+end process;
+---------------------------------------
 
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
+-- GENERATE run --------------------------
+process(pclk,rst) begin
+  if(rst = '1') then
+    run <= '0';
+  elsif(pclk'event and pclk='1') then
+    if(mema_dc /= "000000000000000000") then
+      run <= '1';
+    else
+      run <= '0';
+    end if;
+  end if;
+end process;
 
-    cout.precision(16);
+-- GENERATE mem_adr  ---------------------
+process(pclk,rst) begin
+  if(rst = '1') then
+    mema_dc <=  n(17 downto 0) ;
+  elsif(pclk'event and pclk='1') then
+    if(mema_dc /= "000000000000000000") then
+      mema_dc <= mema_dc - "000000000000000001";
+    end if;
+  end if;
+end process;
+--hoge
+  mem_adr <= "000000000000000" & mema_dc(15 downto 0) & "0";  -- G5
+--mem_adr <= "00000000000000" & mema_dc(15 downto 0) & "00";  -- SPH FirstStage
+--mem_adr <= "0000000000000" & mema_dc(15 downto 0) & "000";  -- SPH SecondStage
 
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
-    }
-}
-//-----------------------------------------------------------------------------
+end rtl;
