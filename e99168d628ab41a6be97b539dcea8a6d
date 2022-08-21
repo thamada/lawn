@@ -1,9 +1,2 @@
-2022年  8月 11日 木曜日 11:10:52 JST
-#!/bin/sh
-#
-# An example hook script to prepare a packed repository for use over
-# dumb transports.
-#
-# To enable this hook, rename this file to "post-update".
-
-exec git update-server-info
+2022年  8月 21日 日曜日 10:26:54 JST
+set AD {../rtl/ifpga.ucf}
