@@ -1,13 +1,13 @@
-2022年  8月 21日 日曜日 11:22:36 JST
+2022年  8月 24日 水曜日 09:23:19 JST
 JDF G
 // Created by Project Navigator ver 1.0
-PROJECT proj
-DESIGN proj
-DEVFAM virtex2p
+PROJECT tmp2
+DESIGN tmp2
+DEVFAM virtex2
 DEVFAMTIME 0
-DEVICE xc2vp70
+DEVICE xc2v1000
 DEVICETIME 0
-DEVPKG ff1517
+DEVPKG fg456
 DEVPKGTIME 0
 DEVSPEED -5
 DEVSPEEDTIME 0
@@ -19,31 +19,7 @@ DEVSIMULATOR Modelsim
 SIMULATORTIME 0
 DEVGENERATEDSIMULATIONMODEL VHDL
 GENERATEDSIMULATIONMODELTIME 0
-SOURCE ..\dmaw_mem_data.vhd
-SOURCE ..\dmaw_mem_we.vhd
-SOURCE ..\dmar_mem_adr.vhd
-SOURCE ..\dmaw_mem_adr.vhd
-SOURCE ..\dmar_start_adr.vhd
-SOURCE ..\dmaw_start_adr.vhd
-SOURCE ..\dmar_dbus_hiz.vhd
-SOURCE ..\dmar.vhd
-SOURCE ..\clk_muldiv_by_xcore.vhd
-SOURCE ..\dmaw.vhd
-SOURCE ..\user.vhd
-SOURCE ..\dmar_state.vhd
-SOURCE ..\dmar_mem_re.vhd
-SOURCE ..\clk_muldiv.vhd
-SOURCE ..\dmaw_state.vhd
-SOURCE ..\top.vhd
-SOURCE ..\pgpg_mem\dpram.vhd
-SOURCE ..\pgpg_mem\pg_module.vhd
-SOURCE ..\pgpg_mem\calc.vhd
-SOURCE ..\pgpg_mem\jmem.vhd
-SOURCE ..\pgpg_mem\pgpg_mem.vhd
-SOURCE ..\pgpg_mem\adr_dec.vhd
-SOURCE ..\pgpg_mem\pg_pipe.vhd
-SOURCE ..\pgpg_mem\setn.vhd
-SOURCE ..\pgpg_mem\pipe_sts.vhd
-DEPASSOC top ..\top.ucf
+SOURCE pfpga_config.vhd
+STIMULUS sim.tbw
 [STRATEGY-LIST]
 Normal=True
