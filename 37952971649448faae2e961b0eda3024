@@ -1,111 +1,57 @@
-2022年  8月 26日 金曜日 10:19:20 JST
--- 2004/05/13 16:30
--- for matsubayashi simulation
-
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
-
-#define DELAY_SUB 1  /* A */
-#define DELAY_FL  1  /* B */
-#define DELAY_X2Y2 1    /* C */
-#define DELAY_R2   1    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   1    /* I */
-#define DELAY_AC   1    /* J */
-
-#define DELAY_EPS  2    /* A+B */
-#define DELAY_DX   4    /* C+D+E+F */
-#define DELAY_M    5    /* A+B+C+D+E */
-#define DELAY_CLE  9    /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  10   /* DELAY_CLE + DELAY_AC */
-
-
-
-
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
-
-/NPIPE 1
-/NVMP 1
-
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
-
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_rundelay(10);
-  pg_fix_addsub(SUB,xi,xj,xij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,yi,yj,yij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,zi,zj,zij,NPOS,DELAY_SUB);
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(yij,dy,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(zij,dz,NPOS,NLOG,NMAN,DELAY_FL);
-
-  pg_pdelay(dx,dxr,NLOG,DELAY_DX);
-  pg_pdelay(dy,dyr,NLOG,DELAY_DX);
-  pg_pdelay(dz,dzr,NLOG,DELAY_DX);
-
-  pg_log_shift(1,dx,x2,NLOG);
-  pg_log_shift(1,dy,y2,NLOG);
-  pg_log_shift(1,dz,z2,NLOG);
-
-  pg_pdelay(ieps2,ieps2r,NLOG,DELAY_EPS);
-  pg_log_unsigned_add_itp(    x2,y2,x2y2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(z2,ieps2r,z2e2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(  x2y2,z2e2,r2,NLOG,NMAN,DELAY_R2,NCUT);
-
-  pg_log_shift(-1,r2,r1,NLOG);
-  pg_log_muldiv(MUL,r2,r1,r3,NLOG,DELAY_R3);
-
-  pg_pdelay(mj,mjr,17,DELAY_M);
-  pg_log_muldiv(DIV,mjr,r3,mf,NLOG,DELAY_MR3);
-
-  pg_log_muldiv(MUL,mf,dxr,fx,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dyr,fy,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dzr,fz,NLOG,DELAY_F);
-
-  pg_log_muldiv(SDIV,fx,fx_ofst,fxo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fy,fy_ofst,fyo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fz,fz_ofst,fzo,NLOG,DELAY_OF);
-
-  pg_conv_ltof(fxo,ffx,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fyo,ffy,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fzo,ffz,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_fix_accum(ffx,sx,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffy,sy,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffz,sz,NFOR,NACC,DELAY_AC,DELAY_CLE);
-}
+2022年  9月  4日 日曜日 11:06:34 JST
+1
+0.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-100.0	0.0
+-2.746715e-01	4.191831e-01
+-2.931587e-01	2.247797e-01
+2.321991e-01	4.064824e-01
+-1.520429e-01	3.578809e-01
+-8.481506e-02	-3.058323e-01
+1.856104e-01	2.437552e-02
+-3.403643e-01	4.547575e-01
+-3.730157e-01	-4.956605e-01
+-1.173085e-01	-2.492071e-01
+1.552879e-01	3.449078e-02
+1.099664e-01	-2.121421e-01
+4.092620e-01	2.361288e-01
+-3.788992e-01	1.148062e-01
+-2.340848e-01	4.453564e-01
+-7.531051e-02	-2.516460e-01
+1.772955e-01	-4.287967e-01
+-4.426001e-02	-3.237644e-04
+-4.797312e-01	3.861750e-01
+1.545830e-01	5.970007e-02
+4.850480e-01	-1.605443e-01
+-4.632017e-01	-2.009751e-01
+4.881687e-01	-5.634217e-02
+-3.708808e-01	4.150378e-01
+-1.135756e-01	-4.695678e-01
+-3.155564e-01	4.356883e-01
+-1.920876e-02	9.783734e-02
+-6.385236e-02	-3.949834e-01
+2.275205e-01	-3.768423e-01
+1.721155e-01	-4.660092e-01
+4.644338e-01	-4.804784e-01
+-4.553355e-01	-7.876486e-02
+2.642185e-01	4.444889e-01
+5.434882e-02	1.171663e-01
+1.465040e-01	-1.143288e-01
+4.021194e-01	-1.771178e-01
+-7.684997e-02	-4.504972e-02
+7.223762e-02	-4.515364e-01
+-2.392842e-02	-3.878574e-01
+3.425949e-01	-1.136164e-01
+-4.632521e-01	2.447992e-01
+2.661087e-03	-2.676771e-01
+-2.328564e-01	-3.223420e-01
+-4.466751e-01	-1.286633e-01
+-4.479510e-01	-6.189542e-02
+-4.433532e-01	1.711145e-01
+-2.251056e-01	-4.814771e-01
+1.644014e-01	3.307433e-01
+-4.618902e-01	1.489123e-01
+7.775744e-02	3.332788e-01
+3.334003e-01	-1.894713e-01
