@@ -1,109 +1,102 @@
-2022年  8月 27日 土曜日 10:27:42 JST
-info x 101 510 0 0 0 0 0 0 0 0 0 0 0 0 0 0 VHDL
-col x 516 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-radix x 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-entity name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 pfpga_dma
-term mark 194 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-vlib save 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-var add 18 0 0 226 35 0 516 100 50 50 5 85 0 0 0 0 RSTInstd_logicRISING_EDGECLK
-var add 19 0 0 226 36 0 516 100 50 50 5 85 0 0 0 0 CLKInstd_logicRISING_EDGECLK
-var add 1 31 0 228 10 0 516 100 50 50 5 85 0 0 0 0 PGPG_REG3Instd_logic_vectorRISING_EDGECLK
-var add 3 0 0 226 12 0 516 100 50 50 5 85 0 0 0 0 Hit_PGPG_REG3Instd_logicRISING_EDGECLK
-var add 4 12 0 228 15 0 516 100 50 50 5 85 0 0 0 0 MEM_ADAInstd_logic_vectorRISING_EDGECLK
-var add 5 0 0 226 16 0 516 100 50 50 5 85 0 0 0 0 MEM_WEHAInstd_logicRISING_EDGECLK
-var add 6 0 0 226 17 0 516 100 50 50 5 85 0 0 0 0 MEM_WELAInstd_logicRISING_EDGECLK
-var add 7 63 0 228 18 0 516 100 50 50 5 85 0 0 0 0 MEM_DTIAInstd_logic_vectorRISING_EDGECLK
-var add 11 63 0 228 25 0 516 100 50 50 5 85 0 0 0 0 DBUS_idataInstd_logic_vectorRISING_EDGECLK
-var add 17 63 0 228 33 0 516 100 50 50 5 85 0 0 0 0 MEM_DTOBInstd_logic_vectorRISING_EDGECLK
-var add 2 31 0 228 11 0 516 100 50 50 5 85 0 0 0 0 GPREG0Outstd_logic_vectorRISING_EDGECLK
-var add 8 3 0 228 22 0 516 100 50 50 5 85 0 0 0 0 DMAW_ENABLEOutstd_logic_vectorRISING_EDGECLK
-var add 9 3 0 228 23 0 516 100 50 50 5 85 0 0 0 0 DMAR_ENABLEOutstd_logic_vectorRISING_EDGECLK
-var add 10 63 0 228 24 0 516 100 50 50 5 85 0 0 0 0 DBUS_PortOutstd_logic_vectorRISING_EDGECLK
-var add 12 0 0 226 26 0 516 100 50 50 5 85 0 0 0 0 DBUS_HiZOutstd_logicRISING_EDGECLK
-var add 13 12 0 228 29 0 516 100 50 50 5 85 0 0 0 0 MEM_ADBOutstd_logic_vectorRISING_EDGECLK
-var add 14 0 0 226 30 0 516 100 50 50 5 85 0 0 0 0 MEM_WEHBOutstd_logicRISING_EDGECLK
-var add 15 0 0 226 31 0 516 100 50 50 5 85 0 0 0 0 MEM_WELBOutstd_logicRISING_EDGECLK
-var add 16 63 0 228 32 0 516 100 50 50 5 85 0 0 0 0 MEM_DTIBOutstd_logic_vectorRISING_EDGECLK
-vdone xxx 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-npos xxx 179 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-cell fill 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 1 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 1 24 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000000000000000000000000000000
-cell fill 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000
-cell fill 5 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110000
-cell fill 5 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110010
-cell fill 5 56 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110100
-cell fill 5 60 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110110
-cell fill 5 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110000
-cell fill 5 80 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110010
-cell fill 5 84 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110100
-cell fill 5 88 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110110
-cell fill 5 92 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111000
-cell fill 5 96 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111010
-cell fill 5 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111100
-cell fill 5 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000100
-cell fill 5 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000110
-cell fill 5 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111000
-cell fill 5 144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111010
-cell fill 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 104 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 112 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 120 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 148 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 104 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 112 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 120 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 148 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-cell fill 8 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001010
-cell fill 8 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001011
-cell fill 8 56 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001100
-cell fill 8 60 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001101
-cell fill 8 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000001
-cell fill 8 80 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000010
-cell fill 8 84 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000011
-cell fill 8 88 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000100
-cell fill 8 92 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000101
-cell fill 8 96 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000110
-cell fill 8 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000111
-cell fill 8 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000011101110111011101110000000000000100
-cell fill 8 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000011101110111011101110000000000000110
-cell fill 8 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1001100110011001100110011001100110001000100010001000100010001000
-cell fill 8 144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1011101110111011101110111011101110101010101010101010101010101010
-cell fill 9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-cell fill 10 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-time info 50 50 5 85 50 50 1 1 0 0 0 0 0 0 0 0 nsCLK
-font save -14 0 400 49 0 0 0 0 0 0 0 0 0 0 0 0 Times New Roman
-src mod 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 c:\cygwin\home\administrator\fkit\pci64\rtl\pfpga_dma.vhd
-utd true 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-cellenab on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-grid on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-com add 1 1 0 404 21 0 -67 0 0 0 0 0 0 0 0 0 Waveform created by
-HDL Bencher 6.1i
-Source = c:\cygwin\home\administrator\fkit\pci64\rtl\pfpga_dma.vhd
-Thu Dec 16 14:21:33 2004
-type info 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logicBITDOWNTO
-type info 31 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logic_vectorVECTORDOWNTO
-opt vhdl87 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-NumClocks x 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-clock_1 name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 CLK
-Zoom_level x 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.00000000000000
+2022年  9月 10日 土曜日 11:30:13 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-03 03:06:20 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import aieye_find
+import time
+import sys
+
+
+if (__name__ == '__main__'):
+    basedir = '../log/'
+    if (len(sys.argv) > 1 ):
+        basedir = sys.argv[1]
+    
+    iflist = [] 
+    for fname in aieye_find.find(basedir, '*.jpg'):
+        iflist.append(fname)
+
+    iflist.sort()
+    ni = len(iflist)
+    i = 0
+    i_fp = 0.0
+    i_delta = 1
+    i_scale = 60.0
+    speed_state = 0
+
+    #    for i, fname in enumerate(iflist):
+    while( i < ni) :
+        fname = iflist[i]
+
+        #print (fname, i, ni, i/ni)
+        image = cv2.imread(fname)
+        cv2.imshow("play.py", image)
+
+        key = cv2.waitKey(1) & 0xFF
+        if key != 255:  print (key, "%d/%d"% (i, ni))
+
+        if key  == 114:           i_fp = 0.  # r
+
+        if key  == ord('q'): break
+        if key  == 97:            i_fp -= 1.  # d
+        if key  == 100:           i_fp += 1.  # a
+        if key  == 81:            i_fp -= 5.  # <-
+        if key  == 83:            i_fp += 5.  # ->
+        if key  == 86:            i_fp += 30. # Up
+        if key  == 85:            i_fp -= 30. # Down
+        if key  == 82:            i_fp += 300. # PgDn
+        if key  == 84:            i_fp -= 300. # PgUp
+
+        if key  == ord(' '): 
+            if 0 != speed_state: 
+                i_delta = 0
+                speed_state = 0
+            else:
+                i_delta = 1
+                speed_state = 1
+            print ("i_delta:", i_delta)
+            print ("speed_state:", speed_state)
+
+
+        if key  == 226: # R_SHIFT
+            if 0 == speed_state:
+                i_delta = int(i_scale/10.)
+                speed_state = 1
+            elif 1 == speed_state:
+                i_delta = int(i_scale)
+                speed_state = 2
+            elif 2 == speed_state:
+                i_delta = int(i_scale*10.)
+                speed_state = 3
+            elif 3 == speed_state:
+                i_delta = int(i_scale*100.)
+                speed_state = 4
+            elif 4 == speed_state:
+                i_delta = 1
+                speed_state = 0
+            else:
+                i_delta = 1
+                speed_state = 0
+            print ("i_delta:", i_delta)
+            print ("speed_state:", speed_state)
+
+        if key  == ord('+'): 
+            i_delta *= 2
+            print ("i_delta:", i_delta)
+
+        if key  == ord('-'): 
+            i_delta = int(i_delta / 2)
+            if i_delta < 1: i_delta = 1 
+            print ("i_delta:", i_delta)
+
+        #----------------------------------
+        i_fp += i_delta/i_scale
+        if i_fp < 0.0 :  i_fp = 0.0
+        if i_fp >= float(ni): i_fp = float(ni) -1.0
+        i = int(i_fp)
+
+    cv2.destroyAllWindows()
