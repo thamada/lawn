@@ -1,51 +1,85 @@
-2022年  8月 28日 日曜日 10:50:01 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2022年  9月 12日 月曜日 10:09:27 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-05-30 09:51:10 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xaf, 0xdf, 0xf)
+    #    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    cv2.putText(image, text, (10, 15), font_type, font_size, font_color)
+
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+    log_base = '../log/'
+    cap = []
+    for i in range(3):
+        cap.append(cv2.VideoCapture(i))
+
+    # -- swap cap --
+    if True:
+        cap_tmp = cap[0]
+        cap[0] = cap[2]
+        cap[2] = cap_tmp
+
+
+    cap_width  = cap[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap[0].get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+    size = (int(cap_width/2), int(cap_height/2))
+
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+
+    while(cap[0].isOpened() and cap[1].isOpened() and cap[2].isOpened()):
+        frame = [0,0,0]
+        for (i, fm) in enumerate(frame):
+            ret, fm = cap[i].read()
+            smallimg = cv2.resize(fm, size)
+            if False: cv2.imshow('camera: %d'%(i), smallimg)
+            frame[i] = smallimg
+
+        # ----------------------------------------------------------------
+        frame_height, frame_width = frame[0].shape[:2]
+        image = np.zeros((frame_height, frame_width*3, 3), dtype=np.uint8)
+
+        for (i, fm) in enumerate(frame):
+            sx = frame_width * i
+            sy = 0
+            ex = frame_width * (i+1)
+            ey = frame_height
+            image[sy:ey,sx:ex] = fm
+
+        cv2.imshow('pycam', image)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(image, tnow)
+            basedir = '../log/'
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, image)
+            print(ofname)
+            tnow0 = tnow
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    for (i, fm) in enumerate(frame):
+        cap[i].release()
+
+    cv2.destroyAllWindows()
+
+    print("Done.")
