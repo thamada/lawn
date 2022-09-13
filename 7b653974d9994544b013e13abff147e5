@@ -1,102 +1,114 @@
-2022Âπ¥  9Êúà 10Êó• ÂúüÊõúÊó• 11:30:13 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 03:06:20 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
+2022Âπ¥  9Êúà 13Êó• ÁÅ´ÊõúÊó• 11:31:28 JST
+-- multiple clock generator
+-- by Tsuyoshi Hamada
+-- Last Modified at 2004/01/11
+-- ===== COMPONENT SAMPLE =======================================
+--component CLK_MULDIV
+--  generic (CLKFX_MULTIPLY : integer :=3;
+--           CLKFX_DIVIDE : integer := 2);
+--  port (ICLK : in std_logic;
+--        OCLK : out std_logic;
+--        OCLK_FX : out std_logic;
+--        LOCKED : out std_logic);
+--end component;
+--
+-- ===== INSTANCIATION SAMPLE ====================================
+--dcm0 : CLK_MULDIV
+----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
+----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
+----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
+----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
+----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
+----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
+----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
+----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
+--  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
+--  port map (
+--	ICLK=>SYS_CLK,
+--	OCLK=>clk,
+--	OCLK_FX=>pclk,
+--	LOCKED=>dcm_locked);
 
 
-if (__name__ == '__main__'):
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
+library ieee;
+LIBRARY UNISIM;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
+USE UNISIM.Vcomponents.ALL;
 
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
-    i_fp = 0.0
-    i_delta = 1
-    i_scale = 60.0
-    speed_state = 0
+entity CLK_MULDIV is
+  generic (CLKFX_MULTIPLY : integer :=3;
+           CLKFX_DIVIDE : integer := 2);
+  port (ICLK : in std_logic;
+        OCLK : out std_logic;
+        OCLK_FX : out std_logic;
+        LOCKED : out std_logic);
+end CLK_MULDIV;
 
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
+architecture rtl of CLK_MULDIV is
+component BUFG port (I: in  std_logic;  O: out  std_logic); 
+end component;
+component IBUFG port(I: in std_logic; O: out std_logic);
+end component;
+component DCM
+  generic ( 
+       CLKFX_MULTIPLY : integer := 3;
+       CLKFX_DIVIDE : integer := 2;
+       CLKIN_PERIOD : real := 15.000000;
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "FIXED";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+  port ( CLKIN   : in  std_logic;
+       CLKFB   : in  std_logic;
+       DSSEN   : in  std_logic;
+       PSINCDEC   : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK   : in  std_logic;
+       RST     : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90   : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X   : out std_logic;
+       CLK2X180   : out std_logic;
+       CLKDV   : out std_logic;
+       CLKFX   : out std_logic;
+       CLKFX180   : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
 
-        #print (fname, i, ni, i/ni)
-        image = cv2.imread(fname)
-        cv2.imshow("play.py", image)
+signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
 
-        key = cv2.waitKey(1) & 0xFF
-        if key != 255:  print (key, "%d/%d"% (i, ni))
+begin
 
-        if key  == 114:           i_fp = 0.  # r
+dcm0 : DCM
+  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
+	CLKFX_DIVIDE=>CLKFX_DIVIDE,
+        CLKIN_PERIOD => 15.000000,
+	DUTY_CYCLE_CORRECTION=>TRUE)
+  port map(
+    RST          => '0',         -- ÉäÉZÉbÉg
+    CLKIN        => dcm_in,      -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => dcm_fb,         -- FBì¸óÕ
+    DSSEN        => '0',
+    PSINCDEC     => '0',
+    PSEN         => '0',         -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => '0',         -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    LOCKED       => LOCKED,
+    CLKFX        => dcm_fx,      -- ICLK x N
+    CLK0         => dcm_out      -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+  );
 
-        if key  == ord('q'): break
-        if key  == 97:            i_fp -= 1.  # d
-        if key  == 100:           i_fp += 1.  # a
-        if key  == 81:            i_fp -= 5.  # <-
-        if key  == 83:            i_fp += 5.  # ->
-        if key  == 86:            i_fp += 30. # Up
-        if key  == 85:            i_fp -= 30. # Down
-        if key  == 82:            i_fp += 300. # PgDn
-        if key  == 84:            i_fp -= 300. # PgUp
+U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
+U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
+U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
+OCLK <= dcm_fb;
+end rtl;
 
-        if key  == ord(' '): 
-            if 0 != speed_state: 
-                i_delta = 0
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 1
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
-
-
-        if key  == 226: # R_SHIFT
-            if 0 == speed_state:
-                i_delta = int(i_scale/10.)
-                speed_state = 1
-            elif 1 == speed_state:
-                i_delta = int(i_scale)
-                speed_state = 2
-            elif 2 == speed_state:
-                i_delta = int(i_scale*10.)
-                speed_state = 3
-            elif 3 == speed_state:
-                i_delta = int(i_scale*100.)
-                speed_state = 4
-            elif 4 == speed_state:
-                i_delta = 1
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 0
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
-
-        if key  == ord('+'): 
-            i_delta *= 2
-            print ("i_delta:", i_delta)
-
-        if key  == ord('-'): 
-            i_delta = int(i_delta / 2)
-            if i_delta < 1: i_delta = 1 
-            print ("i_delta:", i_delta)
-
-        #----------------------------------
-        i_fp += i_delta/i_scale
-        if i_fp < 0.0 :  i_fp = 0.0
-        if i_fp >= float(ni): i_fp = float(ni) -1.0
-        i = int(i_fp)
-
-    cv2.destroyAllWindows()
