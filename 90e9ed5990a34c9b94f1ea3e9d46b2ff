@@ -1,65 +1,44 @@
-2022年  9月 11日 日曜日 10:17:22 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
--- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
--- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
--- START_ADR                    < n                                    >
--- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
--- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
+2022年  9月 14日 水曜日 09:32:04 JST
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+class Message(object):
+    def __init__(self):
+        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
+        self.is_update = False
 
-entity dmaw_mem_adr is
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmaw_mem_adr;
+#D95CBBF2 7 41 53 28 48 50 R->
+def read_log_one(msg):
 
-architecture rtl of dmaw_mem_adr is
+    fname = '/dev/shm/log.txt'
+    with open(fname, 'r') as fh:
+        lines = fh.readlines()
+        l = lines[-2]
+        l = l.rstrip()
+        cols = l.split(' ')
+        if cols[0] != msg.last[0]:
+            msg.last = cols
+            msg.is_update = True
+        else:
+            msg.is_update = False
 
-signal mem_adr_inc : std_logic_vector(18 downto 0);
-signal   x,z : std_logic_vector(18 downto 0);
-constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
 
-begin
+fig = plt.figure()
+msg = Message()
 
-  z <= x + one;
+def plot(data):
+    global msg, fig
+    read_log_one(msg)
+    if msg.is_update :
+        print (msg.last)
 
-  -----------------
-  -- mem_adr_inc
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE = "10") then
-        mem_adr_inc <= z;
-      else
-        mem_adr_inc <= (others=>'0');
-      end if;
-    end if;
-  end process;
+    plt.cla() # clear graph
+    rand = np.random.randn(100)
+    im = plt.plot(rand)
 
-  x <= mem_adr_inc;
 
-  -----------------
-  -- MEM_ADR
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE="10") then
-        MEM_ADR <= mem_adr_inc + START_ADR;
-      else
-        MEM_ADR <= (others=>'0');
-      end if;
-    end if;
-  end process;
+ani = animation.FuncAnimation(fig, plot, interval=100)
+plt.show()
 
-end rtl;
