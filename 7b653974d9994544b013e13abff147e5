@@ -1,114 +1,49 @@
-2022å¹´  9æœˆ 13æ—¥ ç«æ›œæ—¥ 11:31:28 JST
--- multiple clock generator
--- by Tsuyoshi Hamada
--- Last Modified at 2004/01/11
--- ===== COMPONENT SAMPLE =======================================
---component CLK_MULDIV
---  generic (CLKFX_MULTIPLY : integer :=3;
---           CLKFX_DIVIDE : integer := 2);
---  port (ICLK : in std_logic;
---        OCLK : out std_logic;
---        OCLK_FX : out std_logic;
---        LOCKED : out std_logic);
---end component;
---
--- ===== INSTANCIATION SAMPLE ====================================
---dcm0 : CLK_MULDIV
-----  generic map (CLKFX_MULTIPLY =>11,CLKFX_DIVIDE=>2) -- 183MHz
-----  generic map (CLKFX_MULTIPLY =>16,CLKFX_DIVIDE=>3) -- 178MHz
-----  generic map (CLKFX_MULTIPLY =>5,CLKFX_DIVIDE=>1)  -- 167MHz
-----  generic map (CLKFX_MULTIPLY =>9,CLKFX_DIVIDE=>2)  -- 150MHz
-----  generic map (CLKFX_MULTIPLY =>4,CLKFX_DIVIDE=>1)  -- 133MHz
-----  generic map (CLKFX_MULTIPLY =>7,CLKFX_DIVIDE=>2)  -- 117MHz
-----  generic map (CLKFX_MULTIPLY =>3,CLKFX_DIVIDE=>1)  -- 100MHz
-----  generic map (CLKFX_MULTIPLY =>2,CLKFX_DIVIDE=>1)  -- 67MHz
---  generic map (CLKFX_MULTIPLY =>1,CLKFX_DIVIDE=>1)    -- 33MHz if SYS_CLK is 33MHz
---  port map (
---	ICLK=>SYS_CLK,
---	OCLK=>clk,
---	OCLK_FX=>pclk,
---	LOCKED=>dcm_locked);
+2022å¹´  9æœˆ 17æ—¥ åœŸæ›œæ—¥ 11:21:58 JST
+//Time-stamp: <2006-09-07 13:50:20 hamada>
 
+/NPIPE 1;
 
-library ieee;
-LIBRARY UNISIM;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
-USE UNISIM.Vcomponents.ALL;
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-entity CLK_MULDIV is
-  generic (CLKFX_MULTIPLY : integer :=3;
-           CLKFX_DIVIDE : integer := 2);
-  port (ICLK : in std_logic;
-        OCLK : out std_logic;
-        OCLK_FX : out std_logic;
-        LOCKED : out std_logic);
-end CLK_MULDIV;
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
-architecture rtl of CLK_MULDIV is
-component BUFG port (I: in  std_logic;  O: out  std_logic); 
-end component;
-component IBUFG port(I: in std_logic; O: out std_logic);
-end component;
-component DCM
-  generic ( 
-       CLKFX_MULTIPLY : integer := 3;
-       CLKFX_DIVIDE : integer := 2;
-       CLKIN_PERIOD : real := 15.000000;
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "FIXED";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
-  port ( CLKIN   : in  std_logic;
-       CLKFB   : in  std_logic;
-       DSSEN   : in  std_logic;
-       PSINCDEC   : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK   : in  std_logic;
-       RST     : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90   : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X   : out std_logic;
-       CLK2X180   : out std_logic;
-       CLKDV   : out std_logic;
-       CLKFX   : out std_logic;
-       CLKFX180   : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
+/MEM xj[3] <= x[][] : fix(NPOS);
+/MEM mj    <= m[]   : log(NLOG,NMAN);
+/REG xi[3] <= x[][] : fix(NPOS);
+/REG ieps2 <= eps2  : log(NLOG,NMAN);
+/REG sx[3] => a[][] : fix(NACC);
 
-signal dcm_in,dcm_out,dcm_fx,dcm_fb : std_logic;
+/SCALE xj[3] : xscale;
+/SCALE mj    : mscale;
+/SCALE xi[3] : xscale;
+/SCALE ieps2 : escale;
+/SCALE sx[3] : fscale;
+/NVMP 1;
 
-begin
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           3);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, 4);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-dcm0 : DCM
-  generic map (CLKFX_MULTIPLY=>CLKFX_MULTIPLY,
-	CLKFX_DIVIDE=>CLKFX_DIVIDE,
-        CLKIN_PERIOD => 15.000000,
-	DUTY_CYCLE_CORRECTION=>TRUE)
-  port map(
-    RST          => '0',         -- ƒŠƒZƒbƒg
-    CLKIN        => dcm_in,      -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
-    CLKFB        => dcm_fb,         -- FB“ü—Í
-    DSSEN        => '0',
-    PSINCDEC     => '0',
-    PSEN         => '0',         -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
-    PSCLK        => '0',         -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
-    LOCKED       => LOCKED,
-    CLKFX        => dcm_fx,      -- ICLK x N
-    CLK0         => dcm_out      -- PHASE SHIFTo—ÍƒNƒƒbƒN
-  );
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,9,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,9,NCUT);
 
-U_BUFG0 : IBUFG port map(I=>ICLK, O=>dcm_in);
-U_BUFG1 : BUFG port map(I=>dcm_out,   O=>dcm_fb);
-U_BUFG2 : BUFG port map(I=>dcm_fx, O=>OCLK_FX);  -- 66,100,133MHz
-OCLK <= dcm_fb;
-end rtl;
-
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,2);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,2);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,2);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN,1);
+pg_conv_ltof(fxs, ffx,                 NLOG,NMAN,NFOR,5);
+pg_fix_smaccum(ffx, sx,                NFOR,NACC,4);
