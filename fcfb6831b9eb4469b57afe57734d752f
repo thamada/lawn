@@ -1,51 +1,50 @@
-2022å¹´  9æœˆ 28æ—¥ æ°´æ›œæ—¥ 10:15:55 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2022å¹´ 10æœˆ 19æ—¥ æ°´æ›œæ—¥ 10:57:18 JST
+#include <math.h>
+#define DIM (3)              /* ŸŒ³” */
+#define NMAX (65536)         /* Å‘å—±q” */
+//#define NTOTAL 1000      /* —±q” (NTOTAL <= NMAX) */
+
+//b3_force_sepaj4.c
+void b3_force_sepaj4(double x[][3],
+		     double m[],
+		     double eps2,
+		     double a[][3],
+		     int n);
+
+//pg_pipe.c
+void force_gravity_on_emulator(double x[][3],
+			       double m[],
+			       double eps2,
+			       double a[][3],
+			       int n);
+
+//force_gravity_on_b3.c
+void force(double x[][3],
+	   double m[],
+	   double eps2,
+	   double a[][3],
+	   int n);
+
+
+//check_pg2emu.c
+void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+
+
+//
+void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+
+double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
+void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
+
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
+void debug_position(double x[][DIM], double dt, int n);
+
+void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+
+void init_particles(char* fname,
+		    int* npar,
+		    double mass[],
+		    double posi[][DIM],
+		    double veloc[][DIM]);
