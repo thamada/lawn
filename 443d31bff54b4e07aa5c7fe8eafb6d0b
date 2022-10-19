@@ -1,387 +1,210 @@
-2022年 10月 16日 日曜日 11:24:08 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-
-
-entity PFPGA_DMA is
-  port (
-    -- PGPG REG input 
-    PGPG_REG3 : in std_logic_vector(31 downto 0);  -- PFPGA Read  { CHIPSEL(4b), NQWORD(9b),  STARTADR(19b) }
-    GPREG0    : out std_logic_vector(31 downto 0); -- PFPGA Read Status(BUSY or DONE)
-    Hit_PGPG_REG3 : in std_logic;
-
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(16 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end PFPGA_DMA;
-
-architecture rtl of PFPGA_DMA is
-
------------------------------------------------------------------
--- DMAW/R
-  signal Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr : std_logic;
-  signal ChipSel    : std_logic_vector(3 downto 0);
-  signal START_ADR : std_logic_vector(18 downto 0);
-
--- DMAW
-  signal mem_wea   : std_logic := '0';
-  signal dmaw_we0  : std_logic := '0';
-  signal dmaw_we1  : std_logic := '0';
-  signal dmaw_adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dt0,dmaw_dt1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
---
-
--- DMAR
-  signal dmar_enable_cnt0   : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable_cnt0_r : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable0 : std_logic :='0';
-  signal dmar_enable1 : std_logic :='0';
-  signal dmar_enable2 : std_logic :='0';
-  signal dmar_enable3 : std_logic :='0';
-  signal dmar_enable4 : std_logic :='0';
-  signal dmar_enable5 : std_logic :='0';
-  signal dmar_enable6 : std_logic :='0';
-  signal dmar_enable7 : std_logic :='0';
-  signal lo_mem_wad, lo_mem_wad_z : std_logic_vector(12 downto 0);
-  signal dmar_dbus_o   : std_logic_vector(63 downto 0) := (others=>'0');
----
-  signal busy_dmar : std_logic;
-  signal busy_dmaw : std_logic;
-  signal dbus_port0 : std_logic_vector(63 downto 0) := (others=>'0'); 
-begin
-
-  GPREG0(0)   <= '0'; -- not used
-  Hit_DMAW    <= '0'; -- not used
-  busy_dmaw   <= '0'; -- not used
-
-  -- DMA BUSY or IDLE
-  GPREG0(1)   <= busy_dmar;
-  busy_dmar   <= Hit_DMAR or Hit_DMARr or dmar_enable0 or  dmar_enable1 or  dmar_enable2 or  dmar_enable3
-                                       or dmar_enable4 or  dmar_enable5 or  dmar_enable6 or  dmar_enable7;
-  GPREG0(31 downto 2) <= (others=>'0');
-
-
-  Hit_DMAR <= Hit_PGPG_REG3;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      Hit_DMAWr <= Hit_DMAW;
-      Hit_DMARr <= Hit_DMAR;
-    end if;
-  end process;
-
-
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
---    WR SHARE
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
-
-  ----------------------------
-  --- DMAR/W START ADR     ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      START_ADR <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        START_ADR <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        START_ADR <= PGPG_REG3(18 downto 0);
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  --- ChipSel              ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      ChipSel <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        ChipSel <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        if    (PGPG_REG3(28) = '1') then
-          ChipSel <= "0001";
-        elsif (PGPG_REG3(29) = '1') then
-          ChipSel <= "0010";
-        elsif (PGPG_REG3(30) = '1') then
-          ChipSel <= "0100";
-        else
-          ChipSel <= "1000";
-        end if;
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      DBUS_Port <= dbus_port0;
-    end if;
-  end process;
-
-  with busy_dmar select
-    dbus_port0 <= dmar_dbus_o when '1',
-                  dmaw_dbus_o when others;
-
-  ------------------------------
-  --- MEM_ADB                ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      MEM_ADB <= lo_mem_wad;
-    end if;
-  end process;
-
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
--- DMA WRITE ( ifpga -> pfpga )
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-  ------------------------------
-  --- mem_wea                ---
-  ------------------------------
-  mem_wea <= MEM_WEHA AND MEM_WELA;
-
-  ------------------------------
-  --- dmaw_we0,1             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      dmaw_we0 <= mem_wea;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmaw_we1 <= dmaw_we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- dmaw_adr               ---
-  ------------------------------
-  process (RST,CLK,mem_wea,dmaw_we0) begin
-    if(RST='1') then
-      dmaw_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((mem_wea = '1') and (dmaw_we0 = '0')) then
-        dmaw_adr(15 downto 0) <= MEM_ADA(16 downto 1);
-      end if;
-      dmaw_adr(63 downto 16) <= (others=>'0');
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dt delay          ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_dt1 <= (others=>'0');
-      dmaw_dt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      dmaw_dt1 <= dmaw_dt0;
-      dmaw_dt0 <= MEM_DTIA;
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dbus_o            ---
-  ------------------------------
-  process (RST,CLK,dmaw_we0,dmaw_we1) begin
-    if(RST='1') then
-      dmaw_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(dmaw_we0 = '1' and dmaw_we1 = '0') then
-        dmaw_dbus_o <= dmaw_adr;
-      else
-        dmaw_dbus_o <= dmaw_dt1;
-      end if;
-    end if;
-  end process;
-
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= dmaw_we1;
-      DMAW_ENABLE(1) <= dmaw_we1;
-      DMAW_ENABLE(2) <= dmaw_we1;
-      DMAW_ENABLE(3) <= dmaw_we1;
-    end if;
-  end process;
-
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
--- DMA READ (ifpga <- pfpga)
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-
-  ----------------------------
-  -- DMAR ENABLE COUNT     ---
-  ----------------------------
-  dmar_enable_cnt0_r <= dmar_enable_cnt0;
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0_r) begin
-    if(RST='1') then
-      dmar_enable_cnt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable_cnt0 <= "0000" & PGPG_REG3(27 downto 19);   -- SET NQWORD
-      elsif(dmar_enable_cnt0_r /= "000000000000") then
-        dmar_enable_cnt0 <= dmar_enable_cnt0_r - "000000000001";
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  -- DMAR ENABLE 0         ---
-  ----------------------------
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0) begin
-    if(RST='1') then
-      dmar_enable0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable0 <= '1';
-      elsif(dmar_enable_cnt0 = "000000000000") then
-        dmar_enable0 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmar_enable7 <= dmar_enable6;
-      dmar_enable6 <= dmar_enable5;
-      dmar_enable5 <= dmar_enable4;
-      dmar_enable4 <= dmar_enable3;
-      dmar_enable3 <= dmar_enable2;
-      dmar_enable2 <= dmar_enable1;
-      dmar_enable1 <= dmar_enable0;
-    end if;
-  end process;
-
-
-  ------------------------------
-  --- DMAR ENABLE            ---
-  ------------------------------
-  process (CLK,dmar_enable1,dmar_enable2)  begin
-    if(CLK'event and CLK='1') then
-      if((dmar_enable0 = '1') OR (dmar_enable1 = '1')) then
-        DMAR_ENABLE(0) <= '1' AND ChipSel(0);
-        DMAR_ENABLE(1) <= '1' AND ChipSel(1);
-        DMAR_ENABLE(2) <= '1' AND ChipSel(2);
-        DMAR_ENABLE(3) <= '1' AND ChipSel(3);
-      else
-        DMAR_ENABLE <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DMAR_DBUS_O            ---
-  ------------------------------
-  process (RST,CLK,dmar_enable0,dmar_enable1,dmar_enable2,dmar_enable3)  begin
-    if(RST='1') then
-      dmar_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(    (dmar_enable0 = '1') AND (dmar_enable1 = '0') ) then
-        dmar_dbus_o <= ("000000000000000000000000000000000000000000000" & START_ADR);
-      elsif( (dmar_enable1 = '1') AND (dmar_enable2 = '0') ) then
---        dmar_dbus_o <= X"FFFFFFFFFFFFFFFF";
-        NULL;
-      elsif( (dmar_enable2 = '1') AND (dmar_enable3 = '0') ) then
-        dmar_dbus_o <= (others=>'0');
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_HiZ               ---
-  ------------------------------
-  process (RST,CLK,dmar_enable2,dmar_enable3,dmar_enable4,dmar_enable5)  begin
-    if(RST='1') then
-      DBUS_HiZ <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable2 = '1') OR (dmar_enable3 = '1') OR (dmar_enable4 = '1') OR (dmar_enable5 = '1') ) then
-        DBUS_HiZ <= '1';
-      else
-        DBUS_HiZ <= '0';
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_DTIB               ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_DTIB <= DBUS_idata;
-    end if;
-  end process;
-
-  ------------------------------
-  --- MEM_WEHB, MEM_WELB     ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_WEHB <= dmar_enable6;
-      MEM_WELB <= dmar_enable6;
-    end if;
-  end process;
-
-  ------------------------------
-  --- lo_mem_wad             ---
-  ------------------------------
-  lo_mem_wad_z <= lo_mem_wad;
---  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
---    if(RST='1') then
---      lo_mem_wad <= "1000000000000";
---    elsif(CLK'event and CLK='1') then
---      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
---        lo_mem_wad <= "1000000000000";
---      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
---      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= "1000000000000";
---      end if;
---    end if;
---  end process;
-  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
-    if(RST='1') then
-      lo_mem_wad <= "0000000000000";
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
-        lo_mem_wad <= "0000000000000";
-      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
-      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= "0000000000000";
-      end if;
-    end if;
-  end process;
-
-end rtl;
+2022年 10月 19日 水曜日 11:11:29 JST
+#COREGen Project File
+#Tue Nov 09 19:41:17 JST 2004
+overwritefiles=Default
+blkmemsp_v5_0|Xilinx,\ Inc.|5.0=true
+sid_v3_1|Xilinx,\ Inc.|3.1=true
+decode_8b10b_v5_0|Xilinx,\ Inc.|5.0=true
+C_REG_FD_V6_0|Xilinx,\ Inc.|6.0=true
+C_REG_FD_V3_0|Xilinx,\ Inc.|3.0=false
+C_MUX_BIT_V5_0|Xilinx,\ Inc.|5.0=false
+convolution_v2_0|Xilinx,\ Inc.|2.0=false
+pci32_v3_0|Xilinx,\ Inc.|3.0=true
+C_TWOS_COMP_V4_0|Xilinx,\ Inc.|4.0=false
+C_SHIFT_FD_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_PCI32sII|Xilinx,\ Inc.|3.0=false
+gig_eth_pcs_pma_v4_0|Xilinx,\ Inc.|4.0=true
+C_DDS_V4_2|Xilinx,\ Inc.|4.2=true
+ten_gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
+C_ACCUM_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_pci_express_x1|Xilinx,\ Inc.|1.0=true
+C_GATE_BIT_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+xilinxfamily=Virtex2
+C_COUNTER_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
+C_DIST_MEM_V4_1|Xilinx,\ Inc.|4.1=false
+C_COUNTER_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
+C_ADDSUB_V4_0|Xilinx,\ Inc.|4.0=false
+outputoption=DesignFlow
+C_MUX_SLICE_BUFE_V2_0|Xilinx,\ Inc.|2.0=false
+dividervht|Xilinx,\ Inc.|2.0=true
+C_GATE_BIT_V4_0|Xilinx,\ Inc.|4.0=false
+simvendor=ModelSim
+mult_gen_v6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+vfft64v2|Xilinx,\ Inc.|2.0=true
+C_DA_FIR_V7_0|Xilinx,\ Inc.|7.0=false
+C_REG_LD_V6_0|Xilinx,\ Inc.|6.0=true
+mac_v2_0|Xilinx,\ Inc.|2.0=true
+C_REG_LD_V3_0|Xilinx,\ Inc.|3.0=false
+sid_v2_0|Xilinx,\ Inc.|2.0=false
+C_SHIFT_RAM_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_SLICE_BUFT_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFE_V5_0|Xilinx,\ Inc.|5.0=false
+C_SHIFT_RAM_V3_0|Xilinx,\ Inc.|3.0=false
+ADPCM32_catalog|Xilinx,\ Inc.|1.0=true
+C_MUX_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+outputproducts=ImpNetlist;ASYSymbol;VHDLSim
+cam_v4_0|Xilinx,\ Inc.|4.0=true
+C_MAC_FIR_V2_0|Xilinx,\ Inc.|2.0=false
+C_COMPARE_V4_0|Xilinx,\ Inc.|4.0=false
+C_DA_2D_DCT_V2_0|Xilinx,\ Inc.|2.0=true
+C_BIT_CORRELATOR_V3_0|Xilinx,\ Inc.|3.0=true
+cordic_v2_0|Xilinx,\ Inc.|2.0=true
+xlnx_PCI64v|Xilinx,\ Inc.|3.0=false
+fileversion=4
+C_DIST_MEM_V3_0|Xilinx,\ Inc.|3.0=false
+decode_8b10b_v4_0|Xilinx,\ Inc.|4.0=false
+viterbi_v3_0|Xilinx,\ Inc.|3.0=true
+C_MUX_SLICE_BUFT_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_FD_V2_0|Xilinx,\ Inc.|2.0=false
+encode_8b10b_v4_0|Xilinx,\ Inc.|4.0=true
+xapp265|Xilinx,\ Inc.|1.1=true
+C_DECODE_BINARY_V5_0|Xilinx,\ Inc.|5.0=false
+C_SHIFT_FD_V2_0|Xilinx,\ Inc.|2.0=false
+rs_decoder_v4_0|Xilinx,\ Inc.|4.0=false
+C_DECODE_BINARY_V2_0|Xilinx,\ Inc.|2.0=false
+C_GATE_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+blkmemdp_v3_0|Xilinx,\ Inc.|3.0=false
+C_MAC_V3_0|Xilinx,\ Inc.|3.0=true
+posphyl3_link_v1_0|Xilinx,\ Inc.|3.2=true
+sync_fifo_v2_0|Xilinx,\ Inc.|2.0=false
+blkmemsp_v4_0|Xilinx,\ Inc.|4.0=false
+C_DIST_MEM_V6_0|Xilinx,\ Inc.|6.0=true
+C_REG_FD_V5_0|Xilinx,\ Inc.|5.0=false
+C_MUX_BIT_V4_0|Xilinx,\ Inc.|4.0=false
+C_TWOS_COMP_V3_0|Xilinx,\ Inc.|3.0=false
+C_SHIFT_FD_V5_0|Xilinx,\ Inc.|5.0=false
+posphyl4_v6_0_1|Xilinx,\ Inc.|6.0.1=true
+formalverification=None
+C_ACCUM_V4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BIT_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+vfft1024|Xilinx,\ Inc.|1.0=true
+C_COUNTER_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
+C_ADDSUB_V3_0|Xilinx,\ Inc.|3.0=false
+vfft1024v2|Xilinx,\ Inc.|2.0=true
+C_MUX_SLICE_BUFE_V4_0|Xilinx,\ Inc.|4.0=false
+C_SHIFT_RAM_V2_0|Xilinx,\ Inc.|2.0=false
+xfft_v2_0|Xilinx,\ Inc.|2.0=false
+designflow=VHDL
+C_GATE_BIT_V3_0|Xilinx,\ Inc.|3.0=false
+rs_decoder_v4_1|Xilinx,\ Inc.|4.1=true
+mult_gen_v5_0|Xilinx,\ Inc.|5.0=false
+C_TWOS_COMP_V6_0|Xilinx,\ Inc.|6.0=true
+xlnx_pci64_dk|Xilinx,\ Inc.|1.0=true
+vfft64|Xilinx,\ Inc.|1.0=true
+C_DDC_V1_0|Xilinx,\ Inc.|1.0=true
+C_DA_FIR_V6_0|Xilinx,\ Inc.|6.0=false
+C_REG_LD_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_LD_V2_0|Xilinx,\ Inc.|2.0=false
+lockedprops=
+lfsr_v3_0|Xilinx,\ Inc.|3.0=true
+C_ADDSUB_V6_0|Xilinx,\ Inc.|6.0=true
+xfft_v2_1|Xilinx,\ Inc.|2.1=true
+C_CIC_V3_0|Xilinx,\ Inc.|3.0=true
+C_SHIFT_RAM_V5_0|Xilinx,\ Inc.|5.0=false
+async_fifo_v5_0|Xilinx,\ Inc.|5.0=false
+blkmemdp_v3_2|Xilinx,\ Inc.|3.2=false
+C_GATE_BIT_V6_0|Xilinx,\ Inc.|6.0=true
+simulationoutputproducts=VHDL
+C_MUX_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+C_SIN_COS_V4_0|Xilinx,\ Inc.|4.0=false
+HDLC32_catalog|Xilinx,\ Inc.|1.0=true
+busformat=BusFormatAngleBracketNotRipped
+cam_v3_0|Xilinx,\ Inc.|3.0=false
+vfft256v2|Xilinx,\ Inc.|2.0=true
+C_MAC_FIR_V1_0|Xilinx,\ Inc.|1.0=false
+C_COMPARE_V3_0|Xilinx,\ Inc.|3.0=false
+vfft16|Xilinx,\ Inc.|1.0=true
+xlnx_PCI64s2|Xilinx,\ Inc.|3.0=false
+cordic_v1_0|Xilinx,\ Inc.|1.0=false
+flowvendor=Foundation_iSE
+magicnumber=-1172307782
+viterbi_v2_0|Xilinx,\ Inc.|2.0=false
+C_DIST_MEM_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFT_V4_0|Xilinx,\ Inc.|4.0=false
+encode_8b10b_v3_0|Xilinx,\ Inc.|3.0=false
+C_SIN_COS_V4_1|Xilinx,\ Inc.|4.1=false
+HDLC1_catalog|Xilinx,\ Inc.|1.0=true
+C_DECODE_BINARY_V4_0|Xilinx,\ Inc.|4.0=false
+rs_encoder_v4_0|Xilinx,\ Inc.|4.0=false
+rs_decoder_v3_0|Xilinx,\ Inc.|3.0=false
+blkmemdp_v5_0|Xilinx,\ Inc.|5.0=true
+C_GATE_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+sync_fifo_v4_0|Xilinx,\ Inc.|4.0=true
+tcc_decoder_v1_0|Xilinx,\ Inc.|1.0=true
+C_MAC_FIR_V4_0|Xilinx,\ Inc.|4.0=false
+C_ACCUM_V3_0|Xilinx,\ Inc.|3.0=false
+sync_fifo_v1_0|Xilinx,\ Inc.|1.0=false
+C_COMPARE_V6_0|Xilinx,\ Inc.|6.0=true
+cordic_v1_1|Xilinx,\ Inc.|1.1=false
+blkmemsp_v3_0|Xilinx,\ Inc.|3.0=false
+async_fifo_v5_1|Xilinx,\ Inc.|5.1=true
+C_DIST_MEM_V5_0|Xilinx,\ Inc.|5.0=false
+C_REG_FD_V4_0|Xilinx,\ Inc.|4.0=false
+C_MUX_BIT_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_BIT_V3_0|Xilinx,\ Inc.|3.0=false
+convolution_v3_0|Xilinx,\ Inc.|3.0=true
+rs_encoder_v4_1|Xilinx,\ Inc.|4.1=true
+mult_gen_v4_0|Xilinx,\ Inc.|4.0=false
+xfft1024_v1_1|Xilinx,\ Inc.|1.1=true
+C_TWOS_COMP_V2_0|Xilinx,\ Inc.|2.0=false
+flexbus4_v1_0|Xilinx,\ Inc.|1.0=false
+C_SHIFT_FD_V4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+C_ACCUM_V6_0|Xilinx,\ Inc.|6.0=true
+C_GATE_BIT_BUS_V4_0|Xilinx,\ Inc.|4.0=false
+C_DIST_MEM_V5_1|Xilinx,\ Inc.|5.1=false
+C_ADDSUB_V5_0|Xilinx,\ Inc.|5.0=false
+lfsr_v2_0|Xilinx,\ Inc.|2.0=false
+C_COUNTER_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
+C_ADDSUB_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_SLICE_BUFE_V3_0|Xilinx,\ Inc.|3.0=false
+C_SIN_COS_V4_2|Xilinx,\ Inc.|4.2=true
+xaui_v4_0|Xilinx,\ Inc.|4.0=true
+vfft16v2|Xilinx,\ Inc.|2.0=true
+xlnx_PCIX64_virtex_e_ii|Xilinx,\ Inc.|5.0=true
+C_GATE_BIT_V5_0|Xilinx,\ Inc.|5.0=false
+C_GATE_BIT_V2_0|Xilinx,\ Inc.|2.0=false
+C_MUX_BUS_V3_0|Xilinx,\ Inc.|3.0=false
+C_TWOS_COMP_V5_0|Xilinx,\ Inc.|5.0=false
+posphyl4_lite_v2_0|Xilinx,\ Inc.|2.0=true
+C_DA_FIR_V8_0|Xilinx,\ Inc.|8.0=true
+C_DA_FIR_V5_0|Xilinx,\ Inc.|5.0=false
+xlnx_PCI64|Xilinx,\ Inc.|3.0=true
+C_DDS_V4_0|Xilinx,\ Inc.|4.0=false
+C_REG_LD_V4_0|Xilinx,\ Inc.|4.0=false
+C_DA_1D_DCT_V2_1|Xilinx,\ Inc.|2.1=true
+C_COUNTER_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
+C_MUX_SLICE_BUFE_V6_0|Xilinx,\ Inc.|6.0=true
+C_SHIFT_RAM_V4_0|Xilinx,\ Inc.|4.0=false
+async_fifo_v4_0|Xilinx,\ Inc.|4.0=false
+xlnx_PCI32v|Xilinx,\ Inc.|3.0=false
+vfft32_v3_0|Xilinx,\ Inc.|3.0=true
+C_MUX_BUS_V6_0|Xilinx,\ Inc.|6.0=true
+blkmemsp_v3_2|Xilinx,\ Inc.|3.2=false
+C_COMPARE_V2_0|Xilinx,\ Inc.|2.0=false
+C_DDS_V4_1|Xilinx,\ Inc.|4.1=false
+vfft256|Xilinx,\ Inc.|1.0=true
+simelaboptions=
+C_DIST_MEM_V4_0|Xilinx,\ Inc.|4.0=false
+C_MUX_SLICE_BUFT_V6_0|Xilinx,\ Inc.|6.0=true
+sid_v3_0|Xilinx,\ Inc.|3.0=false
+xilinxsubfamily=Virtex2
+C_MUX_SLICE_BUFT_V3_0|Xilinx,\ Inc.|3.0=false
+C_MUX_BIT_V2_0|Xilinx,\ Inc.|2.0=false
+gig_eth_mac_v4_0|Xilinx,\ Inc.|4.0=true
+C_DECODE_BINARY_V6_0|Xilinx,\ Inc.|6.0=true
+C_SHIFT_FD_V3_0|Xilinx,\ Inc.|3.0=false
+corelibraryid=0
+C_DECODE_BINARY_V3_0|Xilinx,\ Inc.|3.0=false
+rs_encoder_v3_0|Xilinx,\ Inc.|3.0=false
+C_GATE_BUS_V5_0|Xilinx,\ Inc.|5.0=false
+blkmemdp_v4_0|Xilinx,\ Inc.|4.0=false
+C_GATE_BUS_V2_0|Xilinx,\ Inc.|2.0=false
+sync_fifo_v3_0|Xilinx,\ Inc.|3.0=false
+tcc_encoder_v1_0|Xilinx,\ Inc.|1.0=true
+C_MAC_FIR_V3_0|Xilinx,\ Inc.|3.0=true
+C_ACCUM_V2_0|Xilinx,\ Inc.|2.0=false
+C_COMPARE_V5_0|Xilinx,\ Inc.|5.0=false
