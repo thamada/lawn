@@ -1,65 +1,90 @@
-2022年 10月 18日 火曜日 11:03:54 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
--- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
--- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
--- START_ADR                    < n                                    >
--- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
--- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
+2022年 10月 20日 木曜日 09:35:29 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 00:18:35 hamada>
+import Message
+import numpy as np
+import cv2
+from datetime import datetime
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
-entity dmaw_mem_adr is
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmaw_mem_adr;
 
-architecture rtl of dmaw_mem_adr is
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-signal mem_adr_inc : std_logic_vector(18 downto 0);
-signal   x,z : std_logic_vector(18 downto 0);
-constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-begin
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
 
-  z <= x + one;
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-  -----------------
-  -- mem_adr_inc
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE = "10") then
-        mem_adr_inc <= z;
-      else
-        mem_adr_inc <= (others=>'0');
-      end if;
-    end if;
-  end process;
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
 
-  x <= mem_adr_inc;
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
 
-  -----------------
-  -- MEM_ADR
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE="10") then
-        MEM_ADR <= mem_adr_inc + START_ADR;
-      else
-        MEM_ADR <= (others=>'0');
-      end if;
-    end if;
-  end process;
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
-end rtl;
+
+def get_bar_length(msg, x):
+    class_id = msg.get_classId()
+    dx = 25
+    z = 0
+    # if class_id == 5: z = x + dx/2; x = int(z)
+    # if class_id == 6: z = x + dx*2; x = int(z)
+    # if class_id == 4: z = x - dx*2; x = int(z)
+
+    if class_id == 0: z = x + dx*2; x = int(z)
+    if class_id in {0,4,5,6,7,8}: 
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        print (tnow,': ', msg.class_count)
+    return (x)
+
+if __name__ == '__main__':
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 120)
+    image  = image0.copy()
+
+    window_title = "AI sensor"
+    x = 0
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
+
+    while(True):
+        x = get_bar_length(msg, x)
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
