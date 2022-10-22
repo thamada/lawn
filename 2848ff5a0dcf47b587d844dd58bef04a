@@ -1,37 +1,51 @@
-2022年 10月 21日 金曜日 10:27:15 JST
-#!/bin/sh
-#
-# An example hook script to prepare the commit log message.
-# Called by "git commit" with the name of the file that has the
-# commit message, followed by the description of the commit
-# message's source.  The hook's purpose is to edit the commit
-# message file.  If the hook fails with a non-zero status,
-# the commit is aborted.
-#
-# To enable this hook, rename this file to "prepare-commit-msg".
+2022年 10月 22日 土曜日 10:12:02 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
+--state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
 
-# This hook includes three examples.  The first comments out the
-# "Conflicts:" part of a merge commit.
-#
-# The second includes the output of "git diff --name-status -r"
-# into the message, just before the "git status" output.  It is
-# commented because it doesn't cope with --amend or with squashed
-# commits.
-#
-# The third example adds a Signed-off-by line to the message, that can
-# still be edited.  This is rarely a good idea.
+-- 0->1 : if((state==0)&&(dma_we==1))
+-- 1->2 : if (state==1)
+-- 2->3 : if((state==2) &&(dma_we==0))
+-- 3->0 : if (state==3)
 
-case "$2,$3" in
-  merge,)
-    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-# ,|template,)
-#   /usr/bin/perl -i.bak -pe '
-#      print "\n" . `git diff --cached --name-status -r`
-#	 if /^#/ && $first++ == 0' "$1" ;;
+entity dmaw_state is
+  port (
+    RST      : in std_logic;
+    CLK      : in std_logic;
+    ENABLE   : in std_logic;
+    STATE    : out std_logic_vector(1 downto 0) );
+end dmaw_state;
 
-  *) ;;
-esac
+architecture rtl of dmaw_state is
 
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+signal state_ff : std_logic_vector(1 downto 0);
+begin
+
+  STATE <= state_ff;
+
+  process (RST,CLK,ENABLE,state_ff) begin
+    if(RST='1') then
+      state_ff <= (others=>'0');
+    elsif(CLK'event and CLK = '1') then
+      if((state_ff="00") AND (ENABLE='1')) then
+        state_ff <= "01";
+      elsif(state_ff = "01") then
+        state_ff <= "10";
+      elsif((state_ff = "10") AND (ENABLE='0')) then
+        state_ff <= "11";
+      elsif((state_ff = "10") AND (ENABLE='1')) then
+        state_ff <= "10";
+      else -- if(state_ff = "11") then
+        state_ff <= "00";
+      end if;
+    end if;
+  end process;
+
+end rtl;
