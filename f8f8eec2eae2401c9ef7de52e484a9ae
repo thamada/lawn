@@ -1,90 +1,37 @@
-2022年 10月 20日 木曜日 09:35:29 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 00:18:35 hamada>
-import Message
-import numpy as np
-import cv2
-from datetime import datetime
+2022年 10月 30日 日曜日 10:52:16 JST
+#!/bin/sh
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file.  If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
 
-def create_cv_image(cols=640, rows=480):
-    image = np.zeros((rows, cols, 3), np.uint8)
-    return (image)
+# This hook includes three examples.  The first comments out the
+# "Conflicts:" part of a merge commit.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# commits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
 
+case "$2,$3" in
+  merge,)
+    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
-def draw_rect(msg, image, x):
-    img_h, img_w = image.shape[:2]
+# ,|template,)
+#   /usr/bin/perl -i.bak -pe '
+#      print "\n" . `git diff --cached --name-status -r`
+#	 if /^#/ && $first++ == 0' "$1" ;;
 
-    y0 = (img_h>>1)-40
-    y1 = (img_h>>1)-30
+  *) ;;
+esac
 
-    if False:
-        x0 = 10
-        x1 = x + 20
-        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
-
-    # --- Yolo/Person ---
-    x0 = 10
-    x1 = x0 + msg.class_count[0] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Goo ---
-    x0 = 10
-    x1 = x0 + msg.class_count[4] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
-
-    # --- Choki ---
-    x0 = 10
-    x1 = x0 + msg.class_count[5] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0xFF, 0]
-
-    # --- Pa ---
-    x0 = 10
-    x1 = x0 + msg.class_count[6] * 2
-    y0 = y1 + 5
-    y1 = y0 + 10
-    image[y0:y1, x0:x1] = [0, 0, 0xFF]
-
-
-def get_bar_length(msg, x):
-    class_id = msg.get_classId()
-    dx = 25
-    z = 0
-    # if class_id == 5: z = x + dx/2; x = int(z)
-    # if class_id == 6: z = x + dx*2; x = int(z)
-    # if class_id == 4: z = x - dx*2; x = int(z)
-
-    if class_id == 0: z = x + dx*2; x = int(z)
-    if class_id in {0,4,5,6,7,8}: 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        print (tnow,': ', msg.class_count)
-    return (x)
-
-if __name__ == '__main__':
-    msg = Message.Message()
-    msg.reset()
-    image0 = create_cv_image(640, 120)
-    image  = image0.copy()
-
-    window_title = "AI sensor"
-    x = 0
-    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL);
-
-    while(True):
-        x = get_bar_length(msg, x)
-        if x < 0 : x = 0
-        if x > image.shape[1]-10 : x = image.shape[1]-10
-        draw_rect(msg, image, x)
-        cv2.imshow(window_title, image)
-        image = image0.copy()
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if key == ord('p'): print (msg.class_count)
-
-    cv2.destroyAllWindows()
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
