@@ -1,387 +1,261 @@
-2022年 10月 22日 土曜日 09:57:21 JST
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2022年 11月  6日 日曜日 11:15:53 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-12 07:43:27 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+
+class State(object):
+    def __init__(self):
+        self.is_record = False
+        self.drawing = False
+        self.moving = False
+        self.posi0 = [-1,-1]
+        self.posi1 = [-1,-1]
+        self.posi2 = [-1,-1]
+        self.image = -1
+        self.image_size = [-1, -1] # [height, width]
+        self.image_orig = -1
+        self.class_num = 777
+        self.image_num = 0
+
+    def draw_rect(self):
+        # print ("posi0, posi1: ", self.posi0, self.posi1)
+        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
+
+    def draw_text(self):
+        if(self.is_record):
+            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
+            font_size = 0.8
+            text = "<<%d>>"% (self.image_num)
+            color = (0x0, 0x0, 0xBF)
+            px = int(self.image_size[1]/2)
+            py = 30
+            cv2.putText(self.image, text,(px, py), font, font_size, color)
+
+state = State()
+
+def mouse_event(event,x,y,flags,param):
+    global state
+
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
+
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
+
+    if event == (cv2.EVENT_RBUTTONDOWN): 
+        state.moving = True
+        state.posi2[0] = x
+        state.posi2[1] = y
+
+    if event == (cv2.EVENT_RBUTTONUP): 
+        state.moving = False
+        state.posi2[0] = x
+        state.posi2[1] = y
+    
+
+    if event == (cv2.EVENT_MOUSEMOVE):
+        if state.moving == True:
+            width  = abs(state.posi0[0] - state.posi1[0])
+            height = abs(state.posi0[1] - state.posi1[1])
+            x0 = x - int(width/2)
+            x1 = x + int(width/2)
+            y0 = y - int(height/2)
+            y1 = y + int(height/2)
+
+            x_min = min(x0, x1)
+            x_max = max(x0, x1)
+            y_min = min(y0, y1)
+            y_max = max(y0, y1)
+
+            if x_min < 0: x_min = 0
+            if y_min < 0: y_min = 0
+            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
+            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
+
+            state.posi0[0] = x_min
+            state.posi0[1] = y_min
+            state.posi1[0] = x_max
+            state.posi1[1] = y_max
+
+def __mouse_event(event,x,y,flags,param):
+    global state
+
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
 
 
-entity PFPGA_DMA is
-  port (
-    -- PGPG REG input 
-    PGPG_REG3 : in std_logic_vector(31 downto 0);  -- PFPGA Read  { CHIPSEL(4b), NQWORD(9b),  STARTADR(19b) }
-    GPREG0    : out std_logic_vector(31 downto 0); -- PFPGA Read Status(BUSY or DONE)
-    Hit_PGPG_REG3 : in std_logic;
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(16 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
+#------------------------------------------------------------------------ save_data
+def save_data_bbox(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%08d" % fnum
 
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end PFPGA_DMA;
+def save_data_darknet(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4darknet/'
+    fname_body = "image_%08d" % fnum
 
-architecture rtl of PFPGA_DMA is
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    #print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
------------------------------------------------------------------
--- DMAW/R
-  signal Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr : std_logic;
-  signal ChipSel    : std_logic_vector(3 downto 0);
-  signal START_ADR : std_logic_vector(18 downto 0);
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    #print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
--- DMAW
-  signal mem_wea   : std_logic := '0';
-  signal dmaw_we0  : std_logic := '0';
-  signal dmaw_we1  : std_logic := '0';
-  signal dmaw_adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dt0,dmaw_dt1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
---
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    
+    label_format = 'BBox'
+    label_format = 'darknet'
 
--- DMAR
-  signal dmar_enable_cnt0   : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable_cnt0_r : std_logic_vector(12 downto 0) :=(others=>'0');
-  signal dmar_enable0 : std_logic :='0';
-  signal dmar_enable1 : std_logic :='0';
-  signal dmar_enable2 : std_logic :='0';
-  signal dmar_enable3 : std_logic :='0';
-  signal dmar_enable4 : std_logic :='0';
-  signal dmar_enable5 : std_logic :='0';
-  signal dmar_enable6 : std_logic :='0';
-  signal dmar_enable7 : std_logic :='0';
-  signal lo_mem_wad, lo_mem_wad_z : std_logic_vector(12 downto 0);
-  signal dmar_dbus_o   : std_logic_vector(63 downto 0) := (others=>'0');
----
-  signal busy_dmar : std_logic;
-  signal busy_dmaw : std_logic;
-  signal dbus_port0 : std_logic_vector(63 downto 0) := (others=>'0'); 
-begin
+    if label_format == 'BBox': 
+        with open(ofname_labels, "w") as file:
+            file.write("1\n")
+            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
 
-  GPREG0(0)   <= '0'; -- not used
-  Hit_DMAW    <= '0'; -- not used
-  busy_dmaw   <= '0'; -- not used
-
-  -- DMA BUSY or IDLE
-  GPREG0(1)   <= busy_dmar;
-  busy_dmar   <= Hit_DMAR or Hit_DMARr or dmar_enable0 or  dmar_enable1 or  dmar_enable2 or  dmar_enable3
-                                       or dmar_enable4 or  dmar_enable5 or  dmar_enable6 or  dmar_enable7;
-  GPREG0(31 downto 2) <= (others=>'0');
-
-
-  Hit_DMAR <= Hit_PGPG_REG3;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      Hit_DMAWr <= Hit_DMAW;
-      Hit_DMARr <= Hit_DMAR;
-    end if;
-  end process;
-
-
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
---    WR SHARE
--- WRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWRWR
-
-  ----------------------------
-  --- DMAR/W START ADR     ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      START_ADR <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        START_ADR <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        START_ADR <= PGPG_REG3(18 downto 0);
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  --- ChipSel              ---
-  ----------------------------
-  process (CLK,Hit_DMAW,Hit_DMAWr,Hit_DMAR,Hit_DMARr) begin
-    if(RST='1') then
-      ChipSel <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if   ((Hit_DMAW = '0') AND (Hit_DMAWr = '1')) then
-        ChipSel <= (others=>'0');
-      elsif((Hit_DMAR = '0') AND (Hit_DMARr = '1')) then
-        if    (PGPG_REG3(28) = '1') then
-          ChipSel <= "0001";
-        elsif (PGPG_REG3(29) = '1') then
-          ChipSel <= "0010";
-        elsif (PGPG_REG3(30) = '1') then
-          ChipSel <= "0100";
-        else
-          ChipSel <= "1000";
-        end if;
-      end if;
-    end if;
-  end process;
-
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      DBUS_Port <= dbus_port0;
-    end if;
-  end process;
-
-  with busy_dmar select
-    dbus_port0 <= dmar_dbus_o when '1',
-                  dmaw_dbus_o when others;
-
-  ------------------------------
-  --- MEM_ADB                ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      MEM_ADB <= lo_mem_wad;
-    end if;
-  end process;
-
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
--- DMA WRITE ( ifpga -> pfpga )
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-  ------------------------------
-  --- mem_wea                ---
-  ------------------------------
-  mem_wea <= MEM_WEHA AND MEM_WELA;
-
-  ------------------------------
-  --- dmaw_we0,1             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      dmaw_we0 <= mem_wea;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmaw_we1 <= dmaw_we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- dmaw_adr               ---
-  ------------------------------
-  process (RST,CLK,mem_wea,dmaw_we0) begin
-    if(RST='1') then
-      dmaw_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((mem_wea = '1') and (dmaw_we0 = '0')) then
-        dmaw_adr(15 downto 0) <= MEM_ADA(16 downto 1);
-      end if;
-      dmaw_adr(63 downto 16) <= (others=>'0');
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dt delay          ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_dt1 <= (others=>'0');
-      dmaw_dt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      dmaw_dt1 <= dmaw_dt0;
-      dmaw_dt0 <= MEM_DTIA;
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dbus_o            ---
-  ------------------------------
-  process (RST,CLK,dmaw_we0,dmaw_we1) begin
-    if(RST='1') then
-      dmaw_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(dmaw_we0 = '1' and dmaw_we1 = '0') then
-        dmaw_dbus_o <= dmaw_adr;
-      else
-        dmaw_dbus_o <= dmaw_dt1;
-      end if;
-    end if;
-  end process;
-
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= dmaw_we1;
-      DMAW_ENABLE(1) <= dmaw_we1;
-      DMAW_ENABLE(2) <= dmaw_we1;
-      DMAW_ENABLE(3) <= dmaw_we1;
-    end if;
-  end process;
-
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
--- DMA READ (ifpga <- pfpga)
--- RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-
-  ----------------------------
-  -- DMAR ENABLE COUNT     ---
-  ----------------------------
-  dmar_enable_cnt0_r <= dmar_enable_cnt0;
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0_r) begin
-    if(RST='1') then
-      dmar_enable_cnt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable_cnt0 <= "0000" & PGPG_REG3(27 downto 19);   -- SET NQWORD
-      elsif(dmar_enable_cnt0_r /= "000000000000") then
-        dmar_enable_cnt0 <= dmar_enable_cnt0_r - "000000000001";
-      end if;
-    end if;
-  end process;
-
-  ----------------------------
-  -- DMAR ENABLE 0         ---
-  ----------------------------
-  process (RST,CLK,Hit_DMAR,Hit_DMARr,dmar_enable_cnt0) begin
-    if(RST='1') then
-      dmar_enable0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((Hit_DMAR = '0') AND (Hit_DMARr = '1'))then
-        dmar_enable0 <= '1';
-      elsif(dmar_enable_cnt0 = "000000000000") then
-        dmar_enable0 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmar_enable7 <= dmar_enable6;
-      dmar_enable6 <= dmar_enable5;
-      dmar_enable5 <= dmar_enable4;
-      dmar_enable4 <= dmar_enable3;
-      dmar_enable3 <= dmar_enable2;
-      dmar_enable2 <= dmar_enable1;
-      dmar_enable1 <= dmar_enable0;
-    end if;
-  end process;
+    if label_format == 'darknet': 
+        img_h, img_w = image_orig.shape[:2]
+        dh = float(img_h)
+        dw = float(img_w)
+        x0 = bbox_posi[0]
+        y0 = bbox_posi[1]
+        x1 = bbox_posi[2]
+        y1 = bbox_posi[3]
+        dnet_x = (x0 + x1)/(2.0*dw)
+        dnet_y = (y0 + y1)/(2.0*dh)
+        dnet_w = (x1 - x0)/dw
+        dnet_h = (y1 - y0)/dh
+        with open(ofname_labels, "w") as file:
+            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
 
 
-  ------------------------------
-  --- DMAR ENABLE            ---
-  ------------------------------
-  process (CLK,dmar_enable1,dmar_enable2)  begin
-    if(CLK'event and CLK='1') then
-      if((dmar_enable0 = '1') OR (dmar_enable1 = '1')) then
-        DMAR_ENABLE(0) <= '1' AND ChipSel(0);
-        DMAR_ENABLE(1) <= '1' AND ChipSel(1);
-        DMAR_ENABLE(2) <= '1' AND ChipSel(2);
-        DMAR_ENABLE(3) <= '1' AND ChipSel(3);
-      else
-        DMAR_ENABLE <= (others=>'0');
-      end if;
-    end if;
-  end process;
+def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
+    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
+    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
 
-  ------------------------------
-  --- DMAR_DBUS_O            ---
-  ------------------------------
-  process (RST,CLK,dmar_enable0,dmar_enable1,dmar_enable2,dmar_enable3)  begin
-    if(RST='1') then
-      dmar_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(    (dmar_enable0 = '1') AND (dmar_enable1 = '0') ) then
-        dmar_dbus_o <= ("000000000000000000000000000000000000000000000" & START_ADR);
-      elsif( (dmar_enable1 = '1') AND (dmar_enable2 = '0') ) then
---        dmar_dbus_o <= X"FFFFFFFFFFFFFFFF";
-        NULL;
-      elsif( (dmar_enable2 = '1') AND (dmar_enable3 = '0') ) then
-        dmar_dbus_o <= (others=>'0');
-      end if;
-    end if;
-  end process;
+#------------------------------------------------------------------------ save_data./
 
-  ------------------------------
-  --- DBUS_HiZ               ---
-  ------------------------------
-  process (RST,CLK,dmar_enable2,dmar_enable3,dmar_enable4,dmar_enable5)  begin
-    if(RST='1') then
-      DBUS_HiZ <= '0';
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable2 = '1') OR (dmar_enable3 = '1') OR (dmar_enable4 = '1') OR (dmar_enable5 = '1') ) then
-        DBUS_HiZ <= '1';
-      else
-        DBUS_HiZ <= '0';
-      end if;
-    end if;
-  end process;
+if (__name__ == '__main__'):
 
-  ------------------------------
-  --- MEM_DTIB               ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_DTIB <= DBUS_idata;
-    end if;
-  end process;
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-  ------------------------------
-  --- MEM_WEHB, MEM_WELB     ---
-  ------------------------------
-  process (CLK)  begin
-    if(CLK'event and CLK='1') then
-      MEM_WEHB <= dmar_enable6;
-      MEM_WELB <= dmar_enable6;
-    end if;
-  end process;
 
-  ------------------------------
-  --- lo_mem_wad             ---
-  ------------------------------
-  lo_mem_wad_z <= lo_mem_wad;
---  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
---    if(RST='1') then
---      lo_mem_wad <= "1000000000000";
---    elsif(CLK'event and CLK='1') then
---      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
---        lo_mem_wad <= "1000000000000";
---      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
---      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
---        lo_mem_wad <= "1000000000000";
---      end if;
---    end if;
---  end process;
-  process (RST,CLK,dmar_enable5,dmar_enable6)  begin
-    if(RST='1') then
-      lo_mem_wad <= "0000000000000";
-    elsif(CLK'event and CLK='1') then
-      if((dmar_enable5 = '1') AND (dmar_enable6 = '0')) then
-        lo_mem_wad <= "0000000000000";
-      elsif((dmar_enable5 = '1') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= lo_mem_wad_z + "0000000000001";
-      elsif((dmar_enable5 = '0') AND (dmar_enable6 = '1')) then
-        lo_mem_wad <= "0000000000000";
-      end if;
-    end if;
-  end process;
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
 
-end rtl;
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        state.image_orig = frame.copy()
+        state.image      = frame.copy()
+        state.image_size[0], state.image_size[1] = frame.shape[:2]
+        state.draw_rect()
+        state.draw_text()
+        cv2.imshow("THBox-Auto.py", state.image)
+        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            if False:
+                basedir = '../log.%d/'% (devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, state.image)
+                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
+                tnow0 = tnow
+            save_data(state.image, state.image_orig, state.image_num)
+            state.image_num += 1
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if ( (key == ord(' ')) or 
+             (key == 34) or # Muhenkan
+             (key == 35) or # Henkan
+             (key == 39) or # katakana
+             (key == 10)    # Enter
+        ):
+            state.is_record = not (state.is_record)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
