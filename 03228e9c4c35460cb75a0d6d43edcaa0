@@ -1,16 +1,4 @@
-2022年 11月  9日 水曜日 10:23:20 JST
-/** 
-# v��1/2���ƥå׿ʤ��
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
-
-#include <stdio.h>
-#include "nbodysim.h"
-
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
-}
+2022年 11月 19日 土曜日 11:18:46 JST
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
+C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
+OK
