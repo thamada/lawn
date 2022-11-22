@@ -1,16 +1,5 @@
-2022年 11月 20日 日曜日 09:40:00 JST
-#include<stdio.h>
-#define LONG long long int 
-// bit level check between emulator and hardware(pg2)
-void check_pg2emu(LONG accel[][3],LONG accel_pg2[][3],int n)
-{
-  int i,j;
-  for(i=0;i<n;i++){
-    for(j=0;i<3;j++){
-      LONG a_emu,a_pg2;
-      a_emu = accel[i][j];
-      a_pg2 = accel_pg2[i][j];
-      if(a_emu != a_pg2){fprintf(stderr,"error\n");}
-    }
-  }
-}
+2022年 11月 22日 火曜日 10:13:49 JST
+-- ProjNav VHDL simulation template: sim_local_read.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
