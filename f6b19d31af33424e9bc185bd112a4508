@@ -1,16 +1,15 @@
-2022年 11月  9日 水曜日 11:02:32 JST
-/** 
-# x��1���ƥå׿ʤ��
-# x(k+1) = x(k) + v(k+1/2)*dt
-*/
+2022年 11月 22日 火曜日 09:31:44 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed
+# by applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-applypatch".
 
-#include <stdio.h>
-#include "nbodysim.h"
-
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-        for(d=0;d<3;d++)
-            x[i][d] = x[i][d]+v[i][d]*dt;
-}
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-commit" &&
+	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
+:
