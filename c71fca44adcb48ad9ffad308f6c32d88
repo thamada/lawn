@@ -1,16 +1,20 @@
-2022年 11月 22日 火曜日 09:41:27 JST
-#!/usr/bin/env python3
+2022年 11月 22日 火曜日 11:34:42 JST
+#!/usr/bin/perl
 
-import glob
-import sys
-import random
 
-fname = sys.argv[1]
-random.seed()
+my $is_stop = 0;
 
-with open(fname, "r") as fd:
-    lines = fd.readlines()
-    random.shuffle(lines)
-    for l in lines:
-        l = l.replace("\n",'')
-        print (l)
+if($ARGV[0]){
+    $is_stop = 1;
+}
+
+my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+
+while(1){
+    my $exe = `$cmd`;
+    print $exe;
+    exit (1) if($is_stop == 1);
+    sleep (2);
+}
+
+1;
