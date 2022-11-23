@@ -1,34 +1,26 @@
-2022年 11月 13日 日曜日 11:48:05 JST
+2022年 11月 23日 水曜日 09:38:18 JST
 #include <stdio.h>
+#include "nbodysim.h"
 
-
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
 {
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+  int i;
+  static int flag=0;
+  static FILE* fp;
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
 
-    fwrite(x, n*24,1,fp);
-
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
-
-    //    fclose(fp);
-    fflush(fp);
+  fflush(fp);
 }
 
