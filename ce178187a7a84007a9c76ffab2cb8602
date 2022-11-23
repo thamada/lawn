@@ -1,51 +1,44 @@
-2022年 11月 13日 日曜日 11:11:38 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
+2022年 11月 23日 水曜日 10:52:19 JST
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
--- 0->1 : if((state==0)&&(dma_we==1))
--- 1->2 : if (state==1)
--- 2->3 : if((state==2) &&(dma_we==0))
--- 3->0 : if (state==3)
+class Message(object):
+    def __init__(self):
+        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
+        self.is_update = False
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+#D95CBBF2 7 41 53 28 48 50 R->
+def read_log_one(msg):
 
-entity dmaw_state is
-  port (
-    RST      : in std_logic;
-    CLK      : in std_logic;
-    ENABLE   : in std_logic;
-    STATE    : out std_logic_vector(1 downto 0) );
-end dmaw_state;
+    fname = '/dev/shm/log.txt'
+    with open(fname, 'r') as fh:
+        lines = fh.readlines()
+        l = lines[-2]
+        l = l.rstrip()
+        cols = l.split(' ')
+        if cols[0] != msg.last[0]:
+            msg.last = cols
+            msg.is_update = True
+        else:
+            msg.is_update = False
 
-architecture rtl of dmaw_state is
 
-signal state_ff : std_logic_vector(1 downto 0);
-begin
+fig = plt.figure()
+msg = Message()
 
-  STATE <= state_ff;
+def plot(data):
+    global msg, fig
+    read_log_one(msg)
+    if msg.is_update :
+        print (msg.last)
 
-  process (RST,CLK,ENABLE,state_ff) begin
-    if(RST='1') then
-      state_ff <= (others=>'0');
-    elsif(CLK'event and CLK = '1') then
-      if((state_ff="00") AND (ENABLE='1')) then
-        state_ff <= "01";
-      elsif(state_ff = "01") then
-        state_ff <= "10";
-      elsif((state_ff = "10") AND (ENABLE='0')) then
-        state_ff <= "11";
-      elsif((state_ff = "10") AND (ENABLE='1')) then
-        state_ff <= "10";
-      else -- if(state_ff = "11") then
-        state_ff <= "00";
-      end if;
-    end if;
-  end process;
+    plt.cla() # clear graph
+    rand = np.random.randn(100)
+    im = plt.plot(rand)
 
-end rtl;
+
+ani = animation.FuncAnimation(fig, plot, interval=100)
+plt.show()
+
