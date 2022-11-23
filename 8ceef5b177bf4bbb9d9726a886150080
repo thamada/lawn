@@ -1,42 +1,29 @@
-2022年 11月 22日 火曜日 11:49:56 JST
-// Time-stamp: "2006-12-07 13:35:12 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
+2022年 11月 23日 水曜日 09:43:33 JST
+#! /bin/sh
+# Time-stamp: <2006-11-22 17:38:27 hamada>
+# Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
+#
+# init script for PGR & PROGRAPE-4 (for developers)
+#
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+rm -rf /tmp/*
+ln -s /usr/local/src/Xilinx.8_1_03i_lin /tmp/Xilinx
+ln -s /usr/local/src/intel_cc_80 /tmp/intel_cc_80
+ln -s /usr/local/src/package.20060613 /tmp/pgr
+ln -s /usr/local/src/progrape /tmp/progrape
+cd /pciDriver/src/driver/; ./insmod.sh
 
-//#define NMAX (0x1<<10) // 4KB
-//#define NMAX (0x1<<11) // 8KB
-//#define NMAX (0x1<<12) // 16KB
-//#define NMAX (0x1<<13) // 32KB
-#define NMAX (0x1<<14) // 64KB
-
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int n = NMAX;
-  int i;
-
-  if(argc > 1){
-    n = atoi(argv[1]);
-  }
-  printf("n = %d\n",n);
-
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
-
-  for(i = 0; i < n; i++) {
-    unsigned int x;
-    x = pg4_readbase1(devid, i);
-    printf("%x : %x\n",i,x);
-  }
+cd /tmp/progrape/driver;  make load
 
 
-  return 0;
-}
+umount /mnt/ram
+rm -rf /mnt/ram
+mkdir /mnt/ram
+mke2fs /dev/ram0
+mount -t ext2 /dev/ram0 /mnt/ram
+chmod -R 777 /mnt/ram
+
+cp /usr/local/bin/xxx.log /mnt/ram
+chmod -R 777 /mnt/ram
+
+
