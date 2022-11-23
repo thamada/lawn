@@ -1,50 +1,47 @@
-2022Âπ¥ 11Êúà 19Êó• ÂúüÊõúÊó• 10:48:31 JST
-#include <math.h>
-#define DIM (3)              /* éüå≥êî */
-#define NMAX (65536)         /* ç≈ëÂó±éqêî */
-//#define NTOTAL 1000      /* ó±éqêî (NTOTAL <= NMAX) */
+2022Âπ¥ 11Êúà 23Êó• Ê∞¥ÊõúÊó• 10:37:32 JST
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
+/*
+ * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
+#include "pg4.h"
 
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+int main(int argc, char* argv[])
+{
+  int devid  = 0;
+  int bar    = 0;
+  int is_size = 0;
+  unsigned long z = 0;
 
+  if (argc < 3) {
+    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
+    exit(-1);
+  }
+  
+  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+  devid = atoi(argv[1]);
+  bar   = atoi(argv[2]);
+  
+  pg4_open(devid);
 
+  if(is_size)
+    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
+  else
+    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
 
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+  printf("0x%08lx\n",z);
+  pg4_close(devid);
 
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
-
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
-
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
+  return 1;
+}
