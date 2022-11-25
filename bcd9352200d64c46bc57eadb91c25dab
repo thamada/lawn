@@ -1,15 +1,17 @@
-2022年 11月 23日 水曜日 11:07:00 JST
-#!/usr/bin/env python3
-import cv2
-import glob
-from datetime import datetime
-import time 
+2022年 11月 25日 金曜日 10:30:31 JST
+#!/usr/bin/perl
 
-while(True):
-    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-    print(tnow)
 
-    with open(".tc~", "w") as file:
-        file.write(tnow +"\n")
+my $is_stop = 0;
+my $nboard = 0;
 
-    time.sleep(3)
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
