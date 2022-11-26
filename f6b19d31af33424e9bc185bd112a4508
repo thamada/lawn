@@ -1,15 +1,71 @@
-2022年 11月 22日 火曜日 09:31:44 JST
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed
-# by applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-applypatch".
+2022年 11月 26日 土曜日 09:29:30 JST
+#Time-stamp: <2017-06-23 16:16:23 hamada>
 
-. git-sh-setup
-test -x "$GIT_DIR/hooks/pre-commit" &&
-	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
-:
+CONFIG=./etc/config.txt
+MODEL=./etc/model.txt
+WEIGHTS=./backup/m10_150000.weights
+LOGFILE=./log.2gpu
+GPUID= -gpus 0,1
+
+all:
+	@echo 'make run'
+
+r: run
+
+run:
+	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
+
+run.1gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
+
+run.2gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
+
+run.4gpu:
+	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
+
+
+
+demo:
+	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
+#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+
+
+photo:
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
+	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+
+
+clean:
+	rm -rf bad.list .*~ *~ ./predictions.jpg
+	rm -rf backup/model*
+
+
+c: clean
+
+
+0.check:
+	cd backup/;md5sum --check md5sum.txt
+
+check:
+	grep ID.000[0-3] etc/all.txt |wc -l
+	grep ID.0004 etc/all.txt |wc -l
+	grep ID.0005 etc/all.txt |wc -l
+	grep ID.0006 etc/all.txt |wc -l
+	grep ID.000[7-9] etc/all.txt |wc -l
+	grep ID.0004 etc/list.train.txt |wc -l
+	grep ID.0005 etc/list.train.txt |wc -l
+	grep ID.0006 etc/list.train.txt |wc -l
+	grep ID.0004 etc/list.valid.txt |wc -l
+	grep ID.0005 etc/list.valid.txt |wc -l
+	grep ID.0006 etc/list.valid.txt |wc -l
+
+check.iou:
+	\rm -f IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
+	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
+	\grep IOU IOU.txt
