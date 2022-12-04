@@ -1,2 +1,5 @@
-2022年 11月 20日 日曜日 11:34:08 JST
-set AD {../rtl/ifpga.ucf}
+2022年 12月  4日 日曜日 10:40:08 JST
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
