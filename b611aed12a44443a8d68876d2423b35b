@@ -1,42 +1,16 @@
-2022å¹´ 12æœˆ  7æ—¥ æ°´æ›œæ—¥ 09:17:22 JST
-/**
-   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
-   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
-   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
-*/
+2022å¹´ 12æœˆ  7æ—¥ æ°´æ›œæ—¥ 10:35:53 JST
+#!/usr/bin/env python3
 
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+import glob
+import sys
+import random
 
-void force_on_host(double x[][DIM],
-	   double m[],
-	   double eps2,
-	   double a[][DIM],
-	   int n)
-{
-  int i,j,d;
-  double dx[3];
+fname = sys.argv[1]
+random.seed()
 
-  /* a[][]‚Ì‰Šú‰» */
-  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
-
-  /* ‘ŠŒİì—p‚ÌŒvZ  */
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] +=  m[j]*dx[d]/r3;
-	a[j][d] += -m[i]*dx[d]/r3;
-      }
-    }
-  }
-
-
-}
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
