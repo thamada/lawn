@@ -1,261 +1,344 @@
-2022年 12月  5日 月曜日 09:16:09 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-12 07:43:27 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
+2022年 12月 11日 日曜日 09:41:02 JST
+/***************************************************
+ * The lowest level library for PROGRAPE-4
+ *
+ * Copyright(c) by Tsuyoshi Hamada.
+ * All rights reserved.
+ *
+ * PLEASE DO NOT BRANCH !!
+ *
+ * 20060916.rev1 : Development start
+ ***************************************************/
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
-        self.drawing = False
-        self.moving = False
-        self.posi0 = [-1,-1]
-        self.posi1 = [-1,-1]
-        self.posi2 = [-1,-1]
-        self.image = -1
-        self.image_size = [-1, -1] # [height, width]
-        self.image_orig = -1
-        self.class_num = 777
-        self.image_num = 0
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/ioctl.h> // ioctl()
+#include <sys/mman.h>  // mmap()
+#include <sys/types.h> // open()
+#include <sys/stat.h>  // open()
+#include <sys/fcntl.h> // open()
 
-    def draw_rect(self):
-        # print ("posi0, posi1: ", self.posi0, self.posi1)
-        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
+#undef CERR
+#define CERR(fmt, args...) fprintf(stderr, fmt, ## args)
 
-    def draw_text(self):
-        if(self.is_record):
-            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
-            font_size = 0.8
-            text = "<<%d>>"% (self.image_num)
-            color = (0x0, 0x0, 0xBF)
-            px = int(self.image_size[1]/2)
-            py = 30
-            cv2.putText(self.image, text,(px, py), font, font_size, color)
+#undef _CERR
+#define _CERR(fmt, args...) 
 
-state = State()
+#define MAX_NBOARD 8
+unsigned int* bar0[MAX_NBOARD];
+unsigned int* bar1[MAX_NBOARD];
 
-def mouse_event(event,x,y,flags,param):
-    global state
+//---------------------------------------
+#include "progrape.h"
 
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
+static char *devname[] = {
+  "/dev/progrape0",
+  "/dev/progrape1",
+  "/dev/progrape2",
+  "/dev/progrape3",
+  "/dev/progrape4",
+  "/dev/progrape5",
+  "/dev/progrape6",
+  "/dev/progrape7",
+  "/dev/progrape8",
+};
 
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
+static int pg4_dev[] = {
+  -1,-1,-1,-1,-1,-1,-1,-1,
+};
 
-    if event == (cv2.EVENT_RBUTTONDOWN): 
-        state.moving = True
-        state.posi2[0] = x
-        state.posi2[1] = y
+unsigned int *dmar_buf[MAX_NBOARD];
+unsigned int *dmaw_buf[MAX_NBOARD];
 
-    if event == (cv2.EVENT_RBUTTONUP): 
-        state.moving = False
-        state.posi2[0] = x
-        state.posi2[1] = y
-    
+unsigned int* pg4_get_bar0ptr(int devid){ return bar0[devid]; }
+unsigned int* pg4_get_bar1ptr(int devid){ return bar1[devid]; }
 
-    if event == (cv2.EVENT_MOUSEMOVE):
-        if state.moving == True:
-            width  = abs(state.posi0[0] - state.posi1[0])
-            height = abs(state.posi0[1] - state.posi1[1])
-            x0 = x - int(width/2)
-            x1 = x + int(width/2)
-            y0 = y - int(height/2)
-            y1 = y + int(height/2)
+#define DMA_BSIZE (0x1<<10) // 4KB
 
-            x_min = min(x0, x1)
-            x_max = max(x0, x1)
-            y_min = min(y0, y1)
-            y_max = max(y0, y1)
-
-            if x_min < 0: x_min = 0
-            if y_min < 0: y_min = 0
-            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
-            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
-
-            state.posi0[0] = x_min
-            state.posi0[1] = y_min
-            state.posi1[0] = x_max
-            state.posi1[1] = y_max
-
-def __mouse_event(event,x,y,flags,param):
-    global state
-
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
+static void * __mmap_bar     (int devid, int bar);
+//    static int __pg4_DMA         (int devid, unsigned int size, unsigned int offset, unsigned int dir);
+//    static int __pg4_DMA_noInterrupt(int devid, unsigned int size, unsigned int offset, unsigned int dir);
+//    static int __pg4_DMA_with_retry(int devid, unsigned int size, unsigned int offset, unsigned int dir);
+int           pg4_DMAget     (int devid, unsigned int size);
+int           pg4_DMAput     (int devid, unsigned int size);
+int           pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
+int           pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
+void          pg4_wait       (int devid, int n);
+void          pg4_DMAcheck   (int devid);
+int           pg4_DMAretry   (int devid);
+unsigned long pg4_getbaseaddr(int devid, int j);
+unsigned long pg4_getbaseaddr_size(int devid, int bar);
+unsigned long pg4_read_pciconfig_dword(int devid, int adr);
+void pg4_get_pfpga_info(int devid, char *info);
+void pg4_set_pfpga_info(int devid, char *info);
 
 
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
+static void * __mmap_dmabuf(int id, int is_wbuf)
+{
+  unsigned long size;
+  void *mapped_ptr;
 
-#------------------------------------------------------------------------ save_data
-def save_data_bbox(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4bbox/'
-    fname_body = "image_%08d" % fnum
+  switch (is_wbuf) {
+  case 0:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_BUF_DMAR)) {
+	CERR("mmap dmar buf failed | %s:%d\n", __FILE__, __LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_DMA_SIZE);
 
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"Images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
+    }
+    break;
+  case 1:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_BUF_DMAW)) {
+	CERR("mmap dmaw buf failed | %s:%d\n", __FILE__, __LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_DMA_SIZE);
+    }
+    break;
+  default :
+    CERR("mmap dmabuf %d invalid | %s:%d\n", is_wbuf, __FILE__, __LINE__);
+    exit (-1);
+  }
 
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
+  mapped_ptr = mmap(NULL,
+		    size,
+		    (PROT_READ| PROT_WRITE),
+		    MAP_SHARED,
+		    pg4_dev[id],
+		    0);
+  _CERR("mmap_ptr called\n");
 
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"Labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    with open(ofname_labels, "w") as file:
-        file.write("1\n")
-        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-def save_data_darknet(image_dbg, image_orig, fnum):
-    global state
-    class_num = state.class_num
-    posi0 = state.posi0
-    posi1 = state.posi1
-    basedir = '../data4darknet/'
-    fname_body = "image_%08d" % fnum
-
-    # save image_orig (for Images/)
-    fname = fname_body + ".jpg"
-    basedir_images = basedir+"images/%03d/"%(class_num)
-    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
-    #print (ofname_images)
-    cv2.imwrite(ofname_images, image_orig)
-
-    # save image_dbg (for Debug/)
-    fname = fname_body + ".jpg"
-    basedir_dbg = basedir+"debug/%03d/"%(class_num)
-    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
-    #print (ofname_dbg)
-    cv2.imwrite(ofname_dbg, image_dbg)
-
-    # save labes
-    fname = fname_body + ".txt"
-    basedir_labels = basedir+"labels/%03d/"%(class_num)
-    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
-    print (ofname_labels)
-    bbox_posi = []
-    bbox_posi.append(min(posi0[0], posi1[0]))
-    bbox_posi.append(min(posi0[1], posi1[1]))
-    bbox_posi.append(max(posi0[0], posi1[0]))
-    bbox_posi.append(max(posi0[1], posi1[1]))
-    
-    label_format = 'BBox'
-    label_format = 'darknet'
-
-    if label_format == 'BBox': 
-        with open(ofname_labels, "w") as file:
-            file.write("1\n")
-            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
-
-    if label_format == 'darknet': 
-        img_h, img_w = image_orig.shape[:2]
-        dh = float(img_h)
-        dw = float(img_w)
-        x0 = bbox_posi[0]
-        y0 = bbox_posi[1]
-        x1 = bbox_posi[2]
-        y1 = bbox_posi[3]
-        dnet_x = (x0 + x1)/(2.0*dw)
-        dnet_y = (y0 + y1)/(2.0*dh)
-        dnet_w = (x1 - x0)/dw
-        dnet_h = (y1 - y0)/dh
-        with open(ofname_labels, "w") as file:
-            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
+  return (mapped_ptr);
+}
 
 
-def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
-    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
-    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
+static void * __mmap_bar(int id, int bar)
+{
+  unsigned long size;
+  unsigned long pagesize = getpagesize();
+  void *mapped_ptr;
 
-#------------------------------------------------------------------------ save_data./
+  switch (bar) {
+  case 0:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_REG_PIORW)) {
+	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
+    }
+    break;
+  case 1:
+    {
+      if (ioctl(pg4_dev[id], IOC_SV_MMAPMODE, MMAP_MEM_PIORW)) {
+	CERR("mmap bar%d failed | %s:%d\n",bar,__FILE__,__LINE__);
+	exit (-1);
+      }
+      size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
+    }
+    break;
+  default :
+    CERR("mmap bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
+    exit (-1);
+  }
 
-if (__name__ == '__main__'):
+  mapped_ptr = mmap(NULL,
+		    (size/pagesize+1)*pagesize,
+		    (PROT_READ| PROT_WRITE),
+		    MAP_SHARED,
+		    pg4_dev[id],
+		    0);
 
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-
-    log_base = '../log/'
-    cap = cv2.VideoCapture(devid)
-
-    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
-
-    print(cap_width, "x", cap_height, ":", cap_fps)
+  return (mapped_ptr);
+}
 
 
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        state.image_orig = frame.copy()
-        state.image      = frame.copy()
-        state.image_size[0], state.image_size[1] = frame.shape[:2]
-        state.draw_rect()
-        state.draw_text()
-        cv2.imshow("THBox-Auto.py", state.image)
-        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
+int pg4_open(int id)
+{
+  pg4_dev[id] = open(devname[id], O_RDWR);
+  if(pg4_dev[id] == -1) {
+    CERR("open failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
+    return -1;
+  }
 
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if(state.is_record):
-            if False:
-                basedir = '../log.%d/'% (devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, state.image)
-                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
-                tnow0 = tnow
-            save_data(state.image, state.image_orig, state.image_num)
-            state.image_num += 1
+  bar0[id] = (unsigned int *) __mmap_bar(id, 0); // mmap BAR0
+  bar1[id] = (unsigned int *) __mmap_bar(id, 1); // mmap BAR1
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if ( (key == ord(' ')) or 
-             (key == 34) or # Muhenkan
-             (key == 35) or # Henkan
-             (key == 39) or # katakana
-             (key == 10)    # Enter
-        ):
-            state.is_record = not (state.is_record)
+  dmaw_buf[id] = (unsigned int *) __mmap_dmabuf(id, 1); // mmap DMAW buf
+  dmar_buf[id] = (unsigned int *) __mmap_dmabuf(id, 0); // mmap DMAR buf
 
-    cap.release()
-    cv2.destroyAllWindows()
+  if(dmaw_buf[id] == NULL){
+    CERR("mmap dmaw_buf failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
+    return (-1);
+  }
 
-    print("Done.")
+  if(dmar_buf[id] == NULL){
+    CERR("mmap dmar_buf failed %s | %s:%d\n",devname[id] ,__FILE__,__LINE__);
+    return (-1);
+  }
+
+  _CERR("DMAW Buff at 0x%x\n",(unsigned int)dmaw_buf[id]);
+  _CERR("DMAR Buff at 0x%x\n",(unsigned int)dmar_buf[id]);
+
+  return 1;
+}
+
+
+void pg4_close(int id){
+  close(pg4_dev[id]);
+  pg4_dev[id] = -1;
+}
+
+
+void pg4_close_and_exit(int id){
+  //  pg4_DMAcheck(id);
+  pg4_close(id);
+  exit(1);
+}
+
+
+inline unsigned int pg4_readbase0(int id, unsigned int index){ return *(bar0[id] + index); }
+inline void         pg4_writebase0(int id, unsigned int index, unsigned int val){ *(bar0[id] + index) = val; }
+inline unsigned int pg4_readbase1(int id, unsigned int index){ return *(bar1[id] + index); }
+inline void         pg4_writebase1(int id, unsigned int index, unsigned int val){ *(bar1[id] + index) = val; }
+inline unsigned int ReadBase0(int id, unsigned int addr){return pg4_readbase0(id, addr>>2);}
+inline unsigned int ReadBase1(int id, unsigned int addr){return pg4_readbase1(id, addr>>2);}
+inline void         WriteBase0(int id, unsigned int addr, unsigned int val){pg4_writebase0(id, addr>>2, val);}
+inline void         WriteBase1(int id, unsigned int addr, unsigned int val){pg4_writebase1(id, addr>>2, val);}
+
+
+unsigned int pg4_get_dma_size(int id) {
+  return ( (unsigned int)ioctl(pg4_dev[id], IOC_GV_DMA_SIZE) );
+}
+
+
+unsigned int* pg4_get_dmawptr(int id) {
+  return ( (unsigned int*)dmaw_buf[id] );
+}
+
+
+unsigned int* pg4_get_dmarptr(int id) {
+  return ( (unsigned int*)dmar_buf[id] );
+}
+
+
+int pg4_DMAput(int id, unsigned int size)
+{
+  int ret = ioctl(pg4_dev[id], IOC_SV_DMAW, size);
+  if(ret){
+    CERR("DMAW failed %d| %s:%d\n",ret ,__FILE__, __LINE__);
+    exit (-1);
+  }
+  return (0);
+}
+
+
+int pg4_DMAget(int id, unsigned int size)
+{
+  int ret = ioctl(pg4_dev[id], IOC_SV_DMAR, size);
+  if(ret){
+    CERR("DMAR failed %d| %s:%d\n",ret ,__FILE__, __LINE__);
+    exit (-1);
+  }
+  return (0);
+}
+
+
+void pg4_DMAcheck(int devid)
+{
+  unsigned int flag, retry;
+  fprintf(stderr,"\t INT_STAT       (0x%X) : %x\n", REG_INT_STAT,       ReadBase0(devid, REG_INT_STAT));
+  fprintf(stderr,"\t INT_MASK       (0x%X) : %x\n", REG_INT_MASK,       ReadBase0(devid, REG_INT_MASK));
+  fprintf(stderr,"\t DMA_PCI_ADRS   (0x%X) : %x\n", REG_DMA_PCI_ADRS,   ReadBase0(devid, REG_DMA_PCI_ADRS));
+  fprintf(stderr,"\t DMA_LOCAL_ADRS (0x%X) : %x\n", REG_DMA_LOCAL_ADRS, ReadBase0(devid, REG_DMA_LOCAL_ADRS));
+  fprintf(stderr,"\t DMA_COUNT      (0x%X) : %x\n", REG_DMA_COUNT,      ReadBase0(devid, REG_DMA_COUNT));
+  fprintf(stderr,"\t DMA_CTRL       (0x%X) : %x\n", REG_DMA_CTRL,       ReadBase0(devid, REG_DMA_CTRL));
+  fprintf(stderr,"\t DMA_INTERVAL   (0x%X) : %x\n", REG_DMA_INTERVAL,   ReadBase0(devid, REG_DMA_INTERVAL));
+  fprintf(stderr,"\t DMA_STAT       (0x%X) : %x\n", REG_DMA_STAT,       ReadBase0(devid, REG_DMA_STAT));
+
+  flag = ReadBase0(devid, REG_DMA_STAT);
+
+  retry = ((0x1<<16)-1)&flag;
+  fprintf(stderr,"\t DMA dissconnect count %i\n", (flag>>16));
+  fprintf(stderr,"\t DMA retry count       %i\n", retry);
+  fprintf(stderr,"\n");
+  fflush(NULL);
+}
+
+int pg4_DMAretry(int devid)
+{
+  unsigned int flag, retry;
+  flag = ReadBase0(devid, REG_DMA_STAT);
+  retry = ((0x1<<16)-1)&flag;
+  return retry;
+}
+
+int pg4_DMAput_offset(int devid, unsigned int size, unsigned offset)
+{
+  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
+  return -1;
+}
+
+int pg4_DMAget_offset(int devid, unsigned int size, unsigned offset)
+{
+  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
+  return -1;
+}
+
+void pg4_wait(int devid, int n)
+{
+  CERR("REMOVED, %s:%d\n", __FILE__, __LINE__);exit(-1);
+}
+
+unsigned long pg4_getbaseaddr(int id, int bar)
+{
+  unsigned long ret;
+  if( (bar==0) || (bar==1)){
+    int bar0_dword_adr = 0x4;
+    ret = pg4_read_pciconfig_dword(id, bar0_dword_adr + bar);
+  }else{
+    CERR("bar %d invalid | %s:%d\n",bar ,__FILE__ ,__LINE__);
+    exit(-1);
+  }
+  return ret;
+}
+
+unsigned long pg4_getbaseaddr_size(int id, int bar)
+{
+  unsigned long size;
+  switch (bar) {
+  case 0:
+    size = ioctl(pg4_dev[id], IOC_GV_REG_SIZE);
+    break;
+  case 1:
+    size = ioctl(pg4_dev[id], IOC_GV_MEM_SIZE);
+    break;
+  default :
+    CERR("bar%d invalid | %s:%d\n",bar,__FILE__,__LINE__);
+    exit (-1);
+  }
+
+  return (size); // [Bytes]
+}
+
+unsigned long pg4_read_pciconfig_dword(int id, int adr)
+{
+  // note : 'adr' uses dword address (not byte address).
+  return (unsigned long) ioctl(pg4_dev[id], IOC_GV_PCICFG, adr);
+}
+
+void pg4_get_pfpga_info(int id, char* ret){
+  char info[NB_FPGA_INFO];
+  ioctl(pg4_dev[id], IOC_GP_FPGA_INFO, info);
+  strcpy(ret, info);
+}
+
+void pg4_set_pfpga_info(int id, char* info){
+  ioctl(pg4_dev[id], IOC_SP_FPGA_INFO, info);
+}
