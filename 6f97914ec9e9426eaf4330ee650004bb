@@ -1,1 +1,9 @@
-2022年 12月  7日 水曜日 09:58:17 JST
+2022年 12月 29日 木曜日 11:31:02 JST
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
