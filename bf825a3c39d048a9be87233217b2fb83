@@ -1,271 +1,163 @@
-2022å¹´ 12æœˆ  6æ—¥ ç«æ›œæ—¥ 10:43:06 JST
--- PGR ALLCORE
+2022å¹´ 12æœˆ 31æ—¥ åœŸæ›œæ—¥ 10:26:49 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+
+-- LOCAL READ ( ifpga <- pfpga )
 -- by Tsuyoshi Hamada
--- Last Modified at 2005/01/02
--- Last Modified at 2004/11/20
---
--- SYS_CLK   __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
--- WE        __/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\____
---(WRITE)
--- ADR         < 0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >
--- DTI         < 0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >
---(READ)
--- ADR         < 0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >
--- DTO              < 0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >
+-- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ğ•Ï‚¦‚½ê‡‚Íprom‚ğÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
+-- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ğƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
 
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-library ieee;
-LIBRARY UNISIM;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
-USE UNISIM.Vcomponents.ALL;
-
-entity pgpg_mem is
+entity LOCAL_READ is
+  generic ( NBIT_L_ADRO : integer := 3);
   port (
-    RST           : in  std_logic;
-    SYS_CLK       : in  std_logic;
-    PIPE_CLK      : in  std_logic;
-    ADR           : in  std_logic_vector(18 downto 0);
-    WE            : in  std_logic;
-    DTI           : in  std_logic_vector(63 downto 0);
-    DTO           : out std_logic_vector(63 downto 0);
-    STS           : out std_logic;
-    FPGA_NO       : in std_logic_vector(1 downto 0));
-end pgpg_mem;
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
 
-architecture RTL of pgpg_mem is
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-component adr_dec
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ;
+
+architecture rtl of LOCAL_READ is
+
+component LOCAL_READ_CNT
+  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
   port (
-    clk        : in std_logic;
-    adr        : in std_logic_vector(18 downto 0);
-    is_jpw     : out std_logic;
-    is_ipw     : out std_logic;
-    is_fo      : out std_logic;
-    is_setn    : out std_logic;
-    is_run     : out std_logic;
-    FPGA_NO    : in std_logic_vector(1 downto 0));
+    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
+    CALC_DONE  : in std_logic;                 -- pulse
+    FETCH_DONE : out std_logic;
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
 end component;
 
-component pipe_sts
+component LOCAL_READ_IF
   port (
-    rst        : in  std_logic;
-    clk        : in  std_logic;
-    run        : in  std_logic;
-    runret     : in  std_logic;
-    status     : out std_logic_vector(31 downto 0));
+    EXEC : in std_logic;
+    START_AD : in std_logic_vector(18 downto 0);
+    NQWORD   : in std_logic_vector( 8 downto 0);
+    CHIPSEL  : in std_logic_vector( 3 downto 0);
+    MEM_AD_BASE : in std_logic_vector(12 downto 0);
+    BUSY : out std_logic;  -- to GPREG0
+    DMAR_ENABLE : out std_logic_vector(3 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_ADB     : out std_logic_vector(12 downto 0);
+    MEM_WEHB    : out std_logic;
+    MEM_WELB    : out std_logic;
+    MEM_DTIB    : out std_logic_vector(63 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
 end component;
 
-component calc is
-  port (
-    start      : in  std_logic;
-    clk        : in  std_logic;
-    pclk       : in  std_logic;
-    n          : in  std_logic_vector(31 downto 0);
-    run        : out  std_logic;
-    mem_adr    : out  std_logic_vector(31 downto 0));
-end component;
+signal calc_done : std_logic :='0';   -- to cnt
+signal csts0,csts1 : std_logic :='0'; -- from pfpga
 
-component setn
-  port (
-    clk       : in std_logic;
-    we        : in std_logic;
-    idata     : in std_logic_vector(31 downto 0);
-    odata     : out std_logic_vector(31 downto 0));
-end component;
-
-component jmem
-  port (
-    wadr        : in  std_logic_vector(15 downto 0);
-    wclk        : in  std_logic;
-    radr        : in  std_logic_vector(15 downto 0);
-    rclk        : in  std_logic;
-    rst        : in  std_logic; -- not used
-    we         : in  std_logic;
-    idata      : in  std_logic_vector(63 downto 0);
-    odata      : out  std_logic_vector(127 downto 0));  -- for G5            (JDIM 4)
---  odata      : out  std_logic_vector(255 downto 0));  -- for SPH 1st stage (JDIM 8)
---  odata      : out  std_logic_vector(511 downto 0));  -- for SPH 2nd stage (JDIM 16)
-end component;
-
--- pg_pipe
-component pg_pipe
-  generic(JDATA_WIDTH : integer := 384;
-          IDATA_WIDTH : integer := 64  );
-  port(
-    p_jdata : in std_logic_vector(JDATA_WIDTH-1 downto 0);
-    p_run : in std_logic;
-    p_we :  in std_logic;
-    p_adri : in std_logic_vector(11 downto 0);
-    p_datai : in std_logic_vector(IDATA_WIDTH-1 downto 0);
-    p_adro : in std_logic_vector(11 downto 0);
-    p_datao : out std_logic_vector(IDATA_WIDTH-1 downto 0);
-    p_runret : out std_logic;
---  aclk : in std_logic;                -- for pg_float_accum
-    rst,pclk,clk : in std_logic);
-end component;
-
--- adr_dec
-signal is_jpw : std_logic;
-signal is_ipw : std_logic;
-signal is_fo  : std_logic;
-signal is_setn : std_logic;
-signal is_run : std_logic;
-
--- pipe_sts
-signal p_runret  : std_logic;
-signal odata_sts : std_logic_vector(31 downto 0);
-
--- calc
-signal calc_we : std_logic;
-signal calc_jadr : std_logic_vector(31 downto 0);
-signal p_run : std_logic;
-
--- setn
-signal setn_we : std_logic;
-signal odata_setn : std_logic_vector(31 downto 0);
-
--- fo
-signal odata_fo : std_logic_vector(63 downto 0);
-signal p_adro   : std_logic_vector(11 downto 0);
-
--- ipw
-signal p_we    : std_logic;
-signal p_adri : std_logic_vector(11 downto 0);
-
--- jmem
-signal jmem_d : std_logic_vector(127 downto 0);  -- for G5
---signal jmem_d : std_logic_vector(255 downto 0);  -- for SHP 1st Stage
---signal jmem_d : std_logic_vector(511 downto 0);  -- for SHP 2nd Stage
-signal jpw_we : std_logic;
-signal jmem_adr : std_logic_vector(63 downto 0);
-signal jmem_adr_outside : std_logic_vector(15 downto 0);
-
-
-signal idata : std_logic_vector(63 downto 0);
-signal clk : std_logic;
-signal pclk : std_logic;
-constant zero32 : std_logic_vector(31 downto 0) := (others=>'0');
-signal ADR_ff : std_logic_vector(18 downto 0) := (others=>'0');
-signal odata_jmem : std_logic_vector(63 downto 0) := (others=>'0');
-
--- DEBUG ---------------------------------------------
-signal debug_p_jdata : std_logic_vector(511 downto 0);
-constant c_zero : std_logic_vector(1023 downto 0) := (others=>'0');
-------------------------------------------------------
+-- CNT
+signal fetch_done : std_logic :='0';
+signal exec : std_logic;                          -- cnt -> if
+signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
+signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
+signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
+signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
+-- IF
+signal ignore_busy : std_logic; 
 
 begin
 
-clk  <= SYS_CLK;
-pclk <= PIPE_CLK;
---pclk <= SYS_CLK;
+  -- CALC STATUS
+  csts0 <= CALC_STS;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      csts1 <= csts0;
+    end if;
+  end process;
 
-idata <= DTI;
+  -- CALC DONE
+  process (RST,CLK,csts0,csts1) begin
+    if(RST='1') then
+      calc_done <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        calc_done <= '1';
+      else
+        calc_done <= '0';
+      end if;
+    end if;
+  end process;
 
--- calc status
-process(clk) begin
-  if(clk'event and clk='1') then
-    STS <= odata_sts(0);
-  end if;
-end process;
+  -- BUSY
+  process (RST,CLK,csts0,csts1,fetch_done) begin
+    if (RST='1') then
+      BUSY <='1';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        BUSY <= '1';
+      elsif(fetch_done='1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
 
-
-
-----------
--- DTO ---
-----------
-
-DTO <= odata_fo;
-
-unit0: adr_dec port map(
-    clk=>clk,
-    adr=>ADR,
-    is_jpw =>is_jpw,  -- jmem
-    is_ipw =>is_ipw,  -- ireg
-    is_fo  =>is_fo,   -- fo
-    is_setn=>is_setn, -- setn
-    is_run =>is_run, -- do calc
-    FPGA_NO => FPGA_NO);
-
--------------------------------------------------------------------------------
--- pg_pipe
--------------------------------------------------------------------------------
-p_we <= is_ipw and WE;
---- ADR CONVERSION XI ---
-p_adri(3 downto 0)  <= '0' & ADR(2 downto 0); --  16 xi       (2004/01/01)
-p_adri(10 downto 4) <= ADR(9 downto 3);       -- 128 pipes    (2004/01/01)
-p_adri(11)          <= '0';                   -- chipsel mask (2005/01/01)
---- ADR CONVERSION AI ---
-p_adro(3 downto 0)  <= '0' & ADR(2 downto 0); --   8 ai       (2004/01/02)
-p_adro(10 downto 4) <= ADR(9 downto 3);       -- 128 pipes    (2004/01/02)
-p_adro(11)          <= '0';                   -- chipsel mask
-
-unit1 : pg_pipe
-    generic map (JDATA_WIDTH =>128,     -- for G5
---  generic map (JDATA_WIDTH =>113,     -- for G5
---  generic map (JDATA_WIDTH =>208,     -- for SPH 1st Stage
---  generic map (JDATA_WIDTH =>384,     -- for SPH 2nd Stage
-                 IDATA_WIDTH =>64 )
-    port map(
---  p_jdata => jmem_d(73 downto 0),     -- G3
-    p_jdata => jmem_d(127 downto 0),    -- G5
---  p_jdata => jmem_d(112 downto 0),    -- G5
---  p_jdata => jmem_d(207 downto 0),    -- SPH 1st Stage
---  p_jdata => jmem_d(383 downto 0),    -- SPH 2nd Stage
-    p_run   => p_run,
-    p_we    => p_we,
-    p_adri  => p_adri,
-    p_datai => idata,
-    p_adro  => p_adro,
-    p_datao => odata_fo,
-    p_runret=> p_runret,
-    rst => '0',
-    pclk => pclk,
-    clk =>clk);
-
--- calc ---------------------------------------------
-calc_we <= is_run AND WE;
-unit2 : calc port map(
-       start   => calc_we,
-       clk     => clk,
-       pclk    => pclk,
-       n       => odata_setn,
-       run     => p_run,
-       mem_adr => calc_jadr);
-
--- pipe_sts
-unit3 : pipe_sts port map(
-           rst => RST,
-           clk => pclk,
-           run => p_run,
-           runret=>p_runret,
-           status=>odata_sts);
-
--- setn access -------------------------------------
-setn_we <= is_setn AND WE;
-unit8 : setn port map(
-       clk=>clk,
-       we=>setn_we,
-       idata=>idata(31 downto 0),
-       odata=>odata_setn);
-
--- jmem access -------------------------------------
-jpw_we <= is_jpw AND WE;
-
---jmem_adr_outside <= "0" & ADR(14 downto 0);
-jmem_adr_outside <= ADR(15 downto 0);
+  -- =================================================== SUBMODULE INSTANCES
+  u0: LOCAL_READ_CNT 
+    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
+    port map(NPIPE => NPIPE,
+             CALC_DONE => calc_done,
+             FETCH_DONE => fetch_done,
+             EXEC       => exec,
+             START_AD   => start_ad,
+             NQWORD     => nqword,
+             CHIPSEL    => chipsel,
+             MEM_AD_BASE => mem_base,
+             RST => RST, CLK=>CLK);
 
 
-unit9: jmem port map(
-    rst=>'0',
-    we=>jpw_we,
-    wadr=>jmem_adr_outside(15 downto 0),  -- ADDRESS for WRITE 
-    wclk=>clk,                            -- CLOCK   for WRITE
-    radr => calc_jadr(15 downto 0),       -- ADDRESS for READ 
-    rclk=>pclk,                           -- CLOCK   for READ
-    idata=>idata,
-    odata=>jmem_d);
+  u1: LOCAL_READ_IF
+    port map(EXEC        => exec,     -- from cnt
+             START_AD    => start_ad, -- from cnt
+             NQWORD      => nqword,   -- from cnt
+             CHIPSEL     => chipsel,  -- from cnt
+             MEM_AD_BASE => mem_base, -- from cnt
+             BUSY => ignore_busy,
+             DMAR_ENABLE => DMAR_ENABLE, -- output directly
+             DBUS_Port   => DBUS_Port,   -- output directly
+             DBUS_idata  => DBUS_idata,  -- output directly
+             DBUS_HiZ    => DBUS_HiZ,    -- output directly
+             MEM_ADB  => MEM_ADB,        -- output directly
+             MEM_WEHB => MEM_WEHB,       -- output directly
+             MEM_WELB => MEM_WELB,       -- output directly
+             MEM_DTIB => MEM_DTIB,       -- output directly
+             RST=>RST,CLK=>CLK);
+
 
 end rtl;
-
