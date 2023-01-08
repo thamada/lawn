@@ -1,153 +1,74 @@
-2022年 12月 27日 火曜日 11:29:33 JST
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
--- LOCAL IO (READ & WRITE)
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+2023年  1月  8日 日曜日 09:42:50 JST
+--------------------------------------------------------------------------------
+Release 6.2.03i Trace G.28
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-entity LOCAL_IO is
-  generic (NBIT_L_ADRO : integer := 3);
-  port (
-    
-    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
-    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
-    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
-
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_IO;
-architecture rtl of LOCAL_IO is
-
-component LOCAL_WRITE
-  port (
-    -- pcicnt input
-    MEM_AD  : in std_logic_vector(19 downto 0);
-    MEM_WE  : in std_logic;
-    MEM_DTI : in std_logic_vector(63 downto 0);
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-component LOCAL_READ
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='0'; -- to GPREG0
-
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
--- DMAW
-  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
--- DMAR
-  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
-  signal busy_dmar    : std_logic;
-
-begin
-
-  -- DMA BUSY or IDLE
-  process (CLK,busy_dmar,CALC_STS) begin
-    if(CLK'event and CLK='1') then
-      if   (CALC_STS='1' AND busy_dmar='0') then
-        BUSY_LOCAL_READ <= '0';
-      elsif(CALC_STS='1' AND busy_dmar='1') then
-        BUSY_LOCAL_READ <= '1';
-      elsif(CALC_STS='1' AND busy_dmar='0') then
-        BUSY_LOCAL_READ <= '1';
-      elsif(CALC_STS='0') then
-        BUSY_LOCAL_READ <= '1';
-      end if;
-    end if;
-  end process;
+trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
 
 
+Design file:              top.ncd
+Physical constraint file: top.pcf
+Device,speed:             xc2vp70,-5 (PRODUCTION 1.86 2004-05-01)
+Report level:             error report
 
-  ------------------------------
-  --- DBUS_Port              ---
-  ------------------------------
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      DBUS_Port <= dbus_port0;
-    end if;
-  end process;
+Environment Variable      Effect 
+--------------------      ------ 
+NONE                      No environment variables were set
+--------------------------------------------------------------------------------
 
-  with busy_dmar select
-    dbus_port0 <= dmar_dbus_o when '1',
-                  dmaw_dbus_o when others;
+INFO:Timing:2752 - To get complete path coverage, use the unconstrained paths
+   option. All paths that are not constrained will be reported in the
+   unconstrained paths section(s) of the report.
 
--------------------------------------------------------------------------------
--- Write : IFPGA --> PFPGAs
--------------------------------------------------------------------------------
-u0 : LOCAL_WRITE
-  port map (MEM_AD      => MEM_ADA,
-            MEM_WE      => MEM_WELA,
-            MEM_DTI     => MEM_DTIA,
-            DMAW_ENABLE => DMAW_ENABLE,
-            DBUS_Port   => dmaw_dbus_o,
-            RST         => RST,
-            CLK         => CLK);
+================================================================================
+Timing constraint: TS_CK66 = PERIOD TIMEGRP "CK66"  20 nS   HIGH 50.000000 % ;
 
--------------------------------------------------------------------------------
--- Read : IFPGA <-- PFPGAs
--------------------------------------------------------------------------------
-u1 : LOCAL_READ
-  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
-  port map (NPIPE       => NPIPE,
-            CALC_STS    => CALC_STS,
-            BUSY        => busy_dmar,
-            DMAR_ENABLE => DMAR_ENABLE,
-            DBUS_Port   => dmar_dbus_o,
-            DBUS_idata  => DBUS_idata,
-            DBUS_HiZ    => DBUS_HiZ,
-            MEM_ADB     => MEM_ADB,
-            MEM_WEHB    => MEM_WEHB,
-            MEM_WELB    => MEM_WELB,
-            MEM_DTIB    => MEM_DTIB,
-            RST         => RST,
-            CLK         => CLK);
+ 0 items analyzed, 0 timing errors detected.
+--------------------------------------------------------------------------------
 
-end rtl;
+================================================================================
+Timing constraint: TS_dcm0_dcm_out = PERIOD TIMEGRP "dcm0_dcm_out" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 43997 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  19.569ns.
+--------------------------------------------------------------------------------
+
+================================================================================
+Timing constraint: TS_dcm0_dcm_fx = PERIOD TIMEGRP "dcm0_dcm_fx" TS_CK66 * 1.000000  HIGH 50.000 % ;
+
+ 1665654 items analyzed, 0 timing errors detected. (0 setup errors, 0 hold errors)
+ Minimum period is  14.739ns.
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+Data Sheet report:
+-----------------
+All values displayed in nanoseconds (ns)
+
+Clock to Setup on destination clock CK66
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+CK66           |   19.959|         |         |         |
+---------------+---------+---------+---------+---------+
+
+
+Timing summary:
+---------------
+
+Timing errors: 0  Score: 0
+
+Constraints cover 1709651 paths, 0 nets, and 63904 connections
+
+Design statistics:
+   Minimum period:  19.569ns (Maximum frequency:  51.101MHz)
+
+
+Analysis completed Mon Jun 13 23:42:18 2005
+--------------------------------------------------------------------------------
+
+Peak Memory Usage: 279 MB
