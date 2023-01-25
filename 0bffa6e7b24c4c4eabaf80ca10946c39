@@ -1,44 +1,26 @@
-2023年  1月 11日 水曜日 10:18:46 JST
-#!/usr/bin/env python3
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+2023年  1月 25日 水曜日 11:41:12 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-class Message(object):
-    def __init__(self):
-        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
-        self.is_update = False
+entity dmar_start_adr is
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmar_start_adr;
 
-#D95CBBF2 7 41 53 28 48 50 R->
-def read_log_one(msg):
-
-    fname = '/dev/shm/log.txt'
-    with open(fname, 'r') as fh:
-        lines = fh.readlines()
-        l = lines[-2]
-        l = l.rstrip()
-        cols = l.split(' ')
-        if cols[0] != msg.last[0]:
-            msg.last = cols
-            msg.is_update = True
-        else:
-            msg.is_update = False
-
-
-fig = plt.figure()
-msg = Message()
-
-def plot(data):
-    global msg, fig
-    read_log_one(msg)
-    if msg.is_update :
-        print (msg.last)
-
-    plt.cla() # clear graph
-    rand = np.random.randn(100)
-    im = plt.plot(rand)
-
-
-ani = animation.FuncAnimation(fig, plot, interval=100)
-plt.show()
-
+architecture rtl of dmar_start_adr is
+component dmaw_start_adr
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end component;
+begin
+  u0 : dmaw_start_adr port map(CLK=>CLK, DBUS=>DBUS, STATE=>STATE, START_ADR=>START_ADR);
+end rtl;
