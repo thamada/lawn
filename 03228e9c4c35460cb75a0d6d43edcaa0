@@ -1,16 +1,46 @@
-2023年  2月  1日 水曜日 09:26:11 JST
-/** 
-# v��1/2���ƥå׿ʤ��
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
+2023年  2月  3日 金曜日 10:00:33 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
-#include <stdio.h>
-#include "nbodysim.h"
+VM_NAME="ubuntu16"
 
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
-}
+all: check
+
+c: check
+
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
