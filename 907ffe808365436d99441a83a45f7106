@@ -1,16 +1,28 @@
-2023年  2月  4日 土曜日 10:08:31 JST
-#!/bin/sh
-#
-# An example hook script to check the commit log message taken by
-# applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.  The hook is
-# allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "applypatch-msg".
+2023年  2月  4日 土曜日 10:39:21 JST
+// Copyright(c) 2004- by PGPG
+// The original source : contrib/src_h/vi/pg_util.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#ifndef LONG
+#define LONG unsigned long long int
+#endif
+LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
+double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
+LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
+LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
+double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
+LONG extractbit_long(LONG in, int hi, int lo);
+void l2bit(LONG a);
+void putbits(LONG a);
+void putbits32(LONG a);
+void putbitsn(LONG a,int n);
+double gen_rand_abs(void);
+double gen_rand(void);
+double gen_rand_tamanizero(void);
 
-. git-sh-setup
-test -x "$GIT_DIR/hooks/commit-msg" &&
-	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
-:
+
+#include <sys/time.h>
+#include <sys/resource.h>
+double e_time(void);
