@@ -1,30 +1,57 @@
-2023å¹´  1æœˆ 31æ—¥ ç«æ›œæ—¥ 10:55:15 JST
+2023å¹´  2æœˆ 19æ—¥ æ—¥æ›œæ—¥ 09:36:01 JST
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;                                        
 use ieee.std_logic_unsigned.all;                                    
 
-entity setn is
+entity pipe_sts is
   port (
-    clk       : in std_logic;
-    we        : in std_logic;
-    idata     : in std_logic_vector(31 downto 0);
-    odata     : out std_logic_vector(31 downto 0));
-end setn;
+    rst        : in  std_logic;
+    clk        : in  std_logic;
+    run        : in  std_logic;
+    runret     : in  std_logic;
+    status     : out std_logic_vector(31 downto 0)
+  );
+end pipe_sts;
 
-architecture rtl of setn is
-signal nreg :  std_logic_vector(31 downto 0) := "00000000000000000000000000000011"; -- default 3
+architecture rtl of pipe_sts is
+signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
+signal rund,sts : std_logic;
+signal cntr : std_logic_vector(7 downto 0);
+signal irun : std_logic := '0';
+
 begin
 
-odata <= nreg;
---odata <= "00000000000000000000000000000011";
+-- clk    ____~~~~____~~~~____~~~~____~~~~__
+-- runret _____~~~~~~~~_____________________
+-- rund   _____________~~~~~~~~_____________
+-- status                      <finish     >
 
-process (clk) begin
-  if(clk'event and clk='1') then
-    if(we = '1') then
-      nreg <= idata;
+-- status
+status(31 downto 8) <= (others=>'0');
+process(clk,rst) begin
+  if(rst='1') then
+    status(7 downto 0) <= (others=>'1');
+  elsif(clk'event and clk='1') then
+    if((runret='0') AND (rund='1')) then  -- ŒvZI—¹
+      status(7 downto 0) <= (others=>'1');
+    elsif((run='1') AND (irun='0')) then -- ŒvZŠJn
+      status(7 downto 0) <= (others=>'0');
     end if;
   end if;
 end process;
+
+process(clk) begin
+  if(clk'event and clk='1') then
+    rund  <= runret;
+  end if;
+end process;
+
+process(clk) begin
+  if(clk'event and clk='1') then
+    irun  <= run;
+  end if;
+end process;
+
 
 end rtl;
