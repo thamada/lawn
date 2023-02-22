@@ -1,29 +1,56 @@
-2023年  2月 15日 水曜日 11:35:08 JST
-//Time-stamp: "2006-11-21 00:17:47 hamada"
+2023年  2月 22日 水曜日 09:34:06 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-04 15:57:17 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-#define FDIM 8       // depend on NBIT_L_UADR     (@ ifpga.vhd)
-#define JDIM 4       // depend on dpram adr width (@ pgpg_mem.vhd)
-#define XI_AWIDTH 4  // depend on l_adri width    (@ pgpg_mem.vhd)
+class State(object):
+    def __init__(self):
+        self.is_record = False
 
-int pgr_open(int);
-void pgr_close(int);
+if (__name__ == '__main__'):
+    state = State()
 
-void pgr_reset(int devid);
-int  pgr_get_writecomb_err(int devid);
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-void pgr_setjpset(int devid, unsigned int jdata[][JDIM], int nj);
-void pgr_setjpset_one(int devid, int j, unsigned int jdata[JDIM]);
 
-void pgr_setipset(int devid, unsigned int *idata, int num);
-void pgr_setipset_ichip(int devid, unsigned int ichip, unsigned int *idata, int number_of_pipelines);
-void pgr_setipset_one(int devid, unsigned int ichip, int ipipe, unsigned int *idata, int idim);
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
 
-void pgr_start_calc(int devid, unsigned int n);
-void pgr_calc_start(int devid, unsigned int n);
-void pgr_calc_finish(int devid);
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
 
-void pgr_getfoset(int devid, unsigned long long int fodata[][FDIM]);
+    print(cap_width, "x", cap_height, ":", cap_fps)
 
-void pgr_set_npipe_per_chip(int devid, int n);
-void pgr_set_jwidth(int devid, int n);
-void pgr_set_nchip(int nchip);
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('camera: %d'%(devid), frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            basedir = '../log.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, frame)
+            print(ofname, "devid = %d"%devid)
+            tnow0 = tnow
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord(' '): state.is_record = not (state.is_record)
+
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
