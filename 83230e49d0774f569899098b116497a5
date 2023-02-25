@@ -1,160 +1,158 @@
-2023年  2月 13日 月曜日 09:48:53 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-11 19:19:34 hamada>
-import cv2
-import urllib.request
-import numpy as np
-import argparse
-from datetime import datetime
-import mkdir
+2023年  2月 25日 土曜日 11:43:53 JST
+#define ERROR_CHECK
 
-class DroidCam(object):
-    def __init__(self):
-        self.droidapp = 'IP Webcam'
-        self.ipadr  = '192.168.43.1'
-#        self.ipadr  = '192.168.42.129'
-#        self.ipadr  = '133.45.9.162'
-        self.port  = '3389'
-        self.stream = -1
-        self.URL = -1
-        self.image = -1
-    def get_stream(self):
-        stub = ''
-        if (self.droidapp == 'DroidCam'):
-            stub = '/mjpegfeed?960x720'
-        elif (self.droidapp == 'IP Webcam'):
-            stub = '/video?dummy=param.mjpg'
-        else:
-            stub = '/mjpegfeed?640x480'
+#include <iostream>
+using namespace std;
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-        url = 'http://'+self.ipadr+':'+self.port + stub
+#define NMAX (1<<17) // 131072
 
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
+extern "C" void force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj);
 
-    def get_stream_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('URL: ', url)
-        self.URL = url
-        self.stream = urllib.request.urlopen(self.URL)
-        return (self.stream)
+#include <time.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+double get_time(void)
+{
+  struct rusage r;
+  double sec, usec, z;
+  getrusage(RUSAGE_SELF, &r);
+  sec   = r.ru_utime.tv_sec;
+  usec  = r.ru_utime.tv_usec;
+  z = sec + usec*1.0e-6;
+  return (z);
+}
 
-    def get_jpg(self):
-        stub = '/shot.jpg'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        urlObj = urllib.request.urlopen(url)
-        print ('URL: ', url, urlObj.getcode())
-        ofname = '/dev/shm/now.jpg'
-        with open(ofname, "wb") as file:
-            file.write(urlObj.read())
-        self.image = cv2.imread(ofname)
-        return (self.image)
-        
-    def set_focus(self):
-        stub = '/focus'
-        url = 'http://'+self.ipadr+':'+self.port + stub
-        print ('focus: ', url)
-        urlObj = urllib.request.urlopen(url)
-        
+static double r[NMAX][3];
+static double m[NMAX];
+static double eps2 = 0.0001;
+static double a[NMAX][3];
+static double v[NMAX][3];
+static double a_h[NMAX][3];
 
-class State(object):
-    def __init__(self):
-        self.is_record = False
-        self.drawing = False
-        self.posi0 = [-1,-1]
-        self.posi1 = [-1,-1]
-        self.image = -1
-        self.image_size = [-1, -1] # [height, width]
-        self.image_orig = -1
-        self.class_num = 777
-        self.image_num = 1
+void readfile(char* fname, int* nbody, double* m, double r[][3], double v[][3])
+{
+  ifstream f;
+  f.open(fname, ios::in);
+  if(!f) {
+    cerr << "Can't open file: " <<  fname << endl;
+    exit(-1);
+  }
+  char* buf= new char [2048];
+  f.getline(buf, 511); // *ignore*
+  int n;
+  f >> n;
+  (*nbody) = n;
+  f.getline(buf, 511); // *ignore*
 
-    def draw_rect(self):
-        # print ("posi0, posi1: ", self.posi0, self.posi1)
-        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
+  f.scientific;
+  for(int i=0; i<n; i++){
+    f.getline(buf, 1024);
+    char ii[256];
+    double mj, x, y, z, vx, vy, vz;
+    f >> ii >> mj >> x >> y >> z >> vx >> vy >> vz;
+    //    printf("%s   %.16E   % .16E % .16E % .16E   % .16E % .16E % .16E \n", ii, m, x, y, z, vx, vy, vz);
+    m[i]    = mj;
+    r[i][0] = x;
+    r[i][1] = y;
+    r[i][2] = z;
+    v[i][0] = vx;
+    v[i][1] = vy;
+    v[i][2] = vz;
+  }
+  f.close();
 
-    def draw_text(self):
-        if(self.is_record):
-            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
-            font_size = 0.8
-            text = "<<%d>>"% (self.image_num)
-            color = (0x0, 0x0, 0xBF)
-            px = int(self.image_size[1]/2)
-            py = 30
-            cv2.putText(self.image, text,(px, py), font, font_size, color)
+  delete[] buf;
+}
 
-state = State()
+void force_host(double xj[][3],
+								double m[],
+								double xi[][3],
+								double eps2,
+								double a[][3],
+								int ni,
+								int nj)
+{
+  int i,j,d;
+  double dx[3];
+  for(i=0;i<ni;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
 
-def mouse_event(event,x,y,flags,param):
-    global state
+  for(i=0;i<ni;i++){
+    for(j=0;j<nj;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+				dx[d] = xj[j][d] - xi[i][d];
+				r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+				a[i][d] +=  m[j]*dx[d]/r3;
+      }
+    }
+  }
+}
 
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= state.image_size[1]: x = state.image_size[1] - 1
-    if y >= state.image_size[0]: y = state.image_size[0] - 1
+int main(int argc,char** argv)
+{
+  int n=0;
+  int nstep = 1;
 
+  if((argc == 2)||(argc == 3)){
+    char ifile[256];
+    strcpy(ifile,argv[1]);
+    readfile(ifile, &n, m, r, v);
+    if(argc == 3)  nstep = atoi(argv[2]);
+  }else{
+    fprintf(stderr, "argc = %d\n",argc);
+    fprintf(stderr, "cmd <init file> <nstep>\n");
+    exit(-1);
+  }
 
-    if event == (cv2.EVENT_LBUTTONDOWN):
-        state.posi0[0] = x0 = state.posi1[0]
-        state.posi0[1] = y0 = state.posi1[1]
-        state.posi1[0] = x
-        state.posi1[1] = y
-        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
+  int ni=n;
+  int nj=n;
 
+  force(r, m, r, eps2, a, ni, nj);
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xf, 0xf, 0xff)
-    cv2.putText(image, text, (5, 15), font_type, font_size, font_color)
+  double eps2 = (1./256.);
+  double tt = get_time();
+  for(int step = 0; step < nstep; step++) force(r, m, r, eps2, a, ni, nj);
+  tt = get_time() - tt;
 
-
-if (__name__ == '__main__'):
-
-    droidcam = DroidCam()
-#    stream = droidcam.get_stream()
-
-    parser = argparse.ArgumentParser(description = "description goes here")
-    parser.add_argument("--devid", type=int, help = "set device id", required=False)
-    args = parser.parse_args()
-    devid = 0
-    if args.devid:
-        devid = int(args.devid)
-        print ("set devid = ", devid)
-
-    while True:
-        frame = droidcam.get_jpg()
-        state.image_orig = frame.copy()
-        state.image      = frame.copy()
-        state.image_size[0], state.image_size[1] = frame.shape[:2]
-        state.draw_rect()
-        state.draw_text()
-        cv2.imshow('droidcam',state.image)
-        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-        if True:
-            basedir = '../log.ipcam.%d/'% (devid)
-            ofname = mkdir.get_filename_frame(basedir, tnow)
-            put_text(state.image, tnow)
-            cv2.imwrite(ofname, state.image)
-            print(ofname)
-            tnow0 = tnow
-            state.image_num += 1
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
-        if ( (key == ord(' ')) or 
-             (key == 34) or # Muhenkan
-             (key == 35) or # Henkan
-             (key == 39) or # katakana
-             (key == 10)    # Enter
-        ):
-            state.is_record = not (state.is_record)
-        if key == ord('f'): droidcam.set_focus()
+  double nfloat = 38.0 * ((double)ni)*((double)nj) * ((double)nstep);
+  double gflops = nfloat * (1.e-9) / tt;
+  //  fprintf(stdout, "n=%d\t%g sec/gpucall\t%g Gflops\n", n, tt/(double)nstep, gflops );
+  fprintf(stdout, "n=%d\n", n);
+  fprintf(stdout, "%g sec/gpucall\n", tt/(double)nstep);
+  fprintf(stdout, "%g Gflops\n",  gflops );
 
 
-    cv2.destroyAllWindows()
-    print("Done.")
+  if(0){
+    cout << "Start Error check: " << n <<endl;
+    force_host(r, m, r, eps2, a_h, ni, nj);
+    double err_max = 0.0;
+    for(int i=0;i<ni;i++){
+      double err=0.0;
+      for(int d=0;d<3;d++){
+				double diff = fabs(a[i][d] - a_h[i][d]);
+				err += (diff*diff);
+      }
+      err = sqrt(err);
+      err = err/sqrt(a_h[i][0]*a_h[i][0]+a_h[i][1]*a_h[i][1]+a_h[i][2]*a_h[i][2]);
+      if (err > err_max){
+				err_max = err;
+				printf("[%d]:\t", i);
+				printf("%.7e:\t", err);
+				printf("%e,%e,%e:\t%e,%e,%e\n",a_h[i][0], a_h[i][1], a_h[i][2],a[i][0], a[i][1], a[i][2]);
+      }
+    }
+    printf("Max Err %.7e\n", err_max);
+  }
 
+  return (0);
+}
