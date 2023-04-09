@@ -1,147 +1,143 @@
-2023年  4月  5日 水曜日 10:18:35 JST
-Release 6.2.03i - Bitgen G.31a
-Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
+2023年  4月  9日 日曜日 10:15:11 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=16
 
-Loading device database for application Bitgen from file "top.ncd".
-   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
-Loading device for application Bitgen from file '2vp70.nph' in environment
-/export/home/opt/xilinx.
-Opened constraints file top.pcf.
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-Mon Jun 13 23:42:26 2005
+learning_rate=0.001
+max_batches = 2000001
+#max_batches = 50
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
-Summary of Bitgen Options:
-+----------------------+----------------------+
-| Option Name          | Current Setting      |
-+----------------------+----------------------+
-| Compress             | (Not Specified)*     |
-+----------------------+----------------------+
-| Readback             | (Not Specified)*     |
-+----------------------+----------------------+
-| CRC                  | Enable**             |
-+----------------------+----------------------+
-| DebugBitstream       | No**                 |
-+----------------------+----------------------+
-| ConfigRate           | 4**                  |
-+----------------------+----------------------+
-| StartupClk           | Cclk**               |
-+----------------------+----------------------+
-| DCMShutdown          | Disable**            |
-+----------------------+----------------------+
-| DisableBandgap       | No**                 |
-+----------------------+----------------------+
-| CclkPin              | Pullup**             |
-+----------------------+----------------------+
-| DonePin              | Pullup**             |
-+----------------------+----------------------+
-| HswapenPin           | Pullup*              |
-+----------------------+----------------------+
-| M0Pin                | Pullup**             |
-+----------------------+----------------------+
-| M1Pin                | Pullup**             |
-+----------------------+----------------------+
-| M2Pin                | Pullup**             |
-+----------------------+----------------------+
-| PowerdownPin         | Pullup**             |
-+----------------------+----------------------+
-| ProgPin              | Pullup**             |
-+----------------------+----------------------+
-| TckPin               | Pullup**             |
-+----------------------+----------------------+
-| TdiPin               | Pullup**             |
-+----------------------+----------------------+
-| TdoPin               | Pullup**             |
-+----------------------+----------------------+
-| TmsPin               | Pullup**             |
-+----------------------+----------------------+
-| UnusedPin            | Pulldown**           |
-+----------------------+----------------------+
-| GWE_cycle            | 6**                  |
-+----------------------+----------------------+
-| GTS_cycle            | 5**                  |
-+----------------------+----------------------+
-| LCK_cycle            | NoWait**             |
-+----------------------+----------------------+
-| Match_cycle          | Auto**               |
-+----------------------+----------------------+
-| DONE_cycle           | 4**                  |
-+----------------------+----------------------+
-| Persist              | No*                  |
-+----------------------+----------------------+
-| DriveDone            | No**                 |
-+----------------------+----------------------+
-| DonePipe             | No**                 |
-+----------------------+----------------------+
-| Security             | None**               |
-+----------------------+----------------------+
-| UserID               | 0xFFFFFFFF**         |
-+----------------------+----------------------+
-| ActivateGclk         | No*                  |
-+----------------------+----------------------+
-| ActiveReconfig       | No*                  |
-+----------------------+----------------------+
-| PartialMask0         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask1         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialMask2         | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialGclk          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialLeft          | (Not Specified)*     |
-+----------------------+----------------------+
-| PartialRight         | (Not Specified)*     |
-+----------------------+----------------------+
-| Encrypt              | No**                 |
-+----------------------+----------------------+
-| Key0                 | pick*                |
-+----------------------+----------------------+
-| Key1                 | pick*                |
-+----------------------+----------------------+
-| Key2                 | pick*                |
-+----------------------+----------------------+
-| Key3                 | pick*                |
-+----------------------+----------------------+
-| Key4                 | pick*                |
-+----------------------+----------------------+
-| Key5                 | pick*                |
-+----------------------+----------------------+
-| Keyseq0              | M*                   |
-+----------------------+----------------------+
-| Keyseq1              | M*                   |
-+----------------------+----------------------+
-| Keyseq2              | M*                   |
-+----------------------+----------------------+
-| Keyseq3              | M*                   |
-+----------------------+----------------------+
-| Keyseq4              | M*                   |
-+----------------------+----------------------+
-| Keyseq5              | M*                   |
-+----------------------+----------------------+
-| KeyFile              | (Not Specified)*     |
-+----------------------+----------------------+
-| StartKey             | 0*                   |
-+----------------------+----------------------+
-| StartCBC             | pick*                |
-+----------------------+----------------------+
-| FreezeDCI            | No*                  |
-+----------------------+----------------------+
-| DCIUpdateMode        | AsRequired**         |
-+----------------------+----------------------+
-| IEEE1532             | No*                  |
-+----------------------+----------------------+
-| Binary               | No**                 |
-+----------------------+----------------------+
- *  Default setting.
- ** The specified setting matches the default setting.
+[maxpool]
+size=2
+stride=2
 
-Running DRC.
-INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
-   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
-   consult the Virtex-II Interactive Data Sheet.
-DRC detected 0 errors and 0 warnings.
-Creating bit map...
-Saving bit stream in "top.bit".
-Bitstream generation is complete.
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+# filters = (classes + coords + 1) * num
+## (10+5)*5
+filters=75
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=10
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
