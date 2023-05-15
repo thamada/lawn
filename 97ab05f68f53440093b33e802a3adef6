@@ -1,71 +1,53 @@
-2023年  4月 15日 土曜日 10:07:13 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:28:33 hamada>
-import numpy as np
-import cv2
+2023年  5月 15日 月曜日 09:07:41 JST
+-- 2005/06/13
+#define NPOS 32
+#define NLOG 17
+#define NMAN 8
+#define NCUT 6
+#define NFOR 57
+#define NACC 64
+#define D_FSU  1
+#define D_FTL  2
+#define D_LAD  4
+#define D_LMU  1
+#define D_LTF  2
+#define D_FAC  1
 
-class Message(object):
-    def __init__(self):
-        self.class_num = 80
-        self.last = [0 for i in range(8)]
-        self.log_previous = ''
-        self.is_update = False
-#        self.filename = '/dev/shm/log.txt'
-        self.filename = '/tmp/log.draw_detections.txt'
-        self.class_count = []
+// -1 < xbox < 1.0,
+// mmin > 1.0 (1e-2 < m < 1.0 ==> underflow around large R)
+#define xsize (2.0)
+#define mmin  (1.0e-2)
+#define xscale (pow(2.0,(double)NPOS)/xsize)
+//mmin 0xdf61
+#define mscale (pow(2.0,95.38)/mmin)
+#define escale (xscale*xscale)
 
-    def reset(self):
-        self.is_update = False
-        self.class_count = [0 for i in range(self.class_num)]
-        self.get_classId()
-        self.class_count = [0 for i in range(self.class_num)]
+#define NEXAD -31
+#define fshift pow(2.0,-1.0*(double)NEXAD)
+#define fscale (-xscale*xscale*fshift/mscale)
 
-    def get_message(self):
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            l = lines[-2]
-            l = l.rstrip()
-            cols = l.split(' ')
-            if cols[0] != self.last[0]:
-                self.last = cols
-                self.is_update = True
-            else:
-                self.is_update = False
-        
+/NPIPE 5;
+/NVMP 1;
 
-    def check_log_update(self):
-        self.is_update = False
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            current = lines[-2]
-            if current != self.log_previous:
-                self.is_update = True
-                self.log_previous = current
-        return (self.is_update)
+/JPSET xj[3], x[][], fix,      NPOS,xscale;
+/JPSET mj,    m[],   log,      NLOG,NMAN,mscale;
+/IPSET xi[3], x[][], fix,      NPOS,xscale;
+/IPSET ieps2, eps2,  log,      NLOG,NMAN,escale;
+/FOSET sx[3], a[][], fix,      NACC,fscale;
 
-    def scan_object(self, cl_name):
-        is_detect = False
+pg_fix_addsub(SUB,xi,xj,xij,           NPOS,           D_FSU);
+pg_conv_ftol(xij,dx,                   NPOS,NLOG,NMAN, D_FTL);
+pg_log_shift(1,dx,x2,                  NLOG);
 
-        if self.check_log_update():
-            with open(self.filename, 'r') as fh:
-                lines = fh.readlines()
-                for i in range(2, 20):
-                    l = lines[-i]
-                    l = l.rstrip()
-                    cols = l.split(' ')
-                    if cols[-1] == cl_name:
-                        is_detect = True
+pg_log_unsigned_add_itp(x2[0],x2[1], x2y2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2[2],ieps2, z2e2,   NLOG,NMAN,D_LAD,NCUT);
+pg_log_unsigned_add_itp(x2y2,z2e2,   r2,     NLOG,NMAN,D_LAD,NCUT);
 
-        return (is_detect)
+pg_log_shift(-1,r2,       r1,          NLOG);
+pg_log_muldiv(MUL,r2,r1,  r3,          NLOG,           D_LMU);
+pg_log_muldiv(SDIV,mj,r3,  mf,         NLOG,           D_LMU);
+pg_log_muldiv(MUL,mf,dx,  fx,          NLOG,           D_LMU);
+pg_log_expadd(fx,fxs,                  NEXAD,NLOG,NMAN, D_LMU);
 
-    def get_classId(self):
-        self.get_message()
-
-        if True == self.is_update:
-            z = int(self.last[1])
-            self.class_count[z] += 1
-        else:
-            z = -1
-
-        return (z)
-
+pg_conv_ltof(fxs,  ffx,                NLOG,NMAN,NFOR, D_LTF);
+pg_fix_accum(ffx,  sx,                 NFOR,NACC,      D_FAC);
