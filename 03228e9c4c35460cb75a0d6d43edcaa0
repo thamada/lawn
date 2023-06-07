@@ -1,25 +1,27 @@
-2023年  6月  3日 土曜日 11:18:27 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+2023年  6月  7日 水曜日 10:05:05 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-10 01:52:29 hamada>
+import cv2
+import urllib.request
+import numpy as np
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
+#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
+stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+bytes = b''
+while True:
+    raw = stream.read(1024)
+    bytes += raw
+    #print (bytes)
+    a = bytes.find(b'\xff\xd8')
+    b = bytes.find(b'\xff\xd9')
+    if a!=-1 and b!=-1:
+        jpg = bytes[a:b+2]
+        bytes= bytes[b+2:]
+        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
+        cv2.imshow('droidcam',image)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+
+cv2.destroyAllWindows()
+
