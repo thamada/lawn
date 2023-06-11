@@ -1,17 +1,16 @@
-2023年  6月  3日 土曜日 10:18:18 JST
-#!/usr/bin/perl
+2023年  6月 11日 日曜日 11:31:57 JST
+/** 
+# v��1/2���ƥå׿ʤ��
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
 
+#include <stdio.h>
+#include "nbodysim.h"
 
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
 }
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
