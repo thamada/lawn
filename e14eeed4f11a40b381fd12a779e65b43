@@ -1,18 +1,44 @@
-2023年  7月 16日 日曜日 10:42:35 JST
-FILES
+2023年  7月 22日 土曜日 10:20:00 JST
+// Time-stamp: " "
+#include <stdio.h> 
+#include <string.h>
+#include <stdlib.h>
+
+void read_data(char* fname, int* nbody, double posi[][2])
 {
-	VHDL_FILE = pgfpga.vhd;
-}
-COMPILER_SETTINGS_LIST
-{
-	COMPILER_SETTINGS = pgfpga;
-}
-SIMULATOR_SETTINGS_LIST
-{
-	SIMULATOR_SETTINGS = pgfpga;
-}
-SOFTWARE_SETTINGS_LIST
-{
-	SOFTWARE_SETTINGS = Debug;
-	SOFTWARE_SETTINGS = Release;
+  int idx,n;
+  char line[2560];
+  FILE *fp;
+  fp = fopen(fname,"r");
+  idx=0;
+
+  { // get N (number of particles)
+    char* p;
+    fgets(line,100,fp);
+    p = (char* )strtok(line,"\n");
+    sscanf(p,"%d",&n);
+    *nbody = n;
+  }
+
+  // get all data
+  for(idx=0;idx<n;idx++){
+    char* p;
+    char col[10][400];
+    int i=0;
+    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
+    p = (char* )strtok(line,"\t");
+    strcpy(col[i],p);
+    i++;
+    while((p = (char* )strtok(NULL, "\t"))!=NULL){
+      strcpy(col[i],p);
+      i++;
+    }
+    //--- for debug ---
+    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
+    //    printf("\n");
+
+    posi[idx][0]=atof(col[0]);
+    posi[idx][1]=atof(col[1]);
+  }
+  fclose(fp);
 }
