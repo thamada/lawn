@@ -1,75 +1,16 @@
-2023年  7月  3日 月曜日 11:20:47 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2023年  7月 23日 日曜日 11:19:03 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+#include <stdio.h>
+#include "nbodysim.h"
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
 }
-
-$bar = 1;
-
-my $adr=0, $size;
-
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
-
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
-
-
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
-
-
-1;
