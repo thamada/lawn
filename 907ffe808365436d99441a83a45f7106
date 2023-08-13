@@ -1,17 +1,44 @@
-2023年  8月  6日 日曜日 10:36:31 JST
-Release 8.1.03i - par I.27
-Copyright (c) 1995-2005 Xilinx, Inc.  All rights reserved.
+2023年  8月 13日 日曜日 09:51:26 JST
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
-Sun Nov 19 22:38:31 2006
+class Message(object):
+    def __init__(self):
+        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
+        self.is_update = False
 
-There are 0 unrouted networks: 
+#D95CBBF2 7 41 53 28 48 50 R->
+def read_log_one(msg):
+
+    fname = '/dev/shm/log.txt'
+    with open(fname, 'r') as fh:
+        lines = fh.readlines()
+        l = lines[-2]
+        l = l.rstrip()
+        cols = l.split(' ')
+        if cols[0] != msg.last[0]:
+            msg.last = cols
+            msg.is_update = True
+        else:
+            msg.is_update = False
 
 
-There are 6 sourceless or loadless networks: 
+fig = plt.figure()
+msg = Message()
 
-   CBUS<2>_IBUF
-   CBUS<3>_IBUF
-   CBUS<4>_IBUF
-   CBUS<5>_IBUF
-   CBUS<6>_IBUF
-   FPGA_NO<2>_IBUF
+def plot(data):
+    global msg, fig
+    read_log_one(msg)
+    if msg.is_update :
+        print (msg.last)
+
+    plt.cla() # clear graph
+    rand = np.random.randn(100)
+    im = plt.plot(rand)
+
+
+ani = animation.FuncAnimation(fig, plot, interval=100)
+plt.show()
+
