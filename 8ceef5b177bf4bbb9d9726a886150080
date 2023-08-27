@@ -1,15 +1,3 @@
-2023年  8月 27日 日曜日 11:22:56 JST
-#!/usr/bin/env python3
-import cv2
-import glob
-from datetime import datetime
-import time 
-
-while(True):
-    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-    print(tnow)
-
-    with open(".tc~", "w") as file:
-        file.write(tnow +"\n")
-
-    time.sleep(3)
+2023年  8月 27日 日曜日 11:50:16 JST
+MODULE local_write
+SUBMODULE local_write
