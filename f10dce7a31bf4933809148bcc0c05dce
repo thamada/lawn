@@ -1,68 +1,36 @@
-2023年  8月 26日 土曜日 09:55:41 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "flops.h"
-//#include "pg_util.h" // double e_time(void)
+2023年  9月  2日 土曜日 09:18:09 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--dmaw_state          0  >< 1 >< 2                                    >< 3 >< 0 
+--dmaw_start_adr               < n                                         >< 0
 
-extern double e_time(void);
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-void flops_initialize(struct flops_member* fm, int n, int nskip)
-{
-  (*fm).nbody = n;
-  (*fm).nskip = nskip;
-  (*fm).times = 0;
-  (*fm).nstep = 0;
-  (*fm).force_time = 0.0;
-  (*fm).start_time = e_time();
-}
+entity dmaw_start_adr is
+  port (
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmaw_start_adr;
 
-void flops_check(struct flops_member* fm)
-{
-  int n = (*fm).nbody;
-  int nskip = (*fm).nskip;
-  int nstep = (*fm).nstep;
-  int times = (*fm).times;
-  double t_start = (*fm).start_time;
-  double tmisc,tall;
-  double nope,Gflops;
-  double t_end;
-  nstep++;
+architecture rtl of dmaw_start_adr is
+constant zero : std_logic_vector(18 downto 0) := (others=>'0');
+begin
 
-  if((times % nskip) != (nskip-1)){
-    times++;
-  } else {
-    double tforce = (*fm).force_time;
-    t_end = e_time();
-    tall = t_end - t_start;
-    tmisc = tall - tforce;
-    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
-    //       GRAVITY,  LEAPFLOG
-    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
-    fprintf(stderr,"[%d steps]\t",nstep);
-    fprintf(stderr,"LapTime %2.2f sec\t",tall);
-    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="01") then
+        START_ADR <= DBUS(18 downto 0);
+      elsif((STATE="00") OR (STATE="11")) then
+        START_ADR <= zero;
+      end if;
+    end if;
+  end process;
 
-    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
-    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
-
-    times = 0;
-    t_start = e_time();
-  }
-  (*fm).times = times;
-  (*fm).nstep = nstep;
-  (*fm).start_time = t_start;
-}
-
-
-
-void flops_ftime_init(struct flops_member *fm){
-  (*fm).force_time = e_time();
-}
-
-void flops_ftime_save(struct flops_member *fm){
-  double dum = (*fm).force_time;
-  (*fm).force_time = e_time() - dum;
-}
-
-
+end rtl;
