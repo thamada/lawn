@@ -1,53 +1,56 @@
-2023年  8月 23日 水曜日 11:46:36 JST
-/*
- * ifpga_bram_clear.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+2023年  9月 10日 日曜日 11:24:48 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-04 15:57:17 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "pg4.h"
+class State(object):
+    def __init__(self):
+        self.is_record = False
 
-//#define NMAX (0x1<<10) // 4KB
-//#define NMAX (0x1<<11) // 8KB
-//#define NMAX (0x1<<12) // 16KB
-//#define NMAX (0x1<<13) // 32KB
-#define NMAX (0x1<<14) // 64KB
+if (__name__ == '__main__'):
+    state = State()
 
-unsigned int* ptr;
-unsigned int* bar1;
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
 
-int main(int argc,char *argv[])
-{
-  int devid = 0;
-  int n = NMAX;
-  int val = 0x1234567;
-  int i;
 
-  if(argc > 1){
-    n = atoi(argv[1]);
-  }
-  if(argc > 2){
-    val = atoi(argv[2]);
-  }
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
 
-  printf("n = %d\n",n);
-  printf("filled by %x\n",val);
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
 
-  pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
+    print(cap_width, "x", cap_height, ":", cap_fps)
 
-  for(i = 0; i < n; i++) {
-    pg4_writebase1(devid, i, val);
-  }
 
-  return 0;
-}
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('camera: %d'%(devid), frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            basedir = '../log.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, frame)
+            print(ofname, "devid = %d"%devid)
+            tnow0 = tnow
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord(' '): state.is_record = not (state.is_record)
+
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
