@@ -1,34 +1,47 @@
-2023年  9月  2日 土曜日 10:41:09 JST
-// Time-stamp: "2006-12-07 19:19:07 hamada"
-// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
-
+2023年  9月 17日 日曜日 10:04:35 JST
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+
+/*
+ * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
+
 #include "pg4.h"
 
-unsigned int* ptr;
-unsigned int* bar1;
-
-int main(int argc,char *argv[])
+int main(int argc, char* argv[])
 {
-  int devid = 0;
-  int i;
+  int devid  = 0;
+  int bar    = 0;
+  int is_size = 0;
+  unsigned long z = 0;
 
+  if (argc < 3) {
+    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
+    exit(-1);
+  }
+  
+  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
+
+  devid = atoi(argv[1]);
+  bar   = atoi(argv[2]);
+  
   pg4_open(devid);
-  bar1 = pg4_get_bar1ptr(devid);
-  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
-  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-  puts("clear DMA_CTRL register(0x2C).");
-  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
+  if(is_size)
+    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
+  else
+    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
 
-  puts("clear INT_STAT register(0x10).");
-  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
+  printf("0x%08lx\n",z);
+  pg4_close(devid);
 
-  puts("clear INT_MASK register(0x14).");
-  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
-
-  pg4_DMAcheck(devid);
-
-  return 0;
+  return 1;
 }
