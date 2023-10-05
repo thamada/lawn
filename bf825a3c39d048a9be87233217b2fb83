@@ -1,40 +1,47 @@
-2023年 10月  2日 月曜日 11:39:45 JST
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
-
-
-
-
-
-
-
+2023年 10月  5日 木曜日 10:54:28 JST
+./db/images/ID.0005/image_00000657.jpg
+./db/images/ID.0006/image_00000651.jpg
+./db/images/ID.0004/image_00001568.jpg
+./db/images/ID.0004/image_00000563.jpg
+./db/images/ID.0006/image_00000301.jpg
+./db/images/ID.0004/image_00000578.jpg
+./db/images/ID.0004/image_00000975.jpg
+./db/images/ID.0004/image_00000848.jpg
+./db/images/ID.0006/image_00000436.jpg
+./db/images/ID.0005/image_00000884.jpg
+./db/images/ID.0005/image_00000878.jpg
+./db/images/ID.0005/image_00000840.jpg
+./db/images/ID.0004/image_00000108.jpg
+./db/images/ID.0005/image_00001203.jpg
+./db/images/ID.0006/image_00000088.jpg
+./db/images/ID.0004/image_00001495.jpg
+./db/images/ID.0005/image_00000063.jpg
+./db/images/ID.0006/image_00000696.jpg
+./db/images/ID.0005/image_00001257.jpg
+./db/images/ID.0006/image_00000821.jpg
+./db/images/ID.0005/image_00000153.jpg
+./db/images/ID.0004/image_00001053.jpg
+./db/images/ID.0004/image_00001427.jpg
+./db/images/ID.0006/image_00000815.jpg
+./db/images/ID.0005/image_00000904.jpg
+./db/images/ID.0004/image_00000694.jpg
+./db/images/ID.0004/image_00001043.jpg
+./db/images/ID.0004/image_00000761.jpg
+./db/images/ID.0006/image_00000289.jpg
+./db/images/ID.0006/image_00000739.jpg
+./db/images/ID.0005/image_00001072.jpg
+./db/images/ID.0006/image_00000890.jpg
+./db/images/ID.0005/image_00000903.jpg
+./db/images/ID.0004/image_00001045.jpg
+./db/images/ID.0004/image_00000576.jpg
+./db/images/ID.0005/image_00001009.jpg
+./db/images/ID.0004/image_00001569.jpg
+./db/images/ID.0004/image_00000916.jpg
+./db/images/ID.0004/image_00000687.jpg
+./db/images/ID.0005/image_00001261.jpg
+./db/images/ID.0004/image_00000316.jpg
+./db/images/ID.0005/image_00000288.jpg
+./db/images/ID.0004/image_00001514.jpg
+./db/images/ID.0004/image_00000456.jpg
+./db/images/ID.0004/image_00000191.jpg
+./db/images/ID.0004/image_00000533.jpg
