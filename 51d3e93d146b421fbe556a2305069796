@@ -1,163 +1,211 @@
-2023å¹´ 10æœˆ 18æ—¥ æ°´æ›œæ—¥ 10:30:54 JST
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
+2023å¹´ 10æœˆ 19æ—¥ æœ¨æ›œæ—¥ 11:18:14 JST
 
--- LOCAL READ ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
--- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
--- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ðƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJŽnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
+-- **************************************
+--               INREVIUM                
+-- **************************************
+
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO MODEL
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO (64 bit X 4 word) Module
+--------------------------------------------------------------------------------
+-- File                      : PCI_RDTFIFO.vhd
+-- Entity                    : PCI_RDTFIFO
+-- Architecture              : PCI_RDTFIFO_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         V‹K
+--------------------------------------------------------------------------------
+
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity LOCAL_READ is
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+entity PCI_RDTFIFO is
+	port (
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+		FIFO_ENB		: in	std_logic;							-- FIFO Enable Signal
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ;
+		-- FIFO Data Write ports
+		FIFO_WRDT		: in	std_logic_vector(63 downto 0);		-- FIFO Write Data
+		FIFO_WE			: in	std_logic;					  		-- FIFO Write Enable
 
-architecture rtl of LOCAL_READ is
+		-- FIFO Data Read ports
+		FIFO_RE			: in	std_logic;							-- FIFO Read Enable
+		FIFO_RDDT		: out	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: out	std_logic							-- FIFO Read Data Enable
+		);
+end PCI_RDTFIFO;
 
-component LOCAL_READ_CNT
-  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
-  port (
-    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
-    CALC_DONE  : in std_logic;                 -- pulse
-    FETCH_DONE : out std_logic;
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
 
-component LOCAL_READ_IF
-  port (
-    EXEC : in std_logic;
-    START_AD : in std_logic_vector(18 downto 0);
-    NQWORD   : in std_logic_vector( 8 downto 0);
-    CHIPSEL  : in std_logic_vector( 3 downto 0);
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);
-    BUSY : out std_logic;  -- to GPREG0
-    DMAR_ENABLE : out std_logic_vector(3 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_ADB     : out std_logic_vector(12 downto 0);
-    MEM_WEHB    : out std_logic;
-    MEM_WELB    : out std_logic;
-    MEM_DTIB    : out std_logic_vector(63 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+architecture PCI_RDTFIFO_rtl of PCI_RDTFIFO is
 
-signal calc_done : std_logic :='0';   -- to cnt
-signal csts0,csts1 : std_logic :='0'; -- from pfpga
 
--- CNT
-signal fetch_done : std_logic :='0';
-signal exec : std_logic;                          -- cnt -> if
-signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
-signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
-signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
-signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
--- IF
-signal ignore_busy : std_logic; 
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+--	type FIFO_TYPE is array (0 to 3) of std_logic_vector(64 downto 0);		------ Define Data Buffer Type (65bit X 4)
+
+	signal FIFO_DATA0	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 0
+	signal FIFO_DATA1	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 1
+	signal FIFO_DATA2	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 2
+	signal FIFO_DATA3	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 3
+
+	signal FIFO_WRADRS	: std_logic_vector( 1 downto 0);					------ FIFO Write Address
+	signal FIFO_RDADRS	: std_logic_vector( 1 downto 0);					------ FIFO Read Address
+
 
 begin
 
-  -- CALC STATUS
-  csts0 <= CALC_STS;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      csts1 <= csts0;
-    end if;
-  end process;
 
-  -- CALC DONE
-  process (RST,CLK,csts0,csts1) begin
-    if(RST='1') then
-      calc_done <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        calc_done <= '1';
-      else
-        calc_done <= '0';
-      end if;
-    end if;
-  end process;
+--***************************************************************
+--*
+--*  FIFO Data Write Control Block
+--*
+--***************************************************************
 
-  -- BUSY
-  process (RST,CLK,csts0,csts1,fetch_done) begin
-    if (RST='1') then
-      BUSY <='1';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        BUSY <= '1';
-      elsif(fetch_done='1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
+--------------------------------------------------------------------------------
+-- FIFO_DATA0 Data Write Control Process
+--------------------------------------------------------------------------------
 
-  -- =================================================== SUBMODULE INSTANCES
-  u0: LOCAL_READ_CNT 
-    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
-    port map(NPIPE => NPIPE,
-             CALC_DONE => calc_done,
-             FETCH_DONE => fetch_done,
-             EXEC       => exec,
-             START_AD   => start_ad,
-             NQWORD     => nqword,
-             CHIPSEL    => chipsel,
-             MEM_AD_BASE => mem_base,
-             RST => RST, CLK=>CLK);
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA0 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA0 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="00" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA0 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA1 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA1 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA1 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="01" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA1 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA2 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA2 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA2 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="10" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA2 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA3 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA3 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA3 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="11" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA3 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Write Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_WRADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_WRADRS <= (others=>'0');								------ FIFO Write Address Clear
+			elsif (FIFO_WE='1') then										------ FIFO Data Write ?
+				FIFO_WRADRS <= FIFO_WRADRS+1;								------ FIFO Write Address Increment
+			end if;
+		end if;
+	end process;
 
 
-  u1: LOCAL_READ_IF
-    port map(EXEC        => exec,     -- from cnt
-             START_AD    => start_ad, -- from cnt
-             NQWORD      => nqword,   -- from cnt
-             CHIPSEL     => chipsel,  -- from cnt
-             MEM_AD_BASE => mem_base, -- from cnt
-             BUSY => ignore_busy,
-             DMAR_ENABLE => DMAR_ENABLE, -- output directly
-             DBUS_Port   => DBUS_Port,   -- output directly
-             DBUS_idata  => DBUS_idata,  -- output directly
-             DBUS_HiZ    => DBUS_HiZ,    -- output directly
-             MEM_ADB  => MEM_ADB,        -- output directly
-             MEM_WEHB => MEM_WEHB,       -- output directly
-             MEM_WELB => MEM_WELB,       -- output directly
-             MEM_DTIB => MEM_DTIB,       -- output directly
-             RST=>RST,CLK=>CLK);
+--***************************************************************
+--*
+--*  FIFO Data Read Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDDT <= FIFO_DATA0(63 downto 0);			------ Buffer0 Read
+			when "01"	=> FIFO_RDDT <= FIFO_DATA1(63 downto 0);			------ Buffer1 Read
+			when "10"	=> FIFO_RDDT <= FIFO_DATA2(63 downto 0);			------ Buffer2 Read
+			when "11"	=> FIFO_RDDT <= FIFO_DATA3(63 downto 0);			------ Buffer3 Read
+			when others => FIFO_RDDT <= (others=>'0');
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Enable Signal Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDTEN <= FIFO_DATA0(64);					------ Buffer0 Read Enable Signal
+			when "01"	=> FIFO_RDTEN <= FIFO_DATA1(64);					------ Buffer1 Read Enable Signal
+			when "10"	=> FIFO_RDTEN <= FIFO_DATA2(64);					------ Buffer2 Read Enable Signal
+			when "11"	=> FIFO_RDTEN <= FIFO_DATA3(64);					------ Buffer3 Read Enable Signal
+			when others => FIFO_RDTEN <= '0';
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_RDADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_RDADRS <= (others=>'0');								------ FIFO Read Address Clear
+			elsif (FIFO_RE='1') then										------ FIFO Data Read ?
+				FIFO_RDADRS <= FIFO_RDADRS+1;								------ FIFO Read Address Increment
+			end if;
+		end if;
+	end process;
 
 
-end rtl;
+
+end PCI_RDTFIFO_rtl;
