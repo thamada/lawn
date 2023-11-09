@@ -1,36 +1,47 @@
-2023年 10月 29日 日曜日 10:52:02 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---dmaw_state          0  >< 1 >< 2                                    >< 3 >< 0 
---dmaw_start_adr               < n                                         >< 0
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmaw_start_adr is
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end dmaw_start_adr;
-
-architecture rtl of dmaw_start_adr is
-constant zero : std_logic_vector(18 downto 0) := (others=>'0');
-begin
-
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="01") then
-        START_ADR <= DBUS(18 downto 0);
-      elsif((STATE="00") OR (STATE="11")) then
-        START_ADR <= zero;
-      end if;
-    end if;
-  end process;
-
-end rtl;
+2023年 11月  9日 木曜日 10:36:59 JST
+./db/images/ID.0005/image_00000657.jpg
+./db/images/ID.0006/image_00000651.jpg
+./db/images/ID.0004/image_00001568.jpg
+./db/images/ID.0004/image_00000563.jpg
+./db/images/ID.0006/image_00000301.jpg
+./db/images/ID.0004/image_00000578.jpg
+./db/images/ID.0004/image_00000975.jpg
+./db/images/ID.0004/image_00000848.jpg
+./db/images/ID.0006/image_00000436.jpg
+./db/images/ID.0005/image_00000884.jpg
+./db/images/ID.0005/image_00000878.jpg
+./db/images/ID.0005/image_00000840.jpg
+./db/images/ID.0004/image_00000108.jpg
+./db/images/ID.0005/image_00001203.jpg
+./db/images/ID.0006/image_00000088.jpg
+./db/images/ID.0004/image_00001495.jpg
+./db/images/ID.0005/image_00000063.jpg
+./db/images/ID.0006/image_00000696.jpg
+./db/images/ID.0005/image_00001257.jpg
+./db/images/ID.0006/image_00000821.jpg
+./db/images/ID.0005/image_00000153.jpg
+./db/images/ID.0004/image_00001053.jpg
+./db/images/ID.0004/image_00001427.jpg
+./db/images/ID.0006/image_00000815.jpg
+./db/images/ID.0005/image_00000904.jpg
+./db/images/ID.0004/image_00000694.jpg
+./db/images/ID.0004/image_00001043.jpg
+./db/images/ID.0004/image_00000761.jpg
+./db/images/ID.0006/image_00000289.jpg
+./db/images/ID.0006/image_00000739.jpg
+./db/images/ID.0005/image_00001072.jpg
+./db/images/ID.0006/image_00000890.jpg
+./db/images/ID.0005/image_00000903.jpg
+./db/images/ID.0004/image_00001045.jpg
+./db/images/ID.0004/image_00000576.jpg
+./db/images/ID.0005/image_00001009.jpg
+./db/images/ID.0004/image_00001569.jpg
+./db/images/ID.0004/image_00000916.jpg
+./db/images/ID.0004/image_00000687.jpg
+./db/images/ID.0005/image_00001261.jpg
+./db/images/ID.0004/image_00000316.jpg
+./db/images/ID.0005/image_00000288.jpg
+./db/images/ID.0004/image_00001514.jpg
+./db/images/ID.0004/image_00000456.jpg
+./db/images/ID.0004/image_00000191.jpg
+./db/images/ID.0004/image_00000533.jpg
