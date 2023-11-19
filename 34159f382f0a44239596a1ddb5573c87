@@ -1,4 +1,16 @@
-2023年 11月 11日 土曜日 10:15:55 JST
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\ifpga.ngc 1139757967
-C:\cygwin\home\Administrator\hamada\PG4\pci64\proj\PCI_LC_I.ngo 1139541920
-OK
+2023年 11月 19日 日曜日 09:35:36 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
+
+#include <stdio.h>
+#include "nbodysim.h"
+
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
+}
