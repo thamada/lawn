@@ -1,11 +1,19 @@
-2023年 12月 13日 水曜日 11:14:38 JST
-Meiji Choco
-TIROL choco
-Can BOSS
-Keikoto
-Goo
-Choki
-Pa
-ID.0007
-ID.0008
-ID.0009
+2023年 12月 14日 木曜日 11:05:59 JST
+//============================================================================
+struct flops_member {
+  double Gflops;
+  double start_time;
+  double force_time;
+  int nbody;
+  int times;
+  int nstep;
+  int nskip;
+};
+
+void flops_initialize(struct flops_member *fm, int n, int nskip);
+void flops_check(struct flops_member *fm);
+
+void flops_ftime_init(struct flops_member *fm);
+void flops_ftime_save(struct flops_member *fm);
+
+
