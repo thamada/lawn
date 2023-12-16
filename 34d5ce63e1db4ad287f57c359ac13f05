@@ -1,19 +1,5 @@
-2023年 12月 14日 木曜日 11:05:59 JST
-//============================================================================
-struct flops_member {
-  double Gflops;
-  double start_time;
-  double force_time;
-  int nbody;
-  int times;
-  int nstep;
-  int nskip;
-};
-
-void flops_initialize(struct flops_member *fm, int n, int nskip);
-void flops_check(struct flops_member *fm);
-
-void flops_ftime_init(struct flops_member *fm);
-void flops_ftime_save(struct flops_member *fm);
-
-
+2023年 12月 16日 土曜日 10:02:07 JST
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
