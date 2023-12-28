@@ -1,29 +1,15 @@
-2023年 12月 13日 水曜日 10:18:16 JST
-#!/usr/bin/env python3
-#Time-stamp: <>
-import fnmatch
-import functools
-import os
-import re
+2023年 12月 28日 木曜日 09:13:07 JST
+#!/usr/bin/perl
 
-def find(path, pattern):
+my $nloop = 16;
+my $logbase = "log.GTX";
 
-    if isinstance(pattern, str): 
-        match = functools.partial(fnmatch.fnmatch, pat=pattern)
-    elif isinstance(pattern, re._pattern_type):
-        match = pattern.match
-    elif callable(pattern):
-        match = pattern
-    else:
-        raise TypeError
+for(my $ni=2; $ni<131073; $ni = $ni*2){
+    my $bin = "\$\(BIN\)";
+    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
+    my $log = "\$LOG";
+    my $cmd = "$bin $ifile $nloop >> $log";
+    print "\t".$cmd ."\n";
+}
 
-    for root, dirs, files in os.walk(path):
-        for file_ in files:
-            if match(file_):
-                yield os.path.join(root, file_)
-
-
-if __name__ == '__main__':
-    for i in find('../log/', '*.jpg'):
-        print (i)
-
+1;
