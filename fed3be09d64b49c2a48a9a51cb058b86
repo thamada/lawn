@@ -1,4 +1,4 @@
-2023年 12月 24日 日曜日 09:10:51 JST
+2023年 12月 28日 木曜日 09:44:35 JST
 -- PGR ALLCORE
 -- by Tsuyoshi Hamada
 -- Last Modified at 2005/01/02
@@ -84,9 +84,9 @@ component jmem
     rst        : in  std_logic; -- not used
     we         : in  std_logic;
     idata      : in  std_logic_vector(63 downto 0);
-    odata      : out  std_logic_vector(127 downto 0));  -- for G5            (JDIM 4)
+--  odata      : out  std_logic_vector(127 downto 0));  -- for G5            (JDIM 4)
 --  odata      : out  std_logic_vector(255 downto 0));  -- for SPH 1st stage (JDIM 8)
---  odata      : out  std_logic_vector(511 downto 0));  -- for SPH 2nd stage (JDIM 16)
+    odata      : out  std_logic_vector(511 downto 0));  -- for SPH 2nd stage (JDIM 16)
 end component;
 
 -- pg_pipe
@@ -135,9 +135,9 @@ signal p_we    : std_logic;
 signal p_adri : std_logic_vector(11 downto 0);
 
 -- jmem
-signal jmem_d : std_logic_vector(127 downto 0);  -- for G5
+--signal jmem_d : std_logic_vector(127 downto 0);  -- for G5
 --signal jmem_d : std_logic_vector(255 downto 0);  -- for SHP 1st Stage
---signal jmem_d : std_logic_vector(511 downto 0);  -- for SHP 2nd Stage
+signal jmem_d : std_logic_vector(511 downto 0);  -- for SHP 2nd Stage
 signal jpw_we : std_logic;
 signal jmem_adr : std_logic_vector(63 downto 0);
 signal jmem_adr_outside : std_logic_vector(15 downto 0);
@@ -202,17 +202,18 @@ p_adro(10 downto 4) <= ADR(9 downto 3);       -- 128 pipes    (2004/01/02)
 p_adro(11)          <= '0';                   -- chipsel mask
 
 unit1 : pg_pipe
-    generic map (JDATA_WIDTH =>128,     -- for G5
+--  generic map (JDATA_WIDTH =>128,     -- for JDIM4
 --  generic map (JDATA_WIDTH =>113,     -- for G5
 --  generic map (JDATA_WIDTH =>208,     -- for SPH 1st Stage
 --  generic map (JDATA_WIDTH =>384,     -- for SPH 2nd Stage
+    generic map (JDATA_WIDTH =>512,     -- for JDIM16
                  IDATA_WIDTH =>64 )
     port map(
 --  p_jdata => jmem_d(73 downto 0),     -- G3
-    p_jdata => jmem_d(127 downto 0),    -- G5
 --  p_jdata => jmem_d(112 downto 0),    -- G5
 --  p_jdata => jmem_d(207 downto 0),    -- SPH 1st Stage
 --  p_jdata => jmem_d(383 downto 0),    -- SPH 2nd Stage
+    p_jdata => jmem_d(511 downto 0),    -- JDIM16
     p_run   => p_run,
     p_we    => p_we,
     p_adri  => p_adri,
