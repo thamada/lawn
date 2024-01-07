@@ -1,50 +1,117 @@
-2023年 12月 31日 日曜日 11:12:25 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[DMAR_ENABLE] _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en0                _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en1                     _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en2                          _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en3                               _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS_HiZ            ~~~~~~~~~~~~~~\_________________________________________________/~~~~
+2024年  1月  7日 日曜日 10:57:56 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-16 23:48:16 hamada>
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+class Queue:
+    def __init__(self, queue = None):
+        self.index = 0
+        self.index_max = 50
+        self.image0 = np.zeros((120, 160, 3), np.uint8)
+        if type(queue) is type([]):
+            self.queue = queue
+        elif queue is None:
+            self.queue = []
+        else:
+            print ('Error Message:')
+            print ('    Your input is not type of list!')
+            print ('    Please enter list type!')
 
-entity dmar_dbus_hiz is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic :='1');
-end dmar_dbus_hiz;
+    def enqueue(self, e):
+        if self.index < self.index_max :
+            self.queue.append(e)
+            self.index += 1
+            print ("queue index: ", self.index)
+        else:
+            self.dequeue()
+            self.queue.append(e)
 
-architecture rtl of dmar_dbus_hiz is
-signal en0,en1,en2,en3 : std_logic :='0';
-begin
+        return self.queue
 
-  process(CLK) begin
-    if(CLK'event and CLK = '1') then
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-      en0 <= ENABLE;
-    end if;
-  end process;
+    def dequeue(self):
+        try:
+            qEl = self.queue[0]
+            del self.queue[0]
+            return (qEl, self.queue)
+        except IndexError:
+            print ('Error Message:')
+            print ('    There is no element in the queue!')
+
+    def look_first(self):
+        ret = self.image0
+        if self.index > 1:
+            ret = self.queue[0]
+        return (ret)
+            
+
+class WebCam(object):
+    def __init__(self):
+        self.devid = 2
+        self.tnow  = ''
+        self.fifo = Queue()
+        self.window_title = 'camera: %d' % (self.devid)
+        self.cap = cv2.VideoCapture(self.devid) 
+        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
+        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
+
+        self.display(True)
+
+    def put_text(self, image, text):
+        font_size = 1.0
+        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
+        # font_type = cv2.FONT_HERSHEY_PLAIN
+        # font_type = cv2.FONT_HERSHEY_DUPLEX
+        font_type = cv2.FONT_HERSHEY_TRIPLEX
+        font_color = (0x0, 0x77, 0x0)
+        px = int(image.shape[1]*0.15 )
+        py = int(image.shape[0]*0.9 )
+
+        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
 
 
-  process(RST,CLK,en2,en3) begin
-    if(RST='1') then
-      DBUS_HiZ <= '1';
-    elsif(CLK'event and CLK = '1') then
-     if( (en1='1') AND (en2='0') ) then
-       DBUS_HiZ <= '0';
-     elsif( (en2='0') AND (en3='1') ) then
-       DBUS_HiZ <= '1';
-     end if;
-    end if;
-  end process;
+    def display(self, is_clear=False):
+        wx = 320
+        wy = 240
+        step = 5
+        if is_clear :
+            for i in range (0, self.fifo.index_max, step):
+                image = self.fifo.image0
+                wname = self.window_title + ": %d" %(i)
+                cv2.resizeWindow(wname, wx, wy)
+                cv2.moveWindow(wname, int(i*wx/step), 0)
+                cv2.imshow(wname, image)
 
-end rtl;
+        for i in range (0, self.fifo.index, step):
+            image = self.fifo.queue[i].copy()
+            wname = self.window_title + ": %d" %(i)
+            image2 = cv2.resize(image, (wx, wy))
+            cv2.imshow(wname, image2)
+
+    def save_photo(self):
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
+            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+            if(tnow != self.tnow):
+                self.put_text(frame, tnow)
+                basedir = './log.%d/'% (self.devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, frame)
+                print(ofname, "devid = %d" % self.devid)
+                self.tnow = tnow
+                print("%s: Take photo" % self.tnow )
+                self.fifo.enqueue(frame)
+                self.display()
+
+    def clear_cache(self):
+        self.display()
+        if(self.cap.isOpened()):
+            ret, frame = self.cap.read()
+
+        # self.cap.release()
+        # cv2.destroyAllWindows()
+
