@@ -1,26 +1,13 @@
-2024年  1月  3日 水曜日 10:21:25 JST
+2024年  1月  7日 日曜日 10:06:31 JST
 #include <stdio.h>
 #include "nbodysim.h"
 
-void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+void debug_position(double x[][DIM], double time,int n)
 {
-  int i;
-  static int flag=0;
-  static FILE* fp;
-
-  if(flag==0){
-    fp = fopen("aaa.log","w");
-    flag = 1;
-  }else{
-    rewind(fp);
-  }
-
-  for(i=0;i<n;i++){
-    fprintf(fp,"%d\t",nstep);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
-  }
-
-  fflush(fp);
+    int i;
+    for(i=0;i<n;i++){
+      //        printf("%d,%e,%1.8e,%1.8e,%1.8e\n",i,t,x[i][0],x[i][1],x[i][2]);
+        printf("%1.8e\t%1.8e\t%1.8e\t%1.1e\n",x[i][0],x[i][1],x[i][2],time);
+    }
 }
 
