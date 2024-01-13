@@ -1,71 +1,143 @@
-2024年  1月  7日 日曜日 10:49:39 JST
--- 2004/05/13 16:30
--- for matsubayashi simulation
+2024年  1月 13日 土曜日 09:47:11 JST
+[net]
+# Testing
+#batch=1
+#subdivisions=1
+# Training
+batch=64
+subdivisions=16
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
 
-#define DELAY_SUB 2     /* A */
-#define DELAY_FL  4     /* B */
-#define DELAY_X2Y2 5    /* C */
-#define DELAY_R2   5    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   2    /* I */
-#define DELAY_AC   3    /* J */
+learning_rate=0.001
+max_batches = 2000001
+#max_batches = 50
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
 
-#define DELAY_EPS  6    /* A+B */
-#define DELAY_DX   12   /* C+D+E+F */
-#define DELAY_M    17   /* A+B+C+D+E */
-#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  25   /* (DELAY_CLE) + J */
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
 
+[maxpool]
+size=2
+stride=2
 
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
 
+[maxpool]
+size=2
+stride=2
 
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
 
-/NPIPE 1
-/NVMP 1
+[maxpool]
+size=2
+stride=2
 
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
 
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-}
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+# filters = (classes + coords + 1) * num
+## (10+5)*5
+filters=75
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=10
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
