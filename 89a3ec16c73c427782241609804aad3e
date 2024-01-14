@@ -1,109 +1,163 @@
-2024å¹´  1æœˆ 13æ—¥ åœŸæ›œæ—¥ 10:04:46 JST
-info x 101 510 0 0 0 0 0 0 0 0 0 0 0 0 0 0 VHDL
-col x 516 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-radix x 16 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-entity name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 pfpga_dma
-term mark 194 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-vlib save 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 library IEEE;
+2024å¹´  1æœˆ 14æ—¥ æ—¥æ›œæ—¥ 11:07:15 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+
+-- LOCAL READ ( ifpga <- pfpga )
+-- by Tsuyoshi Hamada
+-- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
+-- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ðƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJŽnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
+
+library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
-
-var add 18 0 0 226 35 0 516 100 50 50 5 85 0 0 0 0 RSTInstd_logicRISING_EDGECLK
-var add 19 0 0 226 36 0 516 100 50 50 5 85 0 0 0 0 CLKInstd_logicRISING_EDGECLK
-var add 1 31 0 228 10 0 516 100 50 50 5 85 0 0 0 0 PGPG_REG3Instd_logic_vectorRISING_EDGECLK
-var add 3 0 0 226 12 0 516 100 50 50 5 85 0 0 0 0 Hit_PGPG_REG3Instd_logicRISING_EDGECLK
-var add 4 12 0 228 15 0 516 100 50 50 5 85 0 0 0 0 MEM_ADAInstd_logic_vectorRISING_EDGECLK
-var add 5 0 0 226 16 0 516 100 50 50 5 85 0 0 0 0 MEM_WEHAInstd_logicRISING_EDGECLK
-var add 6 0 0 226 17 0 516 100 50 50 5 85 0 0 0 0 MEM_WELAInstd_logicRISING_EDGECLK
-var add 7 63 0 228 18 0 516 100 50 50 5 85 0 0 0 0 MEM_DTIAInstd_logic_vectorRISING_EDGECLK
-var add 11 63 0 228 25 0 516 100 50 50 5 85 0 0 0 0 DBUS_idataInstd_logic_vectorRISING_EDGECLK
-var add 17 63 0 228 33 0 516 100 50 50 5 85 0 0 0 0 MEM_DTOBInstd_logic_vectorRISING_EDGECLK
-var add 2 31 0 228 11 0 516 100 50 50 5 85 0 0 0 0 GPREG0Outstd_logic_vectorRISING_EDGECLK
-var add 8 3 0 228 22 0 516 100 50 50 5 85 0 0 0 0 DMAW_ENABLEOutstd_logic_vectorRISING_EDGECLK
-var add 9 3 0 228 23 0 516 100 50 50 5 85 0 0 0 0 DMAR_ENABLEOutstd_logic_vectorRISING_EDGECLK
-var add 10 63 0 228 24 0 516 100 50 50 5 85 0 0 0 0 DBUS_PortOutstd_logic_vectorRISING_EDGECLK
-var add 12 0 0 226 26 0 516 100 50 50 5 85 0 0 0 0 DBUS_HiZOutstd_logicRISING_EDGECLK
-var add 13 12 0 228 29 0 516 100 50 50 5 85 0 0 0 0 MEM_ADBOutstd_logic_vectorRISING_EDGECLK
-var add 14 0 0 226 30 0 516 100 50 50 5 85 0 0 0 0 MEM_WEHBOutstd_logicRISING_EDGECLK
-var add 15 0 0 226 31 0 516 100 50 50 5 85 0 0 0 0 MEM_WELBOutstd_logicRISING_EDGECLK
-var add 16 63 0 228 32 0 516 100 50 50 5 85 0 0 0 0 MEM_DTIBOutstd_logic_vectorRISING_EDGECLK
-vdone xxx 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-npos xxx 179 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-cell fill 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 1 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 1 24 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000000000000000000000000000000
-cell fill 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000
-cell fill 5 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110000
-cell fill 5 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110010
-cell fill 5 56 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110100
-cell fill 5 60 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0111111110110
-cell fill 5 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110000
-cell fill 5 80 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110010
-cell fill 5 84 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110100
-cell fill 5 88 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101110110
-cell fill 5 92 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111000
-cell fill 5 96 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111010
-cell fill 5 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111100
-cell fill 5 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000100
-cell fill 5 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000110
-cell fill 5 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111000
-cell fill 5 144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0011101111010
-cell fill 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 104 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 112 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 120 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 6 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 6 148 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 104 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 112 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 120 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 7 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-cell fill 7 148 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-cell fill 8 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-cell fill 8 48 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001010
-cell fill 8 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001011
-cell fill 8 56 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001100
-cell fill 8 60 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000001101
-cell fill 8 76 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000001
-cell fill 8 80 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000010
-cell fill 8 84 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000011
-cell fill 8 88 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000100
-cell fill 8 92 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000101
-cell fill 8 96 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000110
-cell fill 8 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000001111111111110000000000000111
-cell fill 8 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000011101110111011101110000000000000100
-cell fill 8 116 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000011101110111011101110000000000000110
-cell fill 8 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1001100110011001100110011001100110001000100010001000100010001000
-cell fill 8 144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1011101110111011101110111011101110101010101010101010101010101010
-cell fill 9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-cell fill 10 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0000000000000000000000000000000000000000000000000000000000000000
-time info 50 50 5 85 50 50 1 1 0 0 0 0 0 0 0 0 nsCLK
-font save -14 0 400 49 0 0 0 0 0 0 0 0 0 0 0 0 Times New Roman
-src mod 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 c:\cygwin\home\administrator\fkit\pci64\rtl\pfpga_dma.vhd
-utd true 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-cellenab on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-grid on 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-com add 1 1 0 404 21 0 -67 0 0 0 0 0 0 0 0 0 Waveform created by
-HDL Bencher 6.1i
-Source = c:\cygwin\home\administrator\fkit\pci64\rtl\pfpga_dma.vhd
-Thu Dec 16 14:21:33 2004
-type info 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logicBITDOWNTO
-type info 31 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 std_logic_vectorVECTORDOWNTO
-opt vhdl87 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-NumClocks x 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-clock_1 name 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 CLK
-Zoom_level x 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.00000000000000
+
+entity LOCAL_READ is
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
+
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ;
+
+architecture rtl of LOCAL_READ is
+
+component LOCAL_READ_CNT
+  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
+  port (
+    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
+    CALC_DONE  : in std_logic;                 -- pulse
+    FETCH_DONE : out std_logic;
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+component LOCAL_READ_IF
+  port (
+    EXEC : in std_logic;
+    START_AD : in std_logic_vector(18 downto 0);
+    NQWORD   : in std_logic_vector( 8 downto 0);
+    CHIPSEL  : in std_logic_vector( 3 downto 0);
+    MEM_AD_BASE : in std_logic_vector(12 downto 0);
+    BUSY : out std_logic;  -- to GPREG0
+    DMAR_ENABLE : out std_logic_vector(3 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_ADB     : out std_logic_vector(12 downto 0);
+    MEM_WEHB    : out std_logic;
+    MEM_WELB    : out std_logic;
+    MEM_DTIB    : out std_logic_vector(63 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+signal calc_done : std_logic :='0';   -- to cnt
+signal csts0,csts1 : std_logic :='0'; -- from pfpga
+
+-- CNT
+signal fetch_done : std_logic :='0';
+signal exec : std_logic;                          -- cnt -> if
+signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
+signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
+signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
+signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
+-- IF
+signal ignore_busy : std_logic; 
+
+begin
+
+  -- CALC STATUS
+  csts0 <= CALC_STS;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      csts1 <= csts0;
+    end if;
+  end process;
+
+  -- CALC DONE
+  process (RST,CLK,csts0,csts1) begin
+    if(RST='1') then
+      calc_done <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        calc_done <= '1';
+      else
+        calc_done <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- BUSY
+  process (RST,CLK,csts0,csts1,fetch_done) begin
+    if (RST='1') then
+      BUSY <='1';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        BUSY <= '1';
+      elsif(fetch_done='1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- =================================================== SUBMODULE INSTANCES
+  u0: LOCAL_READ_CNT 
+    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
+    port map(NPIPE => NPIPE,
+             CALC_DONE => calc_done,
+             FETCH_DONE => fetch_done,
+             EXEC       => exec,
+             START_AD   => start_ad,
+             NQWORD     => nqword,
+             CHIPSEL    => chipsel,
+             MEM_AD_BASE => mem_base,
+             RST => RST, CLK=>CLK);
+
+
+  u1: LOCAL_READ_IF
+    port map(EXEC        => exec,     -- from cnt
+             START_AD    => start_ad, -- from cnt
+             NQWORD      => nqword,   -- from cnt
+             CHIPSEL     => chipsel,  -- from cnt
+             MEM_AD_BASE => mem_base, -- from cnt
+             BUSY => ignore_busy,
+             DMAR_ENABLE => DMAR_ENABLE, -- output directly
+             DBUS_Port   => DBUS_Port,   -- output directly
+             DBUS_idata  => DBUS_idata,  -- output directly
+             DBUS_HiZ    => DBUS_HiZ,    -- output directly
+             MEM_ADB  => MEM_ADB,        -- output directly
+             MEM_WEHB => MEM_WEHB,       -- output directly
+             MEM_WELB => MEM_WELB,       -- output directly
+             MEM_DTIB => MEM_DTIB,       -- output directly
+             RST=>RST,CLK=>CLK);
+
+
+end rtl;
