@@ -1,20 +1,26 @@
-2024年  1月 10日 水曜日 09:23:16 JST
+2024年  1月 14日 日曜日 10:35:06 JST
+#include <stdio.h>
+#include "nbodysim.h"
 
+void debug(double x[][DIM],double a[][DIM], int n, int nstep)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
 
-all:
-	cp top.ucf.ISE6.3i top.ucf
-	rm -rf proj
-	tar xvf proj.ise6.3i.tar
-	cd proj;xst -intstyle ise -ifn __projnav/top.xst -ofn top.syr
-	cd proj;ngdbuild -intstyle ise -dd ./_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.ngc top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+  if(flag==0){
+    fp = fopen("aaa.log","w");
+    flag = 1;
+  }else{
+    rewind(fp);
+  }
 
+  for(i=0;i<n;i++){
+    fprintf(fp,"%d\t",nstep);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
+    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
+  }
 
-
-clean:
-	rm -rf proj top.ucf *~ .*~
-
+  fflush(fp);
+}
 
