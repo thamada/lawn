@@ -1,20 +1,48 @@
-2024年  1月 20日 土曜日 10:53:28 JST
--- LOCAL WRITE ( ifpga -> pfpga )
--- by Tsuyoshi Hamada
---
--- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
--- MEM_WE            __/~~~~~~~~~~\_____ 
--- MEM_AD              < a0 >< a1 >
--- MEM_DTI             < d0 >< d1 >
--- DMAW_ENABLE                      __/~~~~~~~~~~\___  
--- DBUS_Port                     < a0 >< d0 >< d1 >
-
+2024年  1月 20日 土曜日 11:16:07 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+-- LOCAL IO (READ & WRITE)
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity LOCAL_WRITE is
+entity LOCAL_IO is
+  generic (NBIT_L_ADRO : integer := 3);
+  port (
+    
+    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
+    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
+    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
+
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
+
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_IO;
+architecture rtl of LOCAL_IO is
+
+component LOCAL_WRITE
   port (
     -- pcicnt input
     MEM_AD  : in std_logic_vector(19 downto 0);
@@ -27,87 +55,99 @@ entity LOCAL_WRITE is
     RST : in  std_logic;
     CLK : in  std_logic
     );
-end LOCAL_WRITE;
+end component;
 
-architecture rtl of LOCAL_WRITE is
+component LOCAL_READ
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='0'; -- to GPREG0
 
-  signal we0  : std_logic := '0';
-  signal we1  : std_logic := '0';
-  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
+-- DMAW
+  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+-- DMAR
+  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+  signal busy_dmar    : std_logic;
 
 begin
-  ------------------------------
-  --- we0,1                  ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      we0 <= MEM_WE;
-    end if;
-  end process;
 
-  process (CLK) begin
+  -- DMA BUSY or IDLE
+  process (CLK,busy_dmar,CALC_STS) begin
     if(CLK'event and CLK='1') then
-      we1 <= we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- adr                    ---
-  ------------------------------
-  process (RST,CLK,MEM_WE,we0) begin
-    if(RST='1') then
-      adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((MEM_WE = '1') and (we0 = '0')) then
-        adr(18 downto 0) <= MEM_AD(19 downto 1);
+      if   (CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '0';
+      elsif(CALC_STS='1' AND busy_dmar='1') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='0') then
+        BUSY_LOCAL_READ <= '1';
       end if;
-      adr(63 downto 19) <= (others=>'0');
     end if;
   end process;
 
-  ------------------------------
-  --- data delay             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      data1 <= (others=>'0');
-      data0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      data1 <= data0;
-      data0 <= MEM_DTI;
-    end if;
-  end process;
+
 
   ------------------------------
   --- DBUS_Port              ---
   ------------------------------
-  process (RST,CLK,we0,we1) begin
-    if(RST='1') then
-      DBUS_Port <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(we0 = '1' and we1 = '0') then
-        DBUS_Port <= adr;
-      else
-        DBUS_Port <= data1;
-      end if;
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      DBUS_Port <= dbus_port0;
     end if;
   end process;
 
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= we1;
-      DMAW_ENABLE(1) <= we1;
-      DMAW_ENABLE(2) <= we1;
-      DMAW_ENABLE(3) <= we1;
-    end if;
-  end process;
+  with busy_dmar select
+    dbus_port0 <= dmar_dbus_o when '1',
+                  dmaw_dbus_o when others;
 
+-------------------------------------------------------------------------------
+-- Write : IFPGA --> PFPGAs
+-------------------------------------------------------------------------------
+u0 : LOCAL_WRITE
+  port map (MEM_AD      => MEM_ADA,
+            MEM_WE      => MEM_WELA,
+            MEM_DTI     => MEM_DTIA,
+            DMAW_ENABLE => DMAW_ENABLE,
+            DBUS_Port   => dmaw_dbus_o,
+            RST         => RST,
+            CLK         => CLK);
+
+-------------------------------------------------------------------------------
+-- Read : IFPGA <-- PFPGAs
+-------------------------------------------------------------------------------
+u1 : LOCAL_READ
+  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
+  port map (NPIPE       => NPIPE,
+            CALC_STS    => CALC_STS,
+            BUSY        => busy_dmar,
+            DMAR_ENABLE => DMAR_ENABLE,
+            DBUS_Port   => dmar_dbus_o,
+            DBUS_idata  => DBUS_idata,
+            DBUS_HiZ    => DBUS_HiZ,
+            MEM_ADB     => MEM_ADB,
+            MEM_WEHB    => MEM_WEHB,
+            MEM_WELB    => MEM_WELB,
+            MEM_DTIB    => MEM_DTIB,
+            RST         => RST,
+            CLK         => CLK);
 
 end rtl;
