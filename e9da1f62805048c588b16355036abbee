@@ -1,20 +1,18 @@
-2024年  2月 23日 金曜日 09:18:09 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-
-if($ARGV[0]){
-    $is_stop = 1;
+2024年  2月 23日 金曜日 09:35:18 JST
+FILES
+{
+	VHDL_FILE = pgfpga.vhd;
 }
-
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
-
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
+COMPILER_SETTINGS_LIST
+{
+	COMPILER_SETTINGS = pgfpga;
 }
-
-1;
+SIMULATOR_SETTINGS_LIST
+{
+	SIMULATOR_SETTINGS = pgfpga;
+}
+SOFTWARE_SETTINGS_LIST
+{
+	SOFTWARE_SETTINGS = Debug;
+	SOFTWARE_SETTINGS = Release;
+}
