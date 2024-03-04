@@ -1,29 +1,6 @@
-2024年  3月  3日 日曜日 10:46:46 JST
-#!/usr/bin/env python3
-#Time-stamp: <>
-import fnmatch
-import functools
-import os
-import re
-
-def find(path, pattern):
-
-    if isinstance(pattern, str): 
-        match = functools.partial(fnmatch.fnmatch, pat=pattern)
-    elif isinstance(pattern, re._pattern_type):
-        match = pattern.match
-    elif callable(pattern):
-        match = pattern
-    else:
-        raise TypeError
-
-    for root, dirs, files in os.walk(path):
-        for file_ in files:
-            if match(file_):
-                yield os.path.join(root, file_)
-
-
-if __name__ == '__main__':
-    for i in find('../log/', '*.jpg'):
-        print (i)
-
+2024年  3月  4日 月曜日 11:23:44 JST
+3
+0
+1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
+1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
+1 0 0 0 -0.93240737 -0.86473146 -0
