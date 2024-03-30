@@ -1,71 +1,24 @@
-2024年  3月 30日 土曜日 09:16:39 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:28:33 hamada>
-import numpy as np
-import cv2
+2024年  3月 30日 土曜日 10:36:28 JST
+// Time-stamp: "2006-12-07 19:19:22 hamada"
+// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 
-class Message(object):
-    def __init__(self):
-        self.class_num = 80
-        self.last = [0 for i in range(8)]
-        self.log_previous = ''
-        self.is_update = False
-#        self.filename = '/dev/shm/log.txt'
-        self.filename = '/tmp/log.draw_detections.txt'
-        self.class_count = []
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
-    def reset(self):
-        self.is_update = False
-        self.class_count = [0 for i in range(self.class_num)]
-        self.get_classId()
-        self.class_count = [0 for i in range(self.class_num)]
+unsigned int* ptr;
+unsigned int* bar1;
 
-    def get_message(self):
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            l = lines[-2]
-            l = l.rstrip()
-            cols = l.split(' ')
-            if cols[0] != self.last[0]:
-                self.last = cols
-                self.is_update = True
-            else:
-                self.is_update = False
-        
+int main(int argc,char *argv[])
+{
+  int devid = 0;
 
-    def check_log_update(self):
-        self.is_update = False
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            current = lines[-2]
-            if current != self.log_previous:
-                self.is_update = True
-                self.log_previous = current
-        return (self.is_update)
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-    def scan_object(self, cl_name):
-        is_detect = False
+  pg4_DMAcheck(devid);
 
-        if self.check_log_update():
-            with open(self.filename, 'r') as fh:
-                lines = fh.readlines()
-                for i in range(2, 20):
-                    l = lines[-i]
-                    l = l.rstrip()
-                    cols = l.split(' ')
-                    if cols[-1] == cl_name:
-                        is_detect = True
-
-        return (is_detect)
-
-    def get_classId(self):
-        self.get_message()
-
-        if True == self.is_update:
-            z = int(self.last[1])
-            self.class_count[z] += 1
-        else:
-            z = -1
-
-        return (z)
-
+  return 0;
+}
