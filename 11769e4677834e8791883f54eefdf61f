@@ -1,12 +1,24 @@
-2024年  3月 29日 金曜日 09:28:08 JST
+2024年  4月  9日 火曜日 10:53:45 JST
+// Time-stamp: "2006-12-07 19:19:22 hamada"
+// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 
-all:
-	cp top.ucf.ISE6.3i_Synplify top.ucf
-	rm -rf proj
-	tar xvf proj.synplify.tar
-	cd proj;ngdbuild -intstyle ise -dd /home/hamada/VHDL/proj/_ngo -uc ../top.ucf  -p xc2vp70-ff1517-5 top.edn top.ngd
-	cd proj;map -intstyle ise -p xc2vp70-ff1517-5 -cm area -pr b -k 4 -c 100 -tx off -o top_map.ncd top.ngd top.pcf
-	cd proj;par -w -intstyle ise -ol std -t 1 top_map.ncd top.ncd top.pcf
-	cd proj;trce -intstyle ise -e 3 -l 3 -xml top top.ncd -o top.twr top.pcf
-	cd proj;bitgen -intstyle ise -f top.ut top.ncd
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
+unsigned int* ptr;
+unsigned int* bar1;
+
+int main(int argc,char *argv[])
+{
+  int devid = 0;
+
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
+
+  pg4_DMAcheck(devid);
+
+  return 0;
+}
