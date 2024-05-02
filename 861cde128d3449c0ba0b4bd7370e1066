@@ -1,3 +1,15 @@
-2024年  4月  9日 火曜日 09:29:45 JST
-MODULE sim
-SUBMODULE pfpga_config
+2024年  5月  2日 木曜日 10:42:51 JST
+#!/usr/bin/perl
+
+my $nloop = 16;
+my $logbase = "log.GTX";
+
+for(my $ni=2; $ni<131073; $ni = $ni*2){
+    my $bin = "\$\(BIN\)";
+    my $ifile = "gen-plum/data.inp.".sprintf("%06d",$ni);
+    my $log = "\$LOG";
+    my $cmd = "$bin $ifile $nloop >> $log";
+    print "\t".$cmd ."\n";
+}
+
+1;
