@@ -1,1713 +1,259 @@
-2024年  5月 14日 火曜日 09:49:50 JST
-//Time-stamp: <2010-06-18 11:31:00 hamada>
-// Copyright(C) 2008 by 
-// Tsuyoshi Hamada <hamada@progrape.jp>
-
-#include <iostream>
-#include "cuda.h"
-#include "cutil.h"
-
-namespace libcunbody{
-
-  using namespace std;
-
-  // I want to move these member functions into class cunbody.
-  __device__ float4 dev_inter(float4 xi, float4 xj);
-  __device__ float4 dev_inter_001(float4 xi, float4 xj);
-  __device__ float4 dev_inter_011(float4 xi, float4 xj, float* pot);
-  __device__ float4 dev_apot(float4 xi, float4 xj, float4 apot);
-  __global__ void cunbody_kernel_tree_001(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_002(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_003(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_011(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_012(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_013(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-  __global__ void cunbody_kernel_tree_999(float4 *xilist, float4 *xjlist, float4 *apotlist, unsigned int *ioffset, unsigned int *joffset);
-
-  // -------------------------------------- TUNING PROPERTY
-#define KERNEL_TYPE (0x002)                 // (XXX) = (Jark tyep, Pot type, Acc type), 0: not implement 
-  //#define KERNEL_TYPE (0x013)
-#define ACC_TYPE (1)
-#define MAX_WALK (256)
-#define CUDA_MALLOC_TYPE (0)
-#define CUDA_MALLOC_HOST_TYPE (0)
-#define DEV_OPEN_STRATEGY (1)
-#define NTHRE (128)
-  //----------------------------------------.
-
-  class cunbody
-  {
-  private:
-    bool is_open;
-    int host_pid;      // host process id
-    int host_tid;      // host thread Id
-    float4 *dev_xi;
-    float4 *dev_xj;
-    float4 *dev_apot;
-    unsigned int *dev_ioff;
-    unsigned int *dev_joff;
-    unsigned int isize;
-    unsigned int jsize;
-    unsigned int max_isize;
-    unsigned int max_jsize;
-
-//#define ENABLE_DITAILED_OPENMSG
-
-    void dev_check(){
-      int ndev;
-      CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
-      if(ndev == 0){
-	fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
-	fprintf(stdout, "There is no GPUs.\n");
-	exit(-1);
-      }else{
-	int dev = host_pid % ndev;
-	CUDA_SAFE_CALL(cudaSetDevice(dev));
-	printf("[%d]  : cudaSetDevice to %d-th GPU\n",        host_pid, dev+1);
-	cudaDeviceProp deviceProp;
-	CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
-	if (deviceProp.major == 9999 && deviceProp.minor == 9999){
-	  printf("There is no device supporting CUDA.\n");
-	}
-#if defined(ENABLE_DITAILED_OPENMSG)
-	printf("[%d]  : Major revision number:  %d\n",        host_pid, deviceProp.major);
-	printf("[%d]  : Minor revision number:  %d\n",        host_pid, deviceProp.minor);
-        printf("[%d]  : core clock rate:  %.2f GHz\n",        host_pid, deviceProp.clockRate * 1e-6f);
-#  if  (CUDART_VERSION >= 2000)
-	printf("[%d]  : Number of cores:  %d\n",              host_pid, 8 * deviceProp.multiProcessorCount);
-        printf("[%d]  : Concurrent copy and execution: %s\n", host_pid, deviceProp.deviceOverlap ? "Yes" : "No");
-#  endif
-#endif
-
-      }
-    }
-
-    void dev_open(int hpid, int htid) {
-      //      CUT_DEVICE_INIT(, ); // thread safe ?
-      host_pid = hpid;
-      host_tid = htid;
-      fprintf(stdout, "[%d] CUNBODY-1 library: rev.hamada20080920 (^-^)v\n", host_pid);
-#if defined(ENABLE_DITAILED_OPENMSG)
-      fprintf(stdout, "[%d]  open GPU by host thread %d\n", host_pid, host_tid);
-      fprintf(stdout, "[%d]  : KERNEL_TYPE %03x\n",     host_pid, KERNEL_TYPE);
-      fprintf(stdout, "[%d]  : MAX_WALK %d\n",          host_pid, MAX_WALK);
-      fprintf(stdout, "[%d]  : NTHRE    %d\n",          host_pid, NTHRE);
-      fprintf(stdout, "[%d]  : ACC_TYPE %d\n",          host_pid, ACC_TYPE);
-      fprintf(stdout, "[%d]  : CUDA_MALLOC_TYPE %d\n",  host_pid, CUDA_MALLOC_TYPE);
-      fprintf(stdout, "[%d]  : CUDA_MALLOC_HOST_TYPE %d\n", host_pid, CUDA_MALLOC_HOST_TYPE);
-      fprintf(stdout, "[%d]  : DEV_OPEN_STRATEGY %d\n", host_pid, DEV_OPEN_STRATEGY);
-#endif
-      dev_check();
-      //      max_isize = 1500000;
-      //      max_jsize = (this->jsize)*2;
-
-      //      max_isize = (this->isize)*3;
-      //      max_jsize = (this->jsize) + (this->jsize)>>1;
-
-      //theta=0.5
-      //      max_isize = 380000;
-      //      max_jsize = 2100000;
-
-      //theta=0.4
-#if 0
-      max_isize = 380000;
-      max_jsize = 4000000;
-#else
-      max_isize = 520000;
-      max_jsize = 4200000;
-#endif
-
-      CUDA_SAFE_CALL(cudaMalloc((void **)&dev_xi,   (NTHRE + max_isize) * sizeof(float4)));
-      CUDA_SAFE_CALL(cudaMalloc((void **)&dev_apot, max_isize * sizeof(float4)));
-      CUDA_SAFE_CALL(cudaMalloc((void **)&dev_xj,   max_jsize * sizeof(float4)));
-      CUDA_SAFE_CALL(cudaMalloc((void **)&dev_ioff, (MAX_WALK + 1) * sizeof(unsigned int)));
-      CUDA_SAFE_CALL(cudaMalloc((void **)&dev_joff, (MAX_WALK + 1) * sizeof(unsigned int)));
-      printf("[%d-proc, %d-thread] ******** cudaMalloc in total at dev_open() : %d MB (j=%d, i=%d)(j=%d MB, i=%d MB)\n", host_pid, host_tid, 
-	     (
-	      (NTHRE + max_isize) * sizeof(float4) + 
-	      max_isize * sizeof(float4) + 
-	      max_jsize * sizeof(float4) + 
-	      (MAX_WALK + 1) * sizeof(unsigned int) + 
-	      (MAX_WALK + 1) * sizeof(unsigned int)
-	      )/(1024*1024), //                           <----------- total(i, j, offset)
-
-	     max_jsize, max_isize,
-
-	     (max_jsize * sizeof(float4))/(1024*1024), // <----------- only j
-
-	     ((NTHRE + max_isize) * sizeof(float4) +
-	      max_isize * sizeof(float4))/(1024*1024)  // <----------- only i
-	     );
-
-      is_open = true;
-    }
-
-    void dev_close(void) {
-      CUDA_SAFE_CALL(cudaFree(dev_xi));
-      CUDA_SAFE_CALL(cudaFree(dev_xj));
-      CUDA_SAFE_CALL(cudaFree(dev_apot));
-      CUDA_SAFE_CALL(cudaFree(dev_ioff));
-      CUDA_SAFE_CALL(cudaFree(dev_joff));
-    }
-
-  public:
-
-    cunbody() {
-      is_open = false;
-      host_pid = -1;
-      host_tid = -1;
-      max_isize = 0;
-      max_jsize = 0;
-      dev_xi = NULL;
-      dev_xj = NULL;
-      dev_apot = NULL;
-      dev_ioff = NULL;
-      dev_joff = NULL;
-    }
-
-    ~cunbody() {
-      this->dev_close();
-      dev_xi = NULL;
-      dev_xj = NULL;
-      dev_apot = NULL;
-      dev_ioff = NULL;
-      dev_joff = NULL;
-      max_isize = 0;
-      max_jsize = 0;
-      host_tid = -1;
-      host_pid = -1;
-      is_open = false;
-    }
-
-    void vforce_open(int host_pid, int host_tid)
-    {
-      if(is_open == false) this->dev_open(host_pid, host_tid);
-    }
-
-    void vforce_mp(int host_pid,
-		   int host_tid, 
-		float4 xilist[], 
-		float4 xjlist[], 
-		float4 apotlist[], 
-		unsigned int ioff[], 
-		unsigned int joff[], 
-		unsigned int nwalk) 
-    {
-      isize = ioff[nwalk];
-      jsize = joff[nwalk];
-
-      if(is_open == false) this->dev_open(host_pid, host_tid);
-
-#define WARNING_CUDA_MALLOC
-
-      if(isize > max_isize){
-	int isize_bak = isize;
-	isize = (int)(isize*1.1);
-	max_isize = isize_bak;
-#if defined(WARNING_CUDA_MALLOC)
-	int megabyte = ((NTHRE + isize) * sizeof(float4)+isize * sizeof(float4))>>20;
-	printf("[%d @%d]================== cudaMalloc for i : %d MB\n", host_pid, host_tid, megabyte);
-#endif
-	CUDA_SAFE_CALL(cudaFree(dev_xi));
-	CUDA_SAFE_CALL(cudaFree(dev_apot));
-	CUDA_SAFE_CALL(cudaMalloc((void **)&dev_xi,   (NTHRE + isize) * sizeof(float4)));
-	CUDA_SAFE_CALL(cudaMalloc((void **)&dev_apot, isize * sizeof(float4)));
-	isize = isize_bak;
-      }
-
-      if(jsize > max_jsize){
-	max_jsize = jsize;
-#if defined(WARNING_CUDA_MALLOC)
-	int megabyte = (jsize * sizeof(float4))>>20;
-	printf("[%d @%d]------------------ cudaMalloc for j : %d MB\n",  host_pid, host_tid, megabyte);
-#endif
-	CUDA_SAFE_CALL(cudaFree(dev_xj));
-	CUDA_SAFE_CALL(cudaMalloc((void **)&dev_xj,   jsize * sizeof(float4)));
-      }
-
-      CUDA_SAFE_CALL(cudaMemcpy(dev_xi, xilist, isize * sizeof(float4), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(dev_xj, xjlist, jsize * sizeof(float4), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(dev_ioff, ioff, (nwalk + 1) * sizeof(unsigned int), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(dev_joff, joff, (nwalk + 1) * sizeof(unsigned int), cudaMemcpyHostToDevice));
-
-      dim3 grid(nwalk);
-      dim3 threads(NTHRE);
-
-#if   (KERNEL_TYPE == 0x001)
-      cunbody_kernel_tree_001 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#elif (KERNEL_TYPE == 0x002)
-      cunbody_kernel_tree_002 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#elif (KERNEL_TYPE == 0x011)
-      cunbody_kernel_tree_011 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#elif (KERNEL_TYPE == 0x012)
-      cunbody_kernel_tree_012 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#elif (KERNEL_TYPE == 0x013)
-      cunbody_kernel_tree_013 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#elif (KERNEL_TYPE == 0x003)
-      cunbody_kernel_tree_003 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff); // has some bug (# of registers overflow ?)
-#elif (KERNEL_TYPE == 0x999)
-      cunbody_kernel_tree_999 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff); // has some bug
-#else
-      cunbody_kernel_tree_000 <<< grid, threads >>> (dev_xi, dev_xj, dev_apot, dev_ioff, dev_joff);
-#endif
-
-      CUT_CHECK_ERROR("KERNEL EXECUTION FAILED");
-      CUDA_SAFE_CALL(cudaMemcpy(apotlist, dev_apot, isize * sizeof(float4), cudaMemcpyDeviceToHost));
-    }
-
-  }; // class cunbody __END__
-
-}; // namespace libcunbody __END__  ----------------------------------------------------------------------------------
-
-
-
-#define MAX_OMP_THRE (4)
-static libcunbody::cunbody cunObj[MAX_OMP_THRE];
-
-extern "C"
-void vforce(int host_tid, float4 xilist[], float4 xjlist[], float4 apotlist[], unsigned int ioff[], unsigned int joff[], unsigned int nwalk)
-{
-  using namespace std;
-  using namespace libcunbody;
-  cunObj[host_tid].vforce_mp(0, host_tid, xilist, xjlist, apotlist, ioff, joff, nwalk);
-}
-
-extern "C"
-void vforce_mp(int proc_id, int host_tid, float4 xilist[], float4 xjlist[], float4 apotlist[], unsigned int ioff[], unsigned int joff[], unsigned int nwalk)
-{
-  using namespace std;
-  using namespace libcunbody;
-  cunObj[host_tid].vforce_mp(proc_id, host_tid, xilist, xjlist, apotlist, ioff, joff, nwalk);
-}
-
-extern "C"
-void vforce_open(int proc_id, int host_tid)
-{
-  using namespace std;
-  using namespace libcunbody;
-  cunObj[host_tid].vforce_open(proc_id, host_tid);
-}
-
-#if (NTHRE != 128)
-compile-touccha-dame
-#endif
-
-namespace libcunbody{
-
-  using namespace std;
-
-  __device__ float4 dev_inter(float4 xi, float4 xj)
-  {
-    float dx = xj.x - xi.x;
-    float dy = xj.y - xi.y;
-    float dz = xj.z - xi.z;
-    float eps2 = xi.w;
-    float mj   = xj.w;
-
-#if (0)
-    float r2   = (dz*dz +(dy*dy +(dx*dx+eps2)));
-#else
-    float r2   = (dx*dx + eps2) + dy*dy + dz*dz;
-#endif
-
-    float r1i  = 1/sqrt(r2);
-    float r2i  = r1i*r1i;
-    float mr3i = mj * r1i * r2i;
-
-#if (0)  
-    float4 retval = make_float4(dx, dy, dz, mr3i);
-#else
-    float4 retval;
-    retval.x = dx;
-    retval.y = dy;
-    retval.z = dz;
-    retval.w = mr3i;
-#endif
-
-    return retval;
-  }
-
-  __global__ 
-  void cunbody_kernel_tree_999(float4 *xilist,
-				float4 *xjlist,
-				float4 *apotlist,
-				unsigned int *ioffset,
-				unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase+tid];
-      float4 apot = make_float4(0,0,0,0);
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	{
-	  float4 dm0 = dev_inter(xi, sj[0]);
-	  float4 dm1 = dev_inter(xi, sj[1]);
-	  float4 dm2 = dev_inter(xi, sj[2]);
-	  float4 dm3 = dev_inter(xi, sj[3]);
-	  float4 dm4 = dev_inter(xi, sj[4]);
-	  float4 dm5 = dev_inter(xi, sj[5]);
-	  float4 dm6 = dev_inter(xi, sj[6]);
-	  float4 dm7 = dev_inter(xi, sj[7]);
-	  float4 dm8 = dev_inter(xi, sj[8]);
-	  float4 dm9 = dev_inter(xi, sj[9]);
-
-	  float4 dm10 = dev_inter(xi, sj[10]);
-	  float4 dm11 = dev_inter(xi, sj[11]);
-	  float4 dm12 = dev_inter(xi, sj[12]);
-	  float4 dm13 = dev_inter(xi, sj[13]);
-	  float4 dm14 = dev_inter(xi, sj[14]);
-	  float4 dm15 = dev_inter(xi, sj[15]);
-	  float4 dm16 = dev_inter(xi, sj[16]);
-	  float4 dm17 = dev_inter(xi, sj[17]);
-	  float4 dm18 = dev_inter(xi, sj[18]);
-	  float4 dm19 = dev_inter(xi, sj[19]);
-
-	  float4 dm20 = dev_inter(xi, sj[20]);
-	  float4 dm21 = dev_inter(xi, sj[21]);
-	  float4 dm22 = dev_inter(xi, sj[22]);
-	  float4 dm23 = dev_inter(xi, sj[23]);
-	  float4 dm24 = dev_inter(xi, sj[24]);
-	  float4 dm25 = dev_inter(xi, sj[25]);
-	  float4 dm26 = dev_inter(xi, sj[26]);
-	  float4 dm27 = dev_inter(xi, sj[27]);
-	  float4 dm28 = dev_inter(xi, sj[28]);
-	  float4 dm29 = dev_inter(xi, sj[29]);
-
-	  float4 dm30 = dev_inter(xi, sj[30]);
-	  float4 dm31 = dev_inter(xi, sj[31]);
-	  float4 dm32 = dev_inter(xi, sj[32]);
-	  float4 dm33 = dev_inter(xi, sj[33]);
-	  float4 dm34 = dev_inter(xi, sj[34]);
-	  float4 dm35 = dev_inter(xi, sj[35]);
-	  float4 dm36 = dev_inter(xi, sj[36]);
-	  float4 dm37 = dev_inter(xi, sj[37]);
-	  float4 dm38 = dev_inter(xi, sj[38]);
-	  float4 dm39 = dev_inter(xi, sj[39]);
-
-	  float4 dm40 = dev_inter(xi, sj[40]);
-	  float4 dm41 = dev_inter(xi, sj[41]);
-	  float4 dm42 = dev_inter(xi, sj[42]);
-	  float4 dm43 = dev_inter(xi, sj[43]);
-	  float4 dm44 = dev_inter(xi, sj[44]);
-	  float4 dm45 = dev_inter(xi, sj[45]);
-	  float4 dm46 = dev_inter(xi, sj[46]);
-	  float4 dm47 = dev_inter(xi, sj[47]);
-	  float4 dm48 = dev_inter(xi, sj[48]);
-	  float4 dm49 = dev_inter(xi, sj[49]);
-
-	  float4 dm50 = dev_inter(xi, sj[50]);
-	  float4 dm51 = dev_inter(xi, sj[51]);
-	  float4 dm52 = dev_inter(xi, sj[52]);
-	  float4 dm53 = dev_inter(xi, sj[53]);
-	  float4 dm54 = dev_inter(xi, sj[54]);
-	  float4 dm55 = dev_inter(xi, sj[55]);
-	  float4 dm56 = dev_inter(xi, sj[56]);
-	  float4 dm57 = dev_inter(xi, sj[57]);
-	  float4 dm58 = dev_inter(xi, sj[58]);
-	  float4 dm59 = dev_inter(xi, sj[59]);
-
-	  float4 dm60 = dev_inter(xi, sj[60]);
-	  float4 dm61 = dev_inter(xi, sj[61]);
-	  float4 dm62 = dev_inter(xi, sj[62]);
-	  float4 dm63 = dev_inter(xi, sj[63]);
-	  float4 dm64 = dev_inter(xi, sj[64]);
-	  float4 dm65 = dev_inter(xi, sj[65]);
-	  float4 dm66 = dev_inter(xi, sj[66]);
-	  float4 dm67 = dev_inter(xi, sj[67]);
-	  float4 dm68 = dev_inter(xi, sj[68]);
-	  float4 dm69 = dev_inter(xi, sj[69]);
-
-	  float4 dm70 = dev_inter(xi, sj[70]);
-	  float4 dm71 = dev_inter(xi, sj[71]);
-	  float4 dm72 = dev_inter(xi, sj[72]);
-	  float4 dm73 = dev_inter(xi, sj[73]);
-	  float4 dm74 = dev_inter(xi, sj[74]);
-	  float4 dm75 = dev_inter(xi, sj[75]);
-	  float4 dm76 = dev_inter(xi, sj[76]);
-	  float4 dm77 = dev_inter(xi, sj[77]);
-	  float4 dm78 = dev_inter(xi, sj[78]);
-	  float4 dm79 = dev_inter(xi, sj[79]);
-
-	  float4 dm80 = dev_inter(xi, sj[80]);
-	  float4 dm81 = dev_inter(xi, sj[81]);
-	  float4 dm82 = dev_inter(xi, sj[82]);
-	  float4 dm83 = dev_inter(xi, sj[83]);
-	  float4 dm84 = dev_inter(xi, sj[84]);
-	  float4 dm85 = dev_inter(xi, sj[85]);
-	  float4 dm86 = dev_inter(xi, sj[86]);
-	  float4 dm87 = dev_inter(xi, sj[87]);
-	  float4 dm88 = dev_inter(xi, sj[88]);
-	  float4 dm89 = dev_inter(xi, sj[89]);
-
-	  float4 dm90 = dev_inter(xi, sj[90]);
-	  float4 dm91 = dev_inter(xi, sj[91]);
-	  float4 dm92 = dev_inter(xi, sj[92]);
-	  float4 dm93 = dev_inter(xi, sj[93]);
-	  float4 dm94 = dev_inter(xi, sj[94]);
-	  float4 dm95 = dev_inter(xi, sj[95]);
-	  float4 dm96 = dev_inter(xi, sj[96]);
-	  float4 dm97 = dev_inter(xi, sj[97]);
-	  float4 dm98 = dev_inter(xi, sj[98]);
-	  float4 dm99 = dev_inter(xi, sj[99]);
-
-	  float4 dm100 = dev_inter(xi, sj[100]);
-	  float4 dm101 = dev_inter(xi, sj[101]);
-	  float4 dm102 = dev_inter(xi, sj[102]);
-	  float4 dm103 = dev_inter(xi, sj[103]);
-	  float4 dm104 = dev_inter(xi, sj[104]);
-	  float4 dm105 = dev_inter(xi, sj[105]);
-	  float4 dm106 = dev_inter(xi, sj[106]);
-	  float4 dm107 = dev_inter(xi, sj[107]);
-	  float4 dm108 = dev_inter(xi, sj[108]);
-	  float4 dm109 = dev_inter(xi, sj[109]);
-
-	  float4 dm110 = dev_inter(xi, sj[110]);
-	  float4 dm111 = dev_inter(xi, sj[111]);
-	  float4 dm112 = dev_inter(xi, sj[112]);
-	  float4 dm113 = dev_inter(xi, sj[113]);
-	  float4 dm114 = dev_inter(xi, sj[114]);
-	  float4 dm115 = dev_inter(xi, sj[115]);
-	  float4 dm116 = dev_inter(xi, sj[116]);
-	  float4 dm117 = dev_inter(xi, sj[117]);
-	  float4 dm118 = dev_inter(xi, sj[118]);
-	  float4 dm119 = dev_inter(xi, sj[119]);
-
-	  float4 dm120 = dev_inter(xi, sj[120]);
-	  float4 dm121 = dev_inter(xi, sj[121]);
-	  float4 dm122 = dev_inter(xi, sj[122]);
-	  float4 dm123 = dev_inter(xi, sj[123]);
-	  float4 dm124 = dev_inter(xi, sj[124]);
-	  float4 dm125 = dev_inter(xi, sj[125]);
-	  float4 dm126 = dev_inter(xi, sj[126]);
-	  float4 dm127 = dev_inter(xi, sj[127]);
-
-	  apot.x = dm0.x * dm0.w + dm1.x * dm1.w + dm2.x * dm2.w + dm3.x * dm3.w + dm4.x * dm4.w + dm5.x * dm5.w + dm6.x * dm6.w + dm7.x * dm7.w + dm8.x * dm8.w + dm9.x * dm9.w + 
-	    dm10.x * dm10.w + dm11.x * dm11.w + dm12.x * dm12.w + dm13.x * dm13.w + dm14.x * dm14.w + dm15.x * dm15.w + dm16.x * dm16.w + dm17.x * dm17.w + dm18.x * dm18.w + dm19.x * dm19.w + 
-	    dm20.x * dm20.w + dm21.x * dm21.w + dm22.x * dm22.w + dm23.x * dm23.w + dm24.x * dm24.w + dm25.x * dm25.w + dm26.x * dm26.w + dm27.x * dm27.w + dm28.x * dm28.w + dm29.x * dm29.w + 
-	    dm30.x * dm30.w + dm31.x * dm31.w + dm32.x * dm32.w + dm33.x * dm33.w + dm34.x * dm34.w + dm35.x * dm35.w + dm36.x * dm36.w + dm37.x * dm37.w + dm38.x * dm38.w + dm39.x * dm39.w + 
-	    dm40.x * dm40.w + dm41.x * dm41.w + dm42.x * dm42.w + dm43.x * dm43.w + dm44.x * dm44.w + dm45.x * dm45.w + dm46.x * dm46.w + dm47.x * dm47.w + dm48.x * dm48.w + dm49.x * dm49.w + 
-	    dm50.x * dm50.w + dm51.x * dm51.w + dm52.x * dm52.w + dm53.x * dm53.w + dm54.x * dm54.w + dm55.x * dm55.w + dm56.x * dm56.w + dm57.x * dm57.w + dm58.x * dm58.w + dm59.x * dm59.w + 
-	    dm60.x * dm60.w + dm61.x * dm61.w + dm62.x * dm62.w + dm63.x * dm63.w + dm64.x * dm64.w + dm65.x * dm65.w + dm66.x * dm66.w + dm67.x * dm67.w + dm68.x * dm68.w + dm69.x * dm69.w + 
-	    dm70.x * dm70.w + dm71.x * dm71.w + dm72.x * dm72.w + dm73.x * dm73.w + dm74.x * dm74.w + dm75.x * dm75.w + dm76.x * dm76.w + dm77.x * dm77.w + dm78.x * dm78.w + dm79.x * dm79.w + 
-	    dm80.x * dm80.w + dm81.x * dm81.w + dm82.x * dm82.w + dm83.x * dm83.w + dm84.x * dm84.w + dm85.x * dm85.w + dm86.x * dm86.w + dm87.x * dm87.w + dm88.x * dm88.w + dm89.x * dm89.w + 
-	    dm90.x * dm90.w + dm91.x * dm91.w + dm92.x * dm92.w + dm93.x * dm93.w + dm94.x * dm94.w + dm95.x * dm95.w + dm96.x * dm96.w + dm97.x * dm97.w + dm98.x * dm98.w + dm99.x * dm99.w + 
-	    dm100.x * dm100.w + dm101.x * dm101.w + dm102.x * dm102.w + dm103.x * dm103.w + dm104.x * dm104.w + dm105.x * dm105.w + dm106.x * dm106.w + dm107.x * dm107.w + dm108.x * dm108.w + dm109.x * dm109.w + 
-	    dm110.x * dm110.w + dm111.x * dm111.w + dm112.x * dm112.w + dm113.x * dm113.w + dm114.x * dm114.w + dm115.x * dm115.w + dm116.x * dm116.w + dm117.x * dm117.w + dm118.x * dm118.w + dm119.x * dm119.w + 
-	    dm120.x * dm120.w + dm121.x * dm121.w + dm122.x * dm122.w + dm123.x * dm123.w + dm124.x * dm124.w + dm125.x * dm125.w + dm126.x * dm126.w + dm127.x * dm127.w;
-
-	  apot.y = dm0.y * dm0.w + dm1.y * dm1.w + dm2.y * dm2.w + dm3.y * dm3.w + dm4.y * dm4.w + dm5.y * dm5.w + dm6.y * dm6.w + dm7.y * dm7.w + dm8.y * dm8.w + dm9.y * dm9.w + 
-	    dm10.y * dm10.w + dm11.y * dm11.w + dm12.y * dm12.w + dm13.y * dm13.w + dm14.y * dm14.w + dm15.y * dm15.w + dm16.y * dm16.w + dm17.y * dm17.w + dm18.y * dm18.w + dm19.y * dm19.w + 
-	    dm20.y * dm20.w + dm21.y * dm21.w + dm22.y * dm22.w + dm23.y * dm23.w + dm24.y * dm24.w + dm25.y * dm25.w + dm26.y * dm26.w + dm27.y * dm27.w + dm28.y * dm28.w + dm29.y * dm29.w + 
-	    dm30.y * dm30.w + dm31.y * dm31.w + dm32.y * dm32.w + dm33.y * dm33.w + dm34.y * dm34.w + dm35.y * dm35.w + dm36.y * dm36.w + dm37.y * dm37.w + dm38.y * dm38.w + dm39.y * dm39.w + 
-	    dm40.y * dm40.w + dm41.y * dm41.w + dm42.y * dm42.w + dm43.y * dm43.w + dm44.y * dm44.w + dm45.y * dm45.w + dm46.y * dm46.w + dm47.y * dm47.w + dm48.y * dm48.w + dm49.y * dm49.w + 
-	    dm50.y * dm50.w + dm51.y * dm51.w + dm52.y * dm52.w + dm53.y * dm53.w + dm54.y * dm54.w + dm55.y * dm55.w + dm56.y * dm56.w + dm57.y * dm57.w + dm58.y * dm58.w + dm59.y * dm59.w + 
-	    dm60.y * dm60.w + dm61.y * dm61.w + dm62.y * dm62.w + dm63.y * dm63.w + dm64.y * dm64.w + dm65.y * dm65.w + dm66.y * dm66.w + dm67.y * dm67.w + dm68.y * dm68.w + dm69.y * dm69.w + 
-	    dm70.y * dm70.w + dm71.y * dm71.w + dm72.y * dm72.w + dm73.y * dm73.w + dm74.y * dm74.w + dm75.y * dm75.w + dm76.y * dm76.w + dm77.y * dm77.w + dm78.y * dm78.w + dm79.y * dm79.w + 
-	    dm80.y * dm80.w + dm81.y * dm81.w + dm82.y * dm82.w + dm83.y * dm83.w + dm84.y * dm84.w + dm85.y * dm85.w + dm86.y * dm86.w + dm87.y * dm87.w + dm88.y * dm88.w + dm89.y * dm89.w + 
-	    dm90.y * dm90.w + dm91.y * dm91.w + dm92.y * dm92.w + dm93.y * dm93.w + dm94.y * dm94.w + dm95.y * dm95.w + dm96.y * dm96.w + dm97.y * dm97.w + dm98.y * dm98.w + dm99.y * dm99.w + 
-	    dm100.y * dm100.w + dm101.y * dm101.w + dm102.y * dm102.w + dm103.y * dm103.w + dm104.y * dm104.w + dm105.y * dm105.w + dm106.y * dm106.w + dm107.y * dm107.w + dm108.y * dm108.w + dm109.y * dm109.w + 
-	    dm110.y * dm110.w + dm111.y * dm111.w + dm112.y * dm112.w + dm113.y * dm113.w + dm114.y * dm114.w + dm115.y * dm115.w + dm116.y * dm116.w + dm117.y * dm117.w + dm118.y * dm118.w + dm119.y * dm119.w + 
-	    dm120.y * dm120.w + dm121.y * dm121.w + dm122.y * dm122.w + dm123.y * dm123.w + dm124.y * dm124.w + dm125.y * dm125.w + dm126.y * dm126.w + dm127.y * dm127.w;
-
-	  apot.z = dm0.z * dm0.w + dm1.z * dm1.w + dm2.z * dm2.w + dm3.z * dm3.w + dm4.z * dm4.w + dm5.z * dm5.w + dm6.z * dm6.w + dm7.z * dm7.w + dm8.z * dm8.w + dm9.z * dm9.w + 
-	    dm10.z * dm10.w + dm11.z * dm11.w + dm12.z * dm12.w + dm13.z * dm13.w + dm14.z * dm14.w + dm15.z * dm15.w + dm16.z * dm16.w + dm17.z * dm17.w + dm18.z * dm18.w + dm19.z * dm19.w + 
-	    dm20.z * dm20.w + dm21.z * dm21.w + dm22.z * dm22.w + dm23.z * dm23.w + dm24.z * dm24.w + dm25.z * dm25.w + dm26.z * dm26.w + dm27.z * dm27.w + dm28.z * dm28.w + dm29.z * dm29.w + 
-	    dm30.z * dm30.w + dm31.z * dm31.w + dm32.z * dm32.w + dm33.z * dm33.w + dm34.z * dm34.w + dm35.z * dm35.w + dm36.z * dm36.w + dm37.z * dm37.w + dm38.z * dm38.w + dm39.z * dm39.w + 
-	    dm40.z * dm40.w + dm41.z * dm41.w + dm42.z * dm42.w + dm43.z * dm43.w + dm44.z * dm44.w + dm45.z * dm45.w + dm46.z * dm46.w + dm47.z * dm47.w + dm48.z * dm48.w + dm49.z * dm49.w + 
-	    dm50.z * dm50.w + dm51.z * dm51.w + dm52.z * dm52.w + dm53.z * dm53.w + dm54.z * dm54.w + dm55.z * dm55.w + dm56.z * dm56.w + dm57.z * dm57.w + dm58.z * dm58.w + dm59.z * dm59.w + 
-	    dm60.z * dm60.w + dm61.z * dm61.w + dm62.z * dm62.w + dm63.z * dm63.w + dm64.z * dm64.w + dm65.z * dm65.w + dm66.z * dm66.w + dm67.z * dm67.w + dm68.z * dm68.w + dm69.z * dm69.w + 
-	    dm70.z * dm70.w + dm71.z * dm71.w + dm72.z * dm72.w + dm73.z * dm73.w + dm74.z * dm74.w + dm75.z * dm75.w + dm76.z * dm76.w + dm77.z * dm77.w + dm78.z * dm78.w + dm79.z * dm79.w + 
-	    dm80.z * dm80.w + dm81.z * dm81.w + dm82.z * dm82.w + dm83.z * dm83.w + dm84.z * dm84.w + dm85.z * dm85.w + dm86.z * dm86.w + dm87.z * dm87.w + dm88.z * dm88.w + dm89.z * dm89.w + 
-	    dm90.z * dm90.w + dm91.z * dm91.w + dm92.z * dm92.w + dm93.z * dm93.w + dm94.z * dm94.w + dm95.z * dm95.w + dm96.z * dm96.w + dm97.z * dm97.w + dm98.z * dm98.w + dm99.z * dm99.w + 
-	    dm100.z * dm100.w + dm101.z * dm101.w + dm102.z * dm102.w + dm103.z * dm103.w + dm104.z * dm104.w + dm105.z * dm105.w + dm106.z * dm106.w + dm107.z * dm107.w + dm108.z * dm108.w + dm109.z * dm109.w + 
-	    dm110.z * dm110.w + dm111.z * dm111.w + dm112.z * dm112.w + dm113.z * dm113.w + dm114.z * dm114.w + dm115.z * dm115.w + dm116.z * dm116.w + dm117.z * dm117.w + dm118.z * dm118.w + dm119.z * dm119.w + 
-	    dm120.z * dm120.w + dm121.z * dm121.w + dm122.z * dm122.w + dm123.z * dm123.w + dm124.z * dm124.w + dm125.z * dm125.w + dm126.z * dm126.w + dm127.z * dm127.w;
-
-	}
-      }
-      if(ibase+tid < iend){
-	apotlist[ibase+tid] = apot;
-      }
-    }
-  }
-
-
-
-  __device__ 
-  float4 dev_inter_001(float4 xi, float4 xj)
-  {
-    float dx = xj.x - xi.x;
-    float dy = xj.y - xi.y;
-    float dz = xj.z - xi.z;
-    float eps2 = xi.w;
-    float mj   = xj.w;
-#if (0)
-    float r2 = dx*dz + (dy*dy + (dx*dx + eps2));
-#else
-    float r2 = (dx*dx + eps2) + dy*dy + dz*dz;
-#endif
-    //	if(r2 == eps2) return (a,p)
-
-    float r1i = 1/sqrt(r2);
-    //  float r1i = rsqrt(r2);
-
-    float r2i = r1i*r1i;
-    float mr3i = mj * r1i * r2i;
-    float4 retval;
-
-    retval.x = dx; 
-    retval.y = dy; 
-    retval.z = dz;
-    retval.w = mr3i; 
-
-    return (retval);
-  }
-
-
-
-  __global__ 
-  void cunbody_kernel_tree_001(float4 *xilist,
-				float4 *xjlist,
-				float4 *apotlist,
-				unsigned int *ioffset,
-				unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0,0,0,0);
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[0]);
-	  dm1 = dev_inter_001(xi, sj[1]);
-	  dm2 = dev_inter_001(xi, sj[2]);
-	  dm3 = dev_inter_001(xi, sj[3]);
-	  dm4 = dev_inter_001(xi, sj[4]);
-	  dm5 = dev_inter_001(xi, sj[5]);
-	  dm6 = dev_inter_001(xi, sj[6]);
-	  dm7 = dev_inter_001(xi, sj[7]);
-	  dm8 = dev_inter_001(xi, sj[8]);
-	  dm9 = dev_inter_001(xi, sj[9]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[10]);
-	  dm1 = dev_inter_001(xi, sj[11]);
-	  dm2 = dev_inter_001(xi, sj[12]);
-	  dm3 = dev_inter_001(xi, sj[13]);
-	  dm4 = dev_inter_001(xi, sj[14]);
-	  dm5 = dev_inter_001(xi, sj[15]);
-	  dm6 = dev_inter_001(xi, sj[16]);
-	  dm7 = dev_inter_001(xi, sj[17]);
-	  dm8 = dev_inter_001(xi, sj[18]);
-	  dm9 = dev_inter_001(xi, sj[19]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[20]);
-	  dm1 = dev_inter_001(xi, sj[21]);
-	  dm2 = dev_inter_001(xi, sj[22]);
-	  dm3 = dev_inter_001(xi, sj[23]);
-	  dm4 = dev_inter_001(xi, sj[24]);
-	  dm5 = dev_inter_001(xi, sj[25]);
-	  dm6 = dev_inter_001(xi, sj[26]);
-	  dm7 = dev_inter_001(xi, sj[27]);
-	  dm8 = dev_inter_001(xi, sj[28]);
-	  dm9 = dev_inter_001(xi, sj[29]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[30]);
-	  dm1 = dev_inter_001(xi, sj[31]);
-	  dm2 = dev_inter_001(xi, sj[32]);
-	  dm3 = dev_inter_001(xi, sj[33]);
-	  dm4 = dev_inter_001(xi, sj[34]);
-	  dm5 = dev_inter_001(xi, sj[35]);
-	  dm6 = dev_inter_001(xi, sj[36]);
-	  dm7 = dev_inter_001(xi, sj[37]);
-	  dm8 = dev_inter_001(xi, sj[38]);
-	  dm9 = dev_inter_001(xi, sj[39]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[40]);
-	  dm1 = dev_inter_001(xi, sj[41]);
-	  dm2 = dev_inter_001(xi, sj[42]);
-	  dm3 = dev_inter_001(xi, sj[43]);
-	  dm4 = dev_inter_001(xi, sj[44]);
-	  dm5 = dev_inter_001(xi, sj[45]);
-	  dm6 = dev_inter_001(xi, sj[46]);
-	  dm7 = dev_inter_001(xi, sj[47]);
-	  dm8 = dev_inter_001(xi, sj[48]);
-	  dm9 = dev_inter_001(xi, sj[49]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[50]);
-	  dm1 = dev_inter_001(xi, sj[51]);
-	  dm2 = dev_inter_001(xi, sj[52]);
-	  dm3 = dev_inter_001(xi, sj[53]);
-	  dm4 = dev_inter_001(xi, sj[54]);
-	  dm5 = dev_inter_001(xi, sj[55]);
-	  dm6 = dev_inter_001(xi, sj[56]);
-	  dm7 = dev_inter_001(xi, sj[57]);
-	  dm8 = dev_inter_001(xi, sj[58]);
-	  dm9 = dev_inter_001(xi, sj[59]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[60]);
-	  dm1 = dev_inter_001(xi, sj[61]);
-	  dm2 = dev_inter_001(xi, sj[62]);
-	  dm3 = dev_inter_001(xi, sj[63]);
-	  dm4 = dev_inter_001(xi, sj[64]);
-	  dm5 = dev_inter_001(xi, sj[65]);
-	  dm6 = dev_inter_001(xi, sj[66]);
-	  dm7 = dev_inter_001(xi, sj[67]);
-	  dm8 = dev_inter_001(xi, sj[68]);
-	  dm9 = dev_inter_001(xi, sj[69]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[70]);
-	  dm1 = dev_inter_001(xi, sj[71]);
-	  dm2 = dev_inter_001(xi, sj[72]);
-	  dm3 = dev_inter_001(xi, sj[73]);
-	  dm4 = dev_inter_001(xi, sj[74]);
-	  dm5 = dev_inter_001(xi, sj[75]);
-	  dm6 = dev_inter_001(xi, sj[76]);
-	  dm7 = dev_inter_001(xi, sj[77]);
-	  dm8 = dev_inter_001(xi, sj[78]);
-	  dm9 = dev_inter_001(xi, sj[79]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[80]);
-	  dm1 = dev_inter_001(xi, sj[81]);
-	  dm2 = dev_inter_001(xi, sj[82]);
-	  dm3 = dev_inter_001(xi, sj[83]);
-	  dm4 = dev_inter_001(xi, sj[84]);
-	  dm5 = dev_inter_001(xi, sj[85]);
-	  dm6 = dev_inter_001(xi, sj[86]);
-	  dm7 = dev_inter_001(xi, sj[87]);
-	  dm8 = dev_inter_001(xi, sj[88]);
-	  dm9 = dev_inter_001(xi, sj[89]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[90]);
-	  dm1 = dev_inter_001(xi, sj[91]);
-	  dm2 = dev_inter_001(xi, sj[92]);
-	  dm3 = dev_inter_001(xi, sj[93]);
-	  dm4 = dev_inter_001(xi, sj[94]);
-	  dm5 = dev_inter_001(xi, sj[95]);
-	  dm6 = dev_inter_001(xi, sj[96]);
-	  dm7 = dev_inter_001(xi, sj[97]);
-	  dm8 = dev_inter_001(xi, sj[98]);
-	  dm9 = dev_inter_001(xi, sj[99]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[100]);
-	  dm1 = dev_inter_001(xi, sj[101]);
-	  dm2 = dev_inter_001(xi, sj[102]);
-	  dm3 = dev_inter_001(xi, sj[103]);
-	  dm4 = dev_inter_001(xi, sj[104]);
-	  dm5 = dev_inter_001(xi, sj[105]);
-	  dm6 = dev_inter_001(xi, sj[106]);
-	  dm7 = dev_inter_001(xi, sj[107]);
-	  dm8 = dev_inter_001(xi, sj[108]);
-	  dm9 = dev_inter_001(xi, sj[109]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[110]);
-	  dm1 = dev_inter_001(xi, sj[111]);
-	  dm2 = dev_inter_001(xi, sj[112]);
-	  dm3 = dev_inter_001(xi, sj[113]);
-	  dm4 = dev_inter_001(xi, sj[114]);
-	  dm5 = dev_inter_001(xi, sj[115]);
-	  dm6 = dev_inter_001(xi, sj[116]);
-	  dm7 = dev_inter_001(xi, sj[117]);
-	  dm8 = dev_inter_001(xi, sj[118]);
-	  dm9 = dev_inter_001(xi, sj[119]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7;//, dm8, dm9;
-	  dm0 = dev_inter_001(xi, sj[120]);
-	  dm1 = dev_inter_001(xi, sj[121]);
-	  dm2 = dev_inter_001(xi, sj[122]);
-	  dm3 = dev_inter_001(xi, sj[123]);
-	  dm4 = dev_inter_001(xi, sj[124]);
-	  dm5 = dev_inter_001(xi, sj[125]);
-	  dm6 = dev_inter_001(xi, sj[126]);
-	  dm7 = dev_inter_001(xi, sj[127]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w);// + (dm8.x*dm8.w) + (dm9.x*dm9.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w);// + (dm8.y*dm8.w) + (dm9.y*dm9.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w);// + (dm8.z*dm8.w) + (dm9.z*dm9.w);
-	}
-      }
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-    }
-  }
-
-
-  __global__ 
-  void cunbody_kernel_tree_002(float4 *xilist,
-				float4 *xjlist,
-				float4 *apotlist,
-				unsigned int *ioffset,
-				unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0,0,0,0);
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	__syncthreads(); // bugfixed 2008/09/19
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[0]);
-	  dm1 = dev_inter_001(xi, sj[1]);
-	  dm2 = dev_inter_001(xi, sj[2]);
-	  dm3 = dev_inter_001(xi, sj[3]);
-	  dm4 = dev_inter_001(xi, sj[4]);
-	  dm5 = dev_inter_001(xi, sj[5]);
-	  dm6 = dev_inter_001(xi, sj[6]);
-	  dm7 = dev_inter_001(xi, sj[7]);
-	  dm8 = dev_inter_001(xi, sj[8]);
-	  dm9 = dev_inter_001(xi, sj[9]);
-	  dm10 = dev_inter_001(xi, sj[10]);
-	  dm11 = dev_inter_001(xi, sj[11]);
-	  dm12 = dev_inter_001(xi, sj[12]);
-	  dm13 = dev_inter_001(xi, sj[13]);
-	  dm14 = dev_inter_001(xi, sj[14]);
-	  dm15 = dev_inter_001(xi, sj[15]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[16]);
-	  dm1 = dev_inter_001(xi, sj[17]);
-	  dm2 = dev_inter_001(xi, sj[18]);
-	  dm3 = dev_inter_001(xi, sj[19]);
-	  dm4 = dev_inter_001(xi, sj[20]);
-	  dm5 = dev_inter_001(xi, sj[21]);
-	  dm6 = dev_inter_001(xi, sj[22]);
-	  dm7 = dev_inter_001(xi, sj[23]);
-	  dm8 = dev_inter_001(xi, sj[24]);
-	  dm9 = dev_inter_001(xi, sj[25]);
-	  dm10 = dev_inter_001(xi, sj[26]);
-	  dm11 = dev_inter_001(xi, sj[27]);
-	  dm12 = dev_inter_001(xi, sj[28]);
-	  dm13 = dev_inter_001(xi, sj[29]);
-	  dm14 = dev_inter_001(xi, sj[30]);
-	  dm15 = dev_inter_001(xi, sj[31]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[32]);
-	  dm1 = dev_inter_001(xi, sj[33]);
-	  dm2 = dev_inter_001(xi, sj[34]);
-	  dm3 = dev_inter_001(xi, sj[35]);
-	  dm4 = dev_inter_001(xi, sj[36]);
-	  dm5 = dev_inter_001(xi, sj[37]);
-	  dm6 = dev_inter_001(xi, sj[38]);
-	  dm7 = dev_inter_001(xi, sj[39]);
-	  dm8 = dev_inter_001(xi, sj[40]);
-	  dm9 = dev_inter_001(xi, sj[41]);
-	  dm10 = dev_inter_001(xi, sj[42]);
-	  dm11 = dev_inter_001(xi, sj[43]);
-	  dm12 = dev_inter_001(xi, sj[44]);
-	  dm13 = dev_inter_001(xi, sj[45]);
-	  dm14 = dev_inter_001(xi, sj[46]);
-	  dm15 = dev_inter_001(xi, sj[47]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[48]);
-	  dm1 = dev_inter_001(xi, sj[49]);
-	  dm2 = dev_inter_001(xi, sj[50]);
-	  dm3 = dev_inter_001(xi, sj[51]);
-	  dm4 = dev_inter_001(xi, sj[52]);
-	  dm5 = dev_inter_001(xi, sj[53]);
-	  dm6 = dev_inter_001(xi, sj[54]);
-	  dm7 = dev_inter_001(xi, sj[55]);
-	  dm8 = dev_inter_001(xi, sj[56]);
-	  dm9 = dev_inter_001(xi, sj[57]);
-	  dm10 = dev_inter_001(xi, sj[58]);
-	  dm11 = dev_inter_001(xi, sj[59]);
-	  dm12 = dev_inter_001(xi, sj[60]);
-	  dm13 = dev_inter_001(xi, sj[61]);
-	  dm14 = dev_inter_001(xi, sj[62]);
-	  dm15 = dev_inter_001(xi, sj[63]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[64]);
-	  dm1 = dev_inter_001(xi, sj[65]);
-	  dm2 = dev_inter_001(xi, sj[66]);
-	  dm3 = dev_inter_001(xi, sj[67]);
-	  dm4 = dev_inter_001(xi, sj[68]);
-	  dm5 = dev_inter_001(xi, sj[69]);
-	  dm6 = dev_inter_001(xi, sj[70]);
-	  dm7 = dev_inter_001(xi, sj[71]);
-	  dm8 = dev_inter_001(xi, sj[72]);
-	  dm9 = dev_inter_001(xi, sj[73]);
-	  dm10 = dev_inter_001(xi, sj[74]);
-	  dm11 = dev_inter_001(xi, sj[75]);
-	  dm12 = dev_inter_001(xi, sj[76]);
-	  dm13 = dev_inter_001(xi, sj[77]);
-	  dm14 = dev_inter_001(xi, sj[78]);
-	  dm15 = dev_inter_001(xi, sj[79]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[80]);
-	  dm1 = dev_inter_001(xi, sj[81]);
-	  dm2 = dev_inter_001(xi, sj[82]);
-	  dm3 = dev_inter_001(xi, sj[83]);
-	  dm4 = dev_inter_001(xi, sj[84]);
-	  dm5 = dev_inter_001(xi, sj[85]);
-	  dm6 = dev_inter_001(xi, sj[86]);
-	  dm7 = dev_inter_001(xi, sj[87]);
-	  dm8 = dev_inter_001(xi, sj[88]);
-	  dm9 = dev_inter_001(xi, sj[89]);
-	  dm10 = dev_inter_001(xi, sj[90]);
-	  dm11 = dev_inter_001(xi, sj[91]);
-	  dm12 = dev_inter_001(xi, sj[92]);
-	  dm13 = dev_inter_001(xi, sj[93]);
-	  dm14 = dev_inter_001(xi, sj[94]);
-	  dm15 = dev_inter_001(xi, sj[95]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[96]);
-	  dm1 = dev_inter_001(xi, sj[97]);
-	  dm2 = dev_inter_001(xi, sj[98]);
-	  dm3 = dev_inter_001(xi, sj[99]);
-	  dm4 = dev_inter_001(xi, sj[100]);
-	  dm5 = dev_inter_001(xi, sj[101]);
-	  dm6 = dev_inter_001(xi, sj[102]);
-	  dm7 = dev_inter_001(xi, sj[103]);
-	  dm8 = dev_inter_001(xi, sj[104]);
-	  dm9 = dev_inter_001(xi, sj[105]);
-	  dm10 = dev_inter_001(xi, sj[106]);
-	  dm11 = dev_inter_001(xi, sj[107]);
-	  dm12 = dev_inter_001(xi, sj[108]);
-	  dm13 = dev_inter_001(xi, sj[109]);
-	  dm14 = dev_inter_001(xi, sj[110]);
-	  dm15 = dev_inter_001(xi, sj[111]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_001(xi, sj[112]);
-	  dm1 = dev_inter_001(xi, sj[113]);
-	  dm2 = dev_inter_001(xi, sj[114]);
-	  dm3 = dev_inter_001(xi, sj[115]);
-	  dm4 = dev_inter_001(xi, sj[116]);
-	  dm5 = dev_inter_001(xi, sj[117]);
-	  dm6 = dev_inter_001(xi, sj[118]);
-	  dm7 = dev_inter_001(xi, sj[119]);
-	  dm8 = dev_inter_001(xi, sj[120]);
-	  dm9 = dev_inter_001(xi, sj[121]);
-	  dm10 = dev_inter_001(xi, sj[122]);
-	  dm11 = dev_inter_001(xi, sj[123]);
-	  dm12 = dev_inter_001(xi, sj[124]);
-	  dm13 = dev_inter_001(xi, sj[125]);
-	  dm14 = dev_inter_001(xi, sj[126]);
-	  dm15 = dev_inter_001(xi, sj[127]);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-      }
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-    }
-  }
-
-  __global__ 
-  void cunbody_kernel_tree_003(float4 *xilist,
-				float4 *xjlist,
-				float4 *apotlist,
-				unsigned int *ioffset,
-				unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0,0,0,0);
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	{
-	  float4 dm0 = dev_inter_001(xi, sj[0]);
-	  float4 dm1 = dev_inter_001(xi, sj[1]);
-	  float4 dm2 = dev_inter_001(xi, sj[2]);
-	  float4 dm3 = dev_inter_001(xi, sj[3]);
-	  float4 dm4 = dev_inter_001(xi, sj[4]);
-	  float4 dm5 = dev_inter_001(xi, sj[5]);
-	  float4 dm6 = dev_inter_001(xi, sj[6]);
-	  float4 dm7 = dev_inter_001(xi, sj[7]);
-	  float4 dm8 = dev_inter_001(xi, sj[8]);
-	  float4 dm9 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm10 = dev_inter_001(xi, sj[0]);
-	  float4 dm11 = dev_inter_001(xi, sj[1]);
-	  float4 dm12 = dev_inter_001(xi, sj[2]);
-	  float4 dm13 = dev_inter_001(xi, sj[3]);
-	  float4 dm14 = dev_inter_001(xi, sj[4]);
-	  float4 dm15 = dev_inter_001(xi, sj[5]);
-	  float4 dm16 = dev_inter_001(xi, sj[6]);
-	  float4 dm17 = dev_inter_001(xi, sj[7]);
-	  float4 dm18 = dev_inter_001(xi, sj[8]);
-	  float4 dm19 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm20 = dev_inter_001(xi, sj[0]);
-	  float4 dm21 = dev_inter_001(xi, sj[1]);
-	  float4 dm22 = dev_inter_001(xi, sj[2]);
-	  float4 dm23 = dev_inter_001(xi, sj[3]);
-	  float4 dm24 = dev_inter_001(xi, sj[4]);
-	  float4 dm25 = dev_inter_001(xi, sj[5]);
-	  float4 dm26 = dev_inter_001(xi, sj[6]);
-	  float4 dm27 = dev_inter_001(xi, sj[7]);
-	  float4 dm28 = dev_inter_001(xi, sj[8]);
-	  float4 dm29 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm30 = dev_inter_001(xi, sj[0]);
-	  float4 dm31 = dev_inter_001(xi, sj[1]);
-	  float4 dm32 = dev_inter_001(xi, sj[2]);
-	  float4 dm33 = dev_inter_001(xi, sj[3]);
-	  float4 dm34 = dev_inter_001(xi, sj[4]);
-	  float4 dm35 = dev_inter_001(xi, sj[5]);
-	  float4 dm36 = dev_inter_001(xi, sj[6]);
-	  float4 dm37 = dev_inter_001(xi, sj[7]);
-	  float4 dm38 = dev_inter_001(xi, sj[8]);
-	  float4 dm39 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm40 = dev_inter_001(xi, sj[0]);
-	  float4 dm41 = dev_inter_001(xi, sj[1]);
-	  float4 dm42 = dev_inter_001(xi, sj[2]);
-	  float4 dm43 = dev_inter_001(xi, sj[3]);
-	  float4 dm44 = dev_inter_001(xi, sj[4]);
-	  float4 dm45 = dev_inter_001(xi, sj[5]);
-	  float4 dm46 = dev_inter_001(xi, sj[6]);
-	  float4 dm47 = dev_inter_001(xi, sj[7]);
-	  float4 dm48 = dev_inter_001(xi, sj[8]);
-	  float4 dm49 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm50 = dev_inter_001(xi, sj[0]);
-	  float4 dm51 = dev_inter_001(xi, sj[1]);
-	  float4 dm52 = dev_inter_001(xi, sj[2]);
-	  float4 dm53 = dev_inter_001(xi, sj[3]);
-	  float4 dm54 = dev_inter_001(xi, sj[4]);
-	  float4 dm55 = dev_inter_001(xi, sj[5]);
-	  float4 dm56 = dev_inter_001(xi, sj[6]);
-	  float4 dm57 = dev_inter_001(xi, sj[7]);
-	  float4 dm58 = dev_inter_001(xi, sj[8]);
-	  float4 dm59 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm60 = dev_inter_001(xi, sj[0]);
-	  float4 dm61 = dev_inter_001(xi, sj[1]);
-	  float4 dm62 = dev_inter_001(xi, sj[2]);
-	  float4 dm63 = dev_inter_001(xi, sj[3]);
-	  float4 dm64 = dev_inter_001(xi, sj[4]);
-	  float4 dm65 = dev_inter_001(xi, sj[5]);
-	  float4 dm66 = dev_inter_001(xi, sj[6]);
-	  float4 dm67 = dev_inter_001(xi, sj[7]);
-	  float4 dm68 = dev_inter_001(xi, sj[8]);
-	  float4 dm69 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm70 = dev_inter_001(xi, sj[0]);
-	  float4 dm71 = dev_inter_001(xi, sj[1]);
-	  float4 dm72 = dev_inter_001(xi, sj[2]);
-	  float4 dm73 = dev_inter_001(xi, sj[3]);
-	  float4 dm74 = dev_inter_001(xi, sj[4]);
-	  float4 dm75 = dev_inter_001(xi, sj[5]);
-	  float4 dm76 = dev_inter_001(xi, sj[6]);
-	  float4 dm77 = dev_inter_001(xi, sj[7]);
-	  float4 dm78 = dev_inter_001(xi, sj[8]);
-	  float4 dm79 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm80 = dev_inter_001(xi, sj[0]);
-	  float4 dm81 = dev_inter_001(xi, sj[1]);
-	  float4 dm82 = dev_inter_001(xi, sj[2]);
-	  float4 dm83 = dev_inter_001(xi, sj[3]);
-	  float4 dm84 = dev_inter_001(xi, sj[4]);
-	  float4 dm85 = dev_inter_001(xi, sj[5]);
-	  float4 dm86 = dev_inter_001(xi, sj[6]);
-	  float4 dm87 = dev_inter_001(xi, sj[7]);
-	  float4 dm88 = dev_inter_001(xi, sj[8]);
-	  float4 dm89 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm90 = dev_inter_001(xi, sj[0]);
-	  float4 dm91 = dev_inter_001(xi, sj[1]);
-	  float4 dm92 = dev_inter_001(xi, sj[2]);
-	  float4 dm93 = dev_inter_001(xi, sj[3]);
-	  float4 dm94 = dev_inter_001(xi, sj[4]);
-	  float4 dm95 = dev_inter_001(xi, sj[5]);
-	  float4 dm96 = dev_inter_001(xi, sj[6]);
-	  float4 dm97 = dev_inter_001(xi, sj[7]);
-	  float4 dm98 = dev_inter_001(xi, sj[8]);
-	  float4 dm99 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm100 = dev_inter_001(xi, sj[0]);
-	  float4 dm101 = dev_inter_001(xi, sj[1]);
-	  float4 dm102 = dev_inter_001(xi, sj[2]);
-	  float4 dm103 = dev_inter_001(xi, sj[3]);
-	  float4 dm104 = dev_inter_001(xi, sj[4]);
-	  float4 dm105 = dev_inter_001(xi, sj[5]);
-	  float4 dm106 = dev_inter_001(xi, sj[6]);
-	  float4 dm107 = dev_inter_001(xi, sj[7]);
-	  float4 dm108 = dev_inter_001(xi, sj[8]);
-	  float4 dm109 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm110 = dev_inter_001(xi, sj[0]);
-	  float4 dm111 = dev_inter_001(xi, sj[1]);
-	  float4 dm112 = dev_inter_001(xi, sj[2]);
-	  float4 dm113 = dev_inter_001(xi, sj[3]);
-	  float4 dm114 = dev_inter_001(xi, sj[4]);
-	  float4 dm115 = dev_inter_001(xi, sj[5]);
-	  float4 dm116 = dev_inter_001(xi, sj[6]);
-	  float4 dm117 = dev_inter_001(xi, sj[7]);
-	  float4 dm118 = dev_inter_001(xi, sj[8]);
-	  float4 dm119 = dev_inter_001(xi, sj[9]);
-
-	  float4 dm120 = dev_inter_001(xi, sj[0]);
-	  float4 dm121 = dev_inter_001(xi, sj[1]);
-	  float4 dm122 = dev_inter_001(xi, sj[2]);
-	  float4 dm123 = dev_inter_001(xi, sj[3]);
-	  float4 dm124 = dev_inter_001(xi, sj[4]);
-	  float4 dm125 = dev_inter_001(xi, sj[5]);
-	  float4 dm126 = dev_inter_001(xi, sj[6]);
-	  float4 dm127 = dev_inter_001(xi, sj[7]);
-
-
-#if (ACC_TYPE==1)
-	  apot.x += \
-	    (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) + (dm8.x*dm8.w) + (dm9.x*dm9.w) + \
-	    (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w) + (dm16.x*dm16.w) + (dm17.x*dm17.w) + (dm18.x*dm18.w) + (dm19.x*dm19.w) + \
-	    (dm20.x*dm20.w) + (dm21.x*dm21.w) + (dm22.x*dm22.w) + (dm23.x*dm23.w) + (dm24.x*dm24.w) + (dm25.x*dm25.w) + (dm26.x*dm26.w) + (dm27.x*dm27.w) + (dm28.x*dm28.w) + (dm29.x*dm29.w) + \
-	    (dm30.x*dm30.w) + (dm31.x*dm31.w) + (dm32.x*dm32.w) + (dm33.x*dm33.w) + (dm34.x*dm34.w) + (dm35.x*dm35.w) + (dm36.x*dm36.w) + (dm37.x*dm37.w) + (dm38.x*dm38.w) + (dm39.x*dm39.w) + \
-	    (dm40.x*dm40.w) + (dm41.x*dm41.w) + (dm42.x*dm42.w) + (dm43.x*dm43.w) + (dm44.x*dm44.w) + (dm45.x*dm45.w) + (dm46.x*dm46.w) + (dm47.x*dm47.w) + (dm48.x*dm48.w) + (dm49.x*dm49.w) + \
-	    (dm50.x*dm50.w) + (dm51.x*dm51.w) + (dm52.x*dm52.w) + (dm53.x*dm53.w) + (dm54.x*dm54.w) + (dm55.x*dm55.w) + (dm56.x*dm56.w) + (dm57.x*dm57.w) + (dm58.x*dm58.w) + (dm59.x*dm59.w) + \
-	    (dm60.x*dm60.w) + (dm61.x*dm61.w) + (dm62.x*dm62.w) + (dm63.x*dm63.w) + (dm64.x*dm64.w) + (dm65.x*dm65.w) + (dm66.x*dm66.w) + (dm67.x*dm67.w) + (dm68.x*dm68.w) + (dm69.x*dm69.w) + \
-	    (dm70.x*dm70.w) + (dm71.x*dm71.w) + (dm72.x*dm72.w) + (dm73.x*dm73.w) + (dm74.x*dm74.w) + (dm75.x*dm75.w) + (dm76.x*dm76.w) + (dm77.x*dm77.w) + (dm78.x*dm78.w) + (dm79.x*dm79.w) + \
-	    (dm80.x*dm80.w) + (dm81.x*dm81.w) + (dm82.x*dm82.w) + (dm83.x*dm83.w) + (dm84.x*dm84.w) + (dm85.x*dm85.w) + (dm86.x*dm86.w) + (dm87.x*dm87.w) + (dm88.x*dm88.w) + (dm89.x*dm89.w) + \
-	    (dm90.x*dm90.w) + (dm91.x*dm91.w) + (dm92.x*dm92.w) + (dm93.x*dm93.w) + (dm94.x*dm94.w) + (dm95.x*dm95.w) + (dm96.x*dm96.w) + (dm97.x*dm97.w) + (dm98.x*dm98.w) + (dm99.x*dm99.w) + \
-	    (dm100.x*dm100.w) + (dm101.x*dm101.w) + (dm102.x*dm102.w) + (dm103.x*dm103.w) + (dm104.x*dm104.w) + (dm105.x*dm105.w) + (dm106.x*dm106.w) + (dm107.x*dm107.w) + (dm108.x*dm108.w) + (dm109.x*dm109.w) + \
-	    (dm110.x*dm110.w) + (dm111.x*dm111.w) + (dm112.x*dm112.w) + (dm113.x*dm113.w) + (dm114.x*dm114.w) + (dm115.x*dm115.w) + (dm116.x*dm116.w) + (dm117.x*dm117.w) + (dm118.x*dm118.w) + (dm119.x*dm119.w) + \
-	    (dm120.x*dm120.w) + (dm121.x*dm121.w) + (dm122.x*dm122.w) + (dm123.x*dm123.w) + (dm124.x*dm124.w) + (dm125.x*dm125.w) + (dm126.x*dm126.w) + (dm127.x*dm127.w);
-
-	  apot.y += \
-	    (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) + (dm8.y*dm8.w) + (dm9.y*dm9.w) + \
-	    (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w) + (dm16.y*dm16.w) + (dm17.y*dm17.w) + (dm18.y*dm18.w) + (dm19.y*dm19.w) + \
-	    (dm20.y*dm20.w) + (dm21.y*dm21.w) + (dm22.y*dm22.w) + (dm23.y*dm23.w) + (dm24.y*dm24.w) + (dm25.y*dm25.w) + (dm26.y*dm26.w) + (dm27.y*dm27.w) + (dm28.y*dm28.w) + (dm29.y*dm29.w) + \
-	    (dm30.y*dm30.w) + (dm31.y*dm31.w) + (dm32.y*dm32.w) + (dm33.y*dm33.w) + (dm34.y*dm34.w) + (dm35.y*dm35.w) + (dm36.y*dm36.w) + (dm37.y*dm37.w) + (dm38.y*dm38.w) + (dm39.y*dm39.w) + \
-	    (dm40.y*dm40.w) + (dm41.y*dm41.w) + (dm42.y*dm42.w) + (dm43.y*dm43.w) + (dm44.y*dm44.w) + (dm45.y*dm45.w) + (dm46.y*dm46.w) + (dm47.y*dm47.w) + (dm48.y*dm48.w) + (dm49.y*dm49.w) + \
-	    (dm50.y*dm50.w) + (dm51.y*dm51.w) + (dm52.y*dm52.w) + (dm53.y*dm53.w) + (dm54.y*dm54.w) + (dm55.y*dm55.w) + (dm56.y*dm56.w) + (dm57.y*dm57.w) + (dm58.y*dm58.w) + (dm59.y*dm59.w) + \
-	    (dm60.y*dm60.w) + (dm61.y*dm61.w) + (dm62.y*dm62.w) + (dm63.y*dm63.w) + (dm64.y*dm64.w) + (dm65.y*dm65.w) + (dm66.y*dm66.w) + (dm67.y*dm67.w) + (dm68.y*dm68.w) + (dm69.y*dm69.w) + \
-	    (dm70.y*dm70.w) + (dm71.y*dm71.w) + (dm72.y*dm72.w) + (dm73.y*dm73.w) + (dm74.y*dm74.w) + (dm75.y*dm75.w) + (dm76.y*dm76.w) + (dm77.y*dm77.w) + (dm78.y*dm78.w) + (dm79.y*dm79.w) + \
-	    (dm80.y*dm80.w) + (dm81.y*dm81.w) + (dm82.y*dm82.w) + (dm83.y*dm83.w) + (dm84.y*dm84.w) + (dm85.y*dm85.w) + (dm86.y*dm86.w) + (dm87.y*dm87.w) + (dm88.y*dm88.w) + (dm89.y*dm89.w) + \
-	    (dm90.y*dm90.w) + (dm91.y*dm91.w) + (dm92.y*dm92.w) + (dm93.y*dm93.w) + (dm94.y*dm94.w) + (dm95.y*dm95.w) + (dm96.y*dm96.w) + (dm97.y*dm97.w) + (dm98.y*dm98.w) + (dm99.y*dm99.w) + \
-	    (dm100.y*dm100.w) + (dm101.y*dm101.w) + (dm102.y*dm102.w) + (dm103.y*dm103.w) + (dm104.y*dm104.w) + (dm105.y*dm105.w) + (dm106.y*dm106.w) + (dm107.y*dm107.w) + (dm108.y*dm108.w) + (dm109.y*dm109.w) + \
-	    (dm110.y*dm110.w) + (dm111.y*dm111.w) + (dm112.y*dm112.w) + (dm113.y*dm113.w) + (dm114.y*dm114.w) + (dm115.y*dm115.w) + (dm116.y*dm116.w) + (dm117.y*dm117.w) + (dm118.y*dm118.w) + (dm119.y*dm119.w) + \
-	    (dm120.y*dm120.w) + (dm121.y*dm121.w) + (dm122.y*dm122.w) + (dm123.y*dm123.w) + (dm124.y*dm124.w) + (dm125.y*dm125.w) + (dm126.y*dm126.w) + (dm127.y*dm127.w);
-
-	  apot.z += \
-	    (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) + (dm8.z*dm8.w) + (dm9.z*dm9.w) + \
-	    (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w) + (dm16.z*dm16.w) + (dm17.z*dm17.w) + (dm18.z*dm18.w) + (dm19.z*dm19.w) + \
-	    (dm20.z*dm20.w) + (dm21.z*dm21.w) + (dm22.z*dm22.w) + (dm23.z*dm23.w) + (dm24.z*dm24.w) + (dm25.z*dm25.w) + (dm26.z*dm26.w) + (dm27.z*dm27.w) + (dm28.z*dm28.w) + (dm29.z*dm29.w) + \
-	    (dm30.z*dm30.w) + (dm31.z*dm31.w) + (dm32.z*dm32.w) + (dm33.z*dm33.w) + (dm34.z*dm34.w) + (dm35.z*dm35.w) + (dm36.z*dm36.w) + (dm37.z*dm37.w) + (dm38.z*dm38.w) + (dm39.z*dm39.w) + \
-	    (dm40.z*dm40.w) + (dm41.z*dm41.w) + (dm42.z*dm42.w) + (dm43.z*dm43.w) + (dm44.z*dm44.w) + (dm45.z*dm45.w) + (dm46.z*dm46.w) + (dm47.z*dm47.w) + (dm48.z*dm48.w) + (dm49.z*dm49.w) + \
-	    (dm50.z*dm50.w) + (dm51.z*dm51.w) + (dm52.z*dm52.w) + (dm53.z*dm53.w) + (dm54.z*dm54.w) + (dm55.z*dm55.w) + (dm56.z*dm56.w) + (dm57.z*dm57.w) + (dm58.z*dm58.w) + (dm59.z*dm59.w) + \
-	    (dm60.z*dm60.w) + (dm61.z*dm61.w) + (dm62.z*dm62.w) + (dm63.z*dm63.w) + (dm64.z*dm64.w) + (dm65.z*dm65.w) + (dm66.z*dm66.w) + (dm67.z*dm67.w) + (dm68.z*dm68.w) + (dm69.z*dm69.w) + \
-	    (dm70.z*dm70.w) + (dm71.z*dm71.w) + (dm72.z*dm72.w) + (dm73.z*dm73.w) + (dm74.z*dm74.w) + (dm75.z*dm75.w) + (dm76.z*dm76.w) + (dm77.z*dm77.w) + (dm78.z*dm78.w) + (dm79.z*dm79.w) + \
-	    (dm80.z*dm80.w) + (dm81.z*dm81.w) + (dm82.z*dm82.w) + (dm83.z*dm83.w) + (dm84.z*dm84.w) + (dm85.z*dm85.w) + (dm86.z*dm86.w) + (dm87.z*dm87.w) + (dm88.z*dm88.w) + (dm89.z*dm89.w) + \
-	    (dm90.z*dm90.w) + (dm91.z*dm91.w) + (dm92.z*dm92.w) + (dm93.z*dm93.w) + (dm94.z*dm94.w) + (dm95.z*dm95.w) + (dm96.z*dm96.w) + (dm97.z*dm97.w) + (dm98.z*dm98.w) + (dm99.z*dm99.w) + \
-	    (dm100.z*dm100.w) + (dm101.z*dm101.w) + (dm102.z*dm102.w) + (dm103.z*dm103.w) + (dm104.z*dm104.w) + (dm105.z*dm105.w) + (dm106.z*dm106.w) + (dm107.z*dm107.w) + (dm108.z*dm108.w) + (dm109.z*dm109.w) + \
-	    (dm110.z*dm110.w) + (dm111.z*dm111.w) + (dm112.z*dm112.w) + (dm113.z*dm113.w) + (dm114.z*dm114.w) + (dm115.z*dm115.w) + (dm116.z*dm116.w) + (dm117.z*dm117.w) + (dm118.z*dm118.w) + (dm119.z*dm119.w) + \
-	    (dm120.z*dm120.w) + (dm121.z*dm121.w) + (dm122.z*dm122.w) + (dm123.z*dm123.w) + (dm124.z*dm124.w) + (dm125.z*dm125.w) + (dm126.z*dm126.w) + (dm127.z*dm127.w);
-
-#else 
-	  apot.x += \
-	    (dm0.x*dm0.w + dm1.x*dm1.w + dm2.x*dm2.w + dm3.x*dm3.w + dm4.x*dm4.w + dm5.x*dm5.w + dm6.x*dm6.w + dm7.x*dm7.w + dm8.x*dm8.w + dm9.x*dm9.w + \
-	     dm10.x*dm10.w + dm11.x*dm11.w + dm12.x*dm12.w + dm13.x*dm13.w + dm14.x*dm14.w + dm15.x*dm15.w + dm16.x*dm16.w + dm17.x*dm17.w + dm18.x*dm18.w + dm19.x*dm19.w + \
-	     dm20.x*dm20.w + dm21.x*dm21.w + dm22.x*dm22.w + dm23.x*dm23.w + dm24.x*dm24.w + dm25.x*dm25.w + dm26.x*dm26.w + dm27.x*dm27.w + dm28.x*dm28.w + dm29.x*dm29.w + \
-	     dm30.x*dm30.w + dm31.x*dm31.w + dm32.x*dm32.w + dm33.x*dm33.w + dm34.x*dm34.w + dm35.x*dm35.w + dm36.x*dm36.w + dm37.x*dm37.w + dm38.x*dm38.w + dm39.x*dm39.w + \
-	     dm40.x*dm40.w + dm41.x*dm41.w + dm42.x*dm42.w + dm43.x*dm43.w + dm44.x*dm44.w + dm45.x*dm45.w + dm46.x*dm46.w + dm47.x*dm47.w + dm48.x*dm48.w + dm49.x*dm49.w + \
-	     dm50.x*dm50.w + dm51.x*dm51.w + dm52.x*dm52.w + dm53.x*dm53.w + dm54.x*dm54.w + dm55.x*dm55.w + dm56.x*dm56.w + dm57.x*dm57.w + dm58.x*dm58.w + dm59.x*dm59.w + \
-	     dm60.x*dm60.w + dm61.x*dm61.w + dm62.x*dm62.w + dm63.x*dm63.w) +\
-	    (dm64.x*dm64.w + dm65.x*dm65.w + dm66.x*dm66.w + dm67.x*dm67.w + dm68.x*dm68.w + dm69.x*dm69.w + \
-	     dm70.x*dm70.w + dm71.x*dm71.w + dm72.x*dm72.w + dm73.x*dm73.w + dm74.x*dm74.w + dm75.x*dm75.w + dm76.x*dm76.w + dm77.x*dm77.w + dm78.x*dm78.w + dm79.x*dm79.w + \
-	     dm80.x*dm80.w + dm81.x*dm81.w + dm82.x*dm82.w + dm83.x*dm83.w + dm84.x*dm84.w + dm85.x*dm85.w + dm86.x*dm86.w + dm87.x*dm87.w + dm88.x*dm88.w + dm89.x*dm89.w + \
-	     dm90.x*dm90.w + dm91.x*dm91.w + dm92.x*dm92.w + dm93.x*dm93.w + dm94.x*dm94.w + dm95.x*dm95.w + dm96.x*dm96.w + dm97.x*dm97.w + dm98.x*dm98.w + dm99.x*dm99.w + \
-	     dm100.x*dm100.w + dm101.x*dm101.w + dm102.x*dm102.w + dm103.x*dm103.w + dm104.x*dm104.w + dm105.x*dm105.w + dm106.x*dm106.w + dm107.x*dm107.w + dm108.x*dm108.w + dm109.x*dm109.w + \
-	     dm110.x*dm110.w + dm111.x*dm111.w + dm112.x*dm112.w + dm113.x*dm113.w + dm114.x*dm114.w + dm115.x*dm115.w + dm116.x*dm116.w + dm117.x*dm117.w + dm118.x*dm118.w + dm119.x*dm119.w + \
-	     dm120.x*dm120.w + dm121.x*dm121.w + dm122.x*dm122.w + dm123.x*dm123.w + dm124.x*dm124.w + dm125.x*dm125.w + dm126.x*dm126.w + dm127.x*dm127.w);
-
-	  apot.y += \
-	    (dm0.y*dm0.w + dm1.y*dm1.w + dm2.y*dm2.w + dm3.y*dm3.w + dm4.y*dm4.w + dm5.y*dm5.w + dm6.y*dm6.w + dm7.y*dm7.w + dm8.y*dm8.w + dm9.y*dm9.w + \
-	     dm10.y*dm10.w + dm11.y*dm11.w + dm12.y*dm12.w + dm13.y*dm13.w + dm14.y*dm14.w + dm15.y*dm15.w + dm16.y*dm16.w + dm17.y*dm17.w + dm18.y*dm18.w + dm19.y*dm19.w + \
-	     dm20.y*dm20.w + dm21.y*dm21.w + dm22.y*dm22.w + dm23.y*dm23.w + dm24.y*dm24.w + dm25.y*dm25.w + dm26.y*dm26.w + dm27.y*dm27.w + dm28.y*dm28.w + dm29.y*dm29.w + \
-	     dm30.y*dm30.w + dm31.y*dm31.w + dm32.y*dm32.w + dm33.y*dm33.w + dm34.y*dm34.w + dm35.y*dm35.w + dm36.y*dm36.w + dm37.y*dm37.w + dm38.y*dm38.w + dm39.y*dm39.w + \
-	     dm40.y*dm40.w + dm41.y*dm41.w + dm42.y*dm42.w + dm43.y*dm43.w + dm44.y*dm44.w + dm45.y*dm45.w + dm46.y*dm46.w + dm47.y*dm47.w + dm48.y*dm48.w + dm49.y*dm49.w + \
-	     dm50.y*dm50.w + dm51.y*dm51.w + dm52.y*dm52.w + dm53.y*dm53.w + dm54.y*dm54.w + dm55.y*dm55.w + dm56.y*dm56.w + dm57.y*dm57.w + dm58.y*dm58.w + dm59.y*dm59.w + \
-	     dm60.y*dm60.w + dm61.y*dm61.w + dm62.y*dm62.w + dm63.y*dm63.w) +\
-	    (dm64.x*dm64.w + dm65.x*dm65.w + dm66.x*dm66.w + dm67.x*dm67.w + dm68.x*dm68.w + dm69.x*dm69.w + \
-	     dm70.y*dm70.w + dm71.y*dm71.w + dm72.y*dm72.w + dm73.y*dm73.w + dm74.y*dm74.w + dm75.y*dm75.w + dm76.y*dm76.w + dm77.y*dm77.w + dm78.y*dm78.w + dm79.y*dm79.w + \
-	     dm80.y*dm80.w + dm81.y*dm81.w + dm82.y*dm82.w + dm83.y*dm83.w + dm84.y*dm84.w + dm85.y*dm85.w + dm86.y*dm86.w + dm87.y*dm87.w + dm88.y*dm88.w + dm89.y*dm89.w + \
-	     dm90.y*dm90.w + dm91.y*dm91.w + dm92.y*dm92.w + dm93.y*dm93.w + dm94.y*dm94.w + dm95.y*dm95.w + dm96.y*dm96.w + dm97.y*dm97.w + dm98.y*dm98.w + dm99.y*dm99.w + \
-	     dm100.y*dm100.w + dm101.y*dm101.w + dm102.y*dm102.w + dm103.y*dm103.w + dm104.y*dm104.w + dm105.y*dm105.w + dm106.y*dm106.w + dm107.y*dm107.w + dm108.y*dm108.w + dm109.y*dm109.w + \
-	     dm110.y*dm110.w + dm111.y*dm111.w + dm112.y*dm112.w + dm113.y*dm113.w + dm114.y*dm114.w + dm115.y*dm115.w + dm116.y*dm116.w + dm117.y*dm117.w + dm118.y*dm118.w + dm119.y*dm119.w + \
-	     dm120.y*dm120.w + dm121.y*dm121.w + dm122.y*dm122.w + dm123.y*dm123.w + dm124.y*dm124.w + dm125.y*dm125.w + dm126.y*dm126.w + dm127.y*dm127.w);
-
-	  apot.z += \
-	    (dm0.z*dm0.w + dm1.z*dm1.w + dm2.z*dm2.w + dm3.z*dm3.w + dm4.z*dm4.w + dm5.z*dm5.w + dm6.z*dm6.w + dm7.z*dm7.w + dm8.z*dm8.w + dm9.z*dm9.w + \
-	     dm10.z*dm10.w + dm11.z*dm11.w + dm12.z*dm12.w + dm13.z*dm13.w + dm14.z*dm14.w + dm15.z*dm15.w + dm16.z*dm16.w + dm17.z*dm17.w + dm18.z*dm18.w + dm19.z*dm19.w + \
-	     dm20.z*dm20.w + dm21.z*dm21.w + dm22.z*dm22.w + dm23.z*dm23.w + dm24.z*dm24.w + dm25.z*dm25.w + dm26.z*dm26.w + dm27.z*dm27.w + dm28.z*dm28.w + dm29.z*dm29.w + \
-	     dm30.z*dm30.w + dm31.z*dm31.w + dm32.z*dm32.w + dm33.z*dm33.w + dm34.z*dm34.w + dm35.z*dm35.w + dm36.z*dm36.w + dm37.z*dm37.w + dm38.z*dm38.w + dm39.z*dm39.w + \
-	     dm40.z*dm40.w + dm41.z*dm41.w + dm42.z*dm42.w + dm43.z*dm43.w + dm44.z*dm44.w + dm45.z*dm45.w + dm46.z*dm46.w + dm47.z*dm47.w + dm48.z*dm48.w + dm49.z*dm49.w + \
-	     dm50.z*dm50.w + dm51.z*dm51.w + dm52.z*dm52.w + dm53.z*dm53.w + dm54.z*dm54.w + dm55.z*dm55.w + dm56.z*dm56.w + dm57.z*dm57.w + dm58.z*dm58.w + dm59.z*dm59.w + \
-	     dm60.z*dm60.w + dm61.z*dm61.w + dm62.z*dm62.w + dm63.z*dm63.w) +\
-	    (dm64.z*dm64.w + dm65.z*dm65.w + dm66.z*dm66.w + dm67.z*dm67.w + dm68.z*dm68.w + dm69.z*dm69.w + \
-	     dm70.z*dm70.w + dm71.z*dm71.w + dm72.z*dm72.w + dm73.z*dm73.w + dm74.z*dm74.w + dm75.z*dm75.w + dm76.z*dm76.w + dm77.z*dm77.w + dm78.z*dm78.w + dm79.z*dm79.w + \
-	     dm80.z*dm80.w + dm81.z*dm81.w + dm82.z*dm82.w + dm83.z*dm83.w + dm84.z*dm84.w + dm85.z*dm85.w + dm86.z*dm86.w + dm87.z*dm87.w + dm88.z*dm88.w + dm89.z*dm89.w + \
-	     dm90.z*dm90.w + dm91.z*dm91.w + dm92.z*dm92.w + dm93.z*dm93.w + dm94.z*dm94.w + dm95.z*dm95.w + dm96.z*dm96.w + dm97.z*dm97.w + dm98.z*dm98.w + dm99.z*dm99.w + \
-	     dm100.z*dm100.w + dm101.z*dm101.w + dm102.z*dm102.w + dm103.z*dm103.w + dm104.z*dm104.w + dm105.z*dm105.w + dm106.z*dm106.w + dm107.z*dm107.w + dm108.z*dm108.w + dm109.z*dm109.w + \
-	     dm110.z*dm110.w + dm111.z*dm111.w + dm112.z*dm112.w + dm113.z*dm113.w + dm114.z*dm114.w + dm115.z*dm115.w + dm116.z*dm116.w + dm117.z*dm117.w + dm118.z*dm118.w + dm119.z*dm119.w + \
-	     dm120.z*dm120.w + dm121.z*dm121.w + dm122.z*dm122.w + dm123.z*dm123.w + dm124.z*dm124.w + dm125.z*dm125.w + dm126.z*dm126.w + dm127.z*dm127.w);
-#endif
-
-	}
-      }
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-    }
-  }
-
-
-
-  __device__
-  float4 dev_inter_011(float4 xi, float4 xj, float* pot)
-  {
-    float dx = xj.x - xi.x;
-    float dy = xj.y - xi.y;
-    float dz = xj.z - xi.z;
-    float eps2 = xi.w;
-    float mj   = xj.w;
-    float r2 = (dx*dx + eps2) + dy*dy + dz*dz;
-    float r1i  = 1/sqrt(r2);
-
-    if(r2 == eps2) mj = 0.0;
-    float r2i = r1i*r1i;
-    float mr3i = mj * r1i * r2i;
-    float4 retval;
-
-    retval.x = dx; 
-    retval.y = dy; 
-    retval.z = dz;
-    retval.w = mr3i; 
-    (*pot) -= mj * r1i;
-
-    return (retval);
-  }
-
-
-  __global__ 
-  void cunbody_kernel_tree_011(float4 *xilist,
-				float4 *xjlist,
-				float4 *apotlist,
-				unsigned int *ioffset,
-				unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0,0,0,0);
-      float pot0 = 0.0;
-      float pot1 = 0.0;
-      float pot2 = 0.0;
-      float pot3 = 0.0;
-      float pot4 = 0.0;
-      float pot5 = 0.0;
-      float pot6 = 0.0;
-      float pot7 = 0.0;
-
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[0], &pot0);
-	  dm1 = dev_inter_011(xi, sj[1], &pot0);
-	  dm2 = dev_inter_011(xi, sj[2], &pot0);
-	  dm3 = dev_inter_011(xi, sj[3], &pot0);
-	  dm4 = dev_inter_011(xi, sj[4], &pot0);
-	  dm5 = dev_inter_011(xi, sj[5], &pot0);
-	  dm6 = dev_inter_011(xi, sj[6], &pot0);
-	  dm7 = dev_inter_011(xi, sj[7], &pot0);
-	  dm8 = dev_inter_011(xi, sj[8], &pot0);
-	  dm9 = dev_inter_011(xi, sj[9], &pot0);
-	  dm10 = dev_inter_011(xi, sj[10], &pot0);
-	  dm11 = dev_inter_011(xi, sj[11], &pot0);
-	  dm12 = dev_inter_011(xi, sj[12], &pot0);
-	  dm13 = dev_inter_011(xi, sj[13], &pot0);
-	  dm14 = dev_inter_011(xi, sj[14], &pot0);
-	  dm15 = dev_inter_011(xi, sj[15], &pot0);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[16], &pot1);
-	  dm1 = dev_inter_011(xi, sj[17], &pot1);
-	  dm2 = dev_inter_011(xi, sj[18], &pot1);
-	  dm3 = dev_inter_011(xi, sj[19], &pot1);
-	  dm4 = dev_inter_011(xi, sj[20], &pot1);
-	  dm5 = dev_inter_011(xi, sj[21], &pot1);
-	  dm6 = dev_inter_011(xi, sj[22], &pot1);
-	  dm7 = dev_inter_011(xi, sj[23], &pot1);
-	  dm8 = dev_inter_011(xi, sj[24], &pot1);
-	  dm9 = dev_inter_011(xi, sj[25], &pot1);
-	  dm10 = dev_inter_011(xi, sj[26], &pot1);
-	  dm11 = dev_inter_011(xi, sj[27], &pot1);
-	  dm12 = dev_inter_011(xi, sj[28], &pot1);
-	  dm13 = dev_inter_011(xi, sj[29], &pot1);
-	  dm14 = dev_inter_011(xi, sj[30], &pot1);
-	  dm15 = dev_inter_011(xi, sj[31], &pot1);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[32], &pot2);
-	  dm1 = dev_inter_011(xi, sj[33], &pot2);
-	  dm2 = dev_inter_011(xi, sj[34], &pot2);
-	  dm3 = dev_inter_011(xi, sj[35], &pot2);
-	  dm4 = dev_inter_011(xi, sj[36], &pot2);
-	  dm5 = dev_inter_011(xi, sj[37], &pot2);
-	  dm6 = dev_inter_011(xi, sj[38], &pot2);
-	  dm7 = dev_inter_011(xi, sj[39], &pot2);
-	  dm8 = dev_inter_011(xi, sj[40], &pot2);
-	  dm9 = dev_inter_011(xi, sj[41], &pot2);
-	  dm10 = dev_inter_011(xi, sj[42], &pot2);
-	  dm11 = dev_inter_011(xi, sj[43], &pot2);
-	  dm12 = dev_inter_011(xi, sj[44], &pot2);
-	  dm13 = dev_inter_011(xi, sj[45], &pot2);
-	  dm14 = dev_inter_011(xi, sj[46], &pot2);
-	  dm15 = dev_inter_011(xi, sj[47], &pot2);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[48], &pot3);
-	  dm1 = dev_inter_011(xi, sj[49], &pot3);
-	  dm2 = dev_inter_011(xi, sj[50], &pot3);
-	  dm3 = dev_inter_011(xi, sj[51], &pot3);
-	  dm4 = dev_inter_011(xi, sj[52], &pot3);
-	  dm5 = dev_inter_011(xi, sj[53], &pot3);
-	  dm6 = dev_inter_011(xi, sj[54], &pot3);
-	  dm7 = dev_inter_011(xi, sj[55], &pot3);
-	  dm8 = dev_inter_011(xi, sj[56], &pot3);
-	  dm9 = dev_inter_011(xi, sj[57], &pot3);
-	  dm10 = dev_inter_011(xi, sj[58], &pot3);
-	  dm11 = dev_inter_011(xi, sj[59], &pot3);
-	  dm12 = dev_inter_011(xi, sj[60], &pot3);
-	  dm13 = dev_inter_011(xi, sj[61], &pot3);
-	  dm14 = dev_inter_011(xi, sj[62], &pot3);
-	  dm15 = dev_inter_011(xi, sj[63], &pot3);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[64], &pot4);
-	  dm1 = dev_inter_011(xi, sj[65], &pot4);
-	  dm2 = dev_inter_011(xi, sj[66], &pot4);
-	  dm3 = dev_inter_011(xi, sj[67], &pot4);
-	  dm4 = dev_inter_011(xi, sj[68], &pot4);
-	  dm5 = dev_inter_011(xi, sj[69], &pot4);
-	  dm6 = dev_inter_011(xi, sj[70], &pot4);
-	  dm7 = dev_inter_011(xi, sj[71], &pot4);
-	  dm8 = dev_inter_011(xi, sj[72], &pot4);
-	  dm9 = dev_inter_011(xi, sj[73], &pot4);
-	  dm10 = dev_inter_011(xi, sj[74], &pot4);
-	  dm11 = dev_inter_011(xi, sj[75], &pot4);
-	  dm12 = dev_inter_011(xi, sj[76], &pot4);
-	  dm13 = dev_inter_011(xi, sj[77], &pot4);
-	  dm14 = dev_inter_011(xi, sj[78], &pot4);
-	  dm15 = dev_inter_011(xi, sj[79], &pot4);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[80], &pot5);
-	  dm1 = dev_inter_011(xi, sj[81], &pot5);
-	  dm2 = dev_inter_011(xi, sj[82], &pot5);
-	  dm3 = dev_inter_011(xi, sj[83], &pot5);
-	  dm4 = dev_inter_011(xi, sj[84], &pot5);
-	  dm5 = dev_inter_011(xi, sj[85], &pot5);
-	  dm6 = dev_inter_011(xi, sj[86], &pot5);
-	  dm7 = dev_inter_011(xi, sj[87], &pot5);
-	  dm8 = dev_inter_011(xi, sj[88], &pot5);
-	  dm9 = dev_inter_011(xi, sj[89], &pot5);
-	  dm10 = dev_inter_011(xi, sj[90], &pot5);
-	  dm11 = dev_inter_011(xi, sj[91], &pot5);
-	  dm12 = dev_inter_011(xi, sj[92], &pot5);
-	  dm13 = dev_inter_011(xi, sj[93], &pot5);
-	  dm14 = dev_inter_011(xi, sj[94], &pot5);
-	  dm15 = dev_inter_011(xi, sj[95], &pot5);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[96], &pot6);
-	  dm1 = dev_inter_011(xi, sj[97], &pot6);
-	  dm2 = dev_inter_011(xi, sj[98], &pot6);
-	  dm3 = dev_inter_011(xi, sj[99], &pot6);
-	  dm4 = dev_inter_011(xi, sj[100], &pot6);
-	  dm5 = dev_inter_011(xi, sj[101], &pot6);
-	  dm6 = dev_inter_011(xi, sj[102], &pot6);
-	  dm7 = dev_inter_011(xi, sj[103], &pot6);
-	  dm8 = dev_inter_011(xi, sj[104], &pot6);
-	  dm9 = dev_inter_011(xi, sj[105], &pot6);
-	  dm10 = dev_inter_011(xi, sj[106], &pot6);
-	  dm11 = dev_inter_011(xi, sj[107], &pot6);
-	  dm12 = dev_inter_011(xi, sj[108], &pot6);
-	  dm13 = dev_inter_011(xi, sj[109], &pot6);
-	  dm14 = dev_inter_011(xi, sj[110], &pot6);
-	  dm15 = dev_inter_011(xi, sj[111], &pot6);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-	{
-	  float4 dm0, dm1, dm2, dm3, dm4, dm5, dm6, dm7, dm8, dm9, dm10, dm11, dm12, dm13, dm14, dm15;
-	  dm0 = dev_inter_011(xi, sj[112], &pot7);
-	  dm1 = dev_inter_011(xi, sj[113], &pot7);
-	  dm2 = dev_inter_011(xi, sj[114], &pot7);
-	  dm3 = dev_inter_011(xi, sj[115], &pot7);
-	  dm4 = dev_inter_011(xi, sj[116], &pot7);
-	  dm5 = dev_inter_011(xi, sj[117], &pot7);
-	  dm6 = dev_inter_011(xi, sj[118], &pot7);
-	  dm7 = dev_inter_011(xi, sj[119], &pot7);
-	  dm8 = dev_inter_011(xi, sj[120], &pot7);
-	  dm9 = dev_inter_011(xi, sj[121], &pot7);
-	  dm10 = dev_inter_011(xi, sj[122], &pot7);
-	  dm11 = dev_inter_011(xi, sj[123], &pot7);
-	  dm12 = dev_inter_011(xi, sj[124], &pot7);
-	  dm13 = dev_inter_011(xi, sj[125], &pot7);
-	  dm14 = dev_inter_011(xi, sj[126], &pot7);
-	  dm15 = dev_inter_011(xi, sj[127], &pot7);
-	  apot.x += (dm0.x*dm0.w) + (dm1.x*dm1.w) + (dm2.x*dm2.w) + (dm3.x*dm3.w) + (dm4.x*dm4.w) + (dm5.x*dm5.w) + (dm6.x*dm6.w) + (dm7.x*dm7.w) \
-	    + (dm8.x*dm8.w) + (dm9.x*dm9.w) + (dm10.x*dm10.w) + (dm11.x*dm11.w) + (dm12.x*dm12.w) + (dm13.x*dm13.w) + (dm14.x*dm14.w) + (dm15.x*dm15.w);
-	  apot.y += (dm0.y*dm0.w) + (dm1.y*dm1.w) + (dm2.y*dm2.w) + (dm3.y*dm3.w) + (dm4.y*dm4.w) + (dm5.y*dm5.w) + (dm6.y*dm6.w) + (dm7.y*dm7.w) \
-	    + (dm8.y*dm8.w) + (dm9.y*dm9.w) + (dm10.y*dm10.w) + (dm11.y*dm11.w) + (dm12.y*dm12.w) + (dm13.y*dm13.w) + (dm14.y*dm14.w) + (dm15.y*dm15.w);
-	  apot.z += (dm0.z*dm0.w) + (dm1.z*dm1.w) + (dm2.z*dm2.w) + (dm3.z*dm3.w) + (dm4.z*dm4.w) + (dm5.z*dm5.w) + (dm6.z*dm6.w) + (dm7.z*dm7.w) \
-	    + (dm8.z*dm8.w) + (dm9.z*dm9.w) + (dm10.z*dm10.w) + (dm11.z*dm11.w) + (dm12.z*dm12.w) + (dm13.z*dm13.w) + (dm14.z*dm14.w) + (dm15.z*dm15.w);
-	}
-
-      }
-
-      apot.w -= pot0+pot1+pot2+pot3+pot4+pot5+pot6+pot7;
-
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-    }
-  }
-
-
-  // 2008/04/23
-  __device__ float4 dev_apot(float4 xi, float4 xj, float4 apot)
-  {
-    float dx = xj.x - xi.x;
-    float dy = xj.y - xi.y;
-    float dz = xj.z - xi.z;
-    float eps2 = xi.w;
-    float mj   = xj.w;
-    float r2   = (dx*dx + eps2) + dy*dy + dz*dz;
-    float r1i  = rsqrt(r2);
-    float r2i  = r1i*r1i;
-    float mr1i = mj * r1i;
-    float mr3i = mr1i * r2i;
-    apot.x += dx * mr3i;
-    apot.y += dy * mr3i;
-    apot.z += dz * mr3i;
-    apot.w -= mr1i;
-    return (apot);
-  }
-
-  // 2008/04/23
-  __global__ 
-  void cunbody_kernel_tree_012(float4 *xilist,
-			       float4 *xjlist,
-			       float4 *apotlist,
-			       unsigned int *ioffset,
-			       unsigned int *joffset)
-  {
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-    unsigned int ibegin = ioffset[bid];
-    unsigned int iend   = ioffset[bid+1];
-    unsigned int jbegin = joffset[bid];
-    unsigned int jend   = joffset[bid+1];
-    for(unsigned int ibase = ibegin; ibase < iend; ibase += NTHRE){
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
-
-      for(unsigned int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	__shared__ float4 sj[NTHRE];
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	apot = dev_apot(xi, sj[0], apot); apot = dev_apot(xi, sj[1], apot); apot = dev_apot(xi, sj[2], apot); apot = dev_apot(xi, sj[3], apot);	apot = dev_apot(xi, sj[4], apot);
-	apot = dev_apot(xi, sj[5], apot); apot = dev_apot(xi, sj[6], apot); apot = dev_apot(xi, sj[7], apot); apot = dev_apot(xi, sj[8], apot); apot = dev_apot(xi, sj[9], apot);
-	apot = dev_apot(xi, sj[10], apot); apot = dev_apot(xi, sj[11], apot); apot = dev_apot(xi, sj[12], apot); apot = dev_apot(xi, sj[13], apot); apot = dev_apot(xi, sj[14], apot);
-	apot = dev_apot(xi, sj[15], apot); apot = dev_apot(xi, sj[16], apot); apot = dev_apot(xi, sj[17], apot); apot = dev_apot(xi, sj[18], apot); apot = dev_apot(xi, sj[19], apot);
-	apot = dev_apot(xi, sj[20], apot); apot = dev_apot(xi, sj[21], apot); apot = dev_apot(xi, sj[22], apot); apot = dev_apot(xi, sj[23], apot); apot = dev_apot(xi, sj[24], apot);
-	apot = dev_apot(xi, sj[25], apot); apot = dev_apot(xi, sj[26], apot); apot = dev_apot(xi, sj[27], apot); apot = dev_apot(xi, sj[28], apot); apot = dev_apot(xi, sj[29], apot);
-	apot = dev_apot(xi, sj[30], apot); apot = dev_apot(xi, sj[31], apot); apot = dev_apot(xi, sj[32], apot); apot = dev_apot(xi, sj[33], apot); apot = dev_apot(xi, sj[34], apot);
-	apot = dev_apot(xi, sj[35], apot); apot = dev_apot(xi, sj[36], apot); apot = dev_apot(xi, sj[37], apot); apot = dev_apot(xi, sj[38], apot); apot = dev_apot(xi, sj[39], apot);
-	apot = dev_apot(xi, sj[40], apot); apot = dev_apot(xi, sj[41], apot); apot = dev_apot(xi, sj[42], apot); apot = dev_apot(xi, sj[43], apot); apot = dev_apot(xi, sj[44], apot);
-	apot = dev_apot(xi, sj[45], apot); apot = dev_apot(xi, sj[46], apot); apot = dev_apot(xi, sj[47], apot); apot = dev_apot(xi, sj[48], apot); apot = dev_apot(xi, sj[49], apot);
-	apot = dev_apot(xi, sj[50], apot); apot = dev_apot(xi, sj[51], apot); apot = dev_apot(xi, sj[52], apot); apot = dev_apot(xi, sj[53], apot); apot = dev_apot(xi, sj[54], apot);
-	apot = dev_apot(xi, sj[55], apot); apot = dev_apot(xi, sj[56], apot); apot = dev_apot(xi, sj[57], apot); apot = dev_apot(xi, sj[58], apot); apot = dev_apot(xi, sj[59], apot);
-	apot = dev_apot(xi, sj[60], apot); apot = dev_apot(xi, sj[61], apot); apot = dev_apot(xi, sj[62], apot); apot = dev_apot(xi, sj[63], apot); apot = dev_apot(xi, sj[64], apot);
-	apot = dev_apot(xi, sj[65], apot); apot = dev_apot(xi, sj[66], apot); apot = dev_apot(xi, sj[67], apot); apot = dev_apot(xi, sj[68], apot); apot = dev_apot(xi, sj[69], apot);
-	apot = dev_apot(xi, sj[70], apot); apot = dev_apot(xi, sj[71], apot); apot = dev_apot(xi, sj[72], apot); apot = dev_apot(xi, sj[73], apot); apot = dev_apot(xi, sj[74], apot);
-	apot = dev_apot(xi, sj[75], apot); apot = dev_apot(xi, sj[76], apot); apot = dev_apot(xi, sj[77], apot); apot = dev_apot(xi, sj[78], apot); apot = dev_apot(xi, sj[79], apot);
-	apot = dev_apot(xi, sj[80], apot); apot = dev_apot(xi, sj[81], apot); apot = dev_apot(xi, sj[82], apot); apot = dev_apot(xi, sj[83], apot); apot = dev_apot(xi, sj[84], apot);
-	apot = dev_apot(xi, sj[85], apot); apot = dev_apot(xi, sj[86], apot); apot = dev_apot(xi, sj[87], apot); apot = dev_apot(xi, sj[88], apot); apot = dev_apot(xi, sj[89], apot);
-	apot = dev_apot(xi, sj[90], apot); apot = dev_apot(xi, sj[91], apot); apot = dev_apot(xi, sj[92], apot); apot = dev_apot(xi, sj[93], apot); apot = dev_apot(xi, sj[94], apot);
-	apot = dev_apot(xi, sj[95], apot); apot = dev_apot(xi, sj[96], apot); apot = dev_apot(xi, sj[97], apot); apot = dev_apot(xi, sj[98], apot); apot = dev_apot(xi, sj[99], apot);
-	apot = dev_apot(xi, sj[100], apot); apot = dev_apot(xi, sj[101], apot); apot = dev_apot(xi, sj[102], apot); apot = dev_apot(xi, sj[103], apot); apot = dev_apot(xi, sj[104], apot);
-	apot = dev_apot(xi, sj[105], apot); apot = dev_apot(xi, sj[106], apot); apot = dev_apot(xi, sj[107], apot); apot = dev_apot(xi, sj[108], apot); apot = dev_apot(xi, sj[109], apot);
-	apot = dev_apot(xi, sj[110], apot); apot = dev_apot(xi, sj[111], apot); apot = dev_apot(xi, sj[112], apot); apot = dev_apot(xi, sj[113], apot); apot = dev_apot(xi, sj[114], apot);
-	apot = dev_apot(xi, sj[115], apot); apot = dev_apot(xi, sj[116], apot); apot = dev_apot(xi, sj[117], apot); apot = dev_apot(xi, sj[118], apot); apot = dev_apot(xi, sj[119], apot);
-	apot = dev_apot(xi, sj[120], apot); apot = dev_apot(xi, sj[121], apot); apot = dev_apot(xi, sj[122], apot); apot = dev_apot(xi, sj[123], apot); apot = dev_apot(xi, sj[124], apot);
-	apot = dev_apot(xi, sj[125], apot); apot = dev_apot(xi, sj[126], apot); apot = dev_apot(xi, sj[127], apot);
-	__syncthreads();
-      }
-
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-    }
-  }
-
-  // 2008/04/24
-  __global__ 
-  void cunbody_kernel_tree_013(float4 *xilist,
-			       float4 *xjlist,
-			       float4 *apotlist,
-			       unsigned int *ioffset,
-			       unsigned int *joffset)
-  {
-    __syncthreads(); // iranai
-
-    int tid = threadIdx.x;
-    int bid = blockIdx.x;
-    int ibegin = ioffset[bid];
-    int iend   = ioffset[bid+1];
-    int jbegin = joffset[bid];
-    int jend   = joffset[bid+1];
-
-    __syncthreads(); // iranai
-    for(int ibase = ibegin; ibase < iend; ibase += NTHRE){
-
-      __syncthreads(); // iranai
-      float4 xi = xilist[ibase + tid];
-      float4 apot = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
-      __syncthreads(); // iranai
-      __shared__ float4 sj[NTHRE];
-      __syncthreads(); // iranai
-
-      for(int jbase = jbegin; jbase < jend; jbase += NTHRE){
-	sj[tid] = xjlist[jbase + tid];
-	__syncthreads();
-	for(int j=0; j<128; j++){ apot = dev_apot(xi, sj[j], apot); }
-	__syncthreads();
-      }
-
-      __syncthreads(); // iranai
-      if(ibase + tid < iend){
-	apotlist[ibase + tid] = apot;
-      }
-      __syncthreads(); // iranai
-    }
-
-    __syncthreads(); // irania
-  }
-
-
-}; // namespace libcunbody __END__
-
-
+2024年  5月 16日 木曜日 11:33:46 JST
+256
+0
+3.9062500000000e-03	-3.1670986381581e-01	7.2461235251040e-02	-3.0797579953419e-01	1.9952198195924e-01	-5.4941258738981e-02	-1.0995319610836e+00
+3.9062500000000e-03	2.4893220301544e-01	-3.6509309735134e-01	1.1200137598117e-02	-1.0068938408190e-01	-9.8499768009025e-01	7.3676856133499e-03
+3.9062500000000e-03	-4.1299723539810e-01	-1.3751272671996e-01	-2.9224232106532e-01	5.8949606916882e-02	3.1743142554023e-01	2.2574177158654e-01
+3.9062500000000e-03	1.8683819022496e+00	-1.8182830440678e+00	8.4811525480471e-01	4.7367611502925e-02	1.2146913863065e-01	-3.6542377019832e-01
+3.9062500000000e-03	-1.7562880491444e-01	1.9322315698940e-01	-6.3686120786117e-02	2.3016828914213e-01	-5.9661016240386e-01	1.3576089348253e-01
+3.9062500000000e-03	-2.8712016079143e-01	4.7878700130456e-01	-1.9521997002967e-01	-1.4831769197035e-01	7.2104583556396e-01	-4.2307297159791e-01
+3.9062500000000e-03	1.1838478722166e-01	4.0637092191327e-02	1.6667969784311e-01	-5.6012641916355e-01	1.5910970563401e-01	-2.3548964307524e-01
+3.9062500000000e-03	-2.6292946363964e-01	3.6935465390175e-01	4.7035004987605e-01	-5.6812319949014e-01	-4.7936595743203e-01	-4.9134436744986e-01
+3.9062500000000e-03	5.6274035255946e-01	-2.8484402992502e-01	-5.0070365531760e-01	1.5967191273743e-01	-5.0519367508371e-01	-2.3218702186500e-01
+3.9062500000000e-03	-8.7260141058526e-01	1.4786975466205e+00	3.6431957022725e-02	-4.2267679056191e-01	-2.6080100864473e-01	8.8046117806211e-02
+3.9062500000000e-03	6.3824849432619e-01	4.2434041326089e-01	-9.2517514693569e-01	4.9249870966886e-01	5.9458045355088e-01	4.4471863436271e-01
+3.9062500000000e-03	6.4062764607167e-01	-1.2017668093244e-01	-4.5970990590541e-01	-6.0616129515723e-01	6.2407661276842e-01	3.4286260107736e-01
+3.9062500000000e-03	-8.2484279449945e-01	-5.2514200814949e-01	8.8412419984183e-01	-1.2368742317137e-01	-5.3990457727978e-02	3.1749058153700e-01
+3.9062500000000e-03	-3.8849214324345e-02	-1.0266740486352e-01	7.7467351803807e-03	-4.2711057955755e-01	2.5281821022970e-01	-6.3394021104830e-01
+3.9062500000000e-03	-2.0227178510828e-01	-1.5098827553225e-01	-4.7751080097797e-01	-2.8425890685023e-01	-7.7861269914046e-01	1.2448904275448e-01
+3.9062500000000e-03	-1.1886508865401e+00	-9.5995295242299e-01	-1.2884436385093e+00	-1.1861354531384e-01	8.2501220060042e-02	-4.5125705279941e-01
+3.9062500000000e-03	-3.7285037466308e-01	-3.5510588945686e-01	-4.2664237257168e-01	-5.4375137574582e-01	8.3019998164986e-01	-5.9901134269801e-01
+3.9062500000000e-03	-4.7750888124331e-01	5.4385786566402e-01	2.0100357690987e-02	-1.2612568257957e-01	-8.6803461490634e-01	-7.2494096058911e-01
+3.9062500000000e-03	-3.6728632745052e-01	-3.8336372679001e-02	5.6207005802267e-02	3.6393817271270e-01	-6.6318382303790e-01	4.6548219380308e-01
+3.9062500000000e-03	-2.7194632639947e-01	-1.2089276857014e+00	2.1191728577913e-01	-3.1345304479753e-01	2.8486260724111e-01	-4.1808762679076e-01
+3.9062500000000e-03	-9.3011715571006e-02	-1.1304564870212e-01	-1.2520598040711e-01	6.7694311051613e-01	-1.1097626710490e-01	2.8245525027992e-01
+3.9062500000000e-03	5.4982454633909e-01	1.4443353281298e+00	1.6761954137932e-01	-6.1027025171861e-02	-2.9736043686465e-01	1.8439058170926e-01
+3.9062500000000e-03	-8.5319026739238e-02	-3.4937256255172e-01	-2.5924641612839e-01	2.4944966980331e-01	1.3285494033640e+00	-4.3457373691006e-01
+3.9062500000000e-03	2.3551181601725e+00	-1.0436041967885e-01	3.8594185759418e-01	1.8976977292391e-03	-9.2317241508298e-02	3.4938619989994e-01
+3.9062500000000e-03	-6.2049761867142e-02	-9.4471247447365e-01	2.7621468072509e-01	5.5770544301838e-02	9.0189620083202e-02	2.8677208031145e-01
+3.9062500000000e-03	-2.5022806427437e-01	-1.0212621509233e+00	-1.4415423877982e-01	-9.6889241133260e-02	1.9630035216090e-01	-3.3695161892717e-01
+3.9062500000000e-03	-8.5284014200004e-03	5.0353532916441e-01	5.6536729683796e-02	-1.7042374991279e-01	-5.1744213086665e-01	-9.2625540316312e-01
+3.9062500000000e-03	1.5789289945087e-01	-2.3037885158130e-01	-3.7267243748014e-01	2.8125284552213e-01	-6.3705243235705e-01	-1.9497392468832e-01
+3.9062500000000e-03	2.3237195745668e-01	-8.2418617766866e-01	-1.2525482345369e-01	-1.6671483309507e-02	-5.9293973536218e-01	5.6936049062459e-01
+3.9062500000000e-03	1.0182763559062e+01	-1.3073848812085e+00	9.6638195072330e+00	-7.0260950245602e-02	-2.2579407914210e-01	1.0716657462788e-01
+3.9062500000000e-03	-4.6699751577945e-01	7.0951181707344e-01	-3.9613945418396e-01	1.0711482766811e-01	-1.2788303701709e-01	-1.6918619425026e-01
+3.9062500000000e-03	8.9527685149717e-01	-3.2794656776861e-01	-7.2755260058544e-01	7.8164590919328e-03	4.8777119099395e-02	-5.6905662734432e-01
+3.9062500000000e-03	1.4108041104090e-01	1.7009977261716e-01	-1.6761316079316e-01	1.8276914404995e-02	-7.9655150571995e-02	2.5342489117198e-02
+3.9062500000000e-03	-3.6381894095688e-01	-5.9131942007032e-01	8.4862129008620e-02	-3.9864443024213e-01	6.3874922220890e-01	4.3649916295957e-01
+3.9062500000000e-03	9.6497732507488e-03	1.5605558336032e+00	-1.4318369308158e+00	-4.6450310544822e-02	-1.1551370562948e-01	3.6036511718262e-02
+3.9062500000000e-03	1.4584519802805e+00	-1.0110162326806e+00	-7.8483949475914e-02	4.7871741703227e-01	-1.1876043928536e-01	1.4189001060515e-01
+3.9062500000000e-03	-2.9250111692317e-01	-1.1728803433003e+00	4.0264277172095e-01	-2.1530185361861e-01	4.6837986569008e-01	1.9437141896723e-01
+3.9062500000000e-03	-8.8836992121630e-01	-1.9652351489036e-01	2.4572424141055e-01	1.1653838723263e-01	-1.2772449680748e-01	-2.2052575151627e-01
+3.9062500000000e-03	-1.7552423169591e-01	-3.7548318867003e-01	-1.7745754061951e-01	2.9307513594969e-01	1.6863768305031e-02	2.6798259239878e-01
+3.9062500000000e-03	5.5269080534697e-01	1.4594869074896e-01	-2.4660019512084e-01	4.6450274375825e-01	-9.0371186152004e-01	2.0310390984005e-01
+3.9062500000000e-03	3.8867079201516e-01	-7.9224959020483e-01	-3.0320729458491e-01	-3.1798882203875e-01	5.5558837572670e-01	2.7018496206649e-01
+3.9062500000000e-03	-4.3235427358412e-01	-4.6424588404744e-01	2.0900555895791e-02	4.7727891105628e-02	-1.7111952322038e-01	2.9337223974406e-01
+3.9062500000000e-03	2.7713204072660e-01	-4.5822090006870e-01	-2.9465780874948e-01	-1.9636537967475e-02	8.1558583692046e-01	1.9435070949214e-01
+3.9062500000000e-03	-4.1409329494804e-01	-1.3490023279666e-01	3.8616576398335e-01	6.5485842658637e-03	-2.0569666445957e-01	-7.3523211993778e-02
+3.9062500000000e-03	-9.7834471956195e-01	-1.4765272892330e-02	2.2875941199084e-01	-7.3706830903171e-02	7.5656781685137e-01	1.5660618459880e-01
+3.9062500000000e-03	7.1549717861880e-01	2.1511335288237e-01	-7.3163398759994e-01	4.1888724213642e-02	-2.1272857226948e-01	2.7184202949409e-01
+3.9062500000000e-03	-2.6870787858765e-01	3.6860022171251e-01	-6.0204155466529e-02	6.1679505739921e-01	-8.1800722539496e-02	2.5817793808348e-01
+3.9062500000000e-03	-4.3076289327426e-01	-1.4521025938422e-01	-5.2355071919648e-01	-4.6497062238319e-01	3.5471549816554e-01	-4.3747315512542e-01
+3.9062500000000e-03	-1.3780890047671e-01	1.3657801101466e-01	-5.6114141577400e-01	3.7404501666134e-02	6.8803750219779e-01	-2.2497295120425e-01
+3.9062500000000e-03	-4.3807393064962e+00	4.1637534076622e+00	8.1301263279409e+00	7.9506598638552e-02	-5.4537960644076e-03	-1.6330166345263e-01
+3.9062500000000e-03	-5.3965056484201e-01	-1.7047388111976e-01	-1.0112174270649e+00	-5.9941785351118e-01	4.1037217984941e-01	-3.2772278809307e-01
+3.9062500000000e-03	7.5564204268353e-01	1.6417632242977e+00	-4.3891822774875e-01	-5.1492452854820e-02	2.6606269112258e-01	1.2315115316803e-01
+3.9062500000000e-03	-7.5997229755415e-01	6.0711857222777e-01	-6.5895925829366e-02	2.1585022990590e-01	-2.8206619078845e-01	1.8600139649935e-01
+3.9062500000000e-03	-3.9646384693054e-01	-7.3956958154626e-01	-2.2126596777658e-02	-1.3399665344767e-01	-2.6122108752231e-02	-1.5907818914798e-01
+3.9062500000000e-03	-1.9483201850307e-01	1.6549628329132e-01	6.2709761983335e-02	1.8927981299236e-01	-2.6318759628672e-01	-7.5842062314332e-02
+3.9062500000000e-03	1.3558901910605e+00	2.4274962727116e+00	-8.1164110216525e-01	2.1633419783472e-01	-2.1312812568594e-01	-2.4296021240926e-01
+3.9062500000000e-03	7.2822597001531e-01	-1.1785488761124e+00	1.5726615340048e-01	3.5732238591209e-01	-3.3186100811388e-01	-3.2026339794940e-02
+3.9062500000000e-03	-5.0795236400197e-02	2.1874370305435e-01	-3.1479164532810e-01	-8.3126837082112e-01	-2.6628244186186e-01	-8.1989324292366e-02
+3.9062500000000e-03	1.6513520597936e-01	1.4410508675648e-01	-1.7885029441788e-01	1.8385709877838e-01	3.5631814623321e-01	8.7291246028606e-01
+3.9062500000000e-03	-7.6454153091590e-02	-9.5404192207970e-01	-1.0724161393168e-01	2.3746122025449e-02	9.4980458893281e-01	-3.3171618020145e-01
+3.9062500000000e-03	1.2740185854481e+00	-1.1709963758839e+00	-6.0348359050309e-01	1.7048513962296e-01	-6.8112069398515e-02	-3.2592229188421e-01
+3.9062500000000e-03	-1.4267927668582e-01	-7.7060429001657e-02	2.7347924919587e-01	5.2377806978598e-01	1.3362626903069e-01	1.1706912347593e-01
+3.9062500000000e-03	-5.1744868893140e-01	2.2045660532395e-01	-2.4267525418000e+00	5.3878616452918e-01	3.3534538838301e-01	3.3058681830323e-01
+3.9062500000000e-03	-1.4045788621398e+00	-1.9034180445543e-01	1.7216036977169e-01	-2.3412984048434e-01	4.4254610710937e-02	-1.1713292067425e-01
+3.9062500000000e-03	-5.5529303392044e-01	-1.8279457097889e-01	1.1857925983725e+00	6.3725566358746e-02	2.5896172192045e-01	2.3035206897576e-01
+3.9062500000000e-03	1.1262910462486e+00	3.4688021645282e-01	8.0567392055928e-01	-3.6109516190278e-01	2.2751327263799e-01	4.3476734028193e-01
+3.9062500000000e-03	-3.1785232777888e+00	-7.2861756850403e-01	1.2017532845267e+01	6.2870565104260e-02	1.0839430660055e-01	-1.7618996655813e-01
+3.9062500000000e-03	7.0367896161453e-01	-5.2437213317026e-01	-5.8055322774608e-01	-7.3396560432403e-01	-7.4374385674918e-02	-5.9510272854347e-01
+3.9062500000000e-03	-1.2200855065249e-01	1.1560708498312e-01	-1.3405401852295e-01	-1.0896311388199e-01	-3.4484192967998e-01	1.5044288970732e-01
+3.9062500000000e-03	1.2407501902738e-01	3.1497014888057e-01	-1.0550907397273e+00	-2.3636681153237e-01	-2.9372064983184e-01	1.3941745529171e-01
+3.9062500000000e-03	1.2595445759138e-01	-1.4770529814215e-01	2.9461202083814e-01	3.0211196550232e-01	-3.8580254790290e-01	8.0204632767293e-02
+3.9062500000000e-03	-3.1287166715484e-01	5.4342493945808e-01	5.6299804433216e-01	-1.3831262177621e-01	-1.9696973236746e-01	1.8577521810047e-02
+3.9062500000000e-03	-1.4587389338090e-01	2.4533114947079e-01	-2.4166173784426e-01	-1.8606279640551e-01	4.0548177399178e-01	-4.0126192904054e-01
+3.9062500000000e-03	7.9129020606856e-02	-2.4220315428265e-01	-3.2197316731533e-01	-4.2378772380104e-01	4.3439383439126e-02	-8.8126944009613e-01
+3.9062500000000e-03	-1.2412612763048e-01	-4.7529387357548e-01	-3.1840563966992e-02	-7.3324942188570e-01	3.8807088336845e-01	4.3550712772454e-02
+3.9062500000000e-03	-7.7751657111602e-01	5.1157387181115e-01	-9.4437139705328e-01	8.1832840004629e-01	-2.3116137112140e-01	1.9895027968274e-01
+3.9062500000000e-03	-5.0977504274394e-01	6.2225603857596e-01	-6.4483177123869e-02	-6.5326146317390e-02	-5.1902701732015e-02	6.1814594334555e-01
+3.9062500000000e-03	-7.0406829584168e-01	1.0980132113799e+00	4.1047930128535e-01	-1.7311438051598e-01	2.5618039964293e-01	5.6339043802097e-01
+3.9062500000000e-03	6.2860760306945e-02	2.0872127158514e-01	-3.9272935506820e-01	1.0640039190895e-01	-4.9693541648856e-01	-5.3583907081306e-01
+3.9062500000000e-03	-3.9335906897854e-01	-1.2480923739219e+00	-4.4946465925010e-03	1.6509984880778e-01	6.9804415571156e-01	5.4466341533914e-01
+3.9062500000000e-03	-9.2397660307555e-01	2.9045821940629e-01	-5.6816993351289e-02	-5.1707958047003e-01	1.9482610405423e-01	-8.1916995475970e-01
+3.9062500000000e-03	6.7519947060532e-02	7.9116672537316e-01	-4.3210171389473e+00	-1.5362029418217e-01	7.2447054631537e-02	2.8460347977393e-01
+3.9062500000000e-03	-3.0945966038938e-01	2.5234998126696e-01	-1.8175559632486e+00	4.0420963715130e-01	-1.4060117991564e-01	-2.0869706190514e-01
+3.9062500000000e-03	1.2164476119763e+00	6.9832788740096e-01	-2.1804770006267e-01	-2.9115568725991e-01	-1.9426152602496e-01	4.1044075372857e-01
+3.9062500000000e-03	3.4253922728524e-01	-6.9827617544311e-01	2.7708687765085e-01	6.3144551920516e-01	-1.2855466008859e-01	9.6581578918208e-02
+3.9062500000000e-03	-1.5273837349089e-01	-6.4554117464047e-01	3.3247550518751e-01	-3.3334434098221e-01	1.7647339851966e-01	4.1134268538549e-01
+3.9062500000000e-03	1.5335980610619e+00	5.8025569292214e-01	6.0263560897309e-01	-1.2494846483351e-01	2.5579549150366e-01	4.3170836980153e-01
+3.9062500000000e-03	4.0150078094724e-01	4.1357596908900e-01	4.5047440317145e-02	-2.9943286748179e-01	-3.1772452072785e-01	2.3428751344659e-01
+3.9062500000000e-03	2.1445079517134e-02	2.5630760960683e-01	-1.5282446400599e-01	-3.0246821144347e-02	-1.9118000448402e-01	-3.1869871070422e-01
+3.9062500000000e-03	2.9815239089814e-01	1.3407098076915e-01	-8.5806898319053e-02	1.9292876534128e-01	-6.2547623732030e-01	-7.1901837382089e-01
+3.9062500000000e-03	7.1591130266141e-01	8.2656289689122e-01	-3.2516684842367e-01	7.1279675919730e-01	1.5609147658593e-01	1.0761106601040e-01
+3.9062500000000e-03	1.1201906132869e+00	-7.0043111523127e-02	3.8838089196873e-01	-3.9241896973801e-02	9.5583625705180e-01	1.1676313128163e-01
+3.9062500000000e-03	1.9656409926365e-01	-1.2998201324651e+00	5.5954285455049e-01	1.0225193918236e-01	1.0603709293178e-01	-2.6411019948613e-01
+3.9062500000000e-03	3.7094341381643e-02	-1.5993775504048e-01	-4.2519369931517e-01	-4.1424946938099e-01	8.5431006598702e-01	4.9080854163466e-02
+3.9062500000000e-03	-1.0156085601505e-01	-3.7096444545277e-01	2.3992395407894e-01	1.8899398496002e-01	2.3288279684052e-01	3.0931506262044e-01
+3.9062500000000e-03	4.1378027964932e-01	1.2822620752971e-01	-8.6732863733595e-02	-2.8069528658220e-01	-2.6846539049972e-01	-3.9661096328068e-01
+3.9062500000000e-03	2.7426089017914e+00	1.7541699050748e+00	-2.2870914069619e+00	1.3216846518864e-01	-5.0750596847012e-03	-1.2824627423628e-01
+3.9062500000000e-03	-8.9150655038288e-01	2.1265948953904e-01	4.0279337819270e-01	9.9709066848585e-02	7.0858954509933e-01	1.1531604305273e-01
+3.9062500000000e-03	3.0125576899117e-01	4.6499793869896e-01	-7.5468698095173e-02	5.2380367593070e-01	1.8399178130899e-01	7.6951374491850e-01
+3.9062500000000e-03	-3.6943454252839e-01	-1.4609182837158e+00	8.3087532695891e-02	-2.6262636852298e-01	-7.4983724349909e-01	-4.3213481499405e-01
+3.9062500000000e-03	-1.5672670670757e-01	-2.0208311032455e-01	-3.3080441456475e-01	5.8838205451193e-01	-2.8979600589756e-01	8.3057022191190e-01
+3.9062500000000e-03	-1.4153182540889e+00	-3.2100750993557e-01	-6.2962606356389e-02	3.9827907061786e-01	6.7353188218706e-02	-6.8651535041843e-01
+3.9062500000000e-03	-5.1834697694975e-03	3.8640123136661e-02	-5.6398382304374e-01	-9.1158757264610e-01	-4.1629938599880e-01	3.4995148410594e-01
+3.9062500000000e-03	1.1278055079019e+00	1.9419511347328e+00	9.2134716175472e-01	2.0576427115191e-01	-2.0227450980496e-01	1.7107104393729e-02
+3.9062500000000e-03	-3.9136394428539e-02	-5.6900847502982e-01	-1.0505254088879e-03	3.6755540218085e-01	2.8151088503067e-01	4.7468456589653e-01
+3.9062500000000e-03	4.3296580420502e-01	1.4543672087582e-01	3.6759629311953e-01	5.5810675088970e-01	-2.7439928931761e-01	-2.6283233920189e-01
+3.9062500000000e-03	8.1639624301680e-01	-7.9722687431495e-01	2.4125773111506e-01	-1.8790271272738e-01	2.6308879763869e-01	5.6851119959549e-01
+3.9062500000000e-03	4.8064045779136e-02	1.0843025955947e+00	3.8454724442953e-01	-4.7695852946029e-01	5.7878964013030e-01	1.7299960487968e-01
+3.9062500000000e-03	7.2207892529221e-01	-6.3377620342399e-01	5.5750953786233e-01	-1.2623416534987e-01	-2.6973790950036e-01	1.5104222992370e-01
+3.9062500000000e-03	-8.4706076674764e-01	2.9193662146237e-01	-1.9651856661945e+00	1.0042392977950e-01	-3.2493843300168e-01	-5.3405232555051e-01
+3.9062500000000e-03	-3.1558721004947e-01	-1.3104402035515e-01	-4.4260663276464e-01	-2.3400411161904e-02	-2.7504949294031e-01	1.4366484506158e-01
+3.9062500000000e-03	-2.3708644932404e-01	7.4238671048379e-02	-2.8105151883971e-01	-6.8430049278067e-01	-2.9898922902252e-01	-8.3759774302388e-01
+3.9062500000000e-03	-3.6864947822487e-01	-2.2114447699065e-01	2.2360530548484e-01	4.9829286746686e-01	-4.8808561836182e-01	-2.3710607187194e-01
+3.9062500000000e-03	-6.2430294033253e-01	-4.5841110872558e-01	-9.3086997689028e-01	1.5353422620507e-01	-6.8708940386931e-02	-7.0752200333617e-03
+3.9062500000000e-03	-2.3967826793650e-01	-2.0302534603327e-01	5.9602204297221e-01	-4.5482793035185e-01	-8.9092438877917e-02	-3.9980063121858e-01
+3.9062500000000e-03	-1.5673113391044e-01	8.3804084722973e-02	-2.9827096975242e-01	-1.1995715826164e+00	5.1776639111066e-01	8.2478757725633e-01
+3.9062500000000e-03	-1.2674813143211e-01	5.2922891872033e-01	-5.6589070499162e-01	-5.4496388936019e-01	-7.0922446282377e-01	1.0038380814910e-01
+3.9062500000000e-03	-1.5122870684981e+00	-7.5387210135422e-01	-5.3607575333647e-02	-1.5309918611907e-01	4.9698977121230e-01	-2.1279113694000e-01
+3.9062500000000e-03	-3.6815271315869e-01	-8.2407911750606e-01	-5.3355354313344e-01	2.2160285606645e-01	-2.9475805618138e-02	-2.1592216697345e-01
+3.9062500000000e-03	3.0630003572708e-01	-1.0941717947587e-01	-7.3518530911659e-01	6.0627587116956e-01	-4.1883881642818e-01	-1.0397129084737e-01
+3.9062500000000e-03	5.0886828884578e-01	-3.7074147435504e-01	-6.4992460591612e-02	-1.0349719437608e-01	4.5465434514475e-02	3.6939731624827e-02
+3.9062500000000e-03	-3.2063486500224e-01	-7.9716111712995e-01	4.8235034912637e-01	-2.6309895242876e-01	-1.2652210328654e-01	-8.0433718949745e-01
+3.9062500000000e-03	5.9944684688095e-02	1.9417127713880e-01	-2.8021371615681e-01	-6.1782127293024e-01	-3.5962435728888e-01	5.1278710564824e-01
+3.9062500000000e-03	2.2548256302981e-01	-2.1969650539307e-01	8.2204573142475e-02	-1.5600453880898e-01	-7.0056448174694e-01	8.5975676687230e-02
+3.9062500000000e-03	-6.7143616766815e-02	2.3930777975179e-01	-2.3677421753109e-01	-7.7360227112704e-01	2.9922420388647e-01	-3.6613141150629e-01
+3.9062500000000e-03	-6.1542574563887e-02	-9.9279682462212e-01	3.2743106820271e-01	7.4973988035281e-01	-3.4012021420041e-01	-2.9847746809023e-01
+3.9062500000000e-03	4.9275430591892e-01	-8.6487388266052e-01	-1.1448350039065e+00	7.4491535550336e-02	7.5625869898304e-02	6.0348167779605e-02
+3.9062500000000e-03	-6.3389273524981e-01	3.9551738251503e-01	-7.3546165969257e-02	-6.0078406449866e-01	-3.6509266590061e-01	-1.3840127079167e-01
+3.9062500000000e-03	-2.3303921632003e-01	-2.1985532638571e-01	-1.3093630522516e-02	-5.1534672628401e-02	1.0203363033106e-01	6.3394941909409e-01
+3.9062500000000e-03	-3.4342548204760e-01	1.2628880697875e+00	-1.5257145108360e-01	-2.0194880176408e-01	-1.5387799901057e-01	-7.7546644840949e-02
+3.9062500000000e-03	-1.2855609279393e-01	-1.3311062305942e-01	4.6977882495967e-01	-1.4338936763404e-01	3.5637337654537e-01	7.5140414286495e-01
+3.9062500000000e-03	-3.1613459608844e-01	-6.7841480338949e-02	-2.9158799332879e-01	-2.2703945640471e-01	2.4272626851398e-01	2.9139134994742e-01
+3.9062500000000e-03	-5.1918494570912e-02	3.0970782345390e-01	2.1196217970664e-01	3.5135334479935e-01	6.2786669787770e-01	1.7346348475109e-01
+3.9062500000000e-03	-1.3924997194744e+00	8.6312035825934e-01	-2.6902483430030e-01	-3.6584033900848e-01	-4.6266833657897e-02	3.0048653836331e-01
+3.9062500000000e-03	1.7443355939913e+00	-3.8122139770386e-01	7.5675058537791e-01	8.0051688124581e-01	-1.5235064276728e-01	2.4553323290885e-03
+3.9062500000000e-03	6.1642527467308e-01	-6.0506154552116e-01	2.2739102310673e-01	1.7038815127897e-01	-5.7655137337754e-01	5.0872042434038e-01
+3.9062500000000e-03	3.7182295190694e-02	-9.8574858527693e-01	5.6486536824198e-02	-4.7203814114984e-01	-6.0499040262765e-02	6.0796330808868e-01
+3.9062500000000e-03	-1.8442654860482e-01	-1.8494922211511e-01	3.8345909713536e-01	5.9389396439888e-01	1.5555046776758e-01	-1.4738607108286e-01
+3.9062500000000e-03	-4.0740158457866e-02	-5.4131381052254e-01	-6.2294876158147e-01	4.1032524574592e-01	-7.3919604262900e-01	-1.2821858416260e-01
+3.9062500000000e-03	-3.1868254124004e-01	4.4007288831218e-01	3.7519113849662e-01	-4.5942285832625e-01	-8.1895306611871e-01	-5.9938055842232e-01
+3.9062500000000e-03	1.3266388563451e-02	1.1968681604831e-03	5.9901347462468e-01	5.1729847377972e-01	-9.1741459216484e-01	-2.3341177869371e-02
+3.9062500000000e-03	-2.6290025554780e-01	1.4651025435341e-01	3.2448433660108e-01	4.2463895121779e-01	-6.6944702762968e-01	-1.5446899769634e-02
+3.9062500000000e-03	-1.3668187989066e-01	1.7043725244202e+00	-7.9560784926170e-02	1.2065500118354e-01	-3.7838619595147e-01	-3.9149022785845e-01
+3.9062500000000e-03	-3.3598837704295e-01	-5.0635442227832e-01	-1.9436509184168e-01	-3.0468760892486e-01	-3.9924162713131e-01	1.3315119996947e-01
+3.9062500000000e-03	1.0802797406317e+00	-3.0640335388218e-01	-2.6686537433348e+00	-1.9137906705729e-01	-1.1468119694318e-02	1.0476564025841e-03
+3.9062500000000e-03	-3.9038504027061e-01	1.9218878926161e-02	-1.1858873373596e-01	4.7097039535488e-01	-3.0560652396787e-01	-1.5756132760972e-02
+3.9062500000000e-03	-2.7598092782252e-01	3.1534631046605e-01	1.5682445875469e-01	6.2151534817011e-02	-5.1185706577716e-01	-3.3482185050897e-01
+3.9062500000000e-03	1.8614616092300e-01	-5.0767421069343e-01	-8.2157867055487e-02	-3.1761874490290e-01	2.9736799876446e-01	-1.4227462140408e-01
+3.9062500000000e-03	-2.2370414488647e-01	3.4379282411143e-01	1.4699314204306e-02	2.2775403624556e-01	6.3895186768749e-01	2.0611631334158e-01
+3.9062500000000e-03	-4.8539823521734e-01	1.3102815295075e-01	6.0491703077191e-03	5.6495609857681e-01	-3.7742292626871e-01	2.8892475088674e-01
+3.9062500000000e-03	-8.7723122560718e-02	-2.7595829240470e-01	5.7567921448441e-01	4.6801817502891e-01	6.3424381643577e-02	-6.5738121123610e-01
+3.9062500000000e-03	5.4497577707781e-01	2.1378215130519e-01	-5.8740475975374e-01	1.3901216330423e-01	3.3472396218310e-02	3.5673851470055e-01
+3.9062500000000e-03	-2.3577658420523e-02	-8.6700786928417e-02	-3.4166014460927e-01	-6.9843090831991e-01	-3.5746484698125e-01	5.8227546056879e-01
+3.9062500000000e-03	-1.0907788755650e+00	-2.9755525862592e+00	-2.6513335987057e+00	-2.8840168833608e-01	-2.0974154901516e-02	-4.5826717633906e-01
+3.9062500000000e-03	-1.4228464536754e-01	-1.6743282732374e-01	-3.6600448210342e-01	4.5535645781039e-03	-4.1140235365163e-01	1.8698138707247e-01
+3.9062500000000e-03	-4.1414722657361e-01	-2.9754309648459e-01	-2.6448628348683e-02	-6.4718603705195e-01	6.2043311628518e-02	3.9026535458402e-01
+3.9062500000000e-03	-9.4034996901219e-02	-1.0506014548270e-02	4.1271475525641e-01	5.7124076248738e-01	2.5472479323807e-02	-5.8761016887913e-01
+3.9062500000000e-03	2.2499154918293e+00	-5.5742888842590e-01	2.1460244944564e+00	-5.3502520793876e-02	4.0903574663257e-02	-3.9877388106785e-03
+3.9062500000000e-03	-4.7608328352369e-01	-2.5580192692496e-01	1.3518259260556e-01	-5.6011080618844e-01	-3.6018642638505e-01	8.5204619192123e-01
+3.9062500000000e-03	1.3565087031027e-01	3.0527650653966e-02	-1.2334753284425e-01	9.6092578457998e-01	3.5508881502596e-02	-1.8291445800127e-01
+3.9062500000000e-03	7.1100468772287e-01	-1.7288723686738e-01	-3.5656531229049e-01	2.9129837329990e-01	-6.1914426693453e-02	8.1924558114218e-01
+3.9062500000000e-03	2.8015945111661e-01	2.5511946775442e-01	4.5287344938173e-01	-1.9598693740045e-02	5.0936476114451e-02	7.3115461206057e-01
+3.9062500000000e-03	4.0132856189995e-01	1.9260566809271e-01	-1.5309117747764e-01	-8.3244946701718e-02	9.8100841855128e-04	-1.8623551531284e-01
+3.9062500000000e-03	2.3518842755179e-01	5.0206263251710e-02	9.9379273527496e-02	-3.2360164997492e-01	4.7504395243623e-02	-3.5566078362284e-01
+3.9062500000000e-03	1.0556695115081e-01	-3.6727097370520e-01	3.2159121396009e-01	-9.0360778489867e-02	2.2134919335026e-01	-2.7938933551850e-02
+3.9062500000000e-03	-4.2571249159272e-01	9.6860445535615e-01	-4.4124244347553e-01	-7.3838876628196e-01	3.8817936913833e-01	-2.7038771498349e-01
+3.9062500000000e-03	-2.5421908573894e-01	-7.9767866469648e-01	-1.0997765824942e+00	3.8620583250068e-01	-1.1408954147333e-01	2.9354236271701e-02
+3.9062500000000e-03	-4.2022579937923e-02	-6.4298054005441e-01	-8.7060210436823e-01	-3.4418003616231e-01	9.0071570196202e-02	-7.6473675521548e-01
+3.9062500000000e-03	-2.7586258332050e-01	-1.2423114299695e-01	1.1019439225491e-01	-3.2896357951920e-01	1.1519662569093e-01	-8.8355012016739e-02
+3.9062500000000e-03	8.0473672631119e-01	2.0094720475038e-01	2.5927905374613e-01	4.7331575878778e-01	-2.2496403091255e-01	-2.1481082474344e-01
+3.9062500000000e-03	-2.2208178229884e+00	-8.1352424831217e-02	2.5816392180660e-01	-3.9241101468031e-01	-2.4640839908280e-01	4.2498242961649e-01
+3.9062500000000e-03	-6.5267756252149e-01	-3.9374555710541e-01	2.1051287563787e-01	-4.8146209008283e-02	3.3912135120329e-01	3.4876442339787e-01
+3.9062500000000e-03	-8.1010066679761e-01	8.7415664167713e-01	1.0932454182251e+00	9.6949497089657e-02	1.4737616878725e-02	2.6400827957733e-02
+3.9062500000000e-03	-2.1200306897779e-01	1.7264735618196e-02	-2.8399164722807e-01	5.0137716104462e-01	-2.8006302077690e-01	-9.1235484179781e-01
+3.9062500000000e-03	-2.0304719914404e-01	2.9402838995127e-01	-1.7186333014325e-01	-5.6412272296527e-01	1.4296952337044e-01	9.8882370652441e-01
+3.9062500000000e-03	3.2460884752799e-01	3.8483452343549e-01	1.1662364530973e-01	-8.8687375852778e-01	-1.4648494175531e-01	-3.7484615809853e-01
+3.9062500000000e-03	-4.4328313494708e-01	-3.5649798874501e-01	-4.1870692273881e-01	2.2657197559721e-01	-3.0063441002513e-01	-3.3709192105385e-01
+3.9062500000000e-03	2.8654521945505e-01	8.8745563087184e-02	-4.4454569737987e-01	4.9221417409874e-01	4.4157627890316e-01	2.0295579327886e-01
+3.9062500000000e-03	2.7365492508117e+00	8.5813714397432e-01	3.9684825344462e+00	-2.3956961108485e-01	-2.2457345523611e-01	-3.6776515922899e-02
+3.9062500000000e-03	3.6132581138418e-01	1.8729829308470e-01	-8.9102544636072e-01	-5.7463099365238e-01	4.1700012533923e-01	3.4955947067835e-02
+3.9062500000000e-03	1.1982108071802e-01	7.4061005947715e-01	2.6315375534684e+00	6.1963743984986e-01	5.8331192946050e-02	-2.3123263759312e-01
+3.9062500000000e-03	-1.7014449571163e+00	-1.0907424561191e-01	-6.5885038997421e-01	1.0438489474805e-01	-1.9820931989384e-01	2.1880670334610e-01
+3.9062500000000e-03	5.9483523525989e-02	9.5792751330647e-02	5.2618400582730e-02	-6.7182757815206e-01	-9.3014552301114e-01	1.2113604815538e-01
+3.9062500000000e-03	1.4685652029544e-03	-1.6212636224041e-01	-2.5691233979829e-01	-5.9985090559162e-01	-4.3712665864088e-01	-2.3897867363596e-01
+3.9062500000000e-03	9.7156121848131e-03	-6.6455489810491e-01	-7.8712628520104e-01	-1.3626915771308e-01	-1.5880978089399e-01	5.0682127293581e-01
+3.9062500000000e-03	4.1683005356038e-01	3.1248174186951e-01	-5.4040651394590e-01	2.0209922867372e-01	6.5032577584679e-01	-1.3712001094748e-02
+3.9062500000000e-03	8.4894748792769e-02	-5.9082020275122e-01	-6.2420935661210e-01	-1.1358853101936e-01	6.2635899264034e-02	1.3814525290841e-01
+3.9062500000000e-03	-3.1120856247639e-01	-1.1263342996959e+00	-4.5878349866539e-02	-1.7628860212738e-01	-2.7999455195978e-02	-4.4687421042363e-02
+3.9062500000000e-03	-4.6527116288683e-01	-9.1258279593098e-01	-8.3617118030408e-01	-2.2838130167290e-01	-8.6622373065892e-02	-3.7232270230208e-01
+3.9062500000000e-03	2.6491400162375e+00	-3.7516210428899e+00	-1.7134404558565e+00	-2.8979686662910e-01	7.1054159316229e-02	2.8664756468955e-01
+3.9062500000000e-03	-3.0052435739831e-01	4.6111236655461e-01	-7.0805632039210e-01	3.0088226982077e-01	2.1495415090457e-01	2.3937274205575e-01
+3.9062500000000e-03	1.9905978462585e-01	1.8185792629608e-01	-3.6307719525264e-01	-3.4356815535148e-01	5.0486271652561e-01	2.9311080444242e-01
+3.9062500000000e-03	1.8653518947944e+00	-8.7065843332471e-01	1.5781084071587e-01	3.6899341169774e-01	-1.6440430454255e-01	-1.3484512014323e-02
+3.9062500000000e-03	4.1756836954357e-01	-1.1293279643791e+00	-8.7725872293580e-01	-5.7367867457471e-01	-3.4588434741576e-01	-7.7480130304356e-02
+3.9062500000000e-03	-3.1022224193458e-01	2.6261843235521e-01	1.8113095903031e-01	3.4119971861985e-01	-4.2166389496903e-02	7.3942996249657e-01
+3.9062500000000e-03	-4.2246070804941e-01	-9.9006585195183e-02	-3.2197383513161e-01	7.7422125662982e-01	-7.6816319675393e-01	3.2630423690996e-01
+3.9062500000000e-03	-2.5973091527892e-02	-1.6774993070755e-01	-6.4852332444269e-02	2.4016622120506e-01	2.5817506813649e-01	6.0549626714731e-01
+3.9062500000000e-03	8.9515780097488e-02	7.7988212153752e-02	-3.9269437851795e-01	5.3163368765800e-01	-7.6610760149371e-02	2.9524296864185e-01
+3.9062500000000e-03	-7.7019424071120e-01	-6.8835124994164e-03	-3.2992061251869e-01	3.0801360421154e-01	-2.1486315508352e-01	-5.7784469680624e-01
+3.9062500000000e-03	1.1577933092363e-01	-5.7479021095581e-01	-2.8849830435634e-01	6.1606913017750e-01	7.9992489362878e-01	2.2281151680652e-01
+3.9062500000000e-03	-8.9208066750696e-01	1.2559197049725e-01	1.2209196757283e-01	9.2361110363799e-03	7.7736437604437e-02	2.0492871249846e-01
+3.9062500000000e-03	-2.1513395702663e-02	-8.7106739207066e-02	-6.7013985791778e-02	2.0791087884414e-01	-4.8041715385836e-01	1.1825881442463e-01
+3.9062500000000e-03	-1.0696078885082e+00	9.5103518702318e-01	-4.6703589117313e-01	-8.4595120601866e-02	4.1522826987161e-01	3.4189027579481e-01
+3.9062500000000e-03	1.0491205060805e-01	-4.1682285584897e-02	-2.0851336967056e-01	6.0302014499329e-01	6.1670839039750e-01	-5.8319042353055e-01
+3.9062500000000e-03	-2.7696505293032e-02	2.3012493927347e-01	-3.6593382746411e-01	2.0524604212727e-01	6.7266965903553e-02	1.8164458666970e-01
+3.9062500000000e-03	-4.8692086200744e-01	3.4140153023741e-01	4.0239189222132e-01	1.8017665966178e-02	-5.3420597573003e-02	-4.2946625298005e-01
+3.9062500000000e-03	7.5925590339296e-02	-1.8499306903315e-01	1.6233133640026e-01	8.3211861616106e-01	3.5177743666884e-01	-2.6932984413302e-01
+3.9062500000000e-03	2.1521787522919e-01	-5.4018945357215e-02	-1.1462481147421e+00	1.4678956029244e-01	-1.2534458240887e-01	9.2560488803446e-01
+3.9062500000000e-03	-1.1508329592434e+00	1.1852152998158e+00	7.3935889987223e-02	-5.3141945466893e-01	-6.3903745064425e-01	-1.2061380498419e-01
+3.9062500000000e-03	-1.3347872345017e-01	-4.7225245187071e-01	3.7584716244140e-01	-2.5453158886283e-01	7.2081707229941e-01	-9.3777885189695e-02
+3.9062500000000e-03	1.1274040689360e+00	1.5537653899107e-01	1.3503526243967e-01	2.5334600572768e-01	2.2855509080014e-01	3.8214629175068e-02
+3.9062500000000e-03	-5.2938366552407e-01	-2.8440457345799e-01	-3.3878372826063e-01	8.5759532905970e-01	3.7901184961470e-01	-1.2272501427652e-01
+3.9062500000000e-03	-2.0419665113825e-01	3.1378068273812e-02	-2.0780926453735e-01	-2.4669610506108e-01	4.3416359064953e-01	4.4303551252778e-02
+3.9062500000000e-03	-1.1688453605584e-01	-6.6831209465333e-01	-4.9848230948595e-01	-1.3506652162129e-01	3.9936246532934e-01	-3.4167084550481e-01
+3.9062500000000e-03	-1.2823507787092e-01	-3.5609124680042e-01	-1.8140713903729e-01	-3.1330001994302e-01	1.6144539679962e-01	-2.6511981025892e-01
+3.9062500000000e-03	-9.9929663106129e-03	-1.0970079507377e-02	5.7615997069291e-01	8.0050241461877e-01	-1.6139783548075e-01	3.2545914922669e-01
+3.9062500000000e-03	1.8985679607493e-01	8.1041070479074e-02	5.6565799537197e-01	-3.6950743244373e-01	1.3834035588124e-01	7.5403489399654e-01
+3.9062500000000e-03	8.1778067461351e-01	6.8984919046893e-01	8.5559985264990e-02	-1.5902006971488e-01	-5.3614884387178e-01	-5.8500311699611e-01
+3.9062500000000e-03	-3.1870463092635e-01	-2.9794378454218e-01	6.3562904909619e-02	-6.2225948721415e-01	5.3650337963047e-01	5.5008462938680e-01
+3.9062500000000e-03	-2.9382783460465e-01	1.5957004870559e-02	-2.2015064510563e-02	6.3388526533746e-01	-2.1829364981382e-01	-1.2407881758946e+00
+3.9062500000000e-03	5.3109682551540e-01	1.9590359119419e-01	-2.7921367842772e-01	1.7519728456702e-01	-6.9278951213765e-01	-3.6112226916903e-01
+3.9062500000000e-03	-7.6112868722484e-01	3.4759059199613e-01	-8.1592591056407e-01	-1.9417593825467e-01	2.1694422152444e-01	2.4045695473491e-02
+3.9062500000000e-03	4.3072684894282e-01	-1.1653022715233e+00	-2.0752747331902e-02	3.5731310308318e-02	4.2283060694059e-01	1.8722784387148e-02
+3.9062500000000e-03	-1.7126498022181e-01	-7.2909193295113e-01	2.6391750168151e-02	-4.7277505912701e-01	-9.6173058898829e-02	6.2592307021805e-01
+3.9062500000000e-03	1.1036377292167e-01	-7.5103065525108e-01	1.3753704313640e+00	-1.3232647469227e-01	-8.0875328355646e-03	-4.7469241793289e-01
+3.9062500000000e-03	-3.0258242993584e-01	8.2857470807395e-01	-1.6996243460726e-02	-2.4080794889158e-01	-3.2452444551650e-01	-3.1904984960046e-01
+3.9062500000000e-03	-7.9390469740745e-01	-3.2946382814385e-01	5.0790994763712e-02	1.1718252390999e-01	1.8456488815530e-01	-2.9523601665367e-01
+3.9062500000000e-03	4.7771311107978e+00	1.1735542076860e+00	8.6510303853814e-01	-9.8960839917074e-02	1.8487089045360e-02	-3.2363269556151e-01
+3.9062500000000e-03	-5.1364072850412e+00	6.4783767803029e+00	3.5374272880932e+00	-2.3989687903559e-01	-2.9036279404047e-02	1.8959017984736e-02
+3.9062500000000e-03	-1.5736804473355e-01	1.8124825530293e+00	-1.6868338837650e-01	2.8572893140872e-02	2.0568548677168e-01	3.6530514306815e-02
+3.9062500000000e-03	-4.3109598180197e-01	-1.4568906810729e-01	-7.7087050022681e-01	3.3337005195498e-01	2.2979827772443e-01	9.1671406338351e-01
+3.9062500000000e-03	8.1901587529450e-01	2.1358663330936e-01	5.1888091419224e-01	4.6663197899544e-01	-7.4879583948623e-02	4.7334254970134e-02
+3.9062500000000e-03	-5.4487345264549e-02	1.5723419399469e-01	-7.7666417943356e-02	6.4878645754238e-01	1.1247497736056e-01	9.5675112147277e-01
+3.9062500000000e-03	1.6294988906597e-01	2.5775068603671e-01	-4.1729913370507e-01	4.6548990081810e-01	5.0439548942197e-01	-6.5051583249504e-01
+3.9062500000000e-03	-1.7860228174451e-02	5.1216170367816e-01	-1.1035402096670e-01	5.9773849823262e-01	-4.8572032481516e-01	6.2343915829558e-01
+3.9062500000000e-03	-9.3836995989234e-01	6.1124456419657e-01	4.2299147219859e-02	4.5404478221922e-01	-3.8991882107312e-01	5.2002628842904e-01
+3.9062500000000e-03	1.9374937886342e-01	2.1079171980233e-01	8.8715957353482e-02	-1.8470081317978e-01	1.2036661452021e-01	5.6452559551630e-01
+3.9062500000000e-03	-1.2038009247648e-01	3.6765507567510e-01	2.0072028446378e-01	-5.2848817178412e-01	-5.7535500126446e-01	-1.4835937484439e-01
+3.9062500000000e-03	-1.3997907107687e+00	-1.6944841991389e-01	-5.2926852474618e-02	-4.2586964501189e-01	7.4288367122032e-01	-8.2050063936457e-02
+3.9062500000000e-03	4.1648037210392e-01	3.1758577104883e-01	-2.3699671748066e-01	4.8133216503935e-01	1.9361227786228e-01	-6.3980978695939e-01
+3.9062500000000e-03	-5.2368285268173e-01	9.2218675714305e-01	1.4414093277722e+00	4.6876237132803e-01	3.1822306819113e-01	-9.2786493020556e-02
+3.9062500000000e-03	-6.8214602970465e-01	-2.2010021717748e-01	5.6077763436533e-01	2.8365762249828e-01	2.5472583450068e-01	-2.2472384605554e-02
+3.9062500000000e-03	-1.5701789728908e-01	2.3211583434959e-01	-1.4156979804717e-01	1.3666703678172e-01	-1.1172243202117e-01	2.2113377466074e-01
+3.9062500000000e-03	-1.8676383918973e-01	3.7978698711563e-01	-1.3815176161139e+00	1.3546202260321e-01	4.5119925867171e-01	-4.7873762518675e-02
+3.9062500000000e-03	-8.2650566070192e-03	1.5806250676315e-01	3.9325363118077e-01	-6.2771721239023e-02	2.7408858591681e-01	-1.8289831523432e-01
+3.9062500000000e-03	-2.3093530095727e-01	5.0176976497049e-01	-2.2052406527736e-01	-4.7304003975392e-01	5.8090126008819e-01	-4.7187342766574e-01
+3.9062500000000e-03	-1.0856917294439e+00	-3.0592762036229e-01	-5.6718676738730e-01	-2.3100889877544e-01	-4.1956467748276e-01	-5.4572615625048e-01
+3.9062500000000e-03	9.5247005721060e-01	-6.1419223132747e-01	-7.3515231293359e-01	-2.1066312030472e-01	-3.6356426872344e-01	7.5642426423104e-01
+3.9062500000000e-03	4.1059992604345e-01	4.8913749170447e-02	-2.9846432620799e-01	-5.1467580298610e-01	1.1445736141137e+00	1.4328159628901e-01
+3.9062500000000e-03	1.1517213957626e+00	2.6527627537795e+00	-3.2335642818962e-01	1.1281137542292e-01	2.0924759667862e-01	-3.9297987234057e-01
+3.9062500000000e-03	-5.8091061713793e-01	-4.8929414721048e-01	-4.6506587492524e-01	3.4539112016237e-01	-1.9200884611588e-01	3.4929475055364e-01
+3.9062500000000e-03	-3.2079564844110e-02	3.6851022916783e-01	2.8631568212345e-01	8.3737313087169e-01	3.7322943717188e-01	-6.2073737888661e-01
+3.9062500000000e-03	-8.9701553263296e-01	-1.6322613119328e+00	-3.8203310881366e-01	-4.5031803915247e-01	-2.2924120034977e-01	-2.9479438077620e-01
+3.9062500000000e-03	-3.6985751631243e-01	7.9668624303009e-03	3.9948761283582e-01	4.0458241567957e-01	-8.7394086078257e-02	-6.1102475019547e-01
+3.9062500000000e-03	3.2570876049937e-01	2.1894005107810e-01	-4.0203115693436e-01	-2.7006888297927e-01	1.4194624129716e-01	-2.5930314609848e-01
+3.9062500000000e-03	3.2984514163455e-01	-3.1178352014267e-01	-1.1838682285803e+00	1.1431459768299e-01	5.2684190999267e-01	-2.8040851967639e-01
