@@ -1,52 +1,19 @@
-2024年  5月 26日 日曜日 09:58:48 JST
-set -tmpdir __projnav
-set -xsthdpdir ./xst
-run
--ifn top.prj
--ifmt mixed
--ofn top
--ofmt NGC
--p xc2vp70-5-ff1517
--top top
--opt_mode Speed
--opt_level 1
--iuc NO
--lso top.lso
--keep_hierarchy NO
--glob_opt AllClockNets
--rtlview Yes
--read_cores YES
--write_timing_constraints NO
--cross_clock_analysis NO
--hierarchy_separator _
--bus_delimiter <>
--case maintain
--slice_utilization_ratio 100
--verilog2001 YES
--vlgincdir 
--fsm_extract YES -fsm_encoding Auto
--fsm_style lut
--ram_extract Yes
--ram_style Auto
--rom_extract Yes
--rom_style Auto
--mux_extract YES
--mux_style Auto
--decoder_extract YES
--priority_extract YES
--shreg_extract YES
--shift_extract YES
--xor_collapse YES
--resource_sharing YES
--mult_style auto
--iobuf YES
--max_fanout 500
--bufg 16
--register_duplication YES
--equivalent_register_removal YES
--register_balancing No
--slice_packing YES
--optimize_primitives NO
--tristate2logic No
--iob auto
--slice_utilization_ratio_maxmargin 5
+2024年  6月  3日 月曜日 09:50:05 JST
+#!Time-stamp: <2007-01-22 04:30:32 hamada>
+
+Linux device driver for the PROGRAPE-4 board,
+
+including runtime libraries and HDL source for interface FPGA.
+
+- Linux kernel release 2.6.x
+
+- Xilinx XC3S5000-5-FG900 FPGAs
+
+- Xilinx ISE 8.1i
+-- Release 8.1.03i xst I.27
+-- Release 8.1.03i par I.27
+-- Release 8.1.03i Trace I.27
+-- Release 8.1.03i Bitgen I.27
+
+
+![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
