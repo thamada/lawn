@@ -1,51 +1,80 @@
-2024年  5月 26日 日曜日 10:24:04 JST
-2017/07/16 23:46:54 - detects 'Person'
-2017/07/16 23:46:55 - detects 'Person'
-2017/07/16 23:46:57 - detects 'Person'
-2017/07/16 23:46:58 - detects 'Person'
-2017/07/16 23:47:00 - detects 'Person'
-2017/07/16 23:47:01 - detects 'Person'
-2017/07/16 23:47:03 - detects 'Person'
-2017/07/16 23:47:05 - detects 'Person'
-2017/07/16 23:47:06 - detects 'Person'
-2017/07/16 23:47:08 - detects 'Person'
-2017/07/16 23:47:10 - detects 'Person'
-2017/07/16 23:47:11 - detects 'Person'
-2017/07/16 23:47:13 - detects 'Person'
-2017/07/16 23:47:14 - detects 'Person'
-2017/07/16 23:48:37 - detects 'Person'
-2017/07/16 23:48:38 - detects 'Person'
-2017/07/16 23:48:40 - detects 'Person'
-2017/07/16 23:48:42 - detects 'Person'
-2017/07/16 23:48:43 - detects 'Person'
-2017/07/16 23:48:44 - detects 'Person'
-2017/07/16 23:48:46 - detects 'Person'
-2017/07/16 23:48:48 - detects 'Person'
-2017/07/16 23:48:49 - detects 'Person'
-2017/07/16 23:48:51 - detects 'Person'
-2017/07/16 23:48:53 - detects 'Person'
-2017/07/16 23:48:54 - detects 'Person'
-2017/07/16 23:48:56 - detects 'Person'
-2017/07/16 23:48:58 - detects 'Person'
-2017/07/16 23:48:59 - detects 'Person'
-2017/07/16 23:49:01 - detects 'Person'
-2017/07/16 23:49:02 - detects 'Person'
-2017/07/16 23:49:04 - detects 'Person'
-2017/07/16 23:49:06 - detects 'Person'
-2017/07/16 23:49:07 - detects 'Person'
-2017/07/16 23:49:09 - detects 'Person'
-2017/07/16 23:49:10 - detects 'Person'
-2017/07/16 23:49:12 - detects 'Person'
-2017/07/16 23:49:13 - detects 'Person'
-2017/07/16 23:49:15 - detects 'Person'
-2017/07/16 23:49:16 - detects 'Person'
-2017/07/16 23:49:18 - detects 'Person'
-2017/07/16 23:49:19 - detects 'Person'
-2017/07/16 23:49:21 - detects 'Person'
-2017/07/16 23:49:22 - detects 'Person'
-2017/07/16 23:49:24 - detects 'Person'
-2017/07/16 23:49:26 - detects 'Person'
-2017/07/16 23:49:27 - detects 'Person'
-2017/07/16 23:49:29 - detects 'Person'
-2017/07/16 23:49:30 - detects 'Person'
-2017/07/16 23:49:32 - detects 'Person'
+2024年  6月  6日 木曜日 11:21:13 JST
+-- Last Modifiled at 2004/12/27
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity adr_dec is
+  port (
+    clk        : in std_logic;
+    adr        : in std_logic_vector(18 downto 0);
+    is_jpw     : out std_logic;
+    is_ipw     : out std_logic;
+    is_fo      : out std_logic;
+    is_setn    : out std_logic;
+    is_run     : out std_logic;
+    FPGA_NO    : in std_logic_vector(1 downto 0));
+end adr_dec;
+
+architecture rtl of adr_dec is
+signal cmd_h : std_logic_vector(6 downto 0);
+signal cmd_l : std_logic_vector(11 downto 0);
+
+begin
+
+cmd_h <= adr(18 downto 12);
+cmd_l <= adr(11 downto 0);
+
+-- is_jpw ----------------------
+process(cmd_h,cmd_l) begin -- BroadCast Only
+--if (cmd_h(3) = '1') then -- 4096w * 512bit = 256KByte
+--if (cmd_h(4) = '1') then -- 8192w * 512bit = 512KByte
+--if (cmd_h(5) = '1') then --16384w * 512bit =   1MByte
+  if (cmd_h(6) = '1') then --32768w * 512bit =   2MByte
+     is_jpw <= '1';
+  else
+     is_jpw <= '0';
+  end if;
+end process;
+
+-- is_ipw ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000101") AND (cmd_l(11 downto 10)=FPGA_NO)) then
+     is_ipw <= '1';
+  else
+     is_ipw <= '0';
+  end if;
+end process;
+
+-- is_fo -----------------------
+process(cmd_h,cmd_l) begin
+--  if((cmd_h = "0000110") AND (cmd_l(9 downto 8) = FPGA_NO)) then
+  if((cmd_h = "0000110") AND (cmd_l(10 downto 9) = FPGA_NO)) then
+     is_fo <= '1';
+  else
+     is_fo <= '0';
+  end if;
+end process;
+
+-- is_setn ---------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0111") AND (cmd_l(11 downto 0) = "000000000000")) then
+     is_setn <= '1';
+  else
+     is_setn <= '0';
+  end if;
+end process;
+
+-- is_run ----------------------
+process(cmd_h,cmd_l) begin
+  if((cmd_h = "0000111") AND (cmd_l(11 downto 0) = "000000000011")) then
+     is_run <= '1';
+  else
+     is_run <= '0';
+  end if;
+end process;
+
+
+end rtl;
