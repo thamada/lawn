@@ -1,9 +1,49 @@
-2024年  6月  5日 水曜日 09:55:22 JST
-V1 3
-FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd 2004/11/10.11:36:20
-EN work/PFPGA_CONFIG \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      PB ieee/STD_LOGIC_1164 PB ieee/STD_LOGIC_ARITH PB ieee/STD_LOGIC_UNSIGNED
-AR work/PFPGA_CONFIG/RTL \
-      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
-      EN work/PFPGA_CONFIG
+2024年  6月  6日 木曜日 10:26:42 JST
+JDF G
+// Created by Project Navigator ver 1.0
+PROJECT proj
+DESIGN proj
+DEVFAM virtex2p
+DEVFAMTIME 0
+DEVICE xc2vp70
+DEVICETIME 0
+DEVPKG ff1517
+DEVPKGTIME 0
+DEVSPEED -5
+DEVSPEEDTIME 0
+DEVTOPLEVELMODULETYPE HDL
+TOPLEVELMODULETYPETIME 0
+DEVSYNTHESISTOOL XST (VHDL/Verilog)
+SYNTHESISTOOLTIME 0
+DEVSIMULATOR Modelsim
+SIMULATORTIME 0
+DEVGENERATEDSIMULATIONMODEL VHDL
+GENERATEDSIMULATIONMODELTIME 0
+SOURCE ..\dmaw_mem_data.vhd
+SOURCE ..\dmaw_mem_we.vhd
+SOURCE ..\dmar_mem_adr.vhd
+SOURCE ..\dmaw_mem_adr.vhd
+SOURCE ..\dmar_start_adr.vhd
+SOURCE ..\dmaw_start_adr.vhd
+SOURCE ..\dmar_dbus_hiz.vhd
+SOURCE ..\dmar.vhd
+SOURCE ..\clk_muldiv_by_xcore.vhd
+SOURCE ..\dmaw.vhd
+SOURCE ..\user.vhd
+SOURCE ..\dmar_state.vhd
+SOURCE ..\dmar_mem_re.vhd
+SOURCE ..\clk_muldiv.vhd
+SOURCE ..\dmaw_state.vhd
+SOURCE ..\top.vhd
+SOURCE ..\pgpg_mem\dpram.vhd
+SOURCE ..\pgpg_mem\pg_module.vhd
+SOURCE ..\pgpg_mem\calc.vhd
+SOURCE ..\pgpg_mem\jmem.vhd
+SOURCE ..\pgpg_mem\pgpg_mem.vhd
+SOURCE ..\pgpg_mem\adr_dec.vhd
+SOURCE ..\pgpg_mem\pg_pipe.vhd
+SOURCE ..\pgpg_mem\setn.vhd
+SOURCE ..\pgpg_mem\pipe_sts.vhd
+DEPASSOC top ..\top.ucf
+[STRATEGY-LIST]
+Normal=True
