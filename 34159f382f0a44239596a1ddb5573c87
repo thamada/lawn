@@ -1,71 +1,30 @@
-2024年  6月  7日 金曜日 09:32:07 JST
-#Time-stamp: <2017-06-23 16:16:23 hamada>
+2024年  6月  8日 土曜日 09:31:42 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-CONFIG=./etc/config.txt
-MODEL=./etc/model.txt
-WEIGHTS=./backup/m10_150000.weights
-LOGFILE=./log.2gpu
-GPUID= -gpus 0,1
+entity setn is
+  port (
+    clk       : in std_logic;
+    we        : in std_logic;
+    idata     : in std_logic_vector(31 downto 0);
+    odata     : out std_logic_vector(31 downto 0));
+end setn;
 
-all:
-	@echo 'make run'
+architecture rtl of setn is
+signal nreg :  std_logic_vector(31 downto 0) := "00000000000000000000000000000011"; -- default 3
+begin
 
-r: run
+odata <= nreg;
+--odata <= "00000000000000000000000000000011";
 
-run:
-	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
+process (clk) begin
+  if(clk'event and clk='1') then
+    if(we = '1') then
+      nreg <= idata;
+    end if;
+  end if;
+end process;
 
-run.1gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
-
-run.2gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
-
-run.4gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
-
-
-
-demo:
-	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
-#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
-
-
-photo:
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
-
-
-clean:
-	rm -rf bad.list .*~ *~ ./predictions.jpg
-	rm -rf backup/model*
-
-
-c: clean
-
-
-0.check:
-	cd backup/;md5sum --check md5sum.txt
-
-check:
-	grep ID.000[0-3] etc/all.txt |wc -l
-	grep ID.0004 etc/all.txt |wc -l
-	grep ID.0005 etc/all.txt |wc -l
-	grep ID.0006 etc/all.txt |wc -l
-	grep ID.000[7-9] etc/all.txt |wc -l
-	grep ID.0004 etc/list.train.txt |wc -l
-	grep ID.0005 etc/list.train.txt |wc -l
-	grep ID.0006 etc/list.train.txt |wc -l
-	grep ID.0004 etc/list.valid.txt |wc -l
-	grep ID.0005 etc/list.valid.txt |wc -l
-	grep ID.0006 etc/list.valid.txt |wc -l
-
-check.iou:
-	\rm -f IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
-	\grep IOU IOU.txt
+end rtl;
