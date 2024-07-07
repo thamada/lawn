@@ -1,50 +1,40 @@
-2024å¹´  7æœˆ  7æ—¥ æ—¥æ›œæ—¥ 10:41:08 JST
-#include <math.h>
-#define DIM (3)              /* ŸŒ³” */
-#define NMAX (65536)         /* Å‘å—±q” */
-//#define NTOTAL 1000      /* —±q” (NTOTAL <= NMAX) */
-
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
-
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
-
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+2024å¹´  7æœˆ  7æ—¥ æ—¥æ›œæ—¥ 11:04:59 JST
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+entity WRITECOMB_CHECK is
+  port (
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    IS_ERR : out std_logic_vector(25 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end WRITECOMB_CHECK;
 
+architecture rtl of WRITECOMB_CHECK is
 
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
 
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+begin
 
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
+  IS_ERR <= cnt;
 
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
+  cntr <= cnt;
 
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
+    if(RST = '1') then
+      cnt <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(MEM_WEHA='1' AND MEM_WELA='0') then
+        cnt <= cntr + "00000000000000000000000001";
+      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
+        cnt <= cntr + "00000000000000000000000001";
+      end if;
+    end if;
+  end process;
 
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
+end rtl;
