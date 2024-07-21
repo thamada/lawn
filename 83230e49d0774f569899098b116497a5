@@ -1,37 +1,46 @@
-2024年  7月 13日 土曜日 10:47:08 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[dma_we]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
---mem_data                          <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+2024年  7月 21日 日曜日 09:24:15 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+VM_NAME="ubuntu16"
 
-entity dmaw_mem_data is
-  port (
-    CLK      : in std_logic;
-    DBUS     : in std_logic_vector(63 downto 0);
-    STATE    : in std_logic_vector(1 downto 0);
-    MEM_DATA : out std_logic_vector(63 downto 0) );
-end dmaw_mem_data;
+all: check
 
-architecture rtl of dmaw_mem_data is
-constant zero : std_logic_vector(63 downto 0) := (others=>'0');
-begin
+c: check
 
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="10") then
-        MEM_DATA <= DBUS;
-      else
-        MEM_DATA <= zero;
-      end if;
-    end if;
-  end process;
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
 
-end rtl;
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
