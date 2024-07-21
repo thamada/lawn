@@ -1,50 +1,34 @@
-2024Âπ¥  7Êúà 13Êó• ÂúüÊõúÊó• 11:16:30 JST
-#include <math.h>
-#define DIM (3)              /* éüå≥êî */
-#define NMAX (65536)         /* ç≈ëÂó±éqêî */
-//#define NTOTAL 1000      /* ó±éqêî (NTOTAL <= NMAX) */
+2024Âπ¥  7Êúà 21Êó• Êó•ÊõúÊó• 11:36:45 JST
+// Time-stamp: "2006-12-07 19:19:07 hamada"
+// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 
-//b3_force_sepaj4.c
-void b3_force_sepaj4(double x[][3],
-		     double m[],
-		     double eps2,
-		     double a[][3],
-		     int n);
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
-//pg_pipe.c
-void force_gravity_on_emulator(double x[][3],
-			       double m[],
-			       double eps2,
-			       double a[][3],
-			       int n);
+unsigned int* ptr;
+unsigned int* bar1;
 
-//force_gravity_on_b3.c
-void force(double x[][3],
-	   double m[],
-	   double eps2,
-	   double a[][3],
-	   int n);
+int main(int argc,char *argv[])
+{
+  int devid = 0;
+  int i;
 
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
 
-//check_pg2emu.c
-void check_pg2emu(long long int a[][3],long long int a_pg2[3],int n);
+  puts("clear DMA_CTRL register(0x2C).");
+  WriteBase0(devid, 0x2C,   0); // 0x2C : DMA_CTRL ... clear
 
+  puts("clear INT_STAT register(0x10).");
+  WriteBase0(devid, 0x10,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
 
-//
-void force_on_host(double x[][DIM], double m[], double eps2, double a[][DIM], int n);
+  puts("clear INT_MASK register(0x14).");
+  WriteBase0(devid, 0x14,   0); // 0x14 : INT_MASK  [1:Enable INT/ 0:Disable INT]
 
-double energy(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
+  pg4_DMAcheck(devid);
 
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n);
-void leapflog_half(double dt,double x[][DIM],double v[][DIM],int n);
-
-void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n);
-void debug_position(double x[][DIM], double dt, int n);
-
-void writelog(double m[], double x[][DIM], double v[][DIM], double eps2, int n);
-
-void init_particles(char* fname,
-		    int* npar,
-		    double mass[],
-		    double posi[][DIM],
-		    double veloc[][DIM]);
+  return 0;
+}
