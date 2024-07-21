@@ -1,7 +1,16 @@
-2024年  7月  7日 日曜日 11:43:20 JST
-classes= 10
-train  = ./etc/list.train.txt
-valid  = ./etc/list.valid.txt
-names =  ./etc/list.classname.txt
-backup = ./backup
+2024年  7月 21日 日曜日 11:57:00 JST
+#!/usr/bin/env python3
 
+import glob
+import sys
+import random
+
+fname = sys.argv[1]
+random.seed()
+
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
