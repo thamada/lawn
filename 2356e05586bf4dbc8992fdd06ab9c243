@@ -1,71 +1,52 @@
-2024年  7月 13日 土曜日 11:23:39 JST
--- 2004/05/13 16:30
--- for matsubayashi simulation
-
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
-
-#define DELAY_SUB 2     /* A */
-#define DELAY_FL  4     /* B */
-#define DELAY_X2Y2 5    /* C */
-#define DELAY_R2   5    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   2    /* I */
-#define DELAY_AC   3    /* J */
-
-#define DELAY_EPS  6    /* A+B */
-#define DELAY_DX   12   /* C+D+E+F */
-#define DELAY_M    17   /* A+B+C+D+E */
-#define DELAY_CLE  22   /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  25   /* (DELAY_CLE) + J */
-
-
-
-
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
-
-/NPIPE 1
-/NVMP 1
-
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
-
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-}
+2024年  7月 21日 日曜日 11:14:45 JST
+set -tmpdir __projnav
+set -xsthdpdir ./xst
+run
+-ifn top.prj
+-ifmt mixed
+-ofn top
+-ofmt NGC
+-p xc2vp70-5-ff1517
+-top top
+-opt_mode Speed
+-opt_level 1
+-iuc NO
+-lso top.lso
+-keep_hierarchy NO
+-glob_opt AllClockNets
+-rtlview Yes
+-read_cores YES
+-write_timing_constraints NO
+-cross_clock_analysis NO
+-hierarchy_separator _
+-bus_delimiter <>
+-case maintain
+-slice_utilization_ratio 100
+-verilog2001 YES
+-vlgincdir 
+-fsm_extract YES -fsm_encoding Auto
+-fsm_style lut
+-ram_extract Yes
+-ram_style Auto
+-rom_extract Yes
+-rom_style Auto
+-mux_extract YES
+-mux_style Auto
+-decoder_extract YES
+-priority_extract YES
+-shreg_extract YES
+-shift_extract YES
+-xor_collapse YES
+-resource_sharing YES
+-mult_style auto
+-iobuf YES
+-max_fanout 500
+-bufg 16
+-register_duplication YES
+-equivalent_register_removal YES
+-register_balancing No
+-slice_packing YES
+-optimize_primitives NO
+-tristate2logic No
+-iob auto
+-slice_utilization_ratio_maxmargin 5
