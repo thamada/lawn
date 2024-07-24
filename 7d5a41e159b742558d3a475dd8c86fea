@@ -1,51 +1,59 @@
-2024年  7月 12日 金曜日 09:11:31 JST
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed.
-# Called by "git commit" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message if
-# it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
+2024年  7月 24日 水曜日 10:05:42 JST
+//-----------------------------------------------------------------------------
+// mk_eight.C:  prints initial conditions for the figure eight
+//              of the three-body problem
+//-----------------------------------------------------------------------------
+#include  <iostream>
+using namespace std;
 
-if git rev-parse --verify HEAD >/dev/null 2>&1
-then
-	against=HEAD
-else
-	# Initial commit: diff against an empty tree object
-	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-fi
+typedef double  real;                      // "real" as a general name for the
+                                           // standard floating-point data type
+#define  NDIM     3                        // number of spatial dimensions
 
-# If you want to allow non-ascii filenames set this variable to true.
-allownonascii=$(git config hooks.allownonascii)
+int main()
+{
+    const int n = 3;           // number of particles
+    const real t = 0;          // time
+    real r[n][NDIM];           // r[i][k] : position component k for particle i
+    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
+    real m[n];                 // m[i] : mass for particle i
 
-# Redirect output to stderr.
-exec 1>&2
+    m[0] = 1;
+    m[1] = 1;
+    m[2] = 1;
 
-# Cross platform projects tend to avoid non-ascii filenames; prevent
-# them from being added to the repository. We exploit the fact that the
-# printable range starts at the space character and ends with tilde.
-if [ "$allownonascii" != "true" ] &&
-	# Note that the use of brackets around a tr range is ok here, (it's
-	# even required, for portability to Solaris 10's /usr/bin/tr), since
-	# the square bracket bytes happen to fall in the designated range.
-	test $(git diff --cached --name-only --diff-filter=A -z $against |
-	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
-then
-	echo "Error: Attempt to add a non-ascii file name."
-	echo
-	echo "This can cause problems if you want to work"
-	echo "with people on other platforms."
-	echo
-	echo "To be portable it is advisable to rename the file ..."
-	echo
-	echo "If you know what you are doing you can disable this"
-	echo "check using:"
-	echo
-	echo "  git config hooks.allownonascii true"
-	echo
-	exit 1
-fi
+    r[0][0] = 0.9700436;
+    r[0][1] = -0.24308753;
+    r[0][2] = 0;
+    v[0][0] = 0.466203685;
+    v[0][1] = 0.43236573;
+    v[0][2] = 0;
 
-# If there are whitespace errors, print the offending file names and fail.
-exec git diff-index --check --cached $against --
+    r[1][0] = -r[0][0];
+    r[1][1] = -r[0][1];
+    r[1][2] = -r[0][2];
+    v[1][0] = v[0][0];
+    v[1][1] = v[0][1];
+    v[1][2] = v[0][2];
+
+    r[2][0] = 0;
+    r[2][1] = 0;
+    r[2][2] = 0;
+    v[2][0] = -2 * v[0][0];
+    v[2][1] = -2 * v[0][1];
+    v[2][2] = -2 * v[0][2];
+
+    cout.precision(16);
+
+    cout << n << endl;                      // first output line:  N
+    cout << t << endl;                      // second output line:  time
+    for (int i = 0; i < n; i++){
+        cout << m[i];                       // each next output line:
+        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
+            cout << ' ' << r[i][k];
+        for (int k = 0; k < NDIM; k++)
+            cout << ' ' << v[i][k];
+        cout << endl;
+    }
+}
+//-----------------------------------------------------------------------------
