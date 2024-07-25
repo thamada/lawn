@@ -1,28 +1,13 @@
-2024年  7月  3日 水曜日 10:06:28 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+2024年  7月 25日 木曜日 10:54:33 JST
+#!/usr/bin/env python3
+# ./mov.py <fps> <start_number>
+import sys
 
-entity dmar_mem_adr is
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmar_mem_adr;
 
-architecture rtl of dmar_mem_adr is
-component dmaw_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end component;
-begin
-  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
-end rtl;
+if __name__ == '__main__':
+	 args = sys.argv
+	 assert len(args) == 3
+	 fps          = int(args[1])
+	 start_number = int(args[2])
+	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
+	 print (cmd)
