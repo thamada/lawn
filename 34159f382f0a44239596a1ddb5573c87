@@ -1,27 +1,32 @@
-2024年  8月 14日 水曜日 10:39:00 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-10 01:52:29 hamada>
-import cv2
-import urllib.request
-import numpy as np
+2024年  8月 25日 日曜日 09:19:46 JST
+/*
+ * pfpga_info.c
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
-#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
-stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-bytes = b''
-while True:
-    raw = stream.read(1024)
-    bytes += raw
-    #print (bytes)
-    a = bytes.find(b'\xff\xd8')
-    b = bytes.find(b'\xff\xd9')
-    if a!=-1 and b!=-1:
-        jpg = bytes[a:b+2]
-        bytes= bytes[b+2:]
-        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
-        cv2.imshow('droidcam',image)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'): break
+#define MAXBD 8
+#include "pg4.h"
 
-cv2.destroyAllWindows()
+int main(int argc, char* argv[])
+{
+  int devid=0;
+  char info[1024];
 
+  pg4_open(devid);
+  pg4_get_pfpga_info(devid, info);
+  pg4_close(devid);
+
+  printf("%s\n", info);
+
+  return 1;
+}
