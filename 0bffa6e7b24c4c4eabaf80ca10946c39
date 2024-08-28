@@ -1,5 +1,15 @@
-2024年  8月 28日 水曜日 09:54:46 JST
-SETPROJECT .
-SET BusFormat = BusFormatAngleBracketNotRipped
-SETXIPCPORTHOST 1271
-XIPCPJSENDCORES virtex2
+2024年  8月 28日 水曜日 11:04:55 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed
+# by applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-applypatch".
+
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-commit" &&
+	exec "$GIT_DIR/hooks/pre-commit" ${1+"$@"}
+:
