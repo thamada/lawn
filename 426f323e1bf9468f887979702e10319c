@@ -1,25 +1,50 @@
-2024年  8月 27日 火曜日 10:32:45 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+2024年  8月 30日 金曜日 09:36:19 JST
+#!/usr/bin/env python3
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import sys
 
-entity dmar_mem_re is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_RE    : out std_logic );
-end dmar_mem_re;
+def put_text(image, text):
+    font_size = 1.0
+    font_type = cv2.FONT_HERSHEY_PLAIN
+    font_color = (0xf, 0xf, 0xff)
+    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
+    
 
-architecture rtl of dmar_mem_re is
-component dmaw_mem_we 
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end component;
-begin
- u0 : dmaw_mem_we port map(CLK=>CLK, STATE=>STATE, MEM_WE=>MEM_RE);
-end rtl;
+
+if (__name__ == '__main__'):
+    argv = sys.argv
+    devid = int(argv[1])
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+    tnow0 = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('frame', frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        if(tnow != tnow0):
+            put_text(frame, tnow)
+            ofname = mkdir.get_filename_frame('../log/', tnow)
+#            cv2.imwrite(ofname, frame)
+            print(ofname, ": TEST on devid=%d"%devid)
+            tnow0 = tnow
+ 
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
