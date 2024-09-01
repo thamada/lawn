@@ -1,38 +1,34 @@
-2024年  8月 28日 水曜日 09:07:00 JST
+2024年  9月  1日 日曜日 09:10:24 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+--clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+--[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+--dmaw_state          0  >< 1 >< 2                                    >< 3 >< 0 
+--dmaw_start_adr               < n                                         >< 0
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
 
-
-entity WRITECOMB_CHECK is
+entity dmaw_start_adr is
   port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end WRITECOMB_CHECK;
+    CLK       : in std_logic;
+    DBUS      : in std_logic_vector(63 downto 0);
+    STATE     : in std_logic_vector(1 downto 0);
+    START_ADR : out std_logic_vector(18 downto 0) );
+end dmaw_start_adr;
 
-architecture rtl of WRITECOMB_CHECK is
-
-signal cnt,cntr : std_logic_vector(25 downto 0) := (others=>'0');
-
+architecture rtl of dmaw_start_adr is
+constant zero : std_logic_vector(18 downto 0) := (others=>'0');
 begin
 
-  IS_ERR <= cnt;
-
-  cntr <= cnt;
-
-  process(CLK, RST, MEM_WEHA, MEM_WELA) begin
-    if(RST = '1') then
-      cnt <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(MEM_WEHA='1' AND MEM_WELA='0') then
-        cnt <= cntr + "00000000000000000000000001";
-      elsif(MEM_WEHA='0' AND MEM_WELA='1') then
-        cnt <= cntr + "00000000000000000000000001";
+  process (CLK,STATE) begin
+    if(CLK'event and CLK = '1') then
+      if(STATE="01") then
+        START_ADR <= DBUS(18 downto 0);
+      elsif((STATE="00") OR (STATE="11")) then
+        START_ADR <= zero;
       end if;
     end if;
   end process;
