@@ -1,47 +1,69 @@
-2024年  8月 25日 日曜日 11:41:51 JST
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+2024年  9月  4日 水曜日 09:20:02 JST
+-- Copyright (c) by PGR project
+-- All rights reserved.
+-- Auther Tsuyoshi Hamada
+-- for JDIM=4 (JDATA_WIDTH =< 128)
+-- but DEPTH=16384
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-/*
- * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+entity jmem is
+  port (
+    rst        : in  std_logic; -- not used
+    we         : in  std_logic;
+    wclk       : in  std_logic;
+    wadr       : in  std_logic_vector(15 downto 0);
+    rclk       : in  std_logic;
+    radr       : in  std_logic_vector(15 downto 0);
+    idata      : in  std_logic_vector(63 downto 0);
+    odata      : out  std_logic_vector(127 downto 0)  -- for G5
+--  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
+--  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+  );
+end jmem;
 
-#include "pg4.h"
+architecture rtl of jmem is
 
-int main(int argc, char* argv[])
-{
-  int devid  = 0;
-  int bar    = 0;
-  int is_size = 0;
-  unsigned long z = 0;
+component dpram
+	port (
+	wadr: IN std_logic_VECTOR(13 downto 0);
+	radr: IN std_logic_VECTOR(13 downto 0);
+	wclk: IN std_logic;
+	rclk: IN std_logic;
+	din: IN std_logic_VECTOR(63 downto 0);
+	dout: OUT std_logic_VECTOR(63 downto 0);
+	we: IN std_logic);
+end component;
 
-  if (argc < 3) {
-    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
-    exit(-1);
-  }
-  
-  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
+signal we0,we1,we2,we3 : std_logic;
+signal adr0,adr1,nadr0,nadr1 : std_logic;
 
-  devid = atoi(argv[1]);
-  bar   = atoi(argv[2]);
-  
-  pg4_open(devid);
+begin
 
-  if(is_size)
-    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
-  else
-    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
+adr0  <= wadr(0);
+nadr0 <= NOT wadr(0);
 
-  printf("0x%08lx\n",z);
-  pg4_close(devid);
+we0  <= we and nadr0;  -- we & wadr(0)="0"
+we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-  return 1;
-}
+u0 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata,
+      dout=> odata(63 downto 0),
+      we  => we0);
+
+u1 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata, 
+      dout=> odata(127 downto 64),
+      we  => we1);
+
+end rtl;
