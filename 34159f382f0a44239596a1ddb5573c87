@@ -1,127 +1,261 @@
-2024年  9月  4日 水曜日 10:23:16 JST
-//-------------------------
-#define NMAX (1<<17)
-#include <cstdio>
-#include <cstdlib>
-#define USE_CUDA_MALLOC_HOST (yes)
-#define IDIM (4)
-#define JDIM (4)
-#define FDIM (3)
-#define NJ_SHMEM (NTHRE)
+2024年  9月  7日 土曜日 09:37:24 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-12 07:43:27 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
 
-float4* h_xj;
-float* h_xi;
-float* h_fo;
-float4* d_xj;
-float* d_xi;
-float* d_fo;
+class State(object):
+    def __init__(self):
+        self.is_record = False
+        self.drawing = False
+        self.moving = False
+        self.posi0 = [-1,-1]
+        self.posi1 = [-1,-1]
+        self.posi2 = [-1,-1]
+        self.image = -1
+        self.image_size = [-1, -1] # [height, width]
+        self.image_orig = -1
+        self.class_num = 777
+        self.image_num = 0
 
-extern "C" void 
-force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj)
-{
-  static bool is_open = false;
-  int devid = 0;
-  int ndev;
-  int nj1 = ((nj+NJ_SHMEM-1)/NJ_SHMEM)*NJ_SHMEM;
+    def draw_rect(self):
+        # print ("posi0, posi1: ", self.posi0, self.posi1)
+        cv2.rectangle(self.image, (self.posi0[0], self.posi0[1]), (self.posi1[0], self.posi1[1]), (0, 255, 0), 1)
 
-  if( ni > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" ni > %d : ni=%d\n",ni, NMAX);
-    exit(-1);
-  }
+    def draw_text(self):
+        if(self.is_record):
+            font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN
+            font_size = 0.8
+            text = "<<%d>>"% (self.image_num)
+            color = (0x0, 0x0, 0xBF)
+            px = int(self.image_size[1]/2)
+            py = 30
+            cv2.putText(self.image, text,(px, py), font, font_size, color)
 
-  if( nj > NMAX ){
-    printf("ERROR %s|%d\n",__FILE__, __LINE__);
-    printf(" nj > %d : nj=%d\n",nj, NMAX);
-    exit(-1);
-  }
+state = State()
 
-  unsigned int ip_size = sizeof(float) * ni * IDIM;
-  unsigned int jp_size = sizeof(float4) * nj1;
-  unsigned int fo_size = sizeof(float) * ni * FDIM;
+def mouse_event(event,x,y,flags,param):
+    global state
 
-  if(is_open == false){
-    char gpu_name[256];
-    CUDA_SAFE_CALL(cudaSetDevice(devid));
-    CUDA_SAFE_CALL(cudaGetDeviceCount(&ndev));
-    if(ndev == 0){
-      fprintf(stdout, "ndev = %d @ %s|%d\n", ndev, __FILE__, __LINE__);
-      exit(-1);
-    }else{
-      int dev = devid;
-      cudaDeviceProp deviceProp;
-      CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, dev));
-      if (deviceProp.major == 9999 && deviceProp.minor == 9999){
-	printf("There is no device supporting CUDA.\n");
-      }
-      fprintf(stderr, "  GPU : %s\n", deviceProp.name);
-      sprintf(gpu_name,"%s", deviceProp.name);
-    }
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
 
-    unsigned int _nmax = NMAX;
-    unsigned int _ip_size = sizeof( float) * _nmax * IDIM;
-    unsigned int _jp_size = sizeof(float4) * _nmax;
-    unsigned int _fo_size = sizeof(float) * _nmax * FDIM;
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
 
-#if defined(USE_CUDA_MALLOC_HOST)
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xj, _jp_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_xi, _ip_size)  );
-    CUDA_SAFE_CALL(  cudaMallocHost( (void**)&h_fo, _fo_size)  );
-#else
-    h_xj = (float4*) malloc(_jp_size);
-    h_xi = (float*)  malloc(_ip_size);
-    h_fo = (float*)  malloc(_fo_size);
-#endif
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xj, _jp_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_xi, _ip_size));
-    CUDA_SAFE_CALL( cudaMalloc( (void**) &d_fo, _fo_size));
-    for(int i = 0; i < _nmax ; i++) h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-    CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, _jp_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xj, _ip_size, cudaMemcpyHostToDevice) );
-    CUDA_SAFE_CALL( cudaMemcpy( d_fo, h_xj, _fo_size, cudaMemcpyHostToDevice) );
-    fprintf(stderr, "open %s by CUNBODY-1 library: rev.hamada20080905  (^<_^)/ %d\n", gpu_name, devid);
-    is_open = true;
-  }
-  for(int i = 0; i < nj; i++){
-    h_xj[i].x = (float) xj[i][0];
-    h_xj[i].y = (float) xj[i][1];
-    h_xj[i].z = (float) xj[i][2];
-    h_xj[i].w = (float) mj[i];
-    //    printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-  }
-  if(nj < nj1){
-    for(int i = nj; i < nj1; i++){
-      h_xj[i] = make_float4(0.0, 0.0, 0.0, 0.0);
-      //      printf("h_xj:%d\t%e\t%e\t%e\t%e\n",i, h_xj[i].x, h_xj[i].y, h_xj[i].z, h_xj[i].w );
-    }
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xj, h_xj, jp_size, cudaMemcpyHostToDevice) );
-  for(int i = 0; i < ni; i++){
-    h_xi[i     ] = (float) xi[i][0];
-    h_xi[i+ni  ] = (float) xi[i][1];
-    h_xi[i+ni*2] = (float) xi[i][2];
-    h_xi[i+ni*3] = (float) eps2;
-    //    printf("h_xi:%d\t%e\t%e\t%e\t%e\n",i, h_xi[i], h_xi[i+ni], h_xi[i+ni*2], h_xi[i+ni*3] );
-  }
-  CUDA_SAFE_CALL( cudaMemcpy( d_xi, h_xi, ip_size, cudaMemcpyHostToDevice) );
+    if event == (cv2.EVENT_RBUTTONDOWN): 
+        state.moving = True
+        state.posi2[0] = x
+        state.posi2[1] = y
 
-  //  printf("Nj=%d\n",nj1);
-  /*
-  dim3 grid((ni+NTHRE)/NTHRE);
-  dim3 threads  (NTHRE);
-  */
-  //  printf("------------------------ %d, %d\n",ni, nj1);
-  dim3 grid(ni/128);
-  dim3 threads  (128);
-  kernel<<< grid, threads >>>(d_xj, d_xi, d_fo, ni, nj1);
-  CUT_CHECK_ERROR("Kernel execution failed");
+    if event == (cv2.EVENT_RBUTTONUP): 
+        state.moving = False
+        state.posi2[0] = x
+        state.posi2[1] = y
+    
 
-  CUDA_SAFE_CALL( cudaMemcpy( h_fo, d_fo, fo_size, cudaMemcpyDeviceToHost) );
+    if event == (cv2.EVENT_MOUSEMOVE):
+        if state.moving == True:
+            width  = abs(state.posi0[0] - state.posi1[0])
+            height = abs(state.posi0[1] - state.posi1[1])
+            x0 = x - int(width/2)
+            x1 = x + int(width/2)
+            y0 = y - int(height/2)
+            y1 = y + int(height/2)
 
-  for(int i=0;i<ni; i++){
-    a[i][0] = (double)h_fo[i];
-    a[i][1] = (double)h_fo[i+ni];
-    a[i][2] = (double)h_fo[i+ni*2];
-    //    printf("a:%d\t%e\t%e\t%e\n",i, h_fo[i], h_fo[i+ni], h_fo[i+ni*2] );
-  }
-}
+            x_min = min(x0, x1)
+            x_max = max(x0, x1)
+            y_min = min(y0, y1)
+            y_max = max(y0, y1)
+
+            if x_min < 0: x_min = 0
+            if y_min < 0: y_min = 0
+            if x_max >= state.image_size[1]: x_max = state.image_size[1] - 1
+            if y_max >= state.image_size[0]: y_max = state.image_size[0] - 1
+
+            state.posi0[0] = x_min
+            state.posi0[1] = y_min
+            state.posi1[0] = x_max
+            state.posi1[1] = y_max
+
+def __mouse_event(event,x,y,flags,param):
+    global state
+
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x >= state.image_size[1]: x = state.image_size[1] - 1
+    if y >= state.image_size[0]: y = state.image_size[0] - 1
+
+
+    if event == (cv2.EVENT_LBUTTONDOWN):
+        state.posi0[0] = x0 = state.posi1[0]
+        state.posi0[1] = y0 = state.posi1[1]
+        state.posi1[0] = x
+        state.posi1[1] = y
+        print ("Rect: (%d, %d) - (%d, %d)"%(x0, y0, x, y) )
+
+#------------------------------------------------------------------------ save_data
+def save_data_bbox(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%08d" % fnum
+
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
+
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
+
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
+
+def save_data_darknet(image_dbg, image_orig, fnum):
+    global state
+    class_num = state.class_num
+    posi0 = state.posi0
+    posi1 = state.posi1
+    basedir = '../data4darknet/'
+    fname_body = "image_%08d" % fnum
+
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    #print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
+
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    #print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
+
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    
+    label_format = 'BBox'
+    label_format = 'darknet'
+
+    if label_format == 'BBox': 
+        with open(ofname_labels, "w") as file:
+            file.write("1\n")
+            file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
+
+    if label_format == 'darknet': 
+        img_h, img_w = image_orig.shape[:2]
+        dh = float(img_h)
+        dw = float(img_w)
+        x0 = bbox_posi[0]
+        y0 = bbox_posi[1]
+        x1 = bbox_posi[2]
+        y1 = bbox_posi[3]
+        dnet_x = (x0 + x1)/(2.0*dw)
+        dnet_y = (y0 + y1)/(2.0*dh)
+        dnet_w = (x1 - x0)/dw
+        dnet_h = (y1 - y0)/dh
+        with open(ofname_labels, "w") as file:
+            file.write("0 %1.17f %1.17f %1.17f %1.17f\n" % (dnet_x, dnet_y, dnet_w, dnet_h))
+
+
+def save_data(image_dbg, image_orig, fnum, label_format='darknet'):
+    if False:                      save_data_bbox(image_dbg, image_orig, fnum)
+    if label_format == 'darknet': save_data_darknet(image_dbg, image_orig, fnum)
+
+#------------------------------------------------------------------------ save_data./
+
+if (__name__ == '__main__'):
+
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        state.image_orig = frame.copy()
+        state.image      = frame.copy()
+        state.image_size[0], state.image_size[1] = frame.shape[:2]
+        state.draw_rect()
+        state.draw_text()
+        cv2.imshow("THBox-Auto.py", state.image)
+        cv2.setMouseCallback("THBox-Auto.py", mouse_event)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            if False:
+                basedir = '../log.%d/'% (devid)
+                ofname = mkdir.get_filename_frame(basedir, tnow)
+                cv2.imwrite(ofname, state.image)
+                print(ofname, "devid = %d, image_num = %d"%(devid, state.image_num))
+                tnow0 = tnow
+            save_data(state.image, state.image_orig, state.image_num)
+            state.image_num += 1
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if ( (key == ord(' ')) or 
+             (key == 34) or # Muhenkan
+             (key == 35) or # Henkan
+             (key == 39) or # katakana
+             (key == 10)    # Enter
+        ):
+            state.is_record = not (state.is_record)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
