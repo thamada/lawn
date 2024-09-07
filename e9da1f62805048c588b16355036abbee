@@ -1,16 +1,16 @@
-2024年  9月  7日 土曜日 10:13:42 JST
-#!/usr/bin/env python3
+2024年  9月  7日 土曜日 10:48:10 JST
+/** 
+# v��1/2���ƥå׿ʤ��
+# v(k+1/2) = v(k) + a(k)*dt/2
+*/
 
-import glob
-import sys
-import random
+#include <stdio.h>
+#include "nbodysim.h"
 
-fname = sys.argv[1]
-random.seed()
-
-with open(fname, "r") as fd:
-    lines = fd.readlines()
-    random.shuffle(lines)
-    for l in lines:
-        l = l.replace("\n",'')
-        print (l)
+void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+      for(d=0;d<3;d++)
+	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
+}
