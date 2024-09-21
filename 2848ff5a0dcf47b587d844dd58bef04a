@@ -1,11 +1,17 @@
-2024年  9月 21日 土曜日 10:18:35 JST
-Meiji Choco
-TIROL choco
-Can BOSS
-Keikoto
-Goo
-Choki
-Pa
-ID.0007
-ID.0008
-ID.0009
+2024年  9月 21日 土曜日 11:20:54 JST
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
