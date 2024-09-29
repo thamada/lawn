@@ -1,71 +1,57 @@
-2024å¹´  9æœˆ 18æ—¥ æ°´æ›œæ—¥ 11:39:22 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-05 14:28:33 hamada>
-import numpy as np
-import cv2
+2024å¹´  9æœˆ 29æ—¥ æ—¥æ›œæ—¥ 11:37:06 JST
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;                                        
+use ieee.std_logic_unsigned.all;                                    
 
-class Message(object):
-    def __init__(self):
-        self.class_num = 80
-        self.last = [0 for i in range(8)]
-        self.log_previous = ''
-        self.is_update = False
-#        self.filename = '/dev/shm/log.txt'
-        self.filename = '/tmp/log.draw_detections.txt'
-        self.class_count = []
+entity pipe_sts is
+  port (
+    rst        : in  std_logic;
+    clk        : in  std_logic;
+    run        : in  std_logic;
+    runret     : in  std_logic;
+    status     : out std_logic_vector(31 downto 0)
+  );
+end pipe_sts;
 
-    def reset(self):
-        self.is_update = False
-        self.class_count = [0 for i in range(self.class_num)]
-        self.get_classId()
-        self.class_count = [0 for i in range(self.class_num)]
+architecture rtl of pipe_sts is
+signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
+signal rund,sts : std_logic;
+signal cntr : std_logic_vector(7 downto 0);
+signal irun : std_logic := '0';
 
-    def get_message(self):
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            l = lines[-2]
-            l = l.rstrip()
-            cols = l.split(' ')
-            if cols[0] != self.last[0]:
-                self.last = cols
-                self.is_update = True
-            else:
-                self.is_update = False
-        
+begin
 
-    def check_log_update(self):
-        self.is_update = False
-        with open(self.filename, 'r') as fh:
-            lines = fh.readlines()
-            current = lines[-2]
-            if current != self.log_previous:
-                self.is_update = True
-                self.log_previous = current
-        return (self.is_update)
+-- clk    ____~~~~____~~~~____~~~~____~~~~__
+-- runret _____~~~~~~~~_____________________
+-- rund   _____________~~~~~~~~_____________
+-- status                      <finish     >
 
-    def scan_object(self, cl_name):
-        is_detect = False
+-- status
+status(31 downto 8) <= (others=>'0');
+process(clk,rst) begin
+  if(rst='1') then
+    status(7 downto 0) <= (others=>'1');
+  elsif(clk'event and clk='1') then
+    if((runret='0') AND (rund='1')) then  -- ŒvZI—¹
+      status(7 downto 0) <= (others=>'1');
+    elsif((run='1') AND (irun='0')) then -- ŒvZŠJn
+      status(7 downto 0) <= (others=>'0');
+    end if;
+  end if;
+end process;
 
-        if self.check_log_update():
-            with open(self.filename, 'r') as fh:
-                lines = fh.readlines()
-                for i in range(2, 20):
-                    l = lines[-i]
-                    l = l.rstrip()
-                    cols = l.split(' ')
-                    if cols[-1] == cl_name:
-                        is_detect = True
+process(clk) begin
+  if(clk'event and clk='1') then
+    rund  <= runret;
+  end if;
+end process;
 
-        return (is_detect)
+process(clk) begin
+  if(clk'event and clk='1') then
+    irun  <= run;
+  end if;
+end process;
 
-    def get_classId(self):
-        self.get_message()
 
-        if True == self.is_update:
-            z = int(self.last[1])
-            self.class_count[z] += 1
-        else:
-            z = -1
-
-        return (z)
-
+end rtl;
