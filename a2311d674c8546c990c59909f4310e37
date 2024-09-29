@@ -1,186 +1,138 @@
-2024Âπ¥  9Êúà 18Êó• Ê∞¥ÊõúÊó• 10:53:46 JST
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
--- VHDL Test Bench created by
--- HDL Bencher 6.1i
--- Sun Jan 02 23:14:58 2005
--- 
--- Notes:
--- 1) This testbench has been automatically generated from
---   your Test Bench Waveform
--- 2) To use this as a user modifiable testbench do the following:
---   - Save it as a file with a .vhd extension (i.e. File->Save As...)
---   - Add it to your project as a testbench source (i.e. Project->Add Source...)
--- 
+2024Âπ¥  9Êúà 29Êó• Êó•ÊõúÊó• 10:27:47 JST
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_TEXTIO.ALL;
-USE STD.TEXTIO.ALL;
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
 
-ENTITY sim_local_write IS
-END sim_local_write;
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- ÉäÉZÉbÉg
+    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
+    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
+    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
+  );
+end dcm_ps_f;
 
-ARCHITECTURE testbench_arch OF sim_local_write IS
--- If you get a compiler error on the following line,
--- from the menu do Options->Configuration select VHDL 87
-FILE RESULTS: TEXT OPEN WRITE_MODE IS "results.txt";
-	COMPONENT local_write
-		PORT (
-			MEM_AD : In  std_logic_vector (16 DOWNTO 0);
-			MEM_WE : In  std_logic;
-			MEM_DTI : In  std_logic_vector (63 DOWNTO 0);
-			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
-			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
-			RST : In  std_logic;
-			CLK : In  std_logic
-		);
-	END COMPONENT;
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
 
-	SIGNAL MEM_AD : std_logic_vector (16 DOWNTO 0);
-	SIGNAL MEM_WE : std_logic;
-	SIGNAL MEM_DTI : std_logic_vector (63 DOWNTO 0);
-	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
-	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
-	SIGNAL RST : std_logic;
-	SIGNAL CLK : std_logic;
+--------------------------------------------------
+-- Components
+--------------------------------------------------
 
-BEGIN
-	UUT : local_write
-	PORT MAP (
-		MEM_AD => MEM_AD,
-		MEM_WE => MEM_WE,
-		MEM_DTI => MEM_DTI,
-		DMAW_ENABLE => DMAW_ENABLE,
-		DBUS_Port => DBUS_Port,
-		RST => RST,
-		CLK => CLK
-	);
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
+end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
 
-	PROCESS -- clock process for CLK,
-	BEGIN
-		CLOCK_LOOP : LOOP
-		CLK <= transport '0';
-		WAIT FOR 5 ns;
-		CLK <= transport '1';
-		WAIT FOR 50 ns;
-		CLK <= transport '0';
-		WAIT FOR 35 ns;
-		WAIT FOR 10 ns;
-		END LOOP CLOCK_LOOP;
-	END PROCESS;
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
 
-	PROCESS   -- Process for CLK
-		VARIABLE TX_OUT : LINE;
-		VARIABLE TX_ERROR : INTEGER := 0;
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
 
-		PROCEDURE CHECK_DMAW_ENABLE(
-			next_DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (DMAW_ENABLE /= next_DMAW_ENABLE) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("ns DMAW_ENABLE="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DMAW_ENABLE);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
+signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
 
-		PROCEDURE CHECK_DBUS_Port(
-			next_DBUS_Port : std_logic_vector (63 DOWNTO 0);
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			-- If compiler error ("/=" is ambiguous) occurs in the next line of code
-			-- change compiler settings to use explicit declarations only
-			IF (DBUS_Port /= next_DBUS_Port) THEN 
-				STD.TEXTIO.write(TX_LOC,string'("Error at time="));
-				STD.TEXTIO.write(TX_LOC, TX_TIME);
-				STD.TEXTIO.write(TX_LOC,string'("ns DBUS_Port="));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
-				STD.TEXTIO.write(TX_LOC, string'(", Expected = "));
-				IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, next_DBUS_Port);
-				STD.TEXTIO.write(TX_LOC, string'(" "));
-				TX_STR(TX_LOC.all'range) := TX_LOC.all;
-				STD.TEXTIO.writeline(results, TX_LOC);
-				STD.TEXTIO.Deallocate(TX_LOC);
-				ASSERT (FALSE) REPORT TX_STR SEVERITY ERROR;
-				TX_ERROR := TX_ERROR + 1;
-			END IF;
-		END;
+begin
 
-		BEGIN
-		-- --------------------
-		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
-		MEM_WE <= transport '0';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
-		RST <= transport '0';
-		-- --------------------
-		WAIT FOR 500 ns; -- Time=500 ns
-		MEM_AD <= transport std_logic_vector'("01100000000000000"); --C000
-		MEM_WE <= transport '1';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000001000100010001"); --1111
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=600 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000010001000100010"); --2222
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=700 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000011001100110011"); --3333
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=800 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000100010001000100"); --4444
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=900 ns
-		MEM_WE <= transport '0';
-		-- --------------------
-		WAIT FOR 800 ns; -- Time=1700 ns
-		MEM_AD <= transport std_logic_vector'("01000000000000000"); --8000
-		MEM_WE <= transport '1';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000101010111100110111101111"); --ABCDEF
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=1800 ns
-		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
-		MEM_WE <= transport '0';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
-		-- --------------------
-		WAIT FOR 1205 ns; -- Time=3005 ns
-		-- --------------------
+-- *********************************************************************
+-- å≈íËêMçÜ
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0å≈íËêMçÜ
 
-		IF (TX_ERROR = 0) THEN 
-			STD.TEXTIO.write(TX_OUT,string'("No errors or warnings"));
-			STD.TEXTIO.writeline(results, TX_OUT);
-			ASSERT (FALSE) REPORT
-				"Simulation successful (not a failure).  No problems detected. "
-				SEVERITY FAILURE;
-		ELSE
-			STD.TEXTIO.write(TX_OUT, TX_ERROR);
-			STD.TEXTIO.write(TX_OUT, string'(
-				" errors found in simulation"));
-			STD.TEXTIO.writeline(results, TX_OUT);
-			ASSERT (FALSE) REPORT
-				"Errors found during simulation"
-				SEVERITY FAILURE;
-		END IF;
-	END PROCESS;
-END testbench_arch;
 
-CONFIGURATION local_write_cfg OF sim_local_write IS
-	FOR testbench_arch
-	END FOR;
-END local_write_cfg;
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ÉäÉZÉbÉg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
+    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
+
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
+    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
+  );
+
+end rtl;
