@@ -1,91 +1,91 @@
-2024年  9月 19日 木曜日 09:54:16 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ENABLE]    _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+2024年  9月 29日 日曜日 10:42:52 JST
+//-----------------------------------------------------------------------------
+// Output Pair-Wise Error
+// Modify: Tsuyoshi Hamada, Nov, 2006
+//-----------------------------------------------------------------------------
+#include  <iostream>
+#include  <cmath>
+#include  <cstdlib>
+#include  <iomanip> // cout << setw() << setprecision() 
+using namespace std;
 
---  ena0      _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---  ena1           _______/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---[ DBUS ]          >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- acnt                0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_ADR                   0 >< n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>< 0
---MEM_DATA                     <d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---MEM_WE                   ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
 
-entity dmaw is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    MEM_WE    : out std_logic;
-    MEM_ADR   : out std_logic_vector(18 downto 0);
-    MEM_DATA  : out std_logic_vector(63 downto 0)   );
-end dmaw;
+#define NMAX 1024
 
-architecture rtl of dmaw is
+double rsv[65536][3];
 
-signal ena0,ena1,ena2,ena3,ena4 : std_logic :='0';
-signal acnt,acntr : std_logic_vector(18 downto 0) :=(others=>'0');
-signal we : std_logic :='0';
+int main(int argc, char *argv[]) {
+  int index;
+  int n = 2;
 
-begin
+  double m[NMAX];
+  double r[NMAX][3];
+  double v[NMAX][3];
 
-  -- MEM_DATA --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_DATA <= DBUS;
-    end if;
-  end process;
+  double p[NMAX];
+  double a[NMAX][3];
+  double jk[NMAX][3];
 
-  -- MEM_WE --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_WE <= ena1;
-    end if;
-  end process;
+  double _p[NMAX];
+  double _a[NMAX][3];
+  double _jk[NMAX][3];
 
-  -- MEM_ADR --
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      MEM_ADR <= acnt;
-    end if;
-  end process;
+  m[0] = m[1] = 1.0;
 
-  -- acnt
-  acntr <= acnt;
-  process (RST,CLK,ena0,ena1) begin
-    if(RST = '1') then
-      acnt  <= (others=>'0');
-    elsif(CLK'event and CLK = '1') then
-      if((ena0='1') AND (ena1='0')) then
-        acnt <= DBUS(18 downto 0);
-      elsif((ena0='1') AND (ena1='1')) then
-        acnt <= acntr + "0000000000000000001";
-      else
-        acnt <= (others=>'0');
-      end if;
-    end if;
-  end process;
+  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
+  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
+  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
+
+  index=0;
+  srand(0x12345);
+
+  for (int t = 0; t < 1000 ; t++){
+    
+
+    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
 
 
 
-  -- ENABLE delays
-  ena0 <= ENABLE;
-  process (CLK) begin
-    if(CLK'event and CLK = '1') then
-      ena4 <= ena3;
-      ena3 <= ena2;
-      ena2 <= ena1;
-      ena1 <= ena0;
-    end if;
-  end process;
+    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
+
+    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
+    index++;
 
 
-end rtl;
+    _force(r, v, m, _p, _a, _jk, n);
+     force(r, v, m,  p,  a,  jk, n);
+
+     double err_p, err_a[3], err_jk[3];
+     double rad;
+     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
+     err_p = fabs(p[0]-_p[0])/_p[0];
+
+    
+     for (int k = 0; k < 3; k++){
+       double host  = _a[0][k];
+       double pipe  =  a[0][k];
+       double err = sqrt((host - pipe)*(host - pipe))/host;
+
+       cout << setw(8);
+       cout.precision(6);
+       cout << rad  << "\t";
+       cout.precision(6);
+       cout << err  << "\t";
+       cout.precision(6);
+       cout << host << "\t";
+       cout.precision(6);
+       cout << pipe << endl;
+
+     }
+
+  }
+  
+
+  debug_position_snap(rsv, 123.456, index, 10);
+
+  return 0;
+}
