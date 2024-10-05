@@ -1,71 +1,231 @@
-2024年  9月 19日 木曜日 11:32:22 JST
-#Time-stamp: <2017-06-23 16:16:23 hamada>
+2024年 10月  5日 土曜日 09:59:42 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Tue Jan 04 15:15:30 2005
 
-CONFIG=./etc/config.txt
-MODEL=./etc/model.txt
-WEIGHTS=./backup/m10_150000.weights
-LOGFILE=./log.2gpu
-GPUID= -gpus 0,1
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-all:
-	@echo 'make run'
+ENTITY sim_local_read_cnt IS
+END sim_local_read_cnt;
 
-r: run
+ARCHITECTURE testbench_arch OF sim_local_read_cnt IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read_cnt.ano";
+	COMPONENT local_read_cnt
+		GENERIC (
+			CNT_WIDTH : INTEGER;
+			FO_BASE : INTEGER;
+			NBIT_FO_UAD : INTEGER;
+			INTF_LAT : INTEGER
+		);
+		PORT (
+			NPIPE : In  std_logic_vector (7 DOWNTO 0);
+			CALC_DONE : In  std_logic;
+			BUSY : Out  std_logic;
+			EXEC : Out  std_logic;
+			START_AD : Out  std_logic_vector (18 DOWNTO 0);
+			NQWORD : Out  std_logic_vector (8 DOWNTO 0);
+			CHIPSEL : Out  std_logic_vector (3 DOWNTO 0);
+			MEM_AD_BASE : Out  std_logic_vector (12 DOWNTO 0);
+			BUSY_IF : In  std_logic;
+			RST : In  std_logic;
+			CLK : In  std_logic
+		);
+	END COMPONENT;
 
-run:
-	./darknet detector train ${CONFIG} ${MODEL} ${WEIGHTS} ${GPUID} 2>&1 | tee ${LOGFILE}
+	SIGNAL NPIPE : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CALC_DONE : std_logic;
+	SIGNAL BUSY : std_logic;
+	SIGNAL EXEC : std_logic;
+	SIGNAL START_AD : std_logic_vector (18 DOWNTO 0);
+	SIGNAL NQWORD : std_logic_vector (8 DOWNTO 0);
+	SIGNAL CHIPSEL : std_logic_vector (3 DOWNTO 0);
+	SIGNAL MEM_AD_BASE : std_logic_vector (12 DOWNTO 0);
+	SIGNAL BUSY_IF : std_logic;
+	SIGNAL RST : std_logic;
+	SIGNAL CLK : std_logic;
 
-run.1gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0 2>&1 |tee log.1gpu
+BEGIN
+	UUT : local_read_cnt
+	GENERIC MAP (
+		CNT_WIDTH => 16,
+		FO_BASE => 24576,
+		NBIT_FO_UAD => 3,
+		INTF_LAT => 8
+	)
+	PORT MAP (
+		NPIPE => NPIPE,
+		CALC_DONE => CALC_DONE,
+		BUSY => BUSY,
+		EXEC => EXEC,
+		START_AD => START_AD,
+		NQWORD => NQWORD,
+		CHIPSEL => CHIPSEL,
+		MEM_AD_BASE => MEM_AD_BASE,
+		BUSY_IF => BUSY_IF,
+		RST => RST,
+		CLK => CLK
+	);
 
-run.2gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./etc/zero.weights -gpus 0,1 2>&1 |tee log.2gpu
+	PROCESS -- clock process for CLK,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-run.4gpu:
-	./darknet detector train ./etc/config.txt ./etc/model.txt ./backup/model_80000.weights -gpus 0,1,2,3 2>&1 |tee log.4gpu
+		PROCEDURE ANNOTATE_BUSY(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_EXEC(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",EXEC,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, EXEC);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_START_AD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",START_AD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, START_AD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-demo:
-	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_680000.weights http://192.168.101.160:3389/video?dummy=param.mjpg -thresh .15
-#	./darknet detector demo ./etc/config.txt ./etc/model.inference.txt ./backup/model_20000.weights http://192.168.42.129:3389/video?dummy=param.mjpg -thresh .55
+		PROCEDURE ANNOTATE_NQWORD(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",NQWORD,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, NQWORD);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_CHIPSEL(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CHIPSEL,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CHIPSEL);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-photo:
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -120 ./etc/list.valid.txt|tail -1` -thresh .55
-	./darknet detector test ./etc/config.txt ./etc/model.inference.txt ./backup/model_final.weights `head -1 ./etc/list.valid.txt` -thresh .55
+		PROCEDURE ANNOTATE_MEM_AD_BASE(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",MEM_AD_BASE,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_AD_BASE);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+	BEGIN
+		CLOCK_LOOP : LOOP
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '1';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		ANNOTATE_BUSY(TX_TIME);
+		ANNOTATE_EXEC(TX_TIME);
+		ANNOTATE_START_AD(TX_TIME);
+		ANNOTATE_NQWORD(TX_TIME);
+		ANNOTATE_CHIPSEL(TX_TIME);
+		ANNOTATE_MEM_AD_BASE(TX_TIME);
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		CLK <= transport '0';
+		WAIT FOR 25 ns;
+		TX_TIME := TX_TIME + 25;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-clean:
-	rm -rf bad.list .*~ *~ ./predictions.jpg
-	rm -rf backup/model*
+	PROCESS   -- Process for CLK
+		VARIABLE TX_OUT : LINE;
 
+		BEGIN
+		-- --------------------
+		CALC_DONE <= transport '0';
+		BUSY_IF <= transport '0';
+		RST <= transport '0';
+		NPIPE <= transport std_logic_vector'("00000000"); --0
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=100 ns
+		NPIPE <= transport std_logic_vector'("00000010"); --2
+		-- --------------------
+		WAIT FOR 500 ns; -- Time=600 ns
+		CALC_DONE <= transport '1';
+		-- --------------------
+		WAIT FOR 100 ns; -- Time=700 ns
+		CALC_DONE <= transport '0';
+		-- --------------------
+		WAIT FOR 32225 ns; -- Time=32925 ns
+		-- --------------------
 
-c: clean
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
 
-
-0.check:
-	cd backup/;md5sum --check md5sum.txt
-
-check:
-	grep ID.000[0-3] etc/all.txt |wc -l
-	grep ID.0004 etc/all.txt |wc -l
-	grep ID.0005 etc/all.txt |wc -l
-	grep ID.0006 etc/all.txt |wc -l
-	grep ID.000[7-9] etc/all.txt |wc -l
-	grep ID.0004 etc/list.train.txt |wc -l
-	grep ID.0005 etc/list.train.txt |wc -l
-	grep ID.0006 etc/list.train.txt |wc -l
-	grep ID.0004 etc/list.valid.txt |wc -l
-	grep ID.0005 etc/list.valid.txt |wc -l
-	grep ID.0006 etc/list.valid.txt |wc -l
-
-check.iou:
-	\rm -f IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_100000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_200000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_260000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_320000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_350000.weights  2>&1 |tee -a IOU.txt
-	./darknet detector recall etc/config.txt etc/model.txt backup/model_360000.weights  2>&1 |tee -a IOU.txt
-	\grep IOU IOU.txt
+CONFIGURATION local_read_cnt_cfg OF sim_local_read_cnt IS
+	FOR testbench_arch
+	END FOR;
+END local_read_cnt_cfg;
