@@ -1,86 +1,153 @@
-2024年 10月 13日 日曜日 11:09:53 JST
-# CUDA
-###  Modify this part as your environment   ##################
-export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
-export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
-export PATH=$PATH:$CUDA_INSTALL_PATH/bin
+2024年 10月 19日 土曜日 10:42:50 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+-- LOCAL IO (READ & WRITE)
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-# for profiling
-export CUDA_PROFILE=0
-export CUDA_PROFILE_LOG=./cuda_profile.log
-export CUDA_PROFILE_CSV=1
-alias cudaprofon='export CUDA_PROFILE=1'
-alias cudaprofoff='export CUDA_PROFILE=0'
+entity LOCAL_IO is
+  generic (NBIT_L_ADRO : integer := 3);
+  port (
+    
+    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
+    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
+    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
 
-# OpenCL
-#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
 
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_IO;
+architecture rtl of LOCAL_IO is
+
+component LOCAL_WRITE
+  port (
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
+
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+
+component LOCAL_READ
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='0'; -- to GPREG0
+
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
+-- DMAW
+  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+-- DMAR
+  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+  signal busy_dmar    : std_logic;
+
+begin
+
+  -- DMA BUSY or IDLE
+  process (CLK,busy_dmar,CALC_STS) begin
+    if(CLK'event and CLK='1') then
+      if   (CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '0';
+      elsif(CALC_STS='1' AND busy_dmar='1') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='0') then
+        BUSY_LOCAL_READ <= '1';
+      end if;
+    end if;
+  end process;
 
 
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
 
-# for MPICH
-#export PATH=/export/opt/mpi/local/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      DBUS_Port <= dbus_port0;
+    end if;
+  end process;
 
-#------------ GbEd --------------------
-#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
+  with busy_dmar select
+    dbus_port0 <= dmar_dbus_o when '1',
+                  dmaw_dbus_o when others;
 
-#------------ InfiniBand (OFED 1.4) --------------------
-export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
+-------------------------------------------------------------------------------
+-- Write : IFPGA --> PFPGAs
+-------------------------------------------------------------------------------
+u0 : LOCAL_WRITE
+  port map (MEM_AD      => MEM_ADA,
+            MEM_WE      => MEM_WELA,
+            MEM_DTI     => MEM_DTIA,
+            DMAW_ENABLE => DMAW_ENABLE,
+            DBUS_Port   => dmaw_dbus_o,
+            RST         => RST,
+            CLK         => CLK);
 
-#------------ InfiniBand (OFED 1.5.1) --------------------
-#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
+-------------------------------------------------------------------------------
+-- Read : IFPGA <-- PFPGAs
+-------------------------------------------------------------------------------
+u1 : LOCAL_READ
+  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
+  port map (NPIPE       => NPIPE,
+            CALC_STS    => CALC_STS,
+            BUSY        => busy_dmar,
+            DMAR_ENABLE => DMAR_ENABLE,
+            DBUS_Port   => dmar_dbus_o,
+            DBUS_idata  => DBUS_idata,
+            DBUS_HiZ    => DBUS_HiZ,
+            MEM_ADB     => MEM_ADB,
+            MEM_WEHB    => MEM_WEHB,
+            MEM_WELB    => MEM_WELB,
+            MEM_DTIB    => MEM_DTIB,
+            RST         => RST,
+            CLK         => CLK);
 
-
-export LANG=C
-export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
-
-# for ICC
-# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
-
-# for Mplayer
-export PATH=/export/opt/mplayer/bin:$PATH
-
-#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
-
-#for Cray-XT5
-alias ssc='ssh hawk.cray.com -l p01130'
-
-#for AMD/ATI GPU
-#export CALROOT=/export/opt/amdstream/atical
-#export PATH=$CALROOT/bin/lnx64:$PATH
-#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
-#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
-#alias aon='export DISPLAY=:0.0'
-export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
-#xmodmap ~/.Xmodmap 2> /dev/null
-#nodeid=`uname -n`
-#echo "node $nodeid"
-
-
-
-export OMP_NUM_THREADS=1
-#export OMP_NUM_THREADS=2
-#export OMP_NUM_THREADS=4
-#export OMP_NUM_THREADS=8
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
-
-export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
-
+end rtl;
