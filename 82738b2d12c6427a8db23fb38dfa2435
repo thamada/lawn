@@ -1,5 +1,20 @@
-2024年 10月  9日 水曜日 11:30:35 JST
--- ProjNav VHDL simulation template: sim_local_read.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2024年 10月 20日 日曜日 11:34:37 JST
+#!/usr/bin/perl
+
+
+my $is_stop = 0;
+
+if($ARGV[0]){
+    $is_stop = 1;
+}
+
+my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+
+while(1){
+    my $exe = `$cmd`;
+    print $exe;
+    exit (1) if($is_stop == 1);
+    sleep (2);
+}
+
+1;
