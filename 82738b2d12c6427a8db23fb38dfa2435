@@ -1,20 +1,46 @@
-2024年 10月 20日 日曜日 11:34:37 JST
-#!/usr/bin/perl
+2024年 10月 23日 水曜日 10:32:18 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
+
+VM_NAME="ubuntu16"
+
+all: check
+
+c: check
+
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
 
 
-my $is_stop = 0;
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
 
-if($ARGV[0]){
-    $is_stop = 1;
-}
 
-my $cmd ="cat /sys/class/fpga/fpga0/irq_count";
+run: start
 
-while(1){
-    my $exe = `$cmd`;
-    print $exe;
-    exit (1) if($is_stop == 1);
-    sleep (2);
-}
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
 
-1;
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
