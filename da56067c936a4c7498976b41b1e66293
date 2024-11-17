@@ -1,280 +1,147 @@
-2024年 11月 13日 水曜日 09:16:30 JST
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
--- VHDL Annotation Test Bench created by
--- HDL Bencher 6.1i
--- Mon Jan 03 23:23:10 2005
+2024年 11月 17日 日曜日 09:43:21 JST
+Release 6.2.03i - Bitgen G.31a
+Copyright (c) 1995-2004 Xilinx, Inc.  All rights reserved.
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_TEXTIO.ALL;
-USE STD.TEXTIO.ALL;
+Loading device database for application Bitgen from file "top.ncd".
+   "top" is an NCD, version 2.38, device xc2vp70, package ff1517, speed -5
+Loading device for application Bitgen from file '2vp70.nph' in environment
+/export/home/opt/xilinx.
+Opened constraints file top.pcf.
 
-ENTITY sim_local_read_if IS
-END sim_local_read_if;
+Mon Jun 13 23:42:26 2005
 
-ARCHITECTURE testbench_arch OF sim_local_read_if IS
--- If you get a compiler error on the following line,
--- from the menu do Options->Configuration select VHDL 87
-FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_read_if.ano";
-	COMPONENT local_read_if
-		PORT (
-			EXEC : In  std_logic;
-			START_AD : In  std_logic_vector (18 DOWNTO 0);
-			NQWORD : In  std_logic_vector (8 DOWNTO 0);
-			CHIPSEL : In  std_logic_vector (3 DOWNTO 0);
-			MEM_AD_BASE : In  std_logic_vector (12 DOWNTO 0);
-			BUSY : Out  std_logic;
-			DMAR_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
-			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
-			DBUS_idata : In  std_logic_vector (63 DOWNTO 0);
-			DBUS_HiZ : Out  std_logic;
-			MEM_ADB : Out  std_logic_vector (12 DOWNTO 0);
-			MEM_WEHB : Out  std_logic;
-			MEM_WELB : Out  std_logic;
-			MEM_DTIB : Out  std_logic_vector (63 DOWNTO 0);
-			RST : In  std_logic;
-			CLK : In  std_logic
-		);
-	END COMPONENT;
+bitgen -intstyle ise -w -g DebugBitstream:No -g Binary:no -g CRC:Enable -g ConfigRate:4 -g CclkPin:PullUp -g M0Pin:PullUp -g M1Pin:PullUp -g M2Pin:PullUp -g ProgPin:PullUp -g DonePin:PullUp -g PowerdownPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF -g DCMShutDown:Disable -g DisableBandgap:No -g DCIUpdateMode:AsRequired -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 -g LCK_cycle:NoWait -g Match_cycle:Auto -g Security:None -g DonePipe:No -g DriveDone:No -g Encrypt:No top.ncd 
 
-	SIGNAL EXEC : std_logic;
-	SIGNAL START_AD : std_logic_vector (18 DOWNTO 0);
-	SIGNAL NQWORD : std_logic_vector (8 DOWNTO 0);
-	SIGNAL CHIPSEL : std_logic_vector (3 DOWNTO 0);
-	SIGNAL MEM_AD_BASE : std_logic_vector (12 DOWNTO 0);
-	SIGNAL BUSY : std_logic;
-	SIGNAL DMAR_ENABLE : std_logic_vector (3 DOWNTO 0);
-	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
-	SIGNAL DBUS_idata : std_logic_vector (63 DOWNTO 0);
-	SIGNAL DBUS_HiZ : std_logic;
-	SIGNAL MEM_ADB : std_logic_vector (12 DOWNTO 0);
-	SIGNAL MEM_WEHB : std_logic;
-	SIGNAL MEM_WELB : std_logic;
-	SIGNAL MEM_DTIB : std_logic_vector (63 DOWNTO 0);
-	SIGNAL RST : std_logic;
-	SIGNAL CLK : std_logic;
+Summary of Bitgen Options:
++----------------------+----------------------+
+| Option Name          | Current Setting      |
++----------------------+----------------------+
+| Compress             | (Not Specified)*     |
++----------------------+----------------------+
+| Readback             | (Not Specified)*     |
++----------------------+----------------------+
+| CRC                  | Enable**             |
++----------------------+----------------------+
+| DebugBitstream       | No**                 |
++----------------------+----------------------+
+| ConfigRate           | 4**                  |
++----------------------+----------------------+
+| StartupClk           | Cclk**               |
++----------------------+----------------------+
+| DCMShutdown          | Disable**            |
++----------------------+----------------------+
+| DisableBandgap       | No**                 |
++----------------------+----------------------+
+| CclkPin              | Pullup**             |
++----------------------+----------------------+
+| DonePin              | Pullup**             |
++----------------------+----------------------+
+| HswapenPin           | Pullup*              |
++----------------------+----------------------+
+| M0Pin                | Pullup**             |
++----------------------+----------------------+
+| M1Pin                | Pullup**             |
++----------------------+----------------------+
+| M2Pin                | Pullup**             |
++----------------------+----------------------+
+| PowerdownPin         | Pullup**             |
++----------------------+----------------------+
+| ProgPin              | Pullup**             |
++----------------------+----------------------+
+| TckPin               | Pullup**             |
++----------------------+----------------------+
+| TdiPin               | Pullup**             |
++----------------------+----------------------+
+| TdoPin               | Pullup**             |
++----------------------+----------------------+
+| TmsPin               | Pullup**             |
++----------------------+----------------------+
+| UnusedPin            | Pulldown**           |
++----------------------+----------------------+
+| GWE_cycle            | 6**                  |
++----------------------+----------------------+
+| GTS_cycle            | 5**                  |
++----------------------+----------------------+
+| LCK_cycle            | NoWait**             |
++----------------------+----------------------+
+| Match_cycle          | Auto**               |
++----------------------+----------------------+
+| DONE_cycle           | 4**                  |
++----------------------+----------------------+
+| Persist              | No*                  |
++----------------------+----------------------+
+| DriveDone            | No**                 |
++----------------------+----------------------+
+| DonePipe             | No**                 |
++----------------------+----------------------+
+| Security             | None**               |
++----------------------+----------------------+
+| UserID               | 0xFFFFFFFF**         |
++----------------------+----------------------+
+| ActivateGclk         | No*                  |
++----------------------+----------------------+
+| ActiveReconfig       | No*                  |
++----------------------+----------------------+
+| PartialMask0         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask1         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialMask2         | (Not Specified)*     |
++----------------------+----------------------+
+| PartialGclk          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialLeft          | (Not Specified)*     |
++----------------------+----------------------+
+| PartialRight         | (Not Specified)*     |
++----------------------+----------------------+
+| Encrypt              | No**                 |
++----------------------+----------------------+
+| Key0                 | pick*                |
++----------------------+----------------------+
+| Key1                 | pick*                |
++----------------------+----------------------+
+| Key2                 | pick*                |
++----------------------+----------------------+
+| Key3                 | pick*                |
++----------------------+----------------------+
+| Key4                 | pick*                |
++----------------------+----------------------+
+| Key5                 | pick*                |
++----------------------+----------------------+
+| Keyseq0              | M*                   |
++----------------------+----------------------+
+| Keyseq1              | M*                   |
++----------------------+----------------------+
+| Keyseq2              | M*                   |
++----------------------+----------------------+
+| Keyseq3              | M*                   |
++----------------------+----------------------+
+| Keyseq4              | M*                   |
++----------------------+----------------------+
+| Keyseq5              | M*                   |
++----------------------+----------------------+
+| KeyFile              | (Not Specified)*     |
++----------------------+----------------------+
+| StartKey             | 0*                   |
++----------------------+----------------------+
+| StartCBC             | pick*                |
++----------------------+----------------------+
+| FreezeDCI            | No*                  |
++----------------------+----------------------+
+| DCIUpdateMode        | AsRequired**         |
++----------------------+----------------------+
+| IEEE1532             | No*                  |
++----------------------+----------------------+
+| Binary               | No**                 |
++----------------------+----------------------+
+ *  Default setting.
+ ** The specified setting matches the default setting.
 
-BEGIN
-	UUT : local_read_if
-	PORT MAP (
-		EXEC => EXEC,
-		START_AD => START_AD,
-		NQWORD => NQWORD,
-		CHIPSEL => CHIPSEL,
-		MEM_AD_BASE => MEM_AD_BASE,
-		BUSY => BUSY,
-		DMAR_ENABLE => DMAR_ENABLE,
-		DBUS_Port => DBUS_Port,
-		DBUS_idata => DBUS_idata,
-		DBUS_HiZ => DBUS_HiZ,
-		MEM_ADB => MEM_ADB,
-		MEM_WEHB => MEM_WEHB,
-		MEM_WELB => MEM_WELB,
-		MEM_DTIB => MEM_DTIB,
-		RST => RST,
-		CLK => CLK
-	);
-
-	PROCESS -- clock process for CLK,
-		VARIABLE TX_TIME : INTEGER :=0;
-
-		PROCEDURE ANNOTATE_BUSY(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",BUSY,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, BUSY);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_DMAR_ENABLE(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",DMAR_ENABLE,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAR_ENABLE);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_DBUS_Port(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_DBUS_HiZ(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",DBUS_HiZ,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_HiZ);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_MEM_ADB(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",MEM_ADB,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_ADB);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_MEM_WEHB(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",MEM_WEHB,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WEHB);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_MEM_WELB(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",MEM_WELB,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_WELB);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-		PROCEDURE ANNOTATE_MEM_DTIB(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",MEM_DTIB,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, MEM_DTIB);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
-
-	BEGIN
-		CLOCK_LOOP : LOOP
-		CLK <= transport '0';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		CLK <= transport '1';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		ANNOTATE_BUSY(TX_TIME);
-		ANNOTATE_DMAR_ENABLE(TX_TIME);
-		ANNOTATE_DBUS_Port(TX_TIME);
-		ANNOTATE_DBUS_HiZ(TX_TIME);
-		ANNOTATE_MEM_ADB(TX_TIME);
-		ANNOTATE_MEM_WEHB(TX_TIME);
-		ANNOTATE_MEM_WELB(TX_TIME);
-		ANNOTATE_MEM_DTIB(TX_TIME);
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		CLK <= transport '0';
-		WAIT FOR 25 ns;
-		TX_TIME := TX_TIME + 25;
-		END LOOP CLOCK_LOOP;
-	END PROCESS;
-
-	PROCESS   -- Process for CLK
-		VARIABLE TX_OUT : LINE;
-
-		BEGIN
-		-- --------------------
-		EXEC <= transport '0';
-		START_AD <= transport std_logic_vector'("0000000000000000000"); --0
-		NQWORD <= transport std_logic_vector'("000000000"); --0
-		CHIPSEL <= transport std_logic_vector'("0000"); --0
-		MEM_AD_BASE <= transport std_logic_vector'("0000000000000"); --0
-		DBUS_idata <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
-		RST <= transport '0';
-		-- --------------------
-		WAIT FOR 400 ns; -- Time=400 ns
-		START_AD <= transport std_logic_vector'("0001000000000000000"); --8000
-		NQWORD <= transport std_logic_vector'("000000111"); --7
-		CHIPSEL <= transport std_logic_vector'("0000"); --0
-		MEM_AD_BASE <= transport std_logic_vector'("0000100000000"); --100
-		-- --------------------
-		WAIT FOR 700 ns; -- Time=1100 ns
-		EXEC <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=1200 ns
-		EXEC <= transport '0';
-		-- --------------------
-		WAIT FOR 1600 ns; -- Time=2800 ns
-		EXEC <= transport '1';
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=2900 ns
-		EXEC <= transport '0';
-		-- --------------------
-		WAIT FOR 3300 ns; -- Time=6200 ns
-		-- --------------------
-
-		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
-		STD.TEXTIO.writeline(results, TX_OUT);
-		ASSERT (FALSE) REPORT
-			"Success! Simulation for annotation completed"
-			SEVERITY FAILURE;
-	END PROCESS;
-END testbench_arch;
-
-CONFIGURATION local_read_if_cfg OF sim_local_read_if IS
-	FOR testbench_arch
-	END FOR;
-END local_read_if_cfg;
+Running DRC.
+INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
+   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
+   consult the Virtex-II Interactive Data Sheet.
+DRC detected 0 errors and 0 warnings.
+Creating bit map...
+Saving bit stream in "top.bit".
+Bitstream generation is complete.
