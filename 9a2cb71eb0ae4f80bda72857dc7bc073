@@ -1,28 +1,9 @@
-2024年 11月 20日 水曜日 10:30:44 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+2024年 11月 25日 月曜日 11:14:56 JST
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
 
-entity dmar_mem_adr is
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmar_mem_adr;
-
-architecture rtl of dmar_mem_adr is
-component dmaw_mem_adr
-  port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end component;
-begin
-  u0 : dmaw_mem_adr port map(CLK=>CLK, STATE=>STATE, START_ADR=>START_ADR, MEM_ADR=>MEM_ADR);
-end rtl;
+exec git update-server-info
