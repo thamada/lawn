@@ -1,47 +1,52 @@
-2024年 11月 27日 水曜日 10:51:53 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-void b3_init(int devid);
-void b3_init_config(int devid, char* fpga_conf_file);
-
-
-
-void b3_set_idata(unsigned int devid,      // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int ireg_index, // iregister index
-                  unsigned int data);      // data
-
-void b3_reset_jmem_adr();
-void b3_reset_jmem_adr_n(int nchip);
-
-void b3_set_jdata(unsigned int devid,      // device id
-                  unsigned int nword,      // number of jdata
-                  unsigned int jdata[] );  // 
-
-void b3_set_jdata_n_chip(unsigned int devid,    // device id
-			 unsigned int nchip,    // 0, 1, 2, 3
-			 unsigned int nword,    // number of jdata
-			 unsigned int jdata[]);
-
-
-void b3_get_jdata(unsigned int devid,      // device id
-                  unsigned int chip_sel,   // chip_sel
-		  unsigned int jmem_adr,   // mem adr
-                  unsigned int* data );    // data 
-
-void b3_start_calc(unsigned int n,
-		   unsigned int chip_sel);
-
-void b3_start_calc_sepa4jM(unsigned int nrun[]);
-
-unsigned int b3_get_calcsts(unsigned int chip_sel);
-
-
-void b3_get_fodata(unsigned int devid,     // device id
-		  unsigned int chip_sel,   // chip select
-                  unsigned int npipe,      // pipeline number
-                  unsigned int fo_index,   // iregister index
-                  unsigned int* data);     // data
+2024年 12月 10日 火曜日 11:29:54 JST
+set -tmpdir __projnav
+set -xsthdpdir ./xst
+run
+-ifn top.prj
+-ifmt mixed
+-ofn top
+-ofmt NGC
+-p xc2vp70-5-ff1517
+-top top
+-opt_mode Speed
+-opt_level 1
+-iuc NO
+-lso top.lso
+-keep_hierarchy NO
+-glob_opt AllClockNets
+-rtlview Yes
+-read_cores YES
+-write_timing_constraints NO
+-cross_clock_analysis NO
+-hierarchy_separator _
+-bus_delimiter <>
+-case maintain
+-slice_utilization_ratio 100
+-verilog2001 YES
+-vlgincdir 
+-fsm_extract YES -fsm_encoding Auto
+-fsm_style lut
+-ram_extract Yes
+-ram_style Auto
+-rom_extract Yes
+-rom_style Auto
+-mux_extract YES
+-mux_style Auto
+-decoder_extract YES
+-priority_extract YES
+-shreg_extract YES
+-shift_extract YES
+-xor_collapse YES
+-resource_sharing YES
+-mult_style auto
+-iobuf YES
+-max_fanout 500
+-bufg 16
+-register_duplication YES
+-equivalent_register_removal YES
+-register_balancing No
+-slice_packing YES
+-optimize_primitives NO
+-tristate2logic No
+-iob auto
+-slice_utilization_ratio_maxmargin 5
