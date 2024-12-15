@@ -1,157 +1,71 @@
-2024年 11月 23日 土曜日 11:46:08 JST
--- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\PROJ
--- VHDL Annotation Test Bench created by
--- HDL Bencher 6.1i
--- Sun Jan 02 23:14:58 2005
+2024年 12月 15日 日曜日 09:21:09 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:28:33 hamada>
+import numpy as np
+import cv2
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_TEXTIO.ALL;
-USE STD.TEXTIO.ALL;
+class Message(object):
+    def __init__(self):
+        self.class_num = 80
+        self.last = [0 for i in range(8)]
+        self.log_previous = ''
+        self.is_update = False
+#        self.filename = '/dev/shm/log.txt'
+        self.filename = '/tmp/log.draw_detections.txt'
+        self.class_count = []
 
-ENTITY sim_local_write IS
-END sim_local_write;
+    def reset(self):
+        self.is_update = False
+        self.class_count = [0 for i in range(self.class_num)]
+        self.get_classId()
+        self.class_count = [0 for i in range(self.class_num)]
 
-ARCHITECTURE testbench_arch OF sim_local_write IS
--- If you get a compiler error on the following line,
--- from the menu do Options->Configuration select VHDL 87
-FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\proj\sim_local_write.ano";
-	COMPONENT local_write
-		PORT (
-			MEM_AD : In  std_logic_vector (16 DOWNTO 0);
-			MEM_WE : In  std_logic;
-			MEM_DTI : In  std_logic_vector (63 DOWNTO 0);
-			DMAW_ENABLE : Out  std_logic_vector (3 DOWNTO 0);
-			DBUS_Port : Out  std_logic_vector (63 DOWNTO 0);
-			RST : In  std_logic;
-			CLK : In  std_logic
-		);
-	END COMPONENT;
+    def get_message(self):
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            l = lines[-2]
+            l = l.rstrip()
+            cols = l.split(' ')
+            if cols[0] != self.last[0]:
+                self.last = cols
+                self.is_update = True
+            else:
+                self.is_update = False
+        
 
-	SIGNAL MEM_AD : std_logic_vector (16 DOWNTO 0);
-	SIGNAL MEM_WE : std_logic;
-	SIGNAL MEM_DTI : std_logic_vector (63 DOWNTO 0);
-	SIGNAL DMAW_ENABLE : std_logic_vector (3 DOWNTO 0);
-	SIGNAL DBUS_Port : std_logic_vector (63 DOWNTO 0);
-	SIGNAL RST : std_logic;
-	SIGNAL CLK : std_logic;
+    def check_log_update(self):
+        self.is_update = False
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            current = lines[-2]
+            if current != self.log_previous:
+                self.is_update = True
+                self.log_previous = current
+        return (self.is_update)
 
-BEGIN
-	UUT : local_write
-	PORT MAP (
-		MEM_AD => MEM_AD,
-		MEM_WE => MEM_WE,
-		MEM_DTI => MEM_DTI,
-		DMAW_ENABLE => DMAW_ENABLE,
-		DBUS_Port => DBUS_Port,
-		RST => RST,
-		CLK => CLK
-	);
+    def scan_object(self, cl_name):
+        is_detect = False
 
-	PROCESS -- clock process for CLK,
-		VARIABLE TX_TIME : INTEGER :=0;
+        if self.check_log_update():
+            with open(self.filename, 'r') as fh:
+                lines = fh.readlines()
+                for i in range(2, 20):
+                    l = lines[-i]
+                    l = l.rstrip()
+                    cols = l.split(' ')
+                    if cols[-1] == cl_name:
+                        is_detect = True
 
-		PROCEDURE ANNOTATE_DMAW_ENABLE(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",DMAW_ENABLE,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DMAW_ENABLE);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+        return (is_detect)
 
-		PROCEDURE ANNOTATE_DBUS_Port(
-			TX_TIME : INTEGER
-		) IS
-			VARIABLE TX_STR : String(1 to 4096);
-			VARIABLE TX_LOC : LINE;
-		BEGIN
-			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
-			STD.TEXTIO.write(TX_LOC, TX_TIME);
-			STD.TEXTIO.write(TX_LOC,string'(",DBUS_Port,"));
-			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, DBUS_Port);
-			STD.TEXTIO.write(TX_LOC, string'("]"));
-			TX_STR(TX_LOC.all'range) := TX_LOC.all;
-			STD.TEXTIO.writeline(results, TX_LOC);
-			STD.TEXTIO.Deallocate(TX_LOC);
-		END;
+    def get_classId(self):
+        self.get_message()
 
-	BEGIN
-		CLOCK_LOOP : LOOP
-		CLK <= transport '0';
-		WAIT FOR 5 ns;
-		TX_TIME := TX_TIME + 5;
-		CLK <= transport '1';
-		WAIT FOR 50 ns;
-		TX_TIME := TX_TIME + 50;
-		CLK <= transport '0';
-		WAIT FOR 35 ns;
-		TX_TIME := TX_TIME + 35;
-		ANNOTATE_DMAW_ENABLE(TX_TIME);
-		ANNOTATE_DBUS_Port(TX_TIME);
-		WAIT FOR 10 ns;
-		TX_TIME := TX_TIME + 10;
-		END LOOP CLOCK_LOOP;
-	END PROCESS;
+        if True == self.is_update:
+            z = int(self.last[1])
+            self.class_count[z] += 1
+        else:
+            z = -1
 
-	PROCESS   -- Process for CLK
-		VARIABLE TX_OUT : LINE;
+        return (z)
 
-		BEGIN
-		-- --------------------
-		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
-		MEM_WE <= transport '0';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
-		RST <= transport '0';
-		-- --------------------
-		WAIT FOR 500 ns; -- Time=500 ns
-		MEM_AD <= transport std_logic_vector'("01100000000000000"); --C000
-		MEM_WE <= transport '1';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000001000100010001"); --1111
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=600 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000010001000100010"); --2222
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=700 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000011001100110011"); --3333
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=800 ns
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000100010001000100"); --4444
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=900 ns
-		MEM_WE <= transport '0';
-		-- --------------------
-		WAIT FOR 800 ns; -- Time=1700 ns
-		MEM_AD <= transport std_logic_vector'("01000000000000000"); --8000
-		MEM_WE <= transport '1';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000101010111100110111101111"); --ABCDEF
-		-- --------------------
-		WAIT FOR 100 ns; -- Time=1800 ns
-		MEM_AD <= transport std_logic_vector'("00000000000000000"); --0
-		MEM_WE <= transport '0';
-		MEM_DTI <= transport std_logic_vector'("0000000000000000000000000000000000000000000000000000000000000000"); --0
-		-- --------------------
-		WAIT FOR 1205 ns; -- Time=3005 ns
-		-- --------------------
-
-		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
-		STD.TEXTIO.writeline(results, TX_OUT);
-		ASSERT (FALSE) REPORT
-			"Success! Simulation for annotation completed"
-			SEVERITY FAILURE;
-	END PROCESS;
-END testbench_arch;
-
-CONFIGURATION local_write_cfg OF sim_local_write IS
-	FOR testbench_arch
-	END FOR;
-END local_write_cfg;
