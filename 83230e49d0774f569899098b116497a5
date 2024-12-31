@@ -1,158 +1,163 @@
-2024Âπ¥ 12Êúà 29Êó• Êó•ÊõúÊó• 10:54:42 JST
-#define ERROR_CHECK
+2024Âπ¥ 12Êúà 31Êó• ÁÅ´ÊõúÊó• 09:16:23 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
 
-#include <iostream>
-using namespace std;
-#include <fstream>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+-- LOCAL READ ( ifpga <- pfpga )
+-- by Tsuyoshi Hamada
+-- (Å¶) l_adroÇÃÉrÉbÉgïù(NBIT_L_ADRO)ÇïœÇ¶ÇΩèÍçáÇÕpromÇèƒÇ´Ç»Ç®Ç∑ïKóvÇ™Ç†ÇÈÇ±Ç∆Ç…íçà”.(íºÇ∑ÇÃÇÕè„ÇÃÉÇÉWÉÖÅ[Éã)
+-- (Å¶) ÇªÇ‡ÇªÇ‡ÇÃëOíÒÅFLOCAL_READÇÕPFPGA0Ç©ÇÁÇÃPIPE_STSêMçÜ(CBUS0(7))ÇÉgÉâÉìÉUÉNÉVÉáÉìäJénêMçÜÇ∆ÇµÇƒÇ¢Ç‹Ç∑ÅB
 
-#define NMAX (1<<17) // 131072
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-extern "C" void force(double xj[][3], double mj[], double xi[][3], double eps2, double a[][3], int ni, int nj);
+entity LOCAL_READ is
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
 
-#include <time.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-double get_time(void)
-{
-  struct rusage r;
-  double sec, usec, z;
-  getrusage(RUSAGE_SELF, &r);
-  sec   = r.ru_utime.tv_sec;
-  usec  = r.ru_utime.tv_usec;
-  z = sec + usec*1.0e-6;
-  return (z);
-}
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-static double r[NMAX][3];
-static double m[NMAX];
-static double eps2 = 0.0001;
-static double a[NMAX][3];
-static double v[NMAX][3];
-static double a_h[NMAX][3];
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
 
-void readfile(char* fname, int* nbody, double* m, double r[][3], double v[][3])
-{
-  ifstream f;
-  f.open(fname, ios::in);
-  if(!f) {
-    cerr << "Can't open file: " <<  fname << endl;
-    exit(-1);
-  }
-  char* buf= new char [2048];
-  f.getline(buf, 511); // *ignore*
-  int n;
-  f >> n;
-  (*nbody) = n;
-  f.getline(buf, 511); // *ignore*
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ;
 
-  f.scientific;
-  for(int i=0; i<n; i++){
-    f.getline(buf, 1024);
-    char ii[256];
-    double mj, x, y, z, vx, vy, vz;
-    f >> ii >> mj >> x >> y >> z >> vx >> vy >> vz;
-    //    printf("%s   %.16E   % .16E % .16E % .16E   % .16E % .16E % .16E \n", ii, m, x, y, z, vx, vy, vz);
-    m[i]    = mj;
-    r[i][0] = x;
-    r[i][1] = y;
-    r[i][2] = z;
-    v[i][0] = vx;
-    v[i][1] = vy;
-    v[i][2] = vz;
-  }
-  f.close();
+architecture rtl of LOCAL_READ is
 
-  delete[] buf;
-}
+component LOCAL_READ_CNT
+  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
+  port (
+    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
+    CALC_DONE  : in std_logic;                 -- pulse
+    FETCH_DONE : out std_logic;
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-void force_host(double xj[][3],
-								double m[],
-								double xi[][3],
-								double eps2,
-								double a[][3],
-								int ni,
-								int nj)
-{
-  int i,j,d;
-  double dx[3];
-  for(i=0;i<ni;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+component LOCAL_READ_IF
+  port (
+    EXEC : in std_logic;
+    START_AD : in std_logic_vector(18 downto 0);
+    NQWORD   : in std_logic_vector( 8 downto 0);
+    CHIPSEL  : in std_logic_vector( 3 downto 0);
+    MEM_AD_BASE : in std_logic_vector(12 downto 0);
+    BUSY : out std_logic;  -- to GPREG0
+    DMAR_ENABLE : out std_logic_vector(3 downto 0);
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
+    MEM_ADB     : out std_logic_vector(12 downto 0);
+    MEM_WEHB    : out std_logic;
+    MEM_WELB    : out std_logic;
+    MEM_DTIB    : out std_logic_vector(63 downto 0);
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-  for(i=0;i<ni;i++){
-    for(j=0;j<nj;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-				dx[d] = xj[j][d] - xi[i][d];
-				r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-				a[i][d] +=  m[j]*dx[d]/r3;
-      }
-    }
-  }
-}
+signal calc_done : std_logic :='0';   -- to cnt
+signal csts0,csts1 : std_logic :='0'; -- from pfpga
 
-int main(int argc,char** argv)
-{
-  int n=0;
-  int nstep = 1;
+-- CNT
+signal fetch_done : std_logic :='0';
+signal exec : std_logic;                          -- cnt -> if
+signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
+signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
+signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
+signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
+-- IF
+signal ignore_busy : std_logic; 
 
-  if((argc == 2)||(argc == 3)){
-    char ifile[256];
-    strcpy(ifile,argv[1]);
-    readfile(ifile, &n, m, r, v);
-    if(argc == 3)  nstep = atoi(argv[2]);
-  }else{
-    fprintf(stderr, "argc = %d\n",argc);
-    fprintf(stderr, "cmd <init file> <nstep>\n");
-    exit(-1);
-  }
+begin
 
-  int ni=n;
-  int nj=n;
+  -- CALC STATUS
+  csts0 <= CALC_STS;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      csts1 <= csts0;
+    end if;
+  end process;
 
-  force(r, m, r, eps2, a, ni, nj);
+  -- CALC DONE
+  process (RST,CLK,csts0,csts1) begin
+    if(RST='1') then
+      calc_done <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        calc_done <= '1';
+      else
+        calc_done <= '0';
+      end if;
+    end if;
+  end process;
 
-  double eps2 = (1./256.);
-  double tt = get_time();
-  for(int step = 0; step < nstep; step++) force(r, m, r, eps2, a, ni, nj);
-  tt = get_time() - tt;
+  -- BUSY
+  process (RST,CLK,csts0,csts1,fetch_done) begin
+    if (RST='1') then
+      BUSY <='1';
+    elsif (CLK'event and CLK='1') then
+      if((csts0='1') AND (csts1='0')) then
+        BUSY <= '1';
+      elsif(fetch_done='1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
 
-  double nfloat = 38.0 * ((double)ni)*((double)nj) * ((double)nstep);
-  double gflops = nfloat * (1.e-9) / tt;
-  //  fprintf(stdout, "n=%d\t%g sec/gpucall\t%g Gflops\n", n, tt/(double)nstep, gflops );
-  fprintf(stdout, "n=%d\n", n);
-  fprintf(stdout, "%g sec/gpucall\n", tt/(double)nstep);
-  fprintf(stdout, "%g Gflops\n",  gflops );
+  -- =================================================== SUBMODULE INSTANCES
+  u0: LOCAL_READ_CNT 
+    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
+    port map(NPIPE => NPIPE,
+             CALC_DONE => calc_done,
+             FETCH_DONE => fetch_done,
+             EXEC       => exec,
+             START_AD   => start_ad,
+             NQWORD     => nqword,
+             CHIPSEL    => chipsel,
+             MEM_AD_BASE => mem_base,
+             RST => RST, CLK=>CLK);
 
 
-  if(0){
-    cout << "Start Error check: " << n <<endl;
-    force_host(r, m, r, eps2, a_h, ni, nj);
-    double err_max = 0.0;
-    for(int i=0;i<ni;i++){
-      double err=0.0;
-      for(int d=0;d<3;d++){
-				double diff = fabs(a[i][d] - a_h[i][d]);
-				err += (diff*diff);
-      }
-      err = sqrt(err);
-      err = err/sqrt(a_h[i][0]*a_h[i][0]+a_h[i][1]*a_h[i][1]+a_h[i][2]*a_h[i][2]);
-      if (err > err_max){
-				err_max = err;
-				printf("[%d]:\t", i);
-				printf("%.7e:\t", err);
-				printf("%e,%e,%e:\t%e,%e,%e\n",a_h[i][0], a_h[i][1], a_h[i][2],a[i][0], a[i][1], a[i][2]);
-      }
-    }
-    printf("Max Err %.7e\n", err_max);
-  }
+  u1: LOCAL_READ_IF
+    port map(EXEC        => exec,     -- from cnt
+             START_AD    => start_ad, -- from cnt
+             NQWORD      => nqword,   -- from cnt
+             CHIPSEL     => chipsel,  -- from cnt
+             MEM_AD_BASE => mem_base, -- from cnt
+             BUSY => ignore_busy,
+             DMAR_ENABLE => DMAR_ENABLE, -- output directly
+             DBUS_Port   => DBUS_Port,   -- output directly
+             DBUS_idata  => DBUS_idata,  -- output directly
+             DBUS_HiZ    => DBUS_HiZ,    -- output directly
+             MEM_ADB  => MEM_ADB,        -- output directly
+             MEM_WEHB => MEM_WEHB,       -- output directly
+             MEM_WELB => MEM_WELB,       -- output directly
+             MEM_DTIB => MEM_DTIB,       -- output directly
+             RST=>RST,CLK=>CLK);
 
-  return (0);
-}
+
+end rtl;
