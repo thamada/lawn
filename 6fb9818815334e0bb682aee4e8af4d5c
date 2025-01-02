@@ -1,206 +1,211 @@
-2025年  1月  1日 水曜日 10:46:15 JST
-#include <stdio.h>
-#include <GL/glut.h>
-#include <string.h> // strtok(),strcpy()
-#include <stdlib.h> // atof()
-#include <math.h>
-#define NMAX 210000
-#define XSCALE 2.0
-#define YSCALE 2.0
-//#define IS_PRESET 0
-#define IS_PRESET 1
-#define PRESET_NBODY 4096
-//#define PRESET_NBODY 16384
-//#define PRESET_NBODY 3
+2025年  1月  2日 木曜日 11:14:29 JST
 
-#define PRESET_NWRITE 1
-#define PRESET_NSKIP 1
+-- **************************************
+--               INREVIUM                
+-- **************************************
 
-static char ifile[256];
-static int istep;
-static FILE *fp;
-
-int imax;
-double x[NMAX];
-double y[NMAX];
-int NBODY;
-int SKIP_STEP;
-
-void reset_fp()
-{
-    printf("restart\n");
-    fclose(fp);
-    fp = fopen(ifile,"r");
-    istep=0;
-}
-
-void skip_step()
-{
-  int i;
-  char line[101];
-  for(i=0;i<NBODY;i++) if(fgets(line,100,fp)==NULL){reset_fp();}
-}
-
-void myidle()
-{
-  istep++;
-  if((istep%SKIP_STEP) != 0){
-    skip_step();
-  }else{
-    glutPostRedisplay();
-  }
-  //  printf("%d step\n",(istep*SKIP_STEP));
-}
-
-void display();
-
-void init()
-{
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-  glColor3f(1.0,1.0,1.0);
-}
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO MODEL
+--------------------------------------------------------------------------------
+-- PCI_RDTFIFO (64 bit X 4 word) Module
+--------------------------------------------------------------------------------
+-- File                      : PCI_RDTFIFO.vhd
+-- Entity                    : PCI_RDTFIFO
+-- Architecture              : PCI_RDTFIFO_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         �V�K
+--------------------------------------------------------------------------------
 
 
-int main(int argc, char** argv)
-{
-
-  if(IS_PRESET){
-    NBODY = PRESET_NBODY*PRESET_NWRITE;
-    SKIP_STEP=PRESET_NSKIP;
-  }else{
-    int nb,nw;
-    printf("enter NBODY:");  scanf("%d",&nb);  //$BN3;R?t$r;XDj(B
-    printf("enter Nwrite:");  scanf("%d",&nw);  //$BO"B3=q9~$_%3%^?t(B
-    //    printf("enter SKIP_STEP:");  scanf("%d",&SKIP_STEP); 
-    NBODY = (int)(nb * nw);
-    SKIP_STEP=1; // Fixed
-  }
-  istep=0;
-  if(argc <2){printf("no inputfile.\n"); exit(0); }
-  strcpy(ifile,argv[1]);
-  fp = fopen(ifile,"r");
-
-  glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_DOUBLE |GLUT_RGB);
-  glutInitWindowSize(400,400);
-  glutInitWindowPosition(600,0);
-  glutCreateWindow("NBODYH-2003/11/08");
-  glutDisplayFunc(display);
-  glutIdleFunc(myidle);
-  init();
-  glutMainLoop();
-
-  fclose(fp);
-  return 0;
-}
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
+entity PCI_RDTFIFO is
+	port (
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
+
+		FIFO_ENB		: in	std_logic;							-- FIFO Enable Signal
+
+		-- FIFO Data Write ports
+		FIFO_WRDT		: in	std_logic_vector(63 downto 0);		-- FIFO Write Data
+		FIFO_WE			: in	std_logic;					  		-- FIFO Write Enable
+
+		-- FIFO Data Read ports
+		FIFO_RE			: in	std_logic;							-- FIFO Read Enable
+		FIFO_RDDT		: out	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: out	std_logic							-- FIFO Read Data Enable
+		);
+end PCI_RDTFIFO;
 
 
-void display()
-{
-  static int flag=0;
-  void display_set_GL_LINES();
-  void display_get_position();
-  glClear(GL_COLOR_BUFFER_BIT);
-  glPointSize(1.0);
-
-  { //--- TIME METER ---
-    char p[10];
-    int i,nketa;
-    nketa = 6;
-    sprintf(p,"%06d",istep);
-    glColor3f(0.1 ,0.2,0.3);
-    for(i=0;i<nketa;i++){
-      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,p[nketa-i]);
-      glRasterPos2f(-0.70-0.06*i, -0.95);
-    }
-  }
-
-  display_set_GL_LINES();
-  glBegin(GL_POINTS);
-  //  glColor3f(1.0 ,0.8,0.0);
-  if(flag != 0){
-    int n;
-    display_get_position();
-    for(n=0;n<NBODY;n++){
-      if(n==1)   glColor3f(1.0,0.5,0.0); else   glColor3f(0.0,0.7,0.0);
-      glVertex2f(x[n]/XSCALE, y[n]/YSCALE);
-    }
-  }
-  flag=1;
-  glEnd();
-  glutSwapBuffers();
-}
+architecture PCI_RDTFIFO_rtl of PCI_RDTFIFO is
 
 
-/* display$B4X?tMQ(B */
-void display_set_GL_LINES()
-{ // --- MEMORI ---
+--------------------------------------------------
+-- signals
+--------------------------------------------------
 
-  glBegin(GL_LINES);
+--	type FIFO_TYPE is array (0 to 3) of std_logic_vector(64 downto 0);		------ Define Data Buffer Type (65bit X 4)
 
-  glColor3f(0.7,0.0,0.0);
-  glVertex2f(-1.0, 0.0);    glVertex2f(1.0, 0.0);
-  glVertex2f(0.0, -1.0);    glVertex2f(0.0, 1.0);
+	signal FIFO_DATA0	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 0
+	signal FIFO_DATA1	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 1
+	signal FIFO_DATA2	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 2
+	signal FIFO_DATA3	: std_logic_vector(64 downto 0);					------ FIFO Data Buffer 3
 
-  glColor3f(0.0,0.2,0.5);
-  glVertex2f(-1.0, 1.0/3.0);    glVertex2f(1.0, 1.0/3.0);
-  glVertex2f(-1.0, 2.0/3.0);    glVertex2f(1.0, 2.0/3.0);
-  glVertex2f(-1.0, -1.0/3.0);    glVertex2f(1.0, -1.0/3.0);
-  glVertex2f(-1.0, -2.0/3.0);    glVertex2f(1.0, -2.0/3.0);
+	signal FIFO_WRADRS	: std_logic_vector( 1 downto 0);					------ FIFO Write Address
+	signal FIFO_RDADRS	: std_logic_vector( 1 downto 0);					------ FIFO Read Address
 
-  glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,1.0);
-  glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,1.0);
-  glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,1.0);
-  glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,1.0);
 
-  {
-    double tiny=0.04;
-    double small=0.04;
-    glColor3f(0.9,0.4,0.8);
-    glVertex2f(-1.0,  0.0);    glVertex2f(-(1.0-small),  0.0);
-    glVertex2f( 1.0,  0.0);    glVertex2f( (1.0-small),  0.0);
-    glVertex2f(  0.0, 1.0);    glVertex2f(  0.0,   1.0-small);
-    glVertex2f(  0.0,-1.0);    glVertex2f(  0.0,  -1.0+small);
+begin
 
-    glColor3f(0.38, 0.01, 0.8);
-    glVertex2f(-1.0, 1.0/3.0);    glVertex2f(-(1.0-tiny), 1.0/3.0);
-    glVertex2f( 1.0, 1.0/3.0);    glVertex2f( (1.0-tiny), 1.0/3.0);
-    glVertex2f(-1.0, 2.0/3.0);    glVertex2f(-(1.0-tiny), 2.0/3.0);
-    glVertex2f( 1.0, 2.0/3.0);    glVertex2f( (1.0-tiny), 2.0/3.0);
-    glVertex2f(-1.0, -1.0/3.0);    glVertex2f(-(1.0-tiny), -1.0/3.0);
-    glVertex2f( 1.0, -1.0/3.0);    glVertex2f( (1.0-tiny), -1.0/3.0);
-    glVertex2f(-1.0, -2.0/3.0);    glVertex2f(-(1.0-tiny), -2.0/3.0);
-    glVertex2f( 1.0, -2.0/3.0);    glVertex2f( (1.0-tiny), -2.0/3.0);
 
-    glVertex2f(1.0/3.0,-1.0);    glVertex2f(1.0/3.0,-(1.0-tiny));
-    glVertex2f(1.0/3.0, 1.0);    glVertex2f(1.0/3.0, (1.0-tiny));
-    glVertex2f(2.0/3.0,-1.0);    glVertex2f(2.0/3.0,-(1.0-tiny));
-    glVertex2f(2.0/3.0, 1.0);    glVertex2f(2.0/3.0, (1.0-tiny));
-    glVertex2f(-1.0/3.0,-1.0);    glVertex2f(-1.0/3.0,-(1.0-tiny));
-    glVertex2f(-1.0/3.0, 1.0);    glVertex2f(-1.0/3.0, (1.0-tiny));
-    glVertex2f(-2.0/3.0,-1.0);    glVertex2f(-2.0/3.0,-(1.0-tiny));
-    glVertex2f(-2.0/3.0, 1.0);    glVertex2f(-2.0/3.0, (1.0-tiny));
-  }
-  glEnd(); // --- End GL_LINES;
-}
+--***************************************************************
+--*
+--*  FIFO Data Write Control Block
+--*
+--***************************************************************
 
-void display_get_position()
-{
-  int i;
-  char line[1024];
-  char* p;
-  double _x,_y,_z;
-  for(i=0;i<NBODY;i++){
-    if(fgets(line,100,fp)!=NULL){
-      p = (char* )strtok(line,"\t"); _x = atof(p);
-      p = (char* )strtok(NULL,"\t"); _y = atof(p);
-      p = (char* )strtok(NULL,"\t"); _z = atof(p);
-      x[i] = _x;
-      y[i] = _y;
-    }else{
-      reset_fp();
-    }
-  }
-}
+--------------------------------------------------------------------------------
+-- FIFO_DATA0 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA0 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA0 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="00" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA0 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA1 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA1 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA1 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="01" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA1 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA2 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA2 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA2 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="10" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA2 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO_DATA3 Data Write Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_DATA3 <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_DATA3 <= (others=>'0');								------ FIFO Data Clear
+			elsif (FIFO_WRADRS="11" and FIFO_WE='1') then					------ FIFO Data Write ?
+				FIFO_DATA3 <= FIFO_WE & FIFO_WRDT;							------ FIFO Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Write Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_WRADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_WRADRS <= (others=>'0');								------ FIFO Write Address Clear
+			elsif (FIFO_WE='1') then										------ FIFO Data Write ?
+				FIFO_WRADRS <= FIFO_WRADRS+1;								------ FIFO Write Address Increment
+			end if;
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  FIFO Data Read Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDDT <= FIFO_DATA0(63 downto 0);			------ Buffer0 Read
+			when "01"	=> FIFO_RDDT <= FIFO_DATA1(63 downto 0);			------ Buffer1 Read
+			when "10"	=> FIFO_RDDT <= FIFO_DATA2(63 downto 0);			------ Buffer2 Read
+			when "11"	=> FIFO_RDDT <= FIFO_DATA3(63 downto 0);			------ Buffer3 Read
+			when others => FIFO_RDDT <= (others=>'0');
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Data Enable Signal Select Control Process
+--------------------------------------------------------------------------------
+
+	process (FIFO_RDADRS,FIFO_DATA0,FIFO_DATA1,FIFO_DATA2,FIFO_DATA3) begin
+		case FIFO_RDADRS is
+			when "00"	=> FIFO_RDTEN <= FIFO_DATA0(64);					------ Buffer0 Read Enable Signal
+			when "01"	=> FIFO_RDTEN <= FIFO_DATA1(64);					------ Buffer1 Read Enable Signal
+			when "10"	=> FIFO_RDTEN <= FIFO_DATA2(64);					------ Buffer2 Read Enable Signal
+			when "11"	=> FIFO_RDTEN <= FIFO_DATA3(64);					------ Buffer3 Read Enable Signal
+			when others => FIFO_RDTEN <= '0';
+		end case;
+	end process;
+
+--------------------------------------------------------------------------------
+-- FIFO Read Address Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FIFO_RDADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (FIFO_ENB='0') then											------ FIFO Disable ?
+				FIFO_RDADRS <= (others=>'0');								------ FIFO Read Address Clear
+			elsif (FIFO_RE='1') then										------ FIFO Data Read ?
+				FIFO_RDADRS <= FIFO_RDADRS+1;								------ FIFO Read Address Increment
+			end if;
+		end if;
+	end process;
+
+
+
+end PCI_RDTFIFO_rtl;
