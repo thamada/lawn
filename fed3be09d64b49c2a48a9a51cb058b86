@@ -1,16 +1,25 @@
-2025年  1月 18日 土曜日 10:56:42 JST
-/** 
-# x��1���ƥå׿ʤ��
-# x(k+1) = x(k) + v(k+1/2)*dt
-*/
-
-#include <stdio.h>
-#include "nbodysim.h"
-
-void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-        for(d=0;d<3;d++)
-            x[i][d] = x[i][d]+v[i][d]*dt;
-}
+2025年  1月 19日 日曜日 10:41:44 JST
+JDF G
+// Created by Project Navigator ver 1.0
+PROJECT tmp2
+DESIGN tmp2
+DEVFAM virtex2
+DEVFAMTIME 0
+DEVICE xc2v1000
+DEVICETIME 0
+DEVPKG fg456
+DEVPKGTIME 0
+DEVSPEED -5
+DEVSPEEDTIME 0
+DEVTOPLEVELMODULETYPE HDL
+TOPLEVELMODULETYPETIME 0
+DEVSYNTHESISTOOL XST (VHDL/Verilog)
+SYNTHESISTOOLTIME 0
+DEVSIMULATOR Modelsim
+SIMULATORTIME 0
+DEVGENERATEDSIMULATIONMODEL VHDL
+GENERATEDSIMULATIONMODELTIME 0
+SOURCE pfpga_config.vhd
+STIMULUS sim.tbw
+[STRATEGY-LIST]
+Normal=True
