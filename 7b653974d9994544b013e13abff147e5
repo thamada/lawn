@@ -1,1166 +1,159 @@
-2025Âπ¥  1Êúà 14Êó• ÁÅ´ÊõúÊó• 11:45:27 JST
--- Top of the Interface FPGA
--- by Tsuyoshi Hamada (2004)
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
-
-entity ifpga is
-  port (
-  -- PCI ports; do not modify names!
-    AD        : inout std_logic_vector(63 downto 0);
-    CBE       : inout std_logic_vector( 7 downto 0);
-    PAR       : inout std_logic;
-    PAR64      : inout std_logic;
-    FRAME_N     : inout std_logic;
-    REQ64_N     : inout std_logic;
-    TRDY_N      : inout std_logic;
-    IRDY_N      : inout std_logic;
-    STOP_N      : inout std_logic;
-    DEVSEL_N    : inout std_logic;
-    ACK64_N     : inout std_logic;
-    IDSEL      : in  std_logic;
-    INTR_A      : out  std_logic;
-    PERR_N      : inout std_logic;
-    SERR_N      : inout std_logic;
-    REQ_N      : out  std_logic;
-    GNT_N      : in  std_logic;
-    RST_N      : in  std_logic;
-    PCLK      : in  std_logic;
-
-   -- PFPGA SIDE -----------------------------------------------------
-    PFPGA_RST : out std_logic_vector(3 downto 0); -- Active High
-   -- DBUS
-    DBUS  : inout std_logic_vector(63 downto 0);
-   -- CBUS
-    CBUS0 : inout std_logic_vector(7 downto 0);
-    CBUS1 : inout std_logic_vector(7 downto 0);
-    CBUS2 : inout std_logic_vector(7 downto 0);
-    CBUS3 : inout std_logic_vector(7 downto 0);
-
-   -- PFPGA CONFIG
-    CFG_D         : out  std_logic_vector(7 downto 0);  -- DATA
-    CFG_CCLK      : out  std_logic;           -- CCLK
-    CFG_PROG_B0   : out  std_logic;           -- PFPGA0å¸ÇØPROG_B
-    CFG_PROG_B1   : out  std_logic;           -- PFPGA1å¸ÇØPROG_B
-    CFG_PROG_B2   : out  std_logic;           -- PFPGA2å¸ÇØPROG_B
-    CFG_PROG_B3   : out  std_logic;           -- PFPGA3å¸ÇØPROG_B
-    CFG_CS_B0     : out  std_logic;           -- PFPGA0å¸ÇØCS_B
-    CFG_CS_B1     : out  std_logic;           -- PFPGA1å¸ÇØCS_B
-    CFG_CS_B2     : out  std_logic;           -- PFPGA2å¸ÇØCS_B
-    CFG_CS_B3     : out  std_logic;           -- PFPGA3å¸ÇØCS_B
-    CFG_RDWR_B    : out  std_logic;           -- RD/WR_B
-    CFG_INIT_B0   : in  std_logic;     -- PFPGA0å¸ÇØINIT_B
-    CFG_INIT_B1   : in  std_logic;     -- PFPGA1å¸ÇØINIT_B
-    CFG_INIT_B2   : in  std_logic;     -- PFPGA2å¸ÇØINIT_B
-    CFG_INIT_B3   : in  std_logic;     -- PFPGA3å¸ÇØINIT_B
-
-
-  -- PFPGA CLOCK
-    CK66_IFPGA   : out std_logic; --  66MHz clock to self chip( CK66)
-    CK66         : in  std_logic; --  66MHz clock from self chip(CK66_IFPGA)
-    CK66_PFPGA0  : out std_logic;
-    CK66_PFPGA1  : out std_logic;
-    CK66_PFPGA2  : out std_logic;
-    CK66_PFPGA3  : out std_logic;
-
-  -- Add user I/O ports here
-    PLED_OUT    : out  std_logic_vector(3 downto 0);  -- LED Output (LED 0..3)
-    LLED_OUT    : out  std_logic_vector(3 downto 0)   -- LED Output (LED 4..7)
-  );
-end ifpga;
-
-
-architecture rtl of ifpga is
-
-
---------------------------------------------------
--- Components
---------------------------------------------------
-
--- Component declaration of PCI Interface
-
-component pcim_lc
-  port (
-  -- PCI ports; do not modify names!
-    AD_IO      : inout std_logic_vector( 63 downto 0);
-    CBE_IO      : inout std_logic_vector(  7 downto 0);
-    PAR_IO      : inout std_logic;
-    PAR64_IO    : inout std_logic;
-    FRAME_IO    : inout std_logic;
-    REQ64_IO    : inout std_logic;
-    TRDY_IO     : inout std_logic;
-    IRDY_IO     : inout std_logic;
-    STOP_IO     : inout std_logic;
-    DEVSEL_IO    : inout std_logic;
-    ACK64_IO    : inout std_logic;
-    IDSEL_I     : in  std_logic;
-    INTA_O      : out  std_logic;
-    PERR_IO     : inout std_logic;
-    SERR_IO     : inout std_logic;
-    REQ_O      : out  std_logic;
-    GNT_I      : in  std_logic;
-    RST_I      : in  std_logic;
-    PCLK      : in  std_logic;
-    CFG       : in  std_logic_vector(255 downto 0);
-    FRAMEQ_N    : out  std_logic;
-    REQ64Q_N    : out  std_logic;
-    TRDYQ_N     : out  std_logic;
-    IRDYQ_N     : out  std_logic;
-    STOPQ_N     : out  std_logic;
-    DEVSELQ_N    : out  std_logic;
-    ACK64Q_N    : out  std_logic;
-    ADDR      : out  std_logic_vector( 31 downto 0);
-    ADIO      : inout std_logic_vector( 63 downto 0);
-    CFG_VLD     : out  std_logic;
-    CFG_HIT     : out  std_logic;
-    C_TERM      : in  std_logic;
-    C_READY     : in  std_logic;
-    ADDR_VLD    : out  std_logic;
-    BASE_HIT    : out  std_logic_vector(  7 downto 0);
-    S_CYCLE64    : out  std_logic;
-    S_TERM      : in  std_logic;
-    S_READY     : in  std_logic;
-    S_ABORT     : in  std_logic;
-    S_WRDN      : out  std_logic;
-    S_SRC_EN    : out  std_logic;
-    S_DATA_VLD    : out  std_logic;
-    S_CBE      : out  std_logic_vector(  7 downto 0);
-    PCI_CMD     : out  std_logic_vector( 15 downto 0);
-    REQUEST     : in  std_logic;
-    REQUEST64    : in  std_logic;
-    REQUESTHOLD   : in  std_logic;
-    COMPLETE    : in  std_logic;
-    M_WRDN      : in  std_logic;
-    M_READY     : in  std_logic;
-    M_SRC_EN    : out  std_logic;
-    M_DATA_VLD    : out  std_logic;
-    M_CBE      : in  std_logic_vector(  7 downto 0);
-    TIME_OUT    : out  std_logic;
-    M_FAIL64    : out  std_logic;
-    CFG_SELF    : in  std_logic;
-    M_DATA      : out  std_logic;
-    DR_BUS      : out  std_logic;
-    I_IDLE      : out  std_logic;
-    M_ADDR_N    : out  std_logic;
-    IDLE      : out  std_logic;
-    B_BUSY      : out  std_logic;
-    S_DATA      : out  std_logic;
-    BACKOFF     : out  std_logic;
-    SLOT64      : in  std_logic;
-    INTR_N      : in  std_logic;
-    PERRQ_N     : out  std_logic;
-    SERRQ_N     : out  std_logic;
-    KEEPOUT     : in  std_logic;
-    CSR       : out  std_logic_vector( 39 downto 0);
-    SUB_DATA    : in  std_logic_vector( 31 downto 0);
-    RST       : inout std_logic;
-    CLK       : inout std_logic
-  );
-end component;
-
-  -- Component declaration for Configuration
-component CFG
-  port (
-    CFG       : out  std_logic_vector(255 downto 0)
-  );
-end component;
-
-
-  -- Component declaration of Userapp
-
-component pcicnt
-  port (
-  -- Interface to PCI Logicore.
-    FRAMEQ_N    : in  std_logic;              -- Latched FRAME# Signal
-    REQ64Q_N    : in  std_logic;              -- Latched REQ64# Signal
-    TRDYQ_N     : in  std_logic;              -- Latched TRDY# Signal
-    IRDYQ_N     : in  std_logic;              -- Latched IRDY# Signal
-    STOPQ_N     : in  std_logic;              -- Latched STOP# Signal
-    DEVSELQ_N   : in  std_logic;              -- Latched DEVSEL# Signal
-    ACK64Q_N    : in  std_logic;              -- Latched ACK64# Signal
-
-    ADDR        : in  std_logic_vector( 31 downto 0);    -- Latched Target Address Bus
-    ADIO        : inout std_logic_vector( 63 downto 0);    -- Internal Address/Data Bus
-
-    CFG_VLD     : in  std_logic;              -- Configulation Cycle Valid
-    CFG_HIT     : in  std_logic;              -- Configuration Cycle Start
-    C_TERM      : out  std_logic;              -- Configuraton Cycle Terminate Signal
-    C_READY     : out  std_logic;              -- Configuration Data Transfer Ready Signal
-
-    ADDR_VLD    : in  std_logic;              -- Internal Address Valid
-    BASE_HIT    : in  std_logic_vector(  7 downto 0);    -- Base Address Hit
-
-    S_CYCLE64   : in  std_logic;              -- 64 bit Transaction Go On
-    S_TERM      : out  std_logic;              -- Target Transaction Terminate Signal
-    S_READY     : out  std_logic;              -- Target Transaction Data Transfer Ready Siganl
-    S_ABORT     : out  std_logic;              -- Target Abort Request Signal
-    S_WRDN      : in  std_logic;              -- Target Transaction Data Direction (0:Write, 1:Read)
-    S_SRC_EN    : in  std_logic;              -- Target Transaction Data Source Enable
-    S_DATA_VLD  : in  std_logic;              -- Target Transaction Data Phase Valid Signal
-    S_CBE       : in  std_logic_vector(  7 downto 0);    -- Target Command & Byte Enable Signal
-    PCI_CMD     : in  std_logic_vector( 15 downto 0);    -- Latched Bus Command
-
-    REQUEST     : out  std_logic;              -- REQ# Signal Assert Request
-    REQUEST64   : out  std_logic;              -- REQ64# Signal Assert Request
-    REQUESTHOLD : out  std_logic;              -- Extended REQ# Signal Assert Request (Not Use)
-    COMPLETE    : out  std_logic;              -- Initiator Transaction End Signal
-
-    M_WRDN      : out  std_logic;              -- Initiator Transaction Data Direction (0:Write, 1:Read)
-    M_READY     : out  std_logic;              -- Initiator Transaction Data Transfer Ready Siganl
-    M_SRC_EN    : in  std_logic;              -- Initiator Transaction Data Source Enable
-    M_DATA_VLD  : in  std_logic;              -- Initiator Transaction Data Phase Valid Signal
-    M_CBE       : out  std_logic_vector(  7 downto 0);    -- Initiator Command & Byte Enable Signal
-
-    TIME_OUT    : in  std_logic;              -- Latency Timer Timeout Signal
-    M_FAIL64    : in  std_logic;              -- 64 bit Transaction Fail Signal
-    CFG_SELF    : out  std_logic;              -- Self Configuration Start Signal
-
-    M_DATA      : in  std_logic;              -- Data Transfer State
-    DR_BUS      : in  std_logic;              -- Bus Park State
-    I_IDLE      : in  std_logic;              -- Initiator Idle State
-    M_ADDR_N    : in  std_logic;              -- Initiator Address State
-    IDLE        : in  std_logic;              -- Target Idle State
-    B_BUSY      : in  std_logic;              -- PCI Bus Busy State
-    S_DATA      : in  std_logic;              -- Target Data Transfer State
-    BACKOFF     : in  std_logic;              -- Target State Machine Transaction End State
-
-    SLOT64      : out  std_logic;              -- 64 bit Extended Signal Eable
-    INTR_N      : out  std_logic;              -- Interrupt Request
-    PERRQ_N     : in  std_logic;              -- latched PERR# Signal
-    SERRQ_N     : in  std_logic;              -- Latched SERR# Signal
-    KEEPOUT     : out  std_logic;              -- ADIO Bus Disable Request Signal
-
-    CSR         : in  std_logic_vector( 39 downto 0);    -- Command/Status Register State
-    SUB_DATA    : out  std_logic_vector( 31 downto 0);    -- Sub-Identification
-    CFG         : in  std_logic_vector(255 downto 0);    -- Confiuration Data
-
-    RST         : in  std_logic;              -- PCI Bus Reset
-    CLK         : in  std_logic;              -- PCI bus Clock
-
-  -- Internal Register Access Control Signal
-    REG_AD      : out  std_logic_vector( 7 downto 0);    -- REGCNT R/W Address
-    REG_WE      : out  std_logic;              -- REGCNT Write Enable
-    REG_RE      : out  std_logic;              -- REGCNT Read Enable
-    REG_DTI     : out  std_logic_vector(31 downto 0);    -- REGCNT Write Data
-    REG_DTO     : in  std_logic_vector(31 downto 0);    -- REGCNT Read Data
-    REG_DTOEN   : in  std_logic;              -- REGCNT Read Data Enable
-
-  -- Internal Memory Access Control Signal
-    MEM_ADA     : out  std_logic_vector(19 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : out  std_logic;              -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : out  std_logic;              -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : out  std_logic;              -- DPRAM Port A Read Enable
-    MEM_DTIA    : out  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
-    MEM_DTOEN   : in  std_logic;              -- DPRAM Port A Read Data Enable
-
-    DMAEND_INT  : out  std_logic;                -- DMA End Interrupt On Request
-    INT_REQ     : in  std_logic;                -- PCI Interrupt On Request
-
-
-
---################################
---##    for Debug
---################################
-
-
-    DEBUG_OUT    : out  std_logic_vector( 7 downto 0)
-
-
-
-  );
-end component;
-
-
-component REGCNT
-  port (
-    RST       : in  std_logic;  -- PCI Bus Reset
-    CLK       : in  std_logic;  -- PCI bus Clock
-    -- PCI R/W ports
-    REG_AD      : in  std_logic_vector( 7 downto 0);   -- REGCNT R/W Address
-    REG_WE      : in  std_logic;                       -- REGCNT Write Enable
-    REG_RE      : in  std_logic;                       -- REGCNT Read Enable
-    REG_DTI      : in  std_logic_vector(31 downto 0);  -- REGCNT Write Data
-    REG_DTO      : out  std_logic_vector(31 downto 0); -- REGCNT Read Data
-    REG_DTOEN    : out  std_logic;                     -- REGCNT Read Data Enable
-    -- USER Application Interface ports
-    LED_CNT      : out  std_logic_vector( 7 downto 0); -- LED Control Signal
-    DIPSW      : in  std_logic_vector( 3 downto 0);    -- DIPSW Signal
-    DMAEND_INT    : in  std_logic;                 -- DMA End Interrupt On Request
-    PSW_ON0      : in  std_logic;                  -- User Interrupt 0 On Request
-    PSW_ON1      : in  std_logic;                  -- User Interrupt 1 On Request
-    USERINT2_ON    : in  std_logic;                -- User Interrupt 2 On Request
-    GPREG0 : in  std_logic_vector(31 downto 0);    -- Read Only Register
-    GPREG1 : out std_logic_vector(31 downto 0);    -- Read Only Register
-    PGPG_REG0 : out std_logic_vector(31 downto 0);
-    PGPG_REG1 : out std_logic_vector(31 downto 0);
-    PGPG_REG2 : out std_logic_vector(31 downto 0);
-    PGPG_REG3 : out std_logic_vector(31 downto 0);
-    Hit_PGPG_REG2 : out std_logic;
-    Hit_PGPG_REG3 : out std_logic;
-    INT_REQ      : out  std_logic                   -- Interrupt Request
-    );
-end component;
-
-
-component DPRAM
-  port (
-    RST       : in  std_logic;                          -- PCI Bus Reset
-    CLK       : in  std_logic;                          -- PCI bus Clock
-    CLKB      : in  std_logic;                          -- Port B Clock
-    -- PCI R/W ports
-    MEM_ADA      : in  std_logic_vector(13 downto 0);   -- DPRAM Port A R/W Address
-    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA      : in  std_logic;                       -- DPRAM Port A Read Enable
-    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : out  std_logic_vector(63 downto 0);   -- DPRAM Port A Read Data
-    MEM_DTOEN    : out  std_logic;                      -- DPRAM Port A Read Data Enable
-    -- USER Application R/W ports
-    MEM_ADB      : in  std_logic_vector(12 downto 0);   -- DPRAM Port B R/W Address
-    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
-    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
-    );
-end component;
-
-
-component USER
-  port (
-    RST         : in  std_logic;                     -- PCI Bus Reset
-    CLK         : in  std_logic;                     -- PCI bus Clock
-    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
-    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
-    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
-    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
-    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
-    );
-end component;
-
-component pfpga_config
-  port( clk   : in std_logic;
-        rst_n : in std_logic;
-        cmd_reg  : in std_logic_vector(8 downto 0);
-        data_reg : in std_logic_vector(31 downto 0);
-	-- Pipeline FPGA side
-        CFG_D         : out  std_logic_vector(7 downto 0);  -- DATA
-        CFG_CCLK      : out  std_logic;           -- CCLK
-        CFG_PROG_B0   : out  std_logic;           -- PFPGA0å¸ÇØPROG_B
-        CFG_PROG_B1   : out  std_logic;           -- PFPGA1å¸ÇØPROG_B
-        CFG_PROG_B2   : out  std_logic;           -- PFPGA2å¸ÇØPROG_B
-        CFG_PROG_B3   : out  std_logic;           -- PFPGA3å¸ÇØPROG_B
-        CFG_CS_B0     : out  std_logic;           -- PFPGA0å¸ÇØCS_B
-        CFG_CS_B1     : out  std_logic;           -- PFPGA1å¸ÇØCS_B
-        CFG_CS_B2     : out  std_logic;           -- PFPGA2å¸ÇØCS_B
-        CFG_CS_B3     : out  std_logic;           -- PFPGA3å¸ÇØCS_B
-        CFG_RDWR_B    : out  std_logic);          -- RD/WR_B
-end component;
-
-component FDDRRSE
-  port(
-    Q        : out  std_logic;      -- DDR output
-    D0        : in  std_logic;      -- data in to fddr
-    D1        : in  std_logic;      -- data in to fddr
-    C0        : in  std_logic;      -- clock
-    C1        : in  std_logic;      -- inversee of C0
-    CE        : in  std_logic;      -- clock enable
-    R        : in  std_logic;       -- reset
-    S        : in  std_logic        -- set
-);
-end component;
-
-component dcm_ps_f
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;     -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;    -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;   -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic   -- ÉNÉçÉbÉNèoóÕ
-  );
-end component;
-
-component LOCAL_IO
-  generic (NBIT_L_ADRO : integer := 3);
-  port (
-    
-    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
-    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
-    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
-
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
-    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-
-component WRITECOMB_CHECK
-  port (
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    IS_ERR : out std_logic_vector(25 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-component FIFOFIFO
-  port (
-    -- pcicnt input
-    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHA : in std_logic;
-    MEM_WELA : in std_logic;
-    MEM_DTIA : in std_logic_vector(63 downto 0);
-    -- output
-    MEM_AD     : out std_logic_vector(31 downto 0);
-    MEM_WE     : out std_logic;
-    MEM_DTI    : out std_logic_vector(63 downto 0);
-
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
-
-
---------------------------------------------------
--- signals
---------------------------------------------------
-
-  -- Internal signals; do not modify names!
-
-  signal FRAMEQ_N      : std_logic;                -- Latched FRAME# Signal
-  signal REQ64Q_N      : std_logic;                -- Latched REQ64# Signal
-  signal TRDYQ_N      : std_logic;                -- Latched TRDY# Signal
-  signal IRDYQ_N      : std_logic;                -- Latched IRDY# Signal
-  signal STOPQ_N      : std_logic;                -- Latched STOP# Signal
-  signal DEVSELQ_N    : std_logic;                -- Latched DEVSEL# Signal
-  signal ACK64Q_N      : std_logic;                -- Latched ACK64# Signal
-
-  signal ADDR        : std_logic_vector( 31 downto 0);      -- Latched Target Address Bus
-  signal ADIO        : std_logic_vector( 63 downto 0);      -- Internal Address/Data Bus
-
-  signal CFG_VLD      : std_logic;                -- Configulation Cycle Valid
-  signal CFG_HIT      : std_logic;                -- Configuration Cycle Start
-  signal C_TERM       : std_logic;                -- Configuraton Cycle Terminate Signal
-  signal C_READY      : std_logic;                -- Configuration Data Transfer Ready Signal
-
-  signal ADDR_VLD      : std_logic;                -- Internal Address Valid
-  signal BASE_HIT      : std_logic_vector(  7 downto 0);      -- Base Address Hit
-
-  signal S_CYCLE64    : std_logic;                -- 64 bit Transaction Go On
-  signal S_TERM       : std_logic;                -- Target Transaction Terminate Signal
-  signal S_READY      : std_logic;                -- Target Transaction Data Transfer Ready Siganl
-  signal S_ABORT      : std_logic;                -- Target Abort Request Signal
-  signal S_WRDN       : std_logic;                -- Target Transaction Data Direction (0:Write, 1:Read)
-  signal S_SRC_EN      : std_logic;                -- Target Transaction Data Source Enable
-  signal S_DATA_VLD     : std_logic;                -- Target Transaction Data Phase Valid Signal
-  signal S_CBE      : std_logic_vector(  7 downto 0);      -- Target Command & Byte Enable Signal
-                                    -- Latched Bus Command
-  signal PCI_CMD      : std_logic_vector( 15 downto 0);
-  signal REQUEST      : std_logic;                -- REQ# Signal Assert Request
-  signal REQUEST64    : std_logic;                -- REQ64# Signal Assert Request
-  signal REQUESTHOLD    : std_logic;                -- Extended REQ# Signal Assert Request (Not Use)
-  signal COMPLETE      : std_logic;                -- Initiator Transaction End Signal
-
-  signal M_WRDN       : std_logic;                -- Initiator Transaction Data Direction (0:Write, 1:Read)
-  signal M_READY      : std_logic;                -- Initiator Transaction Data Transfer Ready Siganl
-  signal M_SRC_EN      : std_logic;                -- Initiator Transaction Data Source Enable
-  signal M_DATA_VLD     : std_logic;                -- Initiator Transaction Data Phase Valid Signal
-  signal M_CBE      : std_logic_vector(  7 downto 0);      -- Initiator Command & Byte Enable Signal
-
-  signal TIME_OUT      : std_logic;                -- Latency Timer Timeout Signal
-  signal M_FAIL64      : std_logic;                -- 64 bit Transaction Fail Signal
-  signal CFG_SELF      : std_logic;                -- Self Configuration Start Signal
-
-  signal M_DATA       : std_logic;                -- Data Transfer State
-  signal DR_BUS       : std_logic;                -- Bus Park State
-  signal I_IDLE       : std_logic;                -- Initiator Idle State
-  signal M_ADDR_N      : std_logic;                -- Initiator Address State
-  signal IDLE        : std_logic;                -- Target Idle State
-  signal B_BUSY       : std_logic;                -- PCI Bus Busy State
-  signal S_DATA       : std_logic;                -- Target Data Transfer State
-  signal BACKOFF      : std_logic;                -- Target State Machine Transaction End State
-
-  signal SLOT64       : std_logic;                -- 64 bit Extended Signal Eable
-  signal INTR_N       : std_logic;                -- Interrupt Request
-  signal PERRQ_N      : std_logic;                -- latched PERR# Signal
-  signal SERRQ_N      : std_logic;                -- Latched SERR# Signal
-  signal KEEPOUT      : std_logic;                -- ADIO Bus Disable Request Signal
-
-  signal CSR        : std_logic_vector( 39 downto 0);      -- Command/Status Register State
-  signal SUB_DATA      : std_logic_vector( 31 downto 0);      -- Sub-Identification
-  signal CFG_BUS      : std_logic_vector(255 downto 0);      -- Confiuration Data
-
-  signal RST        : std_logic;                -- PCI Bus Reset
-  signal CLK        : std_logic;                -- PCI bus Clock
-
-  -- Internal Register Access Control Signal
-  signal  REG_AD      : std_logic_vector( 7 downto 0);      -- REGCNT R/W Address
-  signal  REG_WE      : std_logic;                -- REGCNT Write Enable
-  signal  REG_RE      : std_logic;                -- REGCNT Read Enable
-  signal  REG_DTI      : std_logic_vector(31 downto 0);      -- REGCNT Write Data
-  signal  REG_DTO      : std_logic_vector(31 downto 0);      -- REGCNT Read Data
-  signal  REG_DTOEN    : std_logic;                -- REGCNT Read Data Enable
-
-  -- USER Application Interface ports
-  signal  LED_CNT      : std_logic_vector( 7 downto 0);      -- LED Control Signal
-  signal  DIPSW      : std_logic_vector( 3 downto 0);      -- DIPSW Signal
-
-  signal  DMAEND_INT    : std_logic;                  -- DMA End Interrupt On Request
-  signal  PSW_ON0      : std_logic;                  -- User Interrupt 0 On Request
-  signal  PSW_ON1      : std_logic;                  -- User Interrupt 1 On Request
-  signal  USERINT2_ON    : std_logic;                  -- User Interrupt 2 On Request
-
-  signal  INT_REQ      : std_logic;                -- Interrupt Request
-
-  -- Internal Memory Access from PCI Control Signal
-  signal  MEM_ADA      : std_logic_vector(19 downto 0);      -- DPRAM Port A R/W Address
-  signal  MEM_WEHA    : std_logic;                -- DPRAM Port A Write Enable (High Word)
-  signal  MEM_WELA    : std_logic;                -- DPRAM Port A Write Enable (Low  Word)
-  signal  MEM_REA      : std_logic;                -- DPRAM Port A Read Enable
-  signal  MEM_DTIA    : std_logic_vector(63 downto 0);      -- DPRAM Port A Write Data
-  signal  MEM_DTOA    : std_logic_vector(63 downto 0);      -- DPRAM Port A Read Data
-  signal  MEM_DTOEN    : std_logic;                -- DPRAM Port A Read Data Enable
-
-  -- Internal Memory Access from User Application Control Signal
-  signal  MEM_ADB      : std_logic_vector(12 downto 0);      -- DPRAM Port B R/W Address
-  signal  MEM_WEHB    : std_logic;                  -- DPRAM Port B Write Enable (High Word)
-  signal  MEM_WELB    : std_logic;                  -- DPRAM Port B Write Enable (Low  Word)
-  signal  MEM_DTIB    : std_logic_vector(63 downto 0);      -- DPRAM Port B Write Data
-  signal  MEM_DTOB    : std_logic_vector(63 downto 0);      -- DPRAM Port B Read Data
-
-
-  -- for PGPG
-  constant  const_0 : std_logic :='0';
-  constant  const_1 : std_logic :='1';
-  signal CK66_DCM   : std_logic;
-  signal xCK66_DCM  : std_logic;
-  signal GPREG0_ff : std_logic_vector(31 downto 0); -- REGCNF <- (0):CALC_END(FOGET READY), (31 downto 6):WRITECOMB_CHECK
-  signal GPREG1_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
-  signal PGPG_REG0_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
-  signal PGPG_REG1_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
-  signal PGPG_REG2_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA  # RESERVED!
-  signal PGPG_REG3_ff : std_logic_vector(31 downto 0); -- REGCNF -> PFPGA_DMA
-  signal Hit_PGPG_REG2_ff      : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
-  signal Hit_PGPG_REG2_ff0     : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
-  signal Hit_PGPG_REG2_ff_CK66 : std_logic;            -- REGCNF -> PFPGA_DMA  # RESERVED!
-  signal Hit_PGPG_REG3_ff      : std_logic;            -- REGCNF -> PFPGA_DMA  # NOT USED!
-  signal Hit_PGPG_REG3_ff0     : std_logic;            -- REGCNF -> PFPGA_DMA  # NOT USED!
-  signal Hit_PGPG_REG3_ff_CK66 : std_logic;            -- REGCNF -> PFPGA_DMA -- Bugfixed Hit_PGPG_REG3
-  signal DBUS_Port  : std_logic_vector(63 downto 0) := (others=>'0'); -- PFPGA_DMA -> PFPGA
-  signal DBUS_idata : std_logic_vector(63 downto 0) := (others=>'0'); -- PFPGA_DMA <- PFPGA
-  signal DBUS_HiZ   : std_logic;
-  signal DMAW_ENABLE : std_logic_vector(3 downto 0);
-  signal DMAR_ENABLE : std_logic_vector(3 downto 0);
-  signal PFPGA_DMA_STS : std_logic_vector(31 downto 0) :=(others=>'0'); -- -> GPREG0_ff
-  signal PFPGA_PIPE_STS : std_logic_vector(3 downto 0) :=(others=>'0'); -- -> GPREG0_ff
-  -- FIFOFIFO
-  signal FIFO_WE  : std_logic;
-  signal FIFO_AD  : std_logic_vector(31 downto 0);
-  signal FIFO_DTI : std_logic_vector(63 downto 0);
-  -- LOCAL_IO
-  signal BUSY_LOCAL_READ : std_logic;
-
-  -- FF for PFPGA COnfiguration Pins
-  signal CFG_INIT_B0_iff, CFG_INIT_B1_iff, CFG_INIT_B2_iff, CFG_INIT_B3_iff : std_logic;
-  signal CFG_D_o : std_logic_vector(7 downto 0);
-  signal CFG_CCLK_o,CFG_RDWR_B_o                                    : std_logic;
-  signal CFG_PROG_B0_o, CFG_PROG_B1_o, CFG_PROG_B2_o, CFG_PROG_B3_o : std_logic;
-  signal CFG_CS_B0_o, CFG_CS_B1_o, CFG_CS_B2_o, CFG_CS_B3_o         : std_logic;
-
-  -- LED
-  signal LED_ff : std_logic_vector(7 downto 0);
-
---################################
---##    for Debug
---################################
-  signal  DEBUG_OUT    : std_logic_vector( 7 downto 0);
-  signal  DEBUG_SIG    : std_logic_vector(13 downto 0);
-  signal  DEBUG_CS_CLK0 : std_logic := '0';
-  signal  DEBUG_CS_CLK1 : std_logic;
-
-
-  signal CLK_CFG : std_logic;
-
-  constant PSW_IN : std_logic_vector(1 downto 0) := (others=>'1');
-  signal DSW_OUT : std_logic_vector(1 downto 0) := (others=>'1');
-
-begin
-
-
-  -- Do not modify any port, signal, or instance
-  -- names related to the PCI Interface!
-
-  PCI_CORE : pcim_lc port map (
-    AD_IO      => AD,
-    CBE_IO      => CBE,
-    PAR_IO      => PAR,
-    PAR64_IO    => PAR64,
-    FRAME_IO    => FRAME_N,
-    REQ64_IO    => REQ64_N,
-    TRDY_IO     => TRDY_N,
-    IRDY_IO     => IRDY_N,
-    STOP_IO     => STOP_N,
-    DEVSEL_IO    => DEVSEL_N,
-    ACK64_IO    => ACK64_N,
-    IDSEL_I     => IDSEL,
-    INTA_O      => INTR_A,
-    PERR_IO     => PERR_N,
-    SERR_IO     => SERR_N,
-    REQ_O      => REQ_N,
-    GNT_I      => GNT_N,
-    RST_I      => RST_N,
-    PCLK      => PCLK,
-
-    FRAMEQ_N    => FRAMEQ_N,                -- Latched FRAME# Signal
-    REQ64Q_N    => REQ64Q_N,                -- Latched REQ64# Signal
-    TRDYQ_N     => TRDYQ_N,                 -- Latched TRDY# Signal
-    IRDYQ_N     => IRDYQ_N,                 -- Latched IRDY# Signal
-    STOPQ_N     => STOPQ_N,                 -- Latched STOP# Signal
-    DEVSELQ_N    => DEVSELQ_N,                -- Latched DEVSEL# Signal
-    ACK64Q_N    => ACK64Q_N,                -- Latched ACK64# Signal
-
-    ADDR      => ADDR,                  -- Latched Target Address Bus
-    ADIO      => ADIO,                  -- Internal Address/Data Bus
-
-    CFG_VLD     => CFG_VLD,                 -- Configulation Cycle Valid
-    CFG_HIT     => CFG_HIT,                 -- Configuration Cycle Start
-    C_TERM      => C_TERM,                  -- Configuraton Cycle Terminate Signal
-    C_READY     => C_READY,                 -- Configuration Data Transfer Ready Signal
-
-    ADDR_VLD    => ADDR_VLD,                -- Internal Address Valid
-    BASE_HIT    => BASE_HIT,                -- Base Address Hit
-
-    S_CYCLE64    => S_CYCLE64,                -- 64 bit Transaction Go On
-    S_TERM      => S_TERM,                  -- Target Transaction Terminate Signal
-    S_READY     => S_READY,                 -- Target Transaction Data Transfer Ready Siganl
-    S_ABORT     => S_ABORT,                 -- Target Abort Request Signal
-    S_WRDN      => S_WRDN,                  -- Target Transaction Data Direction (0:Write, 1:Read)
-    S_SRC_EN    => S_SRC_EN,                -- Target Transaction Data Source Enable
-    S_DATA_VLD    => S_DATA_VLD,                -- Target Transaction Data Phase Valid Signal
-    S_CBE      => S_CBE,                  -- Target Command & Byte Enable Signal
-    PCI_CMD     => PCI_CMD,                 -- Latched Bus Command
-
-    REQUEST     => REQUEST,                 -- REQ# Signal Assert Request
-    REQUEST64    => REQUEST64,                -- REQ64# Signal Assert Request
-    REQUESTHOLD   => REQUESTHOLD,               -- Extended REQ# Signal Assert Request (Not Use)
-    COMPLETE    => COMPLETE,                -- Initiator Transaction End Signal
-
-    M_WRDN      => M_WRDN,                  -- Initiator Transaction Data Direction (0:Write, 1:Read)
-    M_READY     => M_READY,                 -- Initiator Transaction Data Transfer Ready Siganl
-    M_SRC_EN    => M_SRC_EN,                -- Initiator Transaction Data Source Enable
-    M_DATA_VLD    => M_DATA_VLD,                -- Initiator Transaction Data Phase Valid Signal
-    M_CBE      => M_CBE,                  -- Initiator Command & Byte Enable Signal
-
-    TIME_OUT    => TIME_OUT,                -- Latency Timer Timeout Signal
-    M_FAIL64    => M_FAIL64,                -- 64 bit Transaction Fail Signal
-    CFG_SELF    => CFG_SELF,                -- Self Configuration Start Signal
-
-    M_DATA      => M_DATA,                  -- Data Transfer State
-    DR_BUS      => DR_BUS,                  -- Bus Park State
-    I_IDLE      => I_IDLE,                  -- Initiator Idle State
-    M_ADDR_N    => M_ADDR_N,                -- Initiator Address State
-    IDLE      => IDLE,                  -- Target Idle State
-    B_BUSY      => B_BUSY,                  -- PCI Bus Busy State
-    S_DATA      => S_DATA,                  -- Target Data Transfer State
-    BACKOFF     => BACKOFF,                 -- Target State Machine Transaction End State
-
-    SLOT64      => SLOT64,                  -- 64 bit Extended Signal Eable
-    INTR_N      => INTR_N,                  -- Interrupt Request
-    PERRQ_N     => PERRQ_N,                 -- latched PERR# Signal
-    SERRQ_N     => SERRQ_N,                 -- Latched SERR# Signal
-    KEEPOUT     => KEEPOUT,                 -- ADIO Bus Disable Request Signal
-
-    CSR       => CSR,                   -- Command/Status Register State
-    SUB_DATA    => SUB_DATA,                -- Sub-Identification
-    CFG       => CFG_BUS,                 -- Confiuration Data
-
-    RST       => RST,                   -- PCI Bus Reset
-    CLK       => CLK                    -- PCI bus Clock
-  );
-
-
-  -- Instantiate the configuration module
-
-  CFG_INST : CFG port map (CFG => CFG_BUS);
-
-
-  -- Instantiate the user application
-
-  PCI_CNT : pcicnt port map (
-    FRAMEQ_N    => FRAMEQ_N,                -- Latched FRAME# Signal
-    REQ64Q_N    => REQ64Q_N,                -- Latched REQ64# Signal
-    TRDYQ_N     => TRDYQ_N,                 -- Latched TRDY# Signal
-    IRDYQ_N     => IRDYQ_N,                 -- Latched IRDY# Signal
-    STOPQ_N     => STOPQ_N,                 -- Latched STOP# Signal
-    DEVSELQ_N    => DEVSELQ_N,                -- Latched DEVSEL# Signal
-    ACK64Q_N    => ACK64Q_N,                -- Latched ACK64# Signal
-
-    ADDR      => ADDR,                  -- Latched Target Address Bus
-    ADIO      => ADIO,                  -- Internal Address/Data Bus
-
-    CFG_VLD     => CFG_VLD,                 -- Configulation Cycle Valid
-    CFG_HIT     => CFG_HIT,                 -- Configuration Cycle Start
-    C_TERM      => C_TERM,                  -- Configuraton Cycle Terminate Signal
-    C_READY     => C_READY,                 -- Configuration Data Transfer Ready Signal
-
-    ADDR_VLD    => ADDR_VLD,                -- Internal Address Valid
-    BASE_HIT    => BASE_HIT,                -- Base Address Hit
-
-    S_CYCLE64    => S_CYCLE64,                -- 64 bit Transaction Go On
-    S_TERM      => S_TERM,                  -- Target Transaction Terminate Signal
-    S_READY     => S_READY,                 -- Target Transaction Data Transfer Ready Siganl
-    S_ABORT     => S_ABORT,                 -- Target Abort Request Signal
-    S_WRDN      => S_WRDN,                  -- Target Transaction Data Direction (0:Write, 1:Read)
-    S_SRC_EN    => S_SRC_EN,                -- Target Transaction Data Source Enable
-    S_DATA_VLD    => S_DATA_VLD,                -- Target Transaction Data Phase Valid Signal
-    S_CBE      => S_CBE,                  -- Target Command & Byte Enable Signal
-    PCI_CMD     => PCI_CMD,                 -- Latched Bus Command
-
-    REQUEST     => REQUEST,                 -- REQ# Signal Assert Request
-    REQUEST64    => REQUEST64,                -- REQ64# Signal Assert Request
-    REQUESTHOLD   => REQUESTHOLD,               -- Extended REQ# Signal Assert Request (Not Use)
-    COMPLETE    => COMPLETE,                -- Initiator Transaction End Signal
-
-    M_WRDN      => M_WRDN,                  -- Initiator Transaction Data Direction (0:Write, 1:Read)
-    M_READY     => M_READY,                 -- Initiator Transaction Data Transfer Ready Siganl
-    M_SRC_EN    => M_SRC_EN,                -- Initiator Transaction Data Source Enable
-    M_DATA_VLD    => M_DATA_VLD,                -- Initiator Transaction Data Phase Valid Signal
-    M_CBE      => M_CBE,                  -- Initiator Command & Byte Enable Signal
-
-    TIME_OUT    => TIME_OUT,                -- Latency Timer Timeout Signal
-    M_FAIL64    => M_FAIL64,                -- 64 bit Transaction Fail Signal
-    CFG_SELF    => CFG_SELF,                -- Self Configuration Start Signal
-
-    M_DATA      => M_DATA,                  -- Data Transfer State
-    DR_BUS      => DR_BUS,                  -- Bus Park State
-    I_IDLE      => I_IDLE,                  -- Initiator Idle State
-    M_ADDR_N    => M_ADDR_N,                -- Initiator Address State
-    IDLE      => IDLE,                  -- Target Idle State
-    B_BUSY      => B_BUSY,                  -- PCI Bus Busy State
-    S_DATA      => S_DATA,                  -- Target Data Transfer State
-    BACKOFF     => BACKOFF,                 -- Target State Machine Transaction End State
-
-    SLOT64      => SLOT64,                  -- 64 bit Extended Signal Eable
-    INTR_N      => INTR_N,                  -- Interrupt Request
-    PERRQ_N     => PERRQ_N,                 -- latched PERR# Signal
-    SERRQ_N     => SERRQ_N,                 -- Latched SERR# Signal
-    KEEPOUT     => KEEPOUT,                 -- ADIO Bus Disable Request Signal
-
-    CSR       => CSR,                   -- Command/Status Register State
-    SUB_DATA    => SUB_DATA,                -- Sub-Identification
-    CFG       => CFG_BUS,                 -- Confiuration Data
-
-    RST       => RST,                   -- PCI Bus Reset
-    CLK       => CLK,                   -- PCI bus Clock
-
-  -- Internal Register Access Control Signal
-    REG_AD      => REG_AD,                  -- REGCNT R/W Address
-    REG_WE      => REG_WE,                  -- REGCNT Write Enable
-    REG_RE      => REG_RE,                  -- REGCNT Read Enable
-    REG_DTI      => REG_DTI,                  -- REGCNT Write Data
-    REG_DTO      => REG_DTO,                  -- REGCNT Read Data
-    REG_DTOEN    => REG_DTOEN,                -- REGCNT Read Data Enable
-
-  -- Internal Memory Access Control Signal
-    MEM_ADA     => MEM_ADA,                  -- DPRAM Port A R/W Address
-    MEM_WEHA     => MEM_WEHA,                -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA     => MEM_WELA,                -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     => MEM_REA,                  -- DPRAM Port A Read Enable
-    MEM_DTIA     => MEM_DTIA,                -- DPRAM Port A Write Data
-    MEM_DTOA     => MEM_DTOA,                -- DPRAM Port A Read Data
-    MEM_DTOEN     => MEM_DTOEN,                -- DPRAM Port A Read Data Enable
-
-    DMAEND_INT    => DMAEND_INT,                -- DMA End Interrupt On Request
-    INT_REQ      => INT_REQ,                  -- PCI Interrupt On Request
-
-
-
-
---################################
---##    for Debug
---################################
-
-
-
-    DEBUG_OUT    =>  DEBUG_OUT                -- DMA End Interrupt On Request
-  );
-
-  reg0 : REGCNT port map (
-    RST       => RST,                   -- PCI Bus Reset
-    CLK       => CLK,                   -- PCI bus Clock
-
-    -- PCI R/W ports
-    REG_AD      => REG_AD,                  -- REGCNT R/W Address
-    REG_WE      => REG_WE,                  -- REGCNT Write Enable
-    REG_RE      => REG_RE,                  -- REGCNT Read Enable
-    REG_DTI      => REG_DTI,                  -- REGCNT Write Data
-    REG_DTO      => REG_DTO,                  -- REGCNT Read Data
-    REG_DTOEN    => REG_DTOEN,                -- REGCNT Read Data Enable
-
-    -- USER Application Interface ports
-    LED_CNT      => LED_CNT,                  -- LED Control Signal
-    DIPSW      => DIPSW,                  -- DIPSW Signal
-
-    DMAEND_INT    => DMAEND_INT,                -- DMA End Interrupt On Request
-    PSW_ON0      => PSW_ON0,                  -- User Interrupt 0 On Request
-    PSW_ON1      => PSW_ON1,                  -- User Interrupt 1 On Request
-    USERINT2_ON    => USERINT2_ON,                -- User Interrupt 2 On Request
-
-    GPREG0 => GPREG0_ff,         -- from PFPGA_DMA_STS/ PFPGA_PIPE_STS
-    GPREG1 => GPREG1_ff,         -- to PFPGA_RST
-    PGPG_REG0 => PGPG_REG0_ff,   -- to PFPGA_DMA
-    PGPG_REG1 => PGPG_REG1_ff,   -- to PFPGA_DMA
-    PGPG_REG2 => PGPG_REG2_ff,   -- to PFPGA_DMA
-    PGPG_REG3 => PGPG_REG3_ff,   -- to PFPGA_DMA
-    Hit_PGPG_REG2 => Hit_PGPG_REG2_ff,   -- to PFPGA_DMA
-    Hit_PGPG_REG3 => Hit_PGPG_REG3_ff,   -- to PFPGA_DMA
-
-    INT_REQ      => INT_REQ                  -- Interrupt Request
-  );
-
-
-  dp0 : DPRAM port map (
-    RST         => RST,                   -- PCI Bus Reset
-    CLK         => CLK,                   -- PCI bus Clock
---hoge
---    CLKB      => CK66,                  -- Port B Clock
-    CLKB        => CLK,                   -- Port B Clock
-
-    -- PCI R/W ports
-
---  ========================================================================================= Ç«Ç§Ç…Ç©ÇµÇƒ!
-    MEM_ADA     => MEM_ADA(13 downto 0),  -- DPRAM Port A R/W Address
-    MEM_WEHA    => MEM_WEHA,              -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    => MEM_WELA,              -- DPRAM Port A Write Enable (Low  Word)
-    MEM_DTIA    => MEM_DTIA,              -- DPRAM Port A Write Data
---    MEM_ADA     => (others=>'0'),
---    MEM_WEHA    => '0',
---    MEM_WELA    => '0',
---    MEM_DTIA    => (others=>'0'),
---  =========================================================================================
-
-    MEM_REA     => MEM_REA,               -- DPRAM Port A Read Enable
-    MEM_DTOA    => MEM_DTOA,              -- DPRAM Port A Read Data
-    MEM_DTOEN   => MEM_DTOEN,             -- DPRAM Port A Read Data Enable
-
-    -- USER Application R/W ports
-    MEM_ADB     => MEM_ADB,               -- DPRAM Port B R/W Address
-    MEM_WEHB    => MEM_WEHB,              -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    => MEM_WELB,              -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    => MEM_DTIB,              -- DPRAM Port B Write Data
-    MEM_DTOB    => MEM_DTOB               -- DPRAM Port B Read Data
-    );
-
-
-  user0 : USER port map (
-    RST         => RST,           -- PCI Bus Reset
-    CLK         => CLK,           -- PCI bus Clock
-    PSW_IN      => PSW_IN,        -- Push SW Input
-    DIPSW       => DIPSW,         -- DIPSW Signal
-    PSW_ON0     => PSW_ON0,       -- User Interrupt 0 On Request
-    PSW_ON1     => PSW_ON1,       -- User Interrupt 1 On Request
-    USERINT2_ON => USERINT2_ON    -- User Interrupt 2 On Request
-    );
-
---***************************************************************
---*
---*  FPGA Reserve PIN Control Block
---*
---***************************************************************
---    CNT2 <= (others=>'Z');
---    CNT4 <= (others=>'Z');
---    RES   <= (others=>'Z');
-
---################################
---##    for Debug
---################################
-    DEBUG_SIG( 4) <= LED_CNT(0);
-    DEBUG_SIG( 5) <= LED_CNT(1);
-    DEBUG_SIG( 6) <= FRAMEQ_N  ;
-    DEBUG_SIG( 7) <= IRDYQ_N  ;
-    DEBUG_SIG( 8) <= TRDYQ_N   ;
-    DEBUG_SIG( 9) <= STOPQ_N   ;
-    DEBUG_SIG(10) <= DEVSELQ_N   ;
-    DEBUG_SIG(11) <= M_DATA  ;
-    DEBUG_SIG(12) <= '0';
-    DEBUG_SIG(13) <= '0';
-
-
--- *************************************************************************
--- PGPG  LOGIC
--- *************************************************************************
-
-pgpg0 : pfpga_config  port map(
---    clk      => CLK,
-    clk      => CLK,
-    rst_n    => (not RST),
-    cmd_reg  => PGPG_REG0_ff(8 downto 0),
-    data_reg => PGPG_REG1_ff(31 downto 0),
-    -- Connected to Chip Output Pins Directly
-    CFG_D       => CFG_D_o,
-    CFG_CCLK    => CFG_CCLK_o,
-    CFG_PROG_B0 => CFG_PROG_B0_o,
-    CFG_PROG_B1 => CFG_PROG_B1_o,
-    CFG_PROG_B2 => CFG_PROG_B2_o,
-    CFG_PROG_B3 => CFG_PROG_B3_o,
-    CFG_CS_B0   => CFG_CS_B0_o,
-    CFG_CS_B1   => CFG_CS_B1_o,
-    CFG_CS_B2   => CFG_CS_B2_o,
-    CFG_CS_B3   => CFG_CS_B3_o,
-    CFG_RDWR_B  => CFG_RDWR_B_o);
-
-  -- PFPGA Configuration Pins
-  process(CLK, RST)  begin
-    if (RST = '1') then
-      CFG_D <= (others => '0');
-      CFG_CCLK <= '0';
-      CFG_PROG_B0 <= '1'; CFG_PROG_B1 <= '1'; CFG_PROG_B2 <= '1'; CFG_PROG_B3 <= '1';
-      CFG_CS_B0 <= '1'; CFG_CS_B1 <= '1'; CFG_CS_B2 <= '1'; CFG_CS_B3 <= '1';
-      CFG_RDWR_B <= '1';
-      CFG_INIT_B0_iff <= '0';
-      CFG_INIT_B1_iff <= '0';
-      CFG_INIT_B2_iff <= '0';
-      CFG_INIT_B3_iff <= '0';
-    elsif (CLK'event and CLK = '1') then
-      CFG_D <= CFG_D_o;
-      CFG_CCLK <= CFG_CCLK_o;
-      CFG_INIT_B0_iff <= CFG_INIT_B0;
-      CFG_INIT_B1_iff <= CFG_INIT_B1;
-      CFG_INIT_B2_iff <= CFG_INIT_B2;
-      CFG_INIT_B3_iff <= CFG_INIT_B3;
-      CFG_PROG_B0 <= CFG_PROG_B0_o;
-      CFG_PROG_B1 <= CFG_PROG_B1_o;
-      CFG_PROG_B2 <= CFG_PROG_B2_o;
-      CFG_PROG_B3 <= CFG_PROG_B3_o;
-      CFG_CS_B0 <= CFG_CS_B0_o;
-      CFG_CS_B1 <= CFG_CS_B1_o;
-      CFG_CS_B2 <= CFG_CS_B2_o;
-      CFG_CS_B3 <= CFG_CS_B3_o;
-      CFG_RDWR_B <= CFG_RDWR_B_o;
-    end if;
-  end process;
-
---------------------------------------------------------------------------------------------------------------
---  LOCAL Input/Output controller between IFPGA and PFPGA
---------------------------------------------------------------------------------------------------------------
-pgpg1 : LOCAL_IO
-  generic map (NBIT_L_ADRO => 3) -- MAX    (FDIM=8)
---  generic map (NBIT_L_ADRO => 2) -- for G5 (FDIM=4) # ÉWÉFÉlÉäÉbÉNÇÃì`îdÇ™Ç§Ç‹Ç≠Ç¢Ç©Ç»Ç¢ÇÃÇ≈íºê⁄local_read_cnt.vhdÇÃI_NFIÇïœçXÇµÇ‹ÇµÇÂÇ§!!
-  port map (
-    CALC_STS => PFPGA_PIPE_STS(0),         -- 1: PIPE CALC DONE, 0: PIPE RUNNING
-    NPIPE    => PGPG_REG3_ff(7 downto 0),  -- from REGNCT ( PGPG_REG3 )
-    BUSY_LOCAL_READ => BUSY_LOCAL_READ,    -- to REGNCT (GPREG0)
-    -- pcicnt input
-    MEM_ADA  => FIFO_AD(19 downto 0),
-    MEM_WEHA => FIFO_WE,
-    MEM_WELA => FIFO_WE,
-    MEM_DTIA => FIFO_DTI,
-
-    -- CBUS/DBUS
-    DMAW_ENABLE => DMAW_ENABLE,
-    DMAR_ENABLE => DMAR_ENABLE,
-    DBUS_Port   => DBUS_Port,
-    DBUS_idata  => DBUS_idata,
-    DBUS_HiZ    => DBUS_HiZ,
-    -- DPRAM R/W ports
-    MEM_ADB     => MEM_ADB,                  -- DPRAM Port B R/W Address
-    MEM_WEHB    => MEM_WEHB,                 -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    => MEM_WELB,                 -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    => MEM_DTIB,                 -- DPRAM Port B Write Data
-    MEM_DTOB    => MEM_DTOB,                 -- DPRAM Port B Read Data
-    RST => RST,
-    CLK => CLK
-    );
-
-pgpg2 : WRITECOMB_CHECK
-  port map (
-    -- pcicnt input
-    MEM_WEHA => MEM_WEHA,
-    MEM_WELA => MEM_WELA,
-    IS_ERR => GPREG0_ff(31 downto 6),
-    RST => GPREG1_ff(0),
-    CLK => CLK
-    );
-
-pgpg3 : FIFOFIFO
-  port map(
-    -- pcicnt input
-    MEM_ADA  => MEM_ADA,
-    MEM_WEHA => MEM_WEHA,
-    MEM_WELA => MEM_WELA,
-    MEM_DTIA => MEM_DTIA,
-    -- output
-    MEM_AD   => FIFO_AD,
-    MEM_WE   => FIFO_WE,
-    MEM_DTI  => FIFO_DTI,
-    RST => RST,
-    CLK => CLK);
-
-
-  -- CBUS --------------------------------------------------------(2004/11/23 by T.H.)
-  CBUS0(0) <= DMAW_ENABLE(0);  CBUS0(1) <= DMAR_ENABLE(0);
-  CBUS1(0) <= DMAW_ENABLE(1);  CBUS1(1) <= DMAR_ENABLE(1);
-  CBUS2(0) <= DMAW_ENABLE(2);  CBUS2(1) <= DMAR_ENABLE(2);
-  CBUS3(0) <= DMAW_ENABLE(3);  CBUS3(1) <= DMAR_ENABLE(3);
---  PFPGA_PIPE_STS <= CBUS3(7) & CBUS2(7) & CBUS1(7) & CBUS0(7);
---  PFPGA_PIPE_STS <= "1111";
-  PFPGA_PIPE_STS <= "111" & CBUS0(7);
-
-  CBUS0(6 downto 2) <= (others=>'Z');
-  CBUS1(7 downto 2) <= (others=>'Z');
-  CBUS2(7 downto 2) <= (others=>'Z');
-  CBUS3(7 downto 2) <= (others=>'Z');
-  ----------------------------------------------------------------//
-
-  DBUS <= (others=>'Z') when DBUS_HiZ='1' else DBUS_Port;
-  DBUS_idata <= DBUS;
-
-  PFPGA_RST <= GPREG1_ff(3 downto 0);
-
-  -- GPREG0 -----------------------------------------------------(2004/11/23 by T.H.)
---GPREG0_ff(31 downto 6) <-- from WRITECOMB_CHECK
-  GPREG0_ff(5 downto 1) <= (others=>'0');
-  GPREG0_ff(0) <= BUSY_LOCAL_READ;
-  ---------------------------------------------------------------
-
---------------------------------------------------------------------------------------------------------------
---  CLOCK to Pipeline FPGAs   (by Tsuyoshi Hamada)
---------------------------------------------------------------------------------------------------------------
---           +-------------------------+
---           |          FPGA           |
---  (CK66) ->| -> DCM -> (IOB:FDDRRSE) -> CK66_IFPGA, CK66_PFPGA
---           | CLK-+                   |
---           +-------------------------+
-  -- ADJUSTMENT OF CHIP INPUT CLOCK AND DCM CLOCK GENERATION
-
-  dcm_ps_f0 : dcm_ps_f  generic map(PS=>0)
-    port map(RST => RST, CLK_IN => CLK, CLK_FB_IN => CK66, CLK_OUT => CK66_DCM);
-
-  xCK66_DCM   <= not CK66_DCM;
-
-  -- OUTPUT CLOCK GENERATION
-  ck66_0  : FDDRRSE port map(Q => CK66_PFPGA0,
-            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
-  ck66_1  : FDDRRSE port map(Q => CK66_PFPGA1,
-            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
-  ck66_2  : FDDRRSE port map(Q => CK66_PFPGA2,
-            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
-  ck66_3  : FDDRRSE port map(Q => CK66_PFPGA3,
-            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
-  ck66_4  : FDDRRSE port map(Q => CK66_IFPGA,
-            D0 => const_1, D1 => const_0, C0 => CK66_DCM,  C1 => xCK66_DCM,  CE => const_1, R => RST, S => const_0);
-
-  -------------------
-  -- LED
-  -------------------
-  PLED_OUT(3 downto 0) <= LED_ff(3 downto 0);
-  LLED_OUT(2 downto 0) <= LED_ff(6 downto 4);
-  LLED_OUT(3) <= LED_ff(7) OR (DSW_OUT(1) AND DSW_OUT(0));
-
-  process(CLK, RST) begin
-    if(RST = '1') then
-      LED_ff <= "00000000";
-    elsif(CLK'event and CLK='1') then
-      LED_ff <= not GPREG1_ff(7 downto 0);
-    end if;
-  end process;
-
-
-  ----------------------------------------------------------------
-  -- Trans Hit_PGPG_REG2_ff (CLK) -> Hit_PGPG_REG2_ff_CK66 (CK66)
-  -- Trans Hit_PGPG_REG3_ff (CLK) -> Hit_PGPG_REG3_ff_CK66 (CK66)
-  ----------------------------------------------------------------
-  Hit_PGPG_REG3_ff_CK66 <= Hit_PGPG_REG3_ff_CK66;
-  process(CK66) begin
-    if(CK66'event and CK66='1') then
-      Hit_PGPG_REG2_ff0 <= Hit_PGPG_REG2_ff;
-      Hit_PGPG_REG3_ff0 <= Hit_PGPG_REG3_ff;
-    end if;
-  end process;
-
-  process(CK66, RST, Hit_PGPG_REG2_ff, Hit_PGPG_REG2_ff0) begin
-    if(RST = '1') then
-      Hit_PGPG_REG2_ff_CK66 <= '0';
-    elsif(CK66'event and CK66='1') then
-      if(Hit_PGPG_REG2_ff = '0' AND Hit_PGPG_REG2_ff0 ='1') then
-        Hit_PGPG_REG2_ff_CK66 <= '1';
-      else
-        Hit_PGPG_REG2_ff_CK66 <= '0';
-      end if;
-    end if;
-  end process;
-
-  process(CK66, RST, Hit_PGPG_REG3_ff, Hit_PGPG_REG3_ff0) begin
-    if(RST = '1') then
-      Hit_PGPG_REG3_ff_CK66 <= '0';
-    elsif(CK66'event and CK66='1') then
-      if(Hit_PGPG_REG3_ff = '0' AND Hit_PGPG_REG3_ff0 ='1') then
-        Hit_PGPG_REG3_ff_CK66 <= '1';
-      else
-        Hit_PGPG_REG3_ff_CK66 <= '0';
-      end if;
-    end if;
-  end process;
-
-
-  ----------------------------
-  -- CK33 for ChipScope Debug
-  ----------------------------
-  DEBUG_CS_CLK1 <= DEBUG_CS_CLK0;
-  process(CLK, RST) begin
-    if(RST = '1') then
-      DEBUG_CS_CLK0<= '0';
-    elsif(CLK'event and CLK='1') then
-      if(DEBUG_CS_CLK1='0') then
-        DEBUG_CS_CLK0<= '1';
-      else
-        DEBUG_CS_CLK0<= '0';
-      end if;
-    end if;
-  end process;
-
-
-  ----------------------------
-  -- Not Used But Need Signals
-  ----------------------------
-
-  process(CLK, RST) begin
-    if(RST = '1') then
-      DSW_OUT(0) <= '1';
-      DSW_OUT(1) <= '1';
-    elsif(CLK'event and CLK='1') then
-      DSW_OUT(0) <= CFG_INIT_B0_iff AND CFG_INIT_B1_iff AND CFG_INIT_B2_iff AND CFG_INIT_B3_iff;
-      DSW_OUT(1) <= DEBUG_CS_CLK0;
-    end if;
-  end process;
-
-
-
-end rtl;
+2025Âπ¥  1Êúà 25Êó• ÂúüÊõúÊó• 10:10:46 JST
+#include "cutil.h"
+
+__device__ float4 
+inter(float4 xj, float4 xi)
+{
+  float mj    = xj.w;        // Mass Mj
+  float ieps2 = xi.w;        // epsilon^2
+  float dx = xj.x - xi.x;    // Coordinates Xj - Xi
+  float dy = xj.y - xi.y;    // Coordinates Yj - Yi
+  float dz = xj.z - xi.z;    // Coordinates Zj - Zi
+  float r2 = (dx*dx+ieps2)+dy*dy+dz*dz;
+  float r1i = 1/sqrt(r2);
+  float r2i = r1i * r1i;
+  float mr3i = mj * r2i * r1i;
+
+  float4 output;
+  output.x = dx;
+  output.y = dy;
+  output.z = dz;
+  output.w = mr3i;
+  return (output);
+  /*
+  apot.x += dx * mr3i;       // Accel AXi
+  apot.y += dy * mr3i;       // Accel AYi
+  apot.z += dz * mr3i;       // Accel AZi
+  return (apot);
+  */
+}
+#define NTHRE (128) // blockDim.x§»∆±√Õ
+__global__ void
+kernel(float4* g_xj,
+       float* g_xi,
+       float* g_fi,
+       int ni,
+       int nj)
+{
+  int tid = threadIdx.x;
+  int i = blockIdx.x*NTHRE+tid;
+  float4 ai = make_float4(0.0, 0.0, 0.0, 0.0);
+  float4 xi;
+  xi.x = g_xi[i];
+  xi.y = g_xi[i+ni];
+  xi.z = g_xi[i+ni*2];
+  xi.w = g_xi[i+ni*3];
+  __shared__ float4 s_xj[NTHRE];
+
+  float4 mf000;float4 mf001;float4 mf002;float4 mf003;float4 mf004;float4 mf005;float4 mf006;float4 mf007;float4 mf008;float4 mf009;
+  float4 mf010;float4 mf011;float4 mf012;float4 mf013;float4 mf014;float4 mf015;float4 mf016;float4 mf017;float4 mf018;float4 mf019;
+  float4 mf020;float4 mf021;float4 mf022;float4 mf023;float4 mf024;float4 mf025;float4 mf026;float4 mf027;float4 mf028;float4 mf029;
+  float4 mf030;float4 mf031;float4 mf032;float4 mf033;float4 mf034;float4 mf035;float4 mf036;float4 mf037;float4 mf038;float4 mf039;
+  float4 mf040;float4 mf041;float4 mf042;float4 mf043;float4 mf044;float4 mf045;float4 mf046;float4 mf047;float4 mf048;float4 mf049;
+  float4 mf050;float4 mf051;float4 mf052;float4 mf053;float4 mf054;float4 mf055;float4 mf056;float4 mf057;float4 mf058;float4 mf059;
+  float4 mf060;float4 mf061;float4 mf062;float4 mf063;float4 mf064;float4 mf065;float4 mf066;float4 mf067;float4 mf068;float4 mf069;
+  float4 mf070;float4 mf071;float4 mf072;float4 mf073;float4 mf074;float4 mf075;float4 mf076;float4 mf077;float4 mf078;float4 mf079;
+  float4 mf080;float4 mf081;float4 mf082;float4 mf083;float4 mf084;float4 mf085;float4 mf086;float4 mf087;float4 mf088;float4 mf089;
+  float4 mf090;float4 mf091;float4 mf092;float4 mf093;float4 mf094;float4 mf095;float4 mf096;float4 mf097;float4 mf098;float4 mf099;
+  float4 mf100;float4 mf101;float4 mf102;float4 mf103;float4 mf104;float4 mf105;float4 mf106;float4 mf107;float4 mf108;float4 mf109;
+  float4 mf110;float4 mf111;float4 mf112;float4 mf113;float4 mf114;float4 mf115;float4 mf116;float4 mf117;float4 mf118;float4 mf119;
+  float4 mf120;float4 mf121;float4 mf122;float4 mf123;float4 mf124;float4 mf125;float4 mf126;float4 mf127;
+
+  for(int j = 0; j<nj; j+=NTHRE){
+    __syncthreads();
+    s_xj[tid] = g_xj[j+tid];
+    __syncthreads();
+    mf000=inter(s_xj[0], xi);
+    mf001=inter(s_xj[1], xi);mf002=inter(s_xj[2], xi);mf003=inter(s_xj[3], xi);mf004=inter(s_xj[4], xi);
+    mf005=inter(s_xj[5], xi);mf006=inter(s_xj[6], xi);mf007=inter(s_xj[7], xi);mf008=inter(s_xj[8], xi);
+    mf009=inter(s_xj[9], xi);mf010=inter(s_xj[10], xi);mf011=inter(s_xj[11], xi);mf012=inter(s_xj[12], xi);
+    mf013=inter(s_xj[13], xi);mf014=inter(s_xj[14], xi);mf015=inter(s_xj[15], xi);mf016=inter(s_xj[16], xi);
+    mf017=inter(s_xj[17], xi);mf018=inter(s_xj[18], xi);mf019=inter(s_xj[19], xi);mf020=inter(s_xj[20], xi);
+    mf021=inter(s_xj[21], xi);mf022=inter(s_xj[22], xi);mf023=inter(s_xj[23], xi);mf024=inter(s_xj[24], xi);
+    mf025=inter(s_xj[25], xi);mf026=inter(s_xj[26], xi);mf027=inter(s_xj[27], xi);mf028=inter(s_xj[28], xi);
+    mf029=inter(s_xj[29], xi);mf030=inter(s_xj[30], xi);mf031=inter(s_xj[31], xi);mf032=inter(s_xj[32], xi);
+    mf033=inter(s_xj[33], xi);mf034=inter(s_xj[34], xi);mf035=inter(s_xj[35], xi);mf036=inter(s_xj[36], xi);
+    mf037=inter(s_xj[37], xi);mf038=inter(s_xj[38], xi);mf039=inter(s_xj[39], xi);mf040=inter(s_xj[40], xi);
+    mf041=inter(s_xj[41], xi);mf042=inter(s_xj[42], xi);mf043=inter(s_xj[43], xi);mf044=inter(s_xj[44], xi);
+    mf045=inter(s_xj[45], xi);mf046=inter(s_xj[46], xi);mf047=inter(s_xj[47], xi);mf048=inter(s_xj[48], xi);
+    mf049=inter(s_xj[49], xi);mf050=inter(s_xj[50], xi);mf051=inter(s_xj[51], xi);mf052=inter(s_xj[52], xi);
+    mf053=inter(s_xj[53], xi);mf054=inter(s_xj[54], xi);mf055=inter(s_xj[55], xi);mf056=inter(s_xj[56], xi);
+    mf057=inter(s_xj[57], xi);mf058=inter(s_xj[58], xi);mf059=inter(s_xj[59], xi);mf060=inter(s_xj[60], xi);
+    mf061=inter(s_xj[61], xi);mf062=inter(s_xj[62], xi);mf063=inter(s_xj[63], xi);mf064=inter(s_xj[64], xi);
+    mf065=inter(s_xj[65], xi);mf066=inter(s_xj[66], xi);mf067=inter(s_xj[67], xi);mf068=inter(s_xj[68], xi);
+    mf069=inter(s_xj[69], xi);mf070=inter(s_xj[70], xi);mf071=inter(s_xj[71], xi);mf072=inter(s_xj[72], xi);
+    mf073=inter(s_xj[73], xi);mf074=inter(s_xj[74], xi);mf075=inter(s_xj[75], xi);mf076=inter(s_xj[76], xi);
+    mf077=inter(s_xj[77], xi);mf078=inter(s_xj[78], xi);mf079=inter(s_xj[79], xi);mf080=inter(s_xj[80], xi);
+    mf081=inter(s_xj[81], xi);mf082=inter(s_xj[82], xi);mf083=inter(s_xj[83], xi);mf084=inter(s_xj[84], xi);
+    mf085=inter(s_xj[85], xi);mf086=inter(s_xj[86], xi);mf087=inter(s_xj[87], xi);mf088=inter(s_xj[88], xi);
+    mf089=inter(s_xj[89], xi);mf090=inter(s_xj[90], xi);mf091=inter(s_xj[91], xi);mf092=inter(s_xj[92], xi);
+    mf093=inter(s_xj[93], xi);mf094=inter(s_xj[94], xi);mf095=inter(s_xj[95], xi);mf096=inter(s_xj[96], xi);
+    mf097=inter(s_xj[97], xi);mf098=inter(s_xj[98], xi);mf099=inter(s_xj[99], xi);mf100=inter(s_xj[100], xi);
+    mf101=inter(s_xj[101], xi);mf102=inter(s_xj[102], xi);mf103=inter(s_xj[103], xi);mf104=inter(s_xj[104], xi);
+    mf105=inter(s_xj[105], xi);mf106=inter(s_xj[106], xi);mf107=inter(s_xj[107], xi);mf108=inter(s_xj[108], xi);
+    mf109=inter(s_xj[109], xi);mf110=inter(s_xj[110], xi);mf111=inter(s_xj[111], xi);mf112=inter(s_xj[112], xi);
+    mf113=inter(s_xj[113], xi);mf114=inter(s_xj[114], xi);mf115=inter(s_xj[115], xi);mf116=inter(s_xj[116], xi);
+    mf117=inter(s_xj[117], xi);mf118=inter(s_xj[118], xi);mf119=inter(s_xj[119], xi);mf120=inter(s_xj[120], xi);
+    mf121=inter(s_xj[121], xi);mf122=inter(s_xj[122], xi);mf123=inter(s_xj[123], xi);mf124=inter(s_xj[124], xi);
+    mf125=inter(s_xj[125], xi);mf126=inter(s_xj[126], xi);mf127=inter(s_xj[127], xi);
+
+    ai.x += (mf000.w * mf000.x)+
+      (mf001.w * mf001.x)+(mf002.w * mf002.x)+(mf003.w * mf003.x)+(mf004.w * mf004.x)+(mf005.w * mf005.x)+(mf006.w * mf006.x)+(mf007.w * mf007.x)+(mf008.w * mf008.x)+(mf009.w * mf009.x)+
+      (mf010.w * mf010.x)+(mf011.w * mf011.x)+(mf012.w * mf012.x)+(mf013.w * mf013.x)+(mf014.w * mf014.x)+(mf015.w * mf015.x)+(mf016.w * mf016.x)+(mf017.w * mf017.x)+(mf018.w * mf018.x)+
+      (mf019.w * mf019.x)+(mf020.w * mf020.x)+(mf021.w * mf021.x)+(mf022.w * mf022.x)+(mf023.w * mf023.x)+(mf024.w * mf024.x)+(mf025.w * mf025.x)+(mf026.w * mf026.x)+(mf027.w * mf027.x)+
+      (mf028.w * mf028.x)+(mf029.w * mf029.x)+(mf030.w * mf030.x)+(mf031.w * mf031.x)+(mf032.w * mf032.x)+(mf033.w * mf033.x)+(mf034.w * mf034.x)+(mf035.w * mf035.x)+(mf036.w * mf036.x)+
+      (mf037.w * mf037.x)+(mf038.w * mf038.x)+(mf039.w * mf039.x)+(mf040.w * mf040.x)+(mf041.w * mf041.x)+(mf042.w * mf042.x)+(mf043.w * mf043.x)+(mf044.w * mf044.x)+(mf045.w * mf045.x)+
+      (mf046.w * mf046.x)+(mf047.w * mf047.x)+(mf048.w * mf048.x)+(mf049.w * mf049.x)+(mf050.w * mf050.x)+(mf051.w * mf051.x)+(mf052.w * mf052.x)+(mf053.w * mf053.x)+(mf054.w * mf054.x)+
+      (mf055.w * mf055.x)+(mf056.w * mf056.x)+(mf057.w * mf057.x)+(mf058.w * mf058.x)+(mf059.w * mf059.x)+(mf060.w * mf060.x)+(mf061.w * mf061.x)+(mf062.w * mf062.x)+(mf063.w * mf063.x)+
+      (mf064.w * mf064.x)+(mf065.w * mf065.x)+(mf066.w * mf066.x)+(mf067.w * mf067.x)+(mf068.w * mf068.x)+(mf069.w * mf069.x)+(mf070.w * mf070.x)+(mf071.w * mf071.x)+(mf072.w * mf072.x)+
+      (mf073.w * mf073.x)+(mf074.w * mf074.x)+(mf075.w * mf075.x)+(mf076.w * mf076.x)+(mf077.w * mf077.x)+(mf078.w * mf078.x)+(mf079.w * mf079.x)+(mf080.w * mf080.x)+(mf081.w * mf081.x)+
+      (mf082.w * mf082.x)+(mf083.w * mf083.x)+(mf084.w * mf084.x)+(mf085.w * mf085.x)+(mf086.w * mf086.x)+(mf087.w * mf087.x)+(mf088.w * mf088.x)+(mf089.w * mf089.x)+(mf090.w * mf090.x)+
+      (mf091.w * mf091.x)+(mf092.w * mf092.x)+(mf093.w * mf093.x)+(mf094.w * mf094.x)+(mf095.w * mf095.x)+(mf096.w * mf096.x)+(mf097.w * mf097.x)+(mf098.w * mf098.x)+(mf099.w * mf099.x)+
+      (mf100.w * mf100.x)+(mf101.w * mf101.x)+(mf102.w * mf102.x)+(mf103.w * mf103.x)+(mf104.w * mf104.x)+(mf105.w * mf105.x)+(mf106.w * mf106.x)+(mf107.w * mf107.x)+(mf108.w * mf108.x)+
+      (mf109.w * mf109.x)+(mf110.w * mf110.x)+(mf111.w * mf111.x)+(mf112.w * mf112.x)+(mf113.w * mf113.x)+(mf114.w * mf114.x)+(mf115.w * mf115.x)+(mf116.w * mf116.x)+(mf117.w * mf117.x)+
+      (mf118.w * mf118.x)+(mf119.w * mf119.x)+(mf120.w * mf120.x)+(mf121.w * mf121.x)+(mf122.w * mf122.x)+(mf123.w * mf123.x)+(mf124.w * mf124.x)+(mf125.w * mf125.x)+(mf126.w * mf126.x)+
+      (mf127.w * mf127.x);
+
+    ai.y += (mf000.w * mf000.y)+
+      (mf001.w * mf001.y)+(mf002.w * mf002.y)+(mf003.w * mf003.y)+(mf004.w * mf004.y)+(mf005.w * mf005.y)+(mf006.w * mf006.y)+(mf007.w * mf007.y)+(mf008.w * mf008.y)+(mf009.w * mf009.y)+
+      (mf010.w * mf010.y)+(mf011.w * mf011.y)+(mf012.w * mf012.y)+(mf013.w * mf013.y)+(mf014.w * mf014.y)+(mf015.w * mf015.y)+(mf016.w * mf016.y)+(mf017.w * mf017.y)+(mf018.w * mf018.y)+
+      (mf019.w * mf019.y)+(mf020.w * mf020.y)+(mf021.w * mf021.y)+(mf022.w * mf022.y)+(mf023.w * mf023.y)+(mf024.w * mf024.y)+(mf025.w * mf025.y)+(mf026.w * mf026.y)+(mf027.w * mf027.y)+
+      (mf028.w * mf028.y)+(mf029.w * mf029.y)+(mf030.w * mf030.y)+(mf031.w * mf031.y)+(mf032.w * mf032.y)+(mf033.w * mf033.y)+(mf034.w * mf034.y)+(mf035.w * mf035.y)+(mf036.w * mf036.y)+
+      (mf037.w * mf037.y)+(mf038.w * mf038.y)+(mf039.w * mf039.y)+(mf040.w * mf040.y)+(mf041.w * mf041.y)+(mf042.w * mf042.y)+(mf043.w * mf043.y)+(mf044.w * mf044.y)+(mf045.w * mf045.y)+
+      (mf046.w * mf046.y)+(mf047.w * mf047.y)+(mf048.w * mf048.y)+(mf049.w * mf049.y)+(mf050.w * mf050.y)+(mf051.w * mf051.y)+(mf052.w * mf052.y)+(mf053.w * mf053.y)+(mf054.w * mf054.y)+
+      (mf055.w * mf055.y)+(mf056.w * mf056.y)+(mf057.w * mf057.y)+(mf058.w * mf058.y)+(mf059.w * mf059.y)+(mf060.w * mf060.y)+(mf061.w * mf061.y)+(mf062.w * mf062.y)+(mf063.w * mf063.y)+
+      (mf064.w * mf064.y)+(mf065.w * mf065.y)+(mf066.w * mf066.y)+(mf067.w * mf067.y)+(mf068.w * mf068.y)+(mf069.w * mf069.y)+(mf070.w * mf070.y)+(mf071.w * mf071.y)+(mf072.w * mf072.y)+
+      (mf073.w * mf073.y)+(mf074.w * mf074.y)+(mf075.w * mf075.y)+(mf076.w * mf076.y)+(mf077.w * mf077.y)+(mf078.w * mf078.y)+(mf079.w * mf079.y)+(mf080.w * mf080.y)+(mf081.w * mf081.y)+
+      (mf082.w * mf082.y)+(mf083.w * mf083.y)+(mf084.w * mf084.y)+(mf085.w * mf085.y)+(mf086.w * mf086.y)+(mf087.w * mf087.y)+(mf088.w * mf088.y)+(mf089.w * mf089.y)+(mf090.w * mf090.y)+
+      (mf091.w * mf091.y)+(mf092.w * mf092.y)+(mf093.w * mf093.y)+(mf094.w * mf094.y)+(mf095.w * mf095.y)+(mf096.w * mf096.y)+(mf097.w * mf097.y)+(mf098.w * mf098.y)+(mf099.w * mf099.y)+
+      (mf100.w * mf100.y)+(mf101.w * mf101.y)+(mf102.w * mf102.y)+(mf103.w * mf103.y)+(mf104.w * mf104.y)+(mf105.w * mf105.y)+(mf106.w * mf106.y)+(mf107.w * mf107.y)+(mf108.w * mf108.y)+
+      (mf109.w * mf109.y)+(mf110.w * mf110.y)+(mf111.w * mf111.y)+(mf112.w * mf112.y)+(mf113.w * mf113.y)+(mf114.w * mf114.y)+(mf115.w * mf115.y)+(mf116.w * mf116.y)+(mf117.w * mf117.y)+
+      (mf118.w * mf118.y)+(mf119.w * mf119.y)+(mf120.w * mf120.y)+(mf121.w * mf121.y)+(mf122.w * mf122.y)+(mf123.w * mf123.y)+(mf124.w * mf124.y)+(mf125.w * mf125.y)+(mf126.w * mf126.y)+
+      (mf127.w * mf127.y);
+
+    ai.z += (mf000.w * mf000.z)+
+      (mf001.w * mf001.z)+(mf002.w * mf002.z)+(mf003.w * mf003.z)+(mf004.w * mf004.z)+(mf005.w * mf005.z)+(mf006.w * mf006.z)+(mf007.w * mf007.z)+(mf008.w * mf008.z)+(mf009.w * mf009.z)+
+      (mf010.w * mf010.z)+(mf011.w * mf011.z)+(mf012.w * mf012.z)+(mf013.w * mf013.z)+(mf014.w * mf014.z)+(mf015.w * mf015.z)+(mf016.w * mf016.z)+(mf017.w * mf017.z)+(mf018.w * mf018.z)+
+      (mf019.w * mf019.z)+(mf020.w * mf020.z)+(mf021.w * mf021.z)+(mf022.w * mf022.z)+(mf023.w * mf023.z)+(mf024.w * mf024.z)+(mf025.w * mf025.z)+(mf026.w * mf026.z)+(mf027.w * mf027.z)+
+      (mf028.w * mf028.z)+(mf029.w * mf029.z)+(mf030.w * mf030.z)+(mf031.w * mf031.z)+(mf032.w * mf032.z)+(mf033.w * mf033.z)+(mf034.w * mf034.z)+(mf035.w * mf035.z)+(mf036.w * mf036.z)+
+      (mf037.w * mf037.z)+(mf038.w * mf038.z)+(mf039.w * mf039.z)+(mf040.w * mf040.z)+(mf041.w * mf041.z)+(mf042.w * mf042.z)+(mf043.w * mf043.z)+(mf044.w * mf044.z)+(mf045.w * mf045.z)+
+      (mf046.w * mf046.z)+(mf047.w * mf047.z)+(mf048.w * mf048.z)+(mf049.w * mf049.z)+(mf050.w * mf050.z)+(mf051.w * mf051.z)+(mf052.w * mf052.z)+(mf053.w * mf053.z)+(mf054.w * mf054.z)+
+      (mf055.w * mf055.z)+(mf056.w * mf056.z)+(mf057.w * mf057.z)+(mf058.w * mf058.z)+(mf059.w * mf059.z)+(mf060.w * mf060.z)+(mf061.w * mf061.z)+(mf062.w * mf062.z)+(mf063.w * mf063.z)+
+      (mf064.w * mf064.z)+(mf065.w * mf065.z)+(mf066.w * mf066.z)+(mf067.w * mf067.z)+(mf068.w * mf068.z)+(mf069.w * mf069.z)+(mf070.w * mf070.z)+(mf071.w * mf071.z)+(mf072.w * mf072.z)+
+      (mf073.w * mf073.z)+(mf074.w * mf074.z)+(mf075.w * mf075.z)+(mf076.w * mf076.z)+(mf077.w * mf077.z)+(mf078.w * mf078.z)+(mf079.w * mf079.z)+(mf080.w * mf080.z)+(mf081.w * mf081.z)+
+      (mf082.w * mf082.z)+(mf083.w * mf083.z)+(mf084.w * mf084.z)+(mf085.w * mf085.z)+(mf086.w * mf086.z)+(mf087.w * mf087.z)+(mf088.w * mf088.z)+(mf089.w * mf089.z)+(mf090.w * mf090.z)+
+      (mf091.w * mf091.z)+(mf092.w * mf092.z)+(mf093.w * mf093.z)+(mf094.w * mf094.z)+(mf095.w * mf095.z)+(mf096.w * mf096.z)+(mf097.w * mf097.z)+(mf098.w * mf098.z)+(mf099.w * mf099.z)+
+      (mf100.w * mf100.z)+(mf101.w * mf101.z)+(mf102.w * mf102.z)+(mf103.w * mf103.z)+(mf104.w * mf104.z)+(mf105.w * mf105.z)+(mf106.w * mf106.z)+(mf107.w * mf107.z)+(mf108.w * mf108.z)+
+      (mf109.w * mf109.z)+(mf110.w * mf110.z)+(mf111.w * mf111.z)+(mf112.w * mf112.z)+(mf113.w * mf113.z)+(mf114.w * mf114.z)+(mf115.w * mf115.z)+(mf116.w * mf116.z)+(mf117.w * mf117.z)+
+      (mf118.w * mf118.z)+(mf119.w * mf119.z)+(mf120.w * mf120.z)+(mf121.w * mf121.z)+(mf122.w * mf122.z)+(mf123.w * mf123.z)+(mf124.w * mf124.z)+(mf125.w * mf125.z)+(mf126.w * mf126.z)+
+      (mf127.w * mf127.z);
+  }
+
+  if(i<ni){
+    g_fi[i]      = ai.x;
+    g_fi[i+ni]   = ai.y;
+    g_fi[i+ni*2] = ai.z;
+  }
+}
+
+#include "api.h"
