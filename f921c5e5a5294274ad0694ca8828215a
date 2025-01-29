@@ -1,134 +1,153 @@
-2025年  1月 22日 水曜日 11:34:39 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <math.h>
-#include "pg_util.h"
+2025年  1月 29日 水曜日 10:34:30 JST
+-- Copyright 2004,2005,2006 by Tsuyoshi Hamada
+-- 2006/06/22 : add some comments (T.H)
+-- 2006/02/08 : Fixed (T.H)
+-- LOCAL IO (READ & WRITE)
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-#include "pgrapi.h"
+entity LOCAL_IO is
+  generic (NBIT_L_ADRO : integer := 3);
+  port (
+    
+    CALC_STS : in std_logic;                               -- from PFPGA CBUS INPUT (1: pipe done, 0: pipe idle or running) 
+    NPIPE : in std_logic_vector(7 downto 0) := "00000001"; -- from PGPG_REG3
+    BUSY_LOCAL_READ : out std_logic :='0';                 -- to GPREG0(0)
 
-// #define DEBUG
+    -- pcicnt input
+    MEM_ADA  : in std_logic_vector(19 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHA : in std_logic;
+    MEM_WELA : in std_logic;
+    MEM_DTIA : in std_logic_vector(63 downto 0);
 
-#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
-#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-#define NJMAX 16384
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+    MEM_DTOB    : in  std_logic_vector(63 downto 0);     -- DPRAM Port B Read Data
 
-#define NPIPE_PER_CHIP  1
-#define NCHIP_PER_BOARD 4
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_IO;
+architecture rtl of LOCAL_IO is
 
-#define NFLO 26
-#define NMAN 16
-#define RMODE 6
+component LOCAL_WRITE
+  port (
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
 
-static int      devid = 0;
-static int      __first = 0;
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
 
-static unsigned long long int fdata[NJMAX][FDIM];
+component LOCAL_READ
+  generic ( NBIT_L_ADRO : integer := 3);
+  port (
+    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
+    CALC_STS : in std_logic;    -- from PFPGA
+    BUSY : out std_logic :='0'; -- to GPREG0
 
-void
-force(double x[][3], double m[], double eps2, double a[][3], int n)
-{
-    double          log2(double);
-    int             i, j;
-    unsigned int    npipe, npipe_per_chip;
-    unsigned int    nchip;
-    unsigned int    jdata[JDIM];
-    if (__first == 0) {
-	b3open(devid);
-	pgr_reset(devid);
-	pgr_set_npipe_per_chip(devid, NPIPE_PER_CHIP);
-	pgr_set_jwidth(devid, 16);	// change manually 4 if grape
-	pgr_set_nchip(NCHIP_PER_BOARD);
-	__first = 1;
-    }
+    -- CBUS/DBUS
+    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);
+    DBUS_idata: in std_logic_vector(63 downto 0);
+    DBUS_HiZ  : out std_logic;
 
-    npipe_per_chip = NPIPE_PER_CHIP;
-    nchip = NCHIP_PER_BOARD;
-    npipe = nchip * npipe_per_chip;
+    -- DPRAM R/W ports
+    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
+    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
 
-    for (j = 0; j < n; j++) {
-	unsigned int    xj[4];
-	xj[0] = (unsigned int) (double2pgpgfloat_r(x[j][0], 26, 16, 6));
-	xj[1] = (unsigned int) (double2pgpgfloat_r(x[j][1], 26, 16, 6));
-	xj[2] = (unsigned int) (double2pgpgfloat_r(x[j][2], 26, 16, 6));
-	xj[3] = (unsigned int) (double2pgpgfloat_r(m[j], 26, 16, 6));
-	for (i = 0; i < JDIM; i++)   jdata[i] = 0x0;
-	jdata[0] |= (0x3ffffff & xj[0]) << 0;	// mask(26)
-	jdata[0] |= (0x3f & xj[1]) << 26;	// mask(6)
-	jdata[1] |= (0xfffff & (xj[1] >> 6));	// mask(20)
-	jdata[1] |= (0xfff & xj[2]) << 20;	// mask(12)
-	jdata[2] |= (0x3fff & (xj[2] >> 12));	// mask(14)
-	jdata[2] |= (0x3ffff & xj[3]) << 14;	// mask(18)
-	jdata[3] |= (0xff & (xj[3] >> 18));	// mask(8)
-	pgr_setjpset_one(devid, j, jdata);
-    }
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end component;
+  signal dbus_port0   : std_logic_vector(63 downto 0) := (others=>'0'); 
+-- DMAW
+  signal dmaw_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+-- DMAR
+  signal dmar_dbus_o  : std_logic_vector(63 downto 0) := (others=>'0');
+  signal busy_dmar    : std_logic;
 
-    for (i = 0; i < n; i += npipe) {
-	int             nn, ii, ichip;
-	nn = MIN(npipe, n - i);
+begin
 
-#ifdef DEBUG
-	dum = e_time();
-#endif
+  -- DMA BUSY or IDLE
+  process (CLK,busy_dmar,CALC_STS) begin
+    if(CLK'event and CLK='1') then
+      if   (CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '0';
+      elsif(CALC_STS='1' AND busy_dmar='1') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='1' AND busy_dmar='0') then
+        BUSY_LOCAL_READ <= '1';
+      elsif(CALC_STS='0') then
+        BUSY_LOCAL_READ <= '1';
+      end if;
+    end if;
+  end process;
 
-	for (ii = 0; ii < nn; ii += npipe_per_chip) {
-	    int             nnn, iii;
-	    ichip = ii / npipe_per_chip;
 
-	    nnn = MIN(npipe_per_chip, nn - ii);
-	    for (iii = 0; iii < nnn; iii++) {
-		unsigned int    idata[4];
-		idata[0] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][0], 26, 16,
-					      6));
-		idata[1] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][1], 26, 16,
-					      6));
-		idata[2] =
-		    (unsigned
-		     int) (double2pgpgfloat_r(x[i + ii + iii][2], 26, 16,
-					      6));
-		idata[3] =
-		    (unsigned int) (double2pgpgfloat_r(eps2, 26, 16, 6));
-		pgr_setipset_one(devid, ichip, iii, idata, 4);
-	    }
-	}
-#ifdef DEBUG
-	_t[2] += e_time() - dum;
-	dum = e_time();
-#endif
 
-	pgr_start_calc(devid, n);
-#ifdef DEBUG
-	_t[3] += e_time() - dum;
-	dum = e_time();
-#endif
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (CLK) begin
+    if(CLK'event and CLK='1') then
+      DBUS_Port <= dbus_port0;
+    end if;
+  end process;
 
-	pgr_getfoset(devid, fdata);
-	for (ii = 0; ii < nn; ii++) {
-	    a[i + ii][0] =
-		((double) ((long long int) fdata[ii][0] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	    a[i + ii][1] =
-		((double) ((long long int) fdata[ii][1] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	    a[i + ii][2] =
-		((double) ((long long int) fdata[ii][2] << 0)) *
-		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
-	}
-#ifdef DEBUG
-	_t[4] += e_time() - dum;
-#endif
+  with busy_dmar select
+    dbus_port0 <= dmar_dbus_o when '1',
+                  dmaw_dbus_o when others;
 
-    }
-#ifdef DEBUG
-    _t[0] = e_time() - _t[0];
-    fprintf(stderr, "total %g sec (jp %g, ip %g, c %g, fo %g %%)\n", _t[0],
-	    100.0 * _t[1] / _t[0], 100.0 * _t[2] / _t[0],
-	    100.0 * _t[3] / _t[0], 100.0 * _t[4] / _t[0]);
-#endif
-}
+-------------------------------------------------------------------------------
+-- Write : IFPGA --> PFPGAs
+-------------------------------------------------------------------------------
+u0 : LOCAL_WRITE
+  port map (MEM_AD      => MEM_ADA,
+            MEM_WE      => MEM_WELA,
+            MEM_DTI     => MEM_DTIA,
+            DMAW_ENABLE => DMAW_ENABLE,
+            DBUS_Port   => dmaw_dbus_o,
+            RST         => RST,
+            CLK         => CLK);
+
+-------------------------------------------------------------------------------
+-- Read : IFPGA <-- PFPGAs
+-------------------------------------------------------------------------------
+u1 : LOCAL_READ
+  generic map (NBIT_L_ADRO => NBIT_L_ADRO)
+  port map (NPIPE       => NPIPE,
+            CALC_STS    => CALC_STS,
+            BUSY        => busy_dmar,
+            DMAR_ENABLE => DMAR_ENABLE,
+            DBUS_Port   => dmar_dbus_o,
+            DBUS_idata  => DBUS_idata,
+            DBUS_HiZ    => DBUS_HiZ,
+            MEM_ADB     => MEM_ADB,
+            MEM_WEHB    => MEM_WEHB,
+            MEM_WELB    => MEM_WELB,
+            MEM_DTIB    => MEM_DTIB,
+            RST         => RST,
+            CLK         => CLK);
+
+end rtl;
