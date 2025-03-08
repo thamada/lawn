@@ -1,26 +1,10 @@
-2025年  3月  8日 土曜日 11:14:41 JST
-#include <stdio.h>
-#include "nbodysim.h"
-
-void debug(double x[][DIM],double a[][DIM], int n, int nstep)
-{
-  int i;
-  static int flag=0;
-  static FILE* fp;
-
-  if(flag==0){
-    fp = fopen("aaa.log","w");
-    flag = 1;
-  }else{
-    rewind(fp);
-  }
-
-  for(i=0;i<n;i++){
-    fprintf(fp,"%d\t",nstep);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\t",x[i][0],x[i][1],x[i][2]);
-    fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",a[i][0],a[i][1],a[i][2]);
-  }
-
-  fflush(fp);
-}
-
+2025年  3月  8日 土曜日 11:28:39 JST
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
