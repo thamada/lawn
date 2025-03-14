@@ -1,172 +1,131 @@
-2025Âπ¥  3Êúà 14Êó• ÈáëÊõúÊó• 10:35:26 JST
--- LOCAL READ CONTROLLER ( ifpga <- pfpga )
--- (LOCAL_READ_IFÇ…äJénêMçÜÇëSÉ`ÉbÉvâÒêîï™ëóÇÈÉÇÉWÉÖÅ[Éã)
--- by Tsuyoshi Hamada 2005/01/04
--- ÉÅÉÇ : 
---   NQWORDÇ∆Ç¡ÇƒÇ≠ÇÈÇÃÇ…ïKóvÇ»LOCAL_READ_IFÇÃÉNÉçÉbÉN(BUSY) : NQWORD + 8(ÉåÉCÉeÉìÉV:INTF_LAT) ÉNÉçÉbÉN
--- 
--- (0) IFÇ… START_AD, NQWORD ÇÉZÉbÉg     : 1ÉNÉçÉbÉN
--- (1) IFÇ… CHIPSEL, MEM_AD_BASE ÇÉZÉbÉg : 1ÉNÉçÉbÉN
--- (2) IFÇÃ EXEC Çè„Ç∞ÇÈ                 : 1ÉNÉçÉbÉN
--- (3) IFÇ… EXEC Çâ∫Ç∞ÇÈ                 : 1ÉNÉçÉbÉN
--- (4) IFÇ™ì]ëóÇèIóπÇ∑ÇÈÇ‹Ç≈ë“Ç¬         : I_NC ÉNÉçÉbÉN(I_NC= NPIPE*pow(2,NBIT_L_ADRO)
--- (5) (1)Ç©ÇÁ(4)Ç‹Ç≈Ç4É`ÉbÉvï™åJÇËï‘Ç∑.
---
--- (Å¶) LOCAL_READ_IFÇÃì]ëóÇ…ïKóvÇ»ÉNÉçÉbÉNÇÕåàÇ‹Ç¡ÇƒÇ¢ÇÈÇÃÇ≈ì]ëóèIóπÉtÉâÉOÇÕå©Ç»Ç¢.
--- (Å¶) l_adroÇÃÉrÉbÉgïù(NBIT_L_ADRO)ÇïœÇ¶ÇΩèÍçáÇÕpromÇèƒÇ´Ç»Ç®Ç∑ïKóvÇ™Ç†ÇÈÇ±Ç∆Ç…íçà”.(íºÇ∑ÇÃÇÕè„ÇÃÉÇÉWÉÖÅ[Éã)
-
+2025Âπ¥  3Êúà 14Êó• ÈáëÊõúÊó• 11:27:33 JST
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity LOCAL_READ_CNT is
-  generic (
-           CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8        -- LOCAL_READ_IF latency (clock)
-  );
+entity USER is
   port (
-    -- from LOCAL_READ
-    NPIPE : in std_logic_vector(7 downto 0);     -- number of pipelines per chip
-    -- from LOCAL_READ_DONE
-    CALC_DONE  : in std_logic;   -- pulse
-    -- to LOCAL_READ_DONE
-    FETCH_DONE : out std_logic;  -- pulse
-
-    -- to LOCAL_READ_IF
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    -- from LOCAL_READ_IF
---    BUSY_IF : in std_logic;
- 
-    RST : in  std_logic;
-    CLK : in  std_logic
+    RST         : in  std_logic;                     -- PCI Bus Reset
+    CLK         : in  std_logic;                     -- PCI bus Clock
+    PSW_IN      : in  std_logic_vector( 1 downto 0); -- Push SW Input
+    DIPSW       : out  std_logic_vector( 3 downto 0);-- DIPSW Signal
+    PSW_ON0     : out  std_logic;                    -- User Interrupt 0 On Request
+    PSW_ON1     : out  std_logic;                    -- User Interrupt 1 On Request
+    USERINT2_ON : out  std_logic                     -- User Interrupt 2 On Request
     );
-end LOCAL_READ_CNT;
+end USER;
 
-architecture rtl of LOCAL_READ_CNT is
 
-signal hit0,hit1 : std_logic :='0';
-signal cnt,cntr : std_logic_vector(CNT_WIDTH-1 downto 0) :=(others=>'0');
-signal cnt_en : std_logic :='0';
-signal is_finish,is_finishr : std_logic :='0';
+architecture USER_rtl of USER is
 
-----
-signal c_start_ad   : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_nqword     : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_chipsel    : std_logic_vector(18 downto 0) :=(others=>'0');
-signal c_mem_offset : std_logic_vector(18 downto 0) :=(others=>'0');
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+  signal DIPSWi      : std_logic_vector( 3 downto 0);          ------ Internal DIPSW Data
+  signal SWCHK_CUNT  : std_logic_vector( 7 downto 0);          ------ Push SW Check Counter
+  signal PSWCHK_CNT0 : std_logic_vector( 2 downto 0);          ------ Push SW 0 Check
+  signal PSWCHK_CNT1 : std_logic_vector( 2 downto 0);          ------ Push SW 1 Check
+  signal PSW_ON0i    : std_logic;                      ------ User Interrupt 0 On Request
+  signal PSW_ON1i    : std_logic;                      ------ User Interrupt 1 On Request
+
 begin
 
-  FETCH_DONE <= is_finish; -- transfer done pulse
 
-  hit0 <= CALC_DONE;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      is_finishr <= is_finish;
-      hit1 <= hit0;
-    end if;
-  end process;
+--------------------------------------------------------------------------------
+-- DIPSW Input Signal Output Control Process
+--------------------------------------------------------------------------------
+    DIPSWi <= (others=>'0');  -- 2004/11/11 by T.Hamada
+    DIPSW <= DIPSWi;
 
-  -- PROGRAM COUNTER
-  cntr <= cnt + conv_std_logic_vector(1, CNT_WIDTH);
-  process (RST,CLK,hit0,hit1,cnt_en) begin
-    if (RST = '1') then
-      cnt <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        cnt <= (others=>'0');
-      elsif(cnt_en = '1') then
-        cnt <= cntr;
-      end if;
-    end if;
-  end process;
+--------------------------------------------------------------------------------
+-- Push SW Check Counter Control Process
+--------------------------------------------------------------------------------
 
-  -- COUNTER ENABLE (counting up signal)
-  process (RST,CLK,hit0,hit1,is_finish,is_finishr) begin
-    if (RST = '1') then
-      cnt_en <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        cnt_en <= '1';
-      elsif((is_finish = '1') AND (is_finishr = '0')) then
-        cnt_en <= '0';
-      end if;
-    end if;
-  end process;
-
-  ------------------------------------------------------------- PROGRAM
-  process (RST,CLK,cnt)
-      variable I_NPIPE : integer;
-      variable I_NFI   : integer;
-      variable I_NC    : integer;
-      variable I_MAB   : integer;
-      variable I_NQW   : integer;
-  begin
+  process (RST,CLK) begin
     if (RST='1') then
-      is_finish <= '0';
+       SWCHK_CUNT <= (others=>'0');
     elsif (CLK'event and CLK='1') then
-
-      --= = = = = = = = = = = = = = = = = = = = INTEGER VARLUES
-      I_NPIPE := conv_integer(NPIPE);
-      I_NFI   := (2**NBIT_L_ADRO);
---      I_NFI   := (2**2);  -- ÉgÉbÉvÇ©ÇÁÇÃÉWÉFÉlÉäÉbÉNÇÃì`îdÇ™Ç§Ç‹Ç≠Ç¢Ç´Ç‹ÇπÇÒÇÃÇ≈íçà”
-      I_NC    := I_NPIPE*I_NFI + INTF_LAT;
-      I_MAB   := I_NPIPE*I_NFI;
-      I_NQW   := I_NPIPE*I_NFI - 1;
-      --= = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-      if(    cnt = conv_std_logic_vector(0, CNT_WIDTH) ) then
-        is_finish <= '0';
-        NQWORD   <= conv_std_logic_vector(I_NQW, 9);
-        START_AD <= conv_std_logic_vector(FO_BASE, 19);
-      -- ================================================================================ CHIP 0
-      elsif( cnt = conv_std_logic_vector(1, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(0, 13);
-        CHIPSEL  <= "0001";
-      elsif( cnt = conv_std_logic_vector(2, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(3, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 1
-      elsif( cnt = conv_std_logic_vector(3 + 1*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(1*I_MAB  , 13);
-        CHIPSEL  <= "0010";
-      elsif( cnt = conv_std_logic_vector(4 + 1*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(5 + 1*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 2
-      elsif( cnt = conv_std_logic_vector(5 + 2*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(2*I_MAB, 13);
-        CHIPSEL  <= "0100";
-      elsif( cnt = conv_std_logic_vector(6 + 2*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(7 + 2*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ CHIP 3
-      elsif( cnt = conv_std_logic_vector(7 + 3*I_NC, CNT_WIDTH) ) then
-        MEM_AD_BASE <= conv_std_logic_vector(3*I_MAB, 13);
-        CHIPSEL  <= "1000";
-      elsif( cnt = conv_std_logic_vector(8 + 3*I_NC, CNT_WIDTH) ) then
-        EXEC <= '1';
-      elsif( cnt = conv_std_logic_vector(9 + 3*I_NC, CNT_WIDTH) ) then
-        EXEC <= '0';
-      -- ================================================================================ FINISH
-      elsif( cnt = conv_std_logic_vector(9 + 4*I_NC, CNT_WIDTH) ) then
-        is_finish <= '1';
-      elsif( cnt = conv_std_logic_vector(10 + 4*I_NC, CNT_WIDTH) ) then
-        is_finish <= '0';
-      else
-      end if;
-
+       SWCHK_CUNT <= SWCHK_CUNT+1;                  ------ Counter Increment
     end if;
   end process;
 
-end rtl;
+--------------------------------------------------------------------------------
+-- Push SW 0 Check Control Process
+--------------------------------------------------------------------------------
 
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSWCHK_CNT0 <= (others=>'1');
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+         PSWCHK_CNT0 <= PSWCHK_CNT0(1 downto 0) & PSW_IN(0);    ------ PSW_IN(0) Sampling
+      end if;
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Push SW 0 On Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSW_ON0i <= '0';
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+        PSW_ON0i <= PSWCHK_CNT0(2) and (not PSWCHK_CNT0(1));    ------ SW Check Signal Set
+      else
+        PSW_ON0i <= '0';
+      end if;
+    end if;
+  end process;
+
+    PSW_ON0 <= PSW_ON0i;
+
+--------------------------------------------------------------------------------
+-- Push SW 1 Check Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSWCHK_CNT1 <= (others=>'1');
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+         PSWCHK_CNT1 <= PSWCHK_CNT1(1 downto 0) & PSW_IN(1);    ------ PSW_IN(1) Sampling
+      end if;
+    end if;
+  end process;
+
+--------------------------------------------------------------------------------
+-- Push SW 1 On Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+       PSW_ON1i <= '0';
+    elsif (CLK'event and CLK='1') then
+      if (SWCHK_CUNT="11111111") then
+        PSW_ON1i <= PSWCHK_CNT1(2) and (not PSWCHK_CNT1(1));    ------ SW Check Signal Set
+      else
+        PSW_ON1i <= '0';
+      end if;
+    end if;
+  end process;
+
+    PSW_ON1 <= PSW_ON1i;
+
+--------------------------------------------------------------------------------
+-- User Interrupt 2 Signal Output Control Process
+--------------------------------------------------------------------------------
+
+  process (RST,CLK) begin
+    if (RST='1') then
+      USERINT2_ON <= '0';
+    elsif (CLK'event and CLK='1') then
+      USERINT2_ON <=  RST and DIPSWi(0) and (not PSWCHK_CNT1(2))
+                            and PSWCHK_CNT1(1);
+    end if;
+  end process;
+
+end USER_rtl;
