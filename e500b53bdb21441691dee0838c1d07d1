@@ -1,80 +1,190 @@
-2025年  3月 24日 月曜日 09:08:24 JST
--- Last Modifiled at 2004/12/27
+2025年  3月 25日 火曜日 10:38:21 JST
+#include <math.h>
+#include "pg_util.h"
 
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
-
-entity adr_dec is
-  port (
-    clk        : in std_logic;
-    adr        : in std_logic_vector(18 downto 0);
-    is_jpw     : out std_logic;
-    is_ipw     : out std_logic;
-    is_fo      : out std_logic;
-    is_setn    : out std_logic;
-    is_run     : out std_logic;
-    FPGA_NO    : in std_logic_vector(1 downto 0));
-end adr_dec;
-
-architecture rtl of adr_dec is
-signal cmd_h : std_logic_vector(6 downto 0);
-signal cmd_l : std_logic_vector(11 downto 0);
-
-begin
-
-cmd_h <= adr(18 downto 12);
-cmd_l <= adr(11 downto 0);
-
--- is_jpw ----------------------
-process(cmd_h,cmd_l) begin -- BroadCast Only
---if (cmd_h(3) = '1') then -- 4096w * 512bit = 256KByte
---if (cmd_h(4) = '1') then -- 8192w * 512bit = 512KByte
---if (cmd_h(5) = '1') then --16384w * 512bit =   1MByte
-  if (cmd_h(6) = '1') then --32768w * 512bit =   2MByte
-     is_jpw <= '1';
-  else
-     is_jpw <= '0';
-  end if;
-end process;
-
--- is_ipw ----------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0000101") AND (cmd_l(11 downto 10)=FPGA_NO)) then
-     is_ipw <= '1';
-  else
-     is_ipw <= '0';
-  end if;
-end process;
-
--- is_fo -----------------------
-process(cmd_h,cmd_l) begin
---  if((cmd_h = "0000110") AND (cmd_l(9 downto 8) = FPGA_NO)) then
-  if((cmd_h = "0000110") AND (cmd_l(10 downto 9) = FPGA_NO)) then
-     is_fo <= '1';
-  else
-     is_fo <= '0';
-  end if;
-end process;
-
--- is_setn ---------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0111") AND (cmd_l(11 downto 0) = "000000000000")) then
-     is_setn <= '1';
-  else
-     is_setn <= '0';
-  end if;
-end process;
-
--- is_run ----------------------
-process(cmd_h,cmd_l) begin
-  if((cmd_h = "0000111") AND (cmd_l(11 downto 0) = "000000000011")) then
-     is_run <= '1';
-  else
-     is_run <= '0';
-  end if;
-end process;
+// Funtion Prototyping
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_fix_sub_32(int x, int y, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_conv_ftol_fix32_log17_man8(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_shift_log17_1(int x, int *z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y,
+							LONG * z);
+void            pg_log_shift_log17_m1(int x, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_div_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_mul_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_log_sdiv_17(int x, int y, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_conv_ltof_log17_man8_fix57(int x, int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
+void            pg_fix_accum_f57_s64(long long int x, long long int *z);
 
 
-end rtl;
+#define NJMAX 16384
+static LONG _a[NJMAX][3];
+static unsigned int _xi[NJMAX][3];
+void dump_foset(int n)
+{
+  int i;
+  static int flag=0;
+  static FILE* fp;
+
+  if(flag==0){
+    fp = fopen("xxx.log","w");
+    flag=1;
+  }
+
+  for(i=0;i<n;i++){
+    fprintf(fp,"%08x,",_xi[i][0]);
+    fprintf(fp,"%08x,",_xi[i][1]);
+    fprintf(fp,"%08x,",_xi[i][2]);
+
+    fprintf(fp,"%016llx,",_a[i][0]);
+    fprintf(fp,"%016llx,",_a[i][1]);
+    fprintf(fp,"%016llx,",_a[i][2]);
+
+    fprintf(fp,"\n");
+  }
+  fflush(fp);
+}
+
+
+
+// API
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    double log2(double);
+    int             i, j;
+    long long int   sx_0;
+    long long int   sx_1;
+    long long int   sx_2;
+    int             xi_0;
+    int             xj_0;
+    int             xi_1;
+    int             xj_1;
+    int             xi_2;
+    int             xj_2;
+    int             xij_0;
+    int             xij_1;
+    int             xij_2;
+    LONG            x2_0;
+    LONG            x2_1;
+    LONG            x2_2;
+    LONG            ieps2;
+    LONG            x2y2;
+    LONG            z2e2;
+    int             r2;
+    int             r1;
+    int             mj;
+    int             r3;
+    int             dx_0;
+    int             dx_1;
+    int             mf;
+    int             dx_2;
+    int             fx_0;
+    int             fx_1;
+    int             fx_2;
+    int             f_shift;
+    int             fxs_0;
+    int             fxs_1;
+    int             fxs_2;
+    long long int   ffx_0;
+    long long int   ffx_1;
+    long long int   ffx_2;
+
+    f_shift = 0x9700;
+
+    for (i = 0; i < n; i++) {
+      xi_0 = ((unsigned int)((x[i][0] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      xi_1 = ((unsigned int)((x[i][1] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      xi_2 = ((unsigned int)((x[i][2] + 50.0)*(42949672.96)+0.5))& 0xFFFFFFFF;
+      ieps2 = (((int)(256.0*log2(eps2*(1.844674407e+15)))) & 0x7FFF) | 0x8000;
+      _xi[i][0] = xi_0;
+      _xi[i][1] = xi_1;
+      _xi[i][2] = xi_2;
+
+	sx_0 = 0;
+	sx_1 = 0;
+	sx_2 = 0;
+
+	for (j = n - 1; j >= 0; j--) {
+	  xj_0 = ((unsigned int) ((x[j][0] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+	  xj_1 = ((unsigned int) ((x[j][1] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+	  xj_2 = ((unsigned int) ((x[j][2] + 50.0) * 42949672.96 + 0.5)) & 0xFFFFFFFF;
+
+#define MSCALE (4.223095768e+32)
+
+	  if (m[j] == 0.0) {
+	    mj = 0;
+	  } else if (m[j] > 0.0) {
+	    mj =(((int)(256.0 * log2(m[j] * MSCALE))) & 0x7FFF) | 0x8000;
+	  } else {
+	    mj =(((int)(256.0 * log2(-m[j] * MSCALE))) & 0x7FFF) | 0x18000;
+	  }
+
+	    pg_fix_sub_32(xi_0, xj_0, &xij_0);
+	    pg_fix_sub_32(xi_1, xj_1, &xij_1);
+	    pg_fix_sub_32(xi_2, xj_2, &xij_2);
+	    pg_conv_ftol_fix32_log17_man8(xij_0, &dx_0);
+	    pg_conv_ftol_fix32_log17_man8(xij_1, &dx_1);
+	    pg_conv_ftol_fix32_log17_man8(xij_2, &dx_2);
+	    pg_log_shift_log17_1(dx_0, &x2_0);
+	    pg_log_shift_log17_1(dx_1, &x2_1);
+	    pg_log_shift_log17_1(dx_2, &x2_2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2_0, x2_1, &x2y2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2_2, ieps2, &z2e2);
+	    pg_log_unsigned_add_itp_log17_man8_cut6(x2y2, z2e2, &r2);
+	    pg_log_shift_log17_m1(r2, &r1);
+	    pg_log_mul_17(r2, r1, &r3);
+	    pg_log_div_17(mj, r3, &mf);
+	    pg_log_mul_17(mf, dx_0, &fx_0);
+	    pg_log_mul_17(mf, dx_1, &fx_1);
+	    pg_log_mul_17(mf, dx_2, &fx_2);
+	    pg_log_sdiv_17(fx_0, f_shift, &fxs_0);
+	    pg_log_sdiv_17(fx_1, f_shift, &fxs_1);
+	    pg_log_sdiv_17(fx_2, f_shift, &fxs_2);
+	    pg_conv_ltof_log17_man8_fix57(fxs_0, &ffx_0);
+	    pg_conv_ltof_log17_man8_fix57(fxs_1, &ffx_1);
+	    pg_conv_ltof_log17_man8_fix57(fxs_2, &ffx_2);
+	    pg_fix_accum_f57_s64(ffx_0, &sx_0);
+	    pg_fix_accum_f57_s64(ffx_1, &sx_1);
+	    pg_fix_accum_f57_s64(ffx_2, &sx_2);
+	}
+	_a[i][0] = sx_0;
+	_a[i][1] = sx_1;
+	_a[i][2] = sx_2;
+
+	a[i][0] =
+	    ((double) (sx_0 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+	a[i][1] =
+	    ((double) (sx_1 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+	a[i][2] =
+	    ((double) (sx_2 << 0)) *
+	    ((-(pow(2.0, (double) 32) / (100.0)) *
+	      (pow(2.0, (double) 32) / (100.0)) * 8388608.0 /
+	      (pow(2.0, 95.38) / (1.220703125e-04)))) / pow(2.0, 0.0);
+    }
+    dump_foset(n);
+}
