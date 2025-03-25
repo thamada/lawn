@@ -1,5 +1,40 @@
-2025年  3月 23日 日曜日 10:26:36 JST
--- ProjNav VHDL simulation template: sim_local_read_cnt.udo
--- You may edit this file after the line that starts with
--- '-- START' to customize your simulation
--- START user-defined simulation commands
+2025年  3月 25日 火曜日 10:23:12 JST
+ 
+-w
+-g DebugBitstream:No
+-g Binary:no
+-g CRC:Enable
+-g ConfigRate:4
+-g CclkPin:PullUp
+-g M0Pin:PullUp
+-g M1Pin:PullUp
+-g M2Pin:PullUp
+-g ProgPin:PullUp
+-g DonePin:PullUp
+-g PowerdownPin:PullUp
+-g TckPin:PullUp
+-g TdiPin:PullUp
+-g TdoPin:PullUp
+-g TmsPin:PullUp
+-g UnusedPin:PullDown
+-g UserID:0xFFFFFFFF
+-g DCMShutDown:Disable
+-g DisableBandgap:No
+-g DCIUpdateMode:AsRequired
+-g StartUpClk:CClk
+-g DONE_cycle:4
+-g GTS_cycle:5
+-g GWE_cycle:6
+-g LCK_cycle:NoWait
+-g Match_cycle:Auto
+-g Security:None
+-g DonePipe:No
+-g DriveDone:No
+-g Encrypt:No
+
+
+
+
+
+
+
