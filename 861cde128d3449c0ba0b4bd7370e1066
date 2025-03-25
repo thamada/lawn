@@ -1,671 +1,974 @@
-2025年  3月 24日 月曜日 09:55:22 JST
-// 
-// PGR parametrized arithmetic modules for software emulators
-// Copyright (c) 2004-2005 by Tsuyoshi Hamada and Naohito Nakasato
-// All rights reserved.
-// 
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<math.h>
+2025年  3月 25日 火曜日 10:31:22 JST
+#define FIXED_IRQN (18)
 
-#ifndef LONG
-#define LONG unsigned long long int
+/*
+ * progrape.c -- the device driver for PROGRAPE(-4,...)
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada(hamada@progrape.jp).
+ * All rights reserved.
+ *
+ * The source code in this file can be freely used, 
+ * so long as an acknowledgment from Tsuyoshi Hamada.
+ * 
+ * The source code in this file can be modified, branched, and
+ * redistributed in source or binary form under the following situations.
+ * If you want to modify, redistribute or make another version based on
+ * this source code, you should get distinct agreement from Tsuyoshi
+ * Hamada.  The modified, redistributed or branched(another version based
+ * on this source code) source code should include the citation that the
+ * code comes from the "progrape.c by Tsuyoshi Hamada".
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/config.h>
+#include <linux/pci.h>      // Symbols for pci_{read,write}_config_
+#include <linux/types.h>    // u8,u16,u32,u64 
+#include <linux/ioport.h>   // IORESOURCE_IO
+#include <linux/dma-mapping.h>
+#include <linux/sched.h>
+#include <linux/version.h>
+#include <linux/interrupt.h>// request_irq(), free_irq()
+#include <asm/io.h>         // ioremap(), iounmap(), iowrite32()
+#include <asm/pgtable.h>    // pgprot_noncached()
+#include <asm/page.h>       // get_order(), virt_to_page()
+#include <asm/uaccess.h>    // access_ok()
+
+
+/* history
+ *
+ * 2006/07/11: developping start by Tsuyoshi Hamada
+ */
+
+#include "progrape.h"
+
+#ifndef PG_MODULE_NAME
+#define PG_MODULE_NAME "progrape"
 #endif
 
-// ----------------------------------------------------------- : No. 0
-/*
- * nbit : 32-bit 
- */
-/*
- * ADDSUB : SUB 
- */
-#include<stdio.h>
-void
-pg_fix_sub_32(int x, int y, int *z)
+
+int pg_major =   PROGRAPE_MAJOR;
+int pg_minor =   0;
+int pg_nr_devs = PROGRAPE_NR_DEVS; // number of char devs
+module_param(pg_major,   int, S_IRUGO);
+module_param(pg_minor,   int, S_IRUGO);
+module_param(pg_nr_devs, int, S_IRUGO);
+
+int pg_nr_pci_devs = 0;            // number of devices founded by kernel pci core
+
+static struct pg_dev *pg_devices;  // allocated in progrape_init_module
+
+
+int pg_ioctl(struct inode *i, struct file *fp, unsigned int c, unsigned long a);
+static int pg_open       (struct inode *inode, struct file *file);
+static int pg_close      (struct inode *inode, struct file *file);
+static int pg_mmap       (struct file *fp, struct vm_area_struct *vma);
+
+struct file_operations pg_fops = {
+	.owner   = THIS_MODULE,
+	.ioctl   = pg_ioctl,
+	.open    = pg_open,
+	.release = pg_close,
+	.mmap    = pg_mmap,
+};
+
+static void pg_vma_open                (struct vm_area_struct *v);
+static void pg_vma_close               (struct vm_area_struct *v);
+static struct page  *pg_vma_nopage     (struct vm_area_struct *v, unsigned long adr, int *t);
+static struct page  *pg_dmar_vma_nopage(struct vm_area_struct *v, unsigned long adr, int *t);
+static struct page  *pg_dmaw_vma_nopage(struct vm_area_struct *v, unsigned long adr, int *t);
+
+static struct vm_operations_struct pg_remap_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_vma_nopage,
+};
+
+static struct vm_operations_struct pg_dmar_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_dmar_vma_nopage,
+};
+
+static struct vm_operations_struct pg_dmaw_vm_ops = {
+  .open   = pg_vma_open,
+  .close  = pg_vma_close,
+  .nopage = pg_dmaw_vma_nopage,
+};
+
+static inline unsigned long pg_get_dmabufsize(void)
 {
-    unsigned int    _x;
-    unsigned int    _y;
-    int             _z;
-    _x = 0xFFFFFFFF & x;
-    _y = 0xFFFFFFFF & y;
-    _z = (int) (_x - _y);
-    *z = 0xFFFFFFFF & _z;
+  // << PG4 ifpga BRAM = 64KBytes = (0x1<<16) Bytes >>
+  //  return ((unsigned long)(0x1<<16));           // 64 KB : BRAM
+  //  return ((unsigned long)(0x1<<12));           //  4 KB : x86 linux
+  //  return ((unsigned long)(dev->pci_mem_size)); // 16 MB : BAR0
+  //  return ((unsigned long)(PAGE_SIZE));         // system 1 page
+  return ((unsigned long)(PG_DMA_BUFSIZE));
 }
-// ----------------------------------------------------------- : No. 1
-/*
- * nbit_fix : 32-bit 
- */
-/*
- * nbit_log : 17-bit 
- */
-/*
- * nbit_man : 8-bit 
- */
-#include<stdio.h>
-#include<math.h>
-void
-pg_conv_ftol_fix32_log17_man8(int fixdata, int *logdata)
+
+// DANGER! it's from /usr/src/linux/mm/internal.h
+static inline void set_page_count(struct page *page, int v)
 {
-    int             fixdata_msb = 0;
-    int             logdata_sign = 0;
-    int             fixdata_body = 0;
-    int             abs = 0;
-    int             abs_decimal = 0;
-    int             logdata_nonzero = 0;
-    int             penc_out = 0;	/* Output of penc */
-    int             table_adr = 0;
-    int             table_overflow = 0;
-    int             logdata_mantissa = 0;
-    int             logdata_exponent = 0;
+  atomic_set(&page->_count, v);
+}
 
-    /*
-     * SIGN BIT 
-     */
-    fixdata_msb = 0x1 & (fixdata >> 31);
-    logdata_sign = fixdata_msb;
+static void free_dmabuf(int order, struct pci_dev *dev,  unsigned long *va, dma_addr_t pa)
+{
 
-    /*
-     * ABSOLUTE 
-     */
-    fixdata_body = 0x7FFFFFFF & fixdata;
+  {
+    ///////// set_page_count() @ <linux/mm.h>,
+    ///////// try to use dma_free_coherent() for future version.
+    int i;
+    struct page *page_top = virt_to_page((unsigned long)va);
+    for(i=1;i<(1<<order);i++) set_page_count(page_top + i, 0);
+    pci_free_consistent(dev, PAGE_SIZE * (1<<order), va, pa);
+  }
+
+  //  dma_free_coherent(dev, PAGE_SIZE * (1<<order), va, pa);
+
+}
+
+void pg_vma_open(struct vm_area_struct *vma)
+{
+  _PDEBUG("called pg_vma open, virtual %lx, physical %lx\n", vma->vm_start, vma->vm_pgoff << PAGE_SHIFT);
+}
+
+void pg_vma_close(struct vm_area_struct *vma)
+{
+  _PDEBUG("called pg_vma_close()\n");
+}
+
+static struct page *pg_vma_nopage     (struct vm_area_struct *vma, unsigned long address, int *type)
+{
+  _PDEBUG("Called: pg_vma_nopage()\n");
+  return (NOPAGE_SIGBUS);
+}
+
+
+static struct page *pg_dmar_vma_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
+{
+  ////////// See Linux Device Drivers Vol. 3 pp. 435
+  struct pg_dev *dev = vma->vm_file->private_data;
+  struct page* page_ptr;
+  unsigned long offset;
+  _PDEBUG("Called: pg_dmar_vma_nopage()\n");
+
+  offset = address - vma->vm_start + ((vma->vm_pgoff)<<PAGE_SHIFT);
+  page_ptr = virt_to_page((unsigned long)(dev->buf_dmar) + offset);
+  get_page(page_ptr);
+
+  return (page_ptr);
+}
+
+static struct page *pg_dmaw_vma_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
+{
+  struct pg_dev *dev = vma->vm_file->private_data;
+  struct page* page_ptr;
+  unsigned long offset;
+  _PDEBUG("Called: pg_dmaw_vma_nopage()\n");
+
+  offset = address - vma->vm_start + ((vma->vm_pgoff)<<PAGE_SHIFT);
+  page_ptr = virt_to_page((unsigned long)(dev->buf_dmaw) + offset);
+  get_page(page_ptr);
+
+  return (page_ptr);
+}
+
+static int pg_mmap (struct file *fp, struct vm_area_struct *vma)
+{
+  struct pg_dev *dev = fp->private_data;
+  int retval = 0;
+  unsigned long off       = (vma->vm_pgoff) << PAGE_SHIFT;
+  unsigned long vsize     = (vma->vm_end) - (vma->vm_start);
+  unsigned long virtual   = vma->vm_start;
+  unsigned long physical  = 0;
+  unsigned long mmap_mode = dev->mmap_mode;
+
+  _PDEBUG("called mmap, MMAP_MODE = %ld\n",mmap_mode);
+
+  // Set physical for BAR's mmap
+  switch (mmap_mode){
+  case MMAP_REG_PIOW : // for REG (BAR0) Write Only
+  case MMAP_REG_PIOR : // for REG (BAR0) Read Only
+  case MMAP_REG_PIORW: // for REG (BAR0)
+    physical = dev->pci_reg_adr & PCI_BASE_ADDRESS_MEM_MASK;
+    break;
+  case MMAP_MEM_PIOW : // for MEM (BAR1) Write Only
+  case MMAP_MEM_PIOR : // for MEM (BAR1) Read Only
+  case MMAP_MEM_PIORW: // for MEM (BAR1)
+  case MMAP_MEM_PIOW_PREFETCH:
+    physical = dev->pci_mem_adr & PCI_BASE_ADDRESS_MEM_MASK;
+    break;
+  default:
+    physical = dev->pci_reg_adr & PCI_BASE_ADDRESS_MEM_MASK;
+  }
+
+  switch (mmap_mode){
+  case MMAP_REG_PIOW : // for REG (BAR0) Write Only
+  case MMAP_REG_PIOR : // for REG (BAR0) Read Only
+  case MMAP_REG_PIORW: // for REG (BAR0)
+  case MMAP_MEM_PIOW : // for MEM (BAR1) Write Only
+  case MMAP_MEM_PIOR : // for MEM (BAR1) Read Only
+  case MMAP_MEM_PIORW: // for MEM (BAR1)
+  case MMAP_MEM_PIOW_PREFETCH:
     {
-	int             inv_fixdata_body = 0;
-	inv_fixdata_body = 0x7FFFFFFF ^ fixdata_body;
-	if (fixdata_msb == 0x1) {
-	    abs = 0x7FFFFFFF & (inv_fixdata_body + 1);
-	} else {
-	    abs = fixdata_body;
-	}
+      //unsigned long psize = dev->pci_reg_size - off;
+      physical += off;
+      vma->vm_flags |= VM_RESERVED;  
+      _PDEBUG("called pg_mmap\n");
+      _PDEBUG(" + vsize 0x%lx\n", vsize);
+      _PDEBUG(" + psize 0x%lx\n", psize);
+      _PDEBUG(" + off   0x%lx\n", off);
+      _PDEBUG(" + virt  0x%lx\n", virtual);
+      _PDEBUG(" + phys  0x%lx\n", physical);
+      /* --------------------------------------------
+      if(vsize > psize){
+	PDEBUG("vsize > psize: return (-EINVAL)\n");
+	return (-EINVAL); // range is too short.
+      }
+      ----------------------------------------------- */
+      retval = remap_pfn_range(vma, virtual, 
+			       (physical>>PAGE_SHIFT), vsize, vma->vm_page_prot);
+      if(retval){
+	PDEBUG("error remap_pfn_range()\n ");
+	return (-EAGAIN); 
+      }
+      vma->vm_ops = &pg_remap_vm_ops;
+      pg_vma_open(vma);
     }
-    abs_decimal = 0x3FFFFFFF & abs;
+    break;
 
-    /*
-     * GENERATE NON-ZERO BIT (ALL BIT OR) 
-     */
-    if (abs != 0x0) {
-	logdata_nonzero = 0x1;
+  case MMAP_BUF_DMAW:
+    vma->vm_ops = &pg_dmaw_vm_ops;
+    /*******************************************************  NON Coherency **
+    **************************************************************************/
+
+    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+
+    ////////////                    <asm/pgtable.h>
+    ////////////                    to mark a page protection value as "uncacheable".
+    vma->vm_flags |= (VM_RESERVED | VM_IO);
+    pg_vma_open(vma);
+    break;
+
+  case MMAP_BUF_DMAR:
+    vma->vm_ops = &pg_dmar_vm_ops;
+    vma->vm_flags |= VM_RESERVED | VM_IO;
+    pg_vma_open(vma);
+    break;
+
+  default:
+    PDEBUG("incompatible mmap mode(%lx) @ %s:%d\n",mmap_mode,__FILE__, __LINE__);
+    return (-EINVAL);
+  }
+    
+  if(retval) retval = (-EAGAIN);
+
+  return (retval);
+}
+
+void __usleep(unsigned int usec)
+{
+  wait_queue_head_t w;
+  init_waitqueue_head(&w);
+  wait_event_interruptible_timeout(w, 0, usec*HZ/1000000);
+}
+
+int pg_dmatransfer(struct pg_dev* dev, dma_addr_t bus_adr, unsigned long size, int is_write)
+{
+  unsigned char *bar0buf;
+  _PDEBUG("called pg_dmatransfer(). size = 0x%lx.\n",size);
+
+  { // I-O memory mapping
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+  }
+
+  { // DMA_PCI_ADRS:
+    // LOCAL_ADRS:
+    // DMA_COUNT:
+    unsigned long sram_ad = 0; // address for Block-RAM on the IFPGA.
+    iowrite32(((u32)(bus_adr)), (void __iomem *)(bar0buf+  REG_DMA_PCI_ADRS  ));
+    iowrite32(((u32)(sram_ad)), (void __iomem *)(bar0buf+  REG_DMA_LOCAL_ADRS));
+
+    size &= (~(PG_PCITRANS_64BIT<<2));
+    iowrite32(((u32)(size)),    (void __iomem *)(bar0buf+  REG_DMA_COUNT     )); // (size) bytes!
+
+    _PDEBUG(" + DMA buf phys adr %lx\n", (unsigned long)bus_adr);
+    _PDEBUG(" + SRAM adr %lx\n", sram_ad);
+  }
+
+  { // DMA_INTERVAL:
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    u32 cmd = (u32)((burst<<16)|(inter));
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_INTERVAL));
+  }
+
+  { // Prepare DMA
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_STAT)); // ... clear
+    iowrite32(1,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  }
+
+  { // DMA_CTRL and start ...
+    //////////////////////            reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = is_write;          // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1;               // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = PG_PCITRANS_64BIT; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1;               // DMA_CTRL(0)
+    u32 cmd = (u32)((dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start);
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // start DMA
+  }
+
+  { //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+    int ret;
+    (dev->wq_count) = 0;
+    _PDEBUG("Wait Interrupt ....\n");
+    ret = wait_event_interruptible(dev->wq,  (dev->wq_count) > 0 );
+    if(ret){
+      PDEBUG("wait_event_interruptible return %d.  %s:%d\n", ret, __FILE__, __LINE__);
+      return (-ERESTARTSYS);
+    }
+    _PDEBUG("%ld times interrupt asserted.\n", dev->wq_count);
+  } //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+
+  iounmap((void __iomem *)bar0buf);
+  return (0);
+}
+
+// ---------------------
+// NO INTERRUPT VERSION
+// ---------------------
+int __pg_dmatransfer(struct pg_dev* dev, dma_addr_t bus_adr, unsigned long size, int is_write)
+{
+  unsigned char *bar0buf;
+  _PDEBUG("called pg_dmatransfer(). size = 0x%lx.\n",size);
+
+  { // I-O memory mapping
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+  }
+
+  { // DMA_PCI_ADRS:
+    // LOCAL_ADRS:
+    // DMA_COUNT:
+    unsigned long sram_ad = 0; // address for Block-RAM on the IFPGA.
+    iowrite32(((u32)(bus_adr)), (void __iomem *)(bar0buf+  REG_DMA_PCI_ADRS  ));
+    iowrite32(((u32)(sram_ad)), (void __iomem *)(bar0buf+  REG_DMA_LOCAL_ADRS));
+
+    size &= (~(PG_PCITRANS_64BIT<<2));
+    iowrite32(((u32)(size)),    (void __iomem *)(bar0buf+  REG_DMA_COUNT     )); // (size) bytes!
+
+    _PDEBUG(" + DMA buf phys adr %lx\n", (unsigned long)bus_adr);
+    _PDEBUG(" + SRAM adr %lx\n", sram_ad);
+  }
+
+  { // DMA_INTERVAL:
+    unsigned int burst = 0;  // DMA Length
+    unsigned int inter = 0;  // DMA Interval
+    u32 cmd = (u32)((burst<<16)|(inter));
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_INTERVAL));
+  }
+
+  { // Prepare DMA
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  }
+
+  { // DMA_CTRL and start ...
+    //////////////////////            reserved  :  DMA_CTRL(31 downto 5)
+    unsigned int dma_dir   = is_write;          // DMA_CTRL(4)  [1:HOST->BOARD/ 0:HOST<-BOARD]
+    unsigned int dma_mode  = 0x1;               // DMA_CTRL(3 downto 2)
+    unsigned int dma_64_32 = PG_PCITRANS_64BIT; // DMA_CTRL(1)  [1:64bit/ 0:32bit]
+    unsigned int dma_start = 0x1;               // DMA_CTRL(0)
+    u32 cmd = (u32)((dma_dir<<4) | (dma_mode<<2) | (dma_64_32<<1) | dma_start);
+    iowrite32(cmd, (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // start DMA
+  }
+
+  { //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+    if(is_write)
+      __usleep(1000);      
+    else 
+      __usleep(1000000);
+  } //WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW wait
+
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+  iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+  iounmap((void __iomem *)bar0buf);
+  return (0);
+}
+
+
+
+void do_test(struct pg_dev *dev){
+  int i;
+  unsigned long dmabuf_size = pg_get_dmabufsize();
+
+  PDEBUG("* do_test() !!!!!!!!!!!!!!!\n");
+
+  for(i=0;i<(dmabuf_size>>2);i++){
+    dev->buf_dmaw[i] = 0x07070707;
+    dev->buf_dmar[i] = 0x77778888;
+  }
+  dev->buf_dmaw[(dmabuf_size>>2)-1] = 0xCCCC9999;
+
+}
+
+int pg_ioctl(struct inode *inode, struct file *fp,
+		unsigned int cmd, unsigned long arg)
+{
+  struct pg_dev *dev = fp->private_data;
+  int err = 0, retval = 0;
+  
+  // Decode & Check cmd before access_ok() 
+  if (_IOC_TYPE(cmd) != PG_IOC_MAGIC) return (-ENOTTY);
+  if (_IOC_NR(cmd) > PG_IOC_MAXNR)    return (-ENOTTY);
+
+  // Verify the arg with access_ok()
+  //   -> See Linux Device Drivers Vol. 3 pp. 141-142 about access_ok()
+  if (_IOC_DIR(cmd) & _IOC_READ)
+    err = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
+  else if (_IOC_DIR(cmd) & _IOC_WRITE)
+    err = !access_ok(VERIFY_READ,  (void __user *)arg, _IOC_SIZE(cmd));
+  if (err) return (-EFAULT);
+
+  switch(cmd) {
+
+  case IOC_SV_MMAPMODE:
+    dev->mmap_mode = (unsigned long)arg;
+    _PDEBUG("IOC_SV_MMAPMODE : %lx\n", dev->mmap_mode);
+    break;
+
+  case IOC_GV_REG_ADR:
+    retval = dev->pci_reg_adr;
+    break;
+
+  case IOC_GV_REG_SIZE:
+    retval = dev->pci_reg_size;
+    break;
+
+  case IOC_GV_MEM_ADR:
+    retval = dev->pci_mem_adr;
+    break;
+
+  case IOC_GV_MEM_SIZE:
+    retval = dev->pci_mem_size;
+    break;
+
+  case IOC_SP_FPGA_INFO:
+    {
+      char s[NB_FPGA_INFO];
+      /* --- if root only, uncomment ----------------
+	if (! capable (CAP_SYS_ADMIN)) return (-EPERM); 
+       ---------------------------------------------- */
+      retval = __copy_from_user(s,(char __user *)arg, sizeof(s));
+      strcpy(dev->fpga_info, s);
+    }
+    break;
+
+  case IOC_GP_FPGA_INFO:
+    {
+      char s[NB_FPGA_INFO];
+      strcpy(s, dev->fpga_info);
+      retval = __copy_to_user((char __user *)arg,  s, sizeof(s));
+    }
+
+    break;
+
+  case IOC_GV_PCICFG:
+    {
+      u32 val;
+      int dword_adr = (((int)arg)<<2); // for DWORD addressing(I hate Byte addressing)
+      if(pci_read_config_dword(dev->pcidev,dword_adr, &val)){
+	PDEBUG("IOC_GV_PCICFG failed (%d) @ %s:%d\n",retval,__FILE__ ,__LINE__);
+	retval = (-EAGAIN);
+      }
+      retval = (int)val;
+    }
+    break;
+
+  case IOC_SV_DMAW:
+    {
+      int is_write       = 1;
+      unsigned long size = (unsigned long) arg;
+      dma_addr_t bus_adr = dev->buf_dmaw_pa;
+      retval = pg_dmatransfer(dev, bus_adr, size, is_write);
+
+      if(retval){
+	PDEBUG("IOC_SV_DMAW. Something goes wrong at %s:%d.\n", __FILE__, __LINE__);
+	retval = (-EAGAIN);
+      }
+      break;
+    }
+
+  case IOC_SV_DMAR:
+    {
+      int is_write       = 0;
+      unsigned long size = (unsigned long) arg;
+      dma_addr_t bus_adr = dev->buf_dmar_pa;
+      retval = pg_dmatransfer(dev, bus_adr, size, is_write);
+      break;
+    }
+
+  case IOC_GV_DMA_SIZE:
+    retval = pg_get_dmabufsize();
+    return (retval);
+    break;
+
+  default:  /* redundant, as cmd was checked against MAXNR */
+    return (-ENOTTY);
+  }
+
+  return (retval);
+}
+
+static irqreturn_t pg_interrupt_handler(int irq, void *dev_id, struct pt_regs *regs)
+{
+  struct pg_dev *dev = dev_id;
+
+  _PDEBUG("          <-------- interrupt handler on IRQ(%d).\n",irq);
+
+  { // diasseert Interrupt signal
+    unsigned long b0ad = dev->pci_reg_adr;
+    unsigned long b0sz = dev->pci_reg_size;
+    unsigned char *bar0buf = (unsigned char*) ioremap_nocache(b0ad, b0sz);
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_STAT)); // ... clear
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_INT_MASK)); // [1:Enable INT/ 0:Disable INT]
+    iowrite32(0,   (void __iomem *)(bar0buf+  REG_DMA_CTRL)); // ... clear
+    iounmap((void __iomem *)bar0buf);
+  }
+
+  (dev->wq_count)++;
+  //  PDEBUG("          <-------- interrupt handler on IRQ(%d) %d.\n",irq, dev->wq_count);
+  //  __usleep(300);
+  wake_up_interruptible(&(dev->wq));
+
+  return (IRQ_HANDLED);
+}
+
+    
+static int pg_open(struct inode *inode, struct file *file)
+{
+  struct pg_dev *dev;
+  dev = container_of(inode->i_cdev, struct pg_dev, cdev); // find me
+  file->private_data = dev;                               // backup me
+
+  if(down_interruptible(&(dev->sem_open))) return (-ERESTARTSYS);
+
+  { // install interrupt handler
+    int ret;
+    u8 irq_num;
+    unsigned long flag;
+    //    pci_read_config_byte(dev->pcidev, PCI_INTERRUPT_LINE, &irq_num);
+    irq_num = dev->pci_irq_num;
+
+    //    flag = SA_SHIRQ | SA_INTERRUPT | SA_TRIGGER_HIGH;
+    flag = SA_SHIRQ;
+    ret = request_irq((unsigned int)irq_num, pg_interrupt_handler, flag, PG_MODULE_NAME, (void*)dev);
+    if(ret) return (-EBUSY);
+  }
+
+  (dev->ntimes_open)++;
+  PDEBUG("'%s' opens %s%d : %ld times\n", current->comm, PG_MODULE_NAME, iminor(inode), dev->ntimes_open);
+  return (0); // 0: success
+}
+
+static int pg_close(struct inode *inode, struct file *file)
+{
+  struct pg_dev *dev;
+  dev = file->private_data;
+
+  { // uninstall interrupt handler
+    u8 irq_num;
+    //    pci_read_config_byte(dev->pcidev, PCI_INTERRUPT_LINE, &irq_num);
+    irq_num = dev->pci_irq_num;
+
+    free_irq((unsigned int)irq_num, (void *)dev);
+  }
+
+  up(&(dev->sem_open));
+  PDEBUG("'%s' closes %s%d.\n", current->comm, PG_MODULE_NAME, iminor(inode));
+  return (0); // 0: success
+}
+
+
+
+/* ----------------------------------------------------------- *
+ * The module stuff 
+ * ----------------------------------------------------------- */
+
+
+// The list of pci_device_id. It should be registerd to the pci_driver->id_table
+static struct pci_device_id
+pg_ids[  ] = {{PCI_DEVICE(PCI_VENDOR_ID_PG,PCI_DEVICE_ID_PG), },{ 0,}};
+
+// pci_device_id should be exported to user space. 
+MODULE_DEVICE_TABLE(pci, pg_ids);
+
+
+static int pg_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+  // Do probing type stuff here. Like calling request_region();
+  // This function called by pci_register_driver() at init_module.
+  int err = 0;
+  static int nth_probes = 0;
+  PDEBUG("%d-th device probed by kernel.\n", nth_probes);
+  err = pci_enable_device(dev);
+  if(err){
+    PDEBUG("Error pci_enable_device(dev); %s|%d\n",__FILE__, __LINE__);
+  }
+
+  {
+    u32 base_adr[6];
+    u16 vendor_id,  device_id, cmd, status;
+    u8 revision_id, max_lat, min_gnt, int_line, int_pin;
+    pci_read_config_word(dev, PCI_VENDOR_ID,    &vendor_id);
+    pci_read_config_word(dev, PCI_DEVICE_ID,    &device_id);
+    pci_read_config_word(dev, PCI_STATUS,       &status);
+    pci_read_config_word(dev, PCI_COMMAND, &cmd);
+    pci_read_config_byte(dev, PCI_REVISION_ID,  &revision_id);
+    pci_read_config_byte(dev, PCI_MIN_GNT, &min_gnt);
+    pci_read_config_byte(dev, PCI_MAX_LAT, &max_lat);
+    pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &int_line);
+    pci_read_config_byte(dev, PCI_INTERRUPT_PIN,  &int_pin);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_0, &base_adr[0]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_1, &base_adr[1]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_2, &base_adr[2]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_3, &base_adr[3]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_4, &base_adr[4]);
+    pci_read_config_dword(dev,PCI_BASE_ADDRESS_5, &base_adr[5]);
+
+    PDEBUG("--- IFPGA PCI CONFIG SPACE   ---\n");
+    PDEBUG("PCI_VENDOR_ID      : 0x%04X\n",vendor_id);
+    PDEBUG("PCI_DEVICE_ID      : 0x%04X\n",device_id);
+    PDEBUG("PCI_REVISION_ID    : 0x%02X\n",revision_id);
+    PDEBUG("PCI_INTERRUPT_LINE : 0x%X\n",int_line);
+    PDEBUG("PCI_INTERRUPT_PIN  : 0x%X\n",int_pin);
+    _PDEBUG("PCI_STATUS         : 0x%04X\n",status);
+    _PDEBUG(" + 66MHZ CAPABLE   : %X\n",0x1U & (status>>5));
+    _PDEBUG(" + DEVCEL TIMING   : %X\n",0x3U & (status>>9));
+    _PDEBUG("PCI_MIN_GNT        : 0x%02X\n",min_gnt);
+    _PDEBUG("PCI_MAX_LAT        : 0x%02X\n",max_lat);
+    _PDEBUG("PCI_COMMAND        : 0x%04X\n",cmd);
+    _PDEBUG(" + ENABLE BUSMASTER: %01X\n",0x1U&(cmd>>2));
+    _PDEBUG(" + ENABLE MEMORY   : %01X\n",0x1U&(cmd>>1));
+    _PDEBUG(" + ENABLE I/O      : %01X\n",0x1U&(cmd));
+    PDEBUG("PCI_BASE_ADDRESS_0 : 0x%08X\n",base_adr[0]);
+    PDEBUG("PCI_BASE_ADDRESS_1 : 0x%08X\n",base_adr[1]);
+    _PDEBUG("PCI_BASE_ADDRESS_2 : 0x%08X\n",base_adr[2]);
+    _PDEBUG("PCI_BASE_ADDRESS_3 : 0x%08X\n",base_adr[3]);
+    _PDEBUG("PCI_BASE_ADDRESS_4 : 0x%08X\n",base_adr[4]);
+    _PDEBUG("PCI_BASE_ADDRESS_5 : 0x%08X\n",base_adr[5]);
+    _PDEBUG("--------------------------------\n");
+  }
+  if(0){
+    u8 revision;
+    pci_read_config_byte(dev, PCI_REVISION_ID, &revision);
+    if (PCI_REVISION_ID_PG != revision) {
+      PDEBUG("REVISION MISSING: 0x%X != 0x%X\n",revision, PCI_REVISION_ID_PG);
+      return (-ENODEV);
+    }
+  }
+
+  // Install a pci_devices
+  if( PROGRAPE_NR_DEVS > nth_probes ){
+    unsigned long start, end, size, flag;
+    u8 irq_num;
+
+    pg_devices[nth_probes].pcidev       = dev;  // Don't use after pci_unregister_driver().
+
+    pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &irq_num);
+    //    irq_num = FIXED_IRQN;
+    //    irq_num = 28;
+    PDEBUG("@@@@@@@@@@@@@@@@@@@@@@ IRQ_NUM = %d\n",irq_num);
+
+    pg_devices[nth_probes].pci_irq_num  = (unsigned long)irq_num;
+
+
+    start = pci_resource_start (dev, 0);  // @ <linux/pci.h>
+    end   = pci_resource_end   (dev, 0);  // @ <linux/pci.h>
+    flag  = pci_resource_flags (dev, 0);  // @ <linux/pci.h>
+    if(end != start) size = end - start + 1; else size = 0;
+    pg_devices[nth_probes].pci_reg_adr  = 0xffffffff & start;
+    pg_devices[nth_probes].pci_reg_size = 0xffffffff & size;
+    pg_devices[nth_probes].pci_reg_flag = 0xffffffff & flag;
+
+    start = pci_resource_start (dev, 1);
+    end   = pci_resource_end   (dev, 1);
+    flag  = pci_resource_flags (dev, 1);
+    if(end != start) size = end - start + 1; else size = 0;
+    pg_devices[nth_probes].pci_mem_adr  = 0xffffffff & start;
+    pg_devices[nth_probes].pci_mem_size = 0xffffffff & size;
+    pg_devices[nth_probes].pci_mem_flag = 0xffffffff & flag;
+
+
+    pci_set_master(dev);
+
+  }else{
+    return (-ENODEV);
+  }
+
+
+  {
+    nth_probes++;
+    pg_nr_pci_devs = nth_probes;
+  }
+
+
+  return (0);
+}
+
+static void pg_pci_remove(struct pci_dev *dev)
+{
+  // clean up any allocated resources and stuff here. like call release_region();
+  PDEBUG("call pci_driver.remove()\n");
+}
+
+static struct pci_driver pci_driver = {
+  .name     = PG_MODULE_NAME,
+  .id_table = pg_ids,
+  .probe    = pg_pci_probe,
+  .remove   = pg_pci_remove,
+};
+
+
+/*
+ * Set up the char_dev structure for this device to Kernel.
+ */
+static void pg_setup_cdev(struct pg_dev *dev, int index)
+{
+  int err;
+  dev_t devno = MKDEV(pg_major, pg_minor + index);
+  cdev_init(&dev->cdev, &pg_fops);
+
+  dev->cdev.owner = THIS_MODULE;
+  dev->cdev.ops = &pg_fops;
+  err = cdev_add (&dev->cdev, devno, 1);
+  if(err){
+    PDEBUG( "Error %d adding %s%d", err, PG_MODULE_NAME, index);
+  }
+}
+
+
+
+/* 
+ * The cleanup function.
+ */
+static void pg_cleanup_module(void)
+{
+  { // ---------------------------- about DMA buffer
+    unsigned long dmabuf_size = pg_get_dmabufsize();
+    int i;
+    for(i=0; i<pg_nr_pci_devs; i++){
+      struct pg_dev *dev = &(pg_devices[i]);
+      free_dmabuf(get_order(dmabuf_size), dev->pcidev,  dev->buf_dmar, dev->buf_dmar_pa);
+      free_dmabuf(get_order(dmabuf_size), dev->pcidev,  dev->buf_dmaw, dev->buf_dmaw_pa);
+    }
+  } // ---------------------------- about DMA buffer
+
+
+  { // ---------------------------- about kernel pci core
+    pci_unregister_driver(&pci_driver);
+  } // ---------------------------- about kernel pci core
+
+
+  { // ---------------------------- about char dev
+    int i;
+    dev_t devno = MKDEV(pg_major, pg_minor);
+    if (pg_devices) {
+      for (i = 0; i < pg_nr_devs; i++) {
+	cdev_del(&pg_devices[i].cdev);
+      }
+      kfree(pg_devices);
+    }
+    unregister_chrdev_region(devno, pg_nr_devs);
+  } // ---------------------------- about char dev
+
+  PDEBUG("module unloaded.\n\n");
+  PDEBUG("bye (- u -)/~~~~~~~\n");
+  PDEBUG("bye (*'> v <'*)\n");
+  PDEBUG("bye (.^_^.)\n");
+  PDEBUG("bye........\n\n");
+}
+
+
+/* 
+ * The initialization function.
+ */
+static int pg_init_module(void)
+{
+  int result;
+
+  { // ---------------------------- about char dev
+    int i;
+    dev_t dev = 0;
+
+    if (pg_major) {
+      dev = MKDEV(pg_major, pg_minor);
+      result = register_chrdev_region(dev, pg_nr_devs, PG_MODULE_NAME);
     } else {
-	logdata_nonzero = 0x0;
+      result = alloc_chrdev_region(&dev, pg_minor, pg_nr_devs, PG_MODULE_NAME);
+      pg_major = MAJOR(dev);
+    }
+    if (result < 0) {
+      PDEBUG("can't get major %d\n", pg_major);
+      return (result);
     }
 
-    {				/* PRIORITY ENCODER */
-	int             i;
-	int             count = 0;
-	for (i = 31; i >= 0; i--) {
-	    int             buf;
-	    buf = 0x1 & (abs >> i);
-	    if (buf == 0x1) {
-		count = i;
-		break;
-	    }
-	    count = i;
+
+    // allocate the devices
+    pg_devices = kmalloc(pg_nr_devs * sizeof(struct pg_dev), GFP_KERNEL);
+    if (!pg_devices) {
+      result = (-ENOMEM);
+      goto init_fail;
+    }
+    memset(pg_devices, 0, pg_nr_devs * sizeof(struct pg_dev));
+
+    /* Initialize each device. */
+    for (i = 0; i < pg_nr_devs; i++) {
+      init_MUTEX(&pg_devices[i].sem);
+      init_MUTEX(&pg_devices[i].sem_open);
+      init_waitqueue_head(&pg_devices[i].wq);
+      pg_setup_cdev(&pg_devices[i], i);
+      pg_devices[i].ntimes_open = 0;
+      pg_devices[i].mmap_mode = MMAP_REG_PIORW;
+      strcpy(pg_devices[i].fpga_info, "no bitfile loaded");
+    }
+  } // ---------------------------- about char dev
+
+
+  { // ---------------------------- about kernel pci core
+    int i;
+    result = pci_register_driver(&pci_driver); // This function calls pg_pci_probe()
+    if(result<0){
+      PDEBUG("failed to pci_register_driver %d\n",result);
+      goto init_fail;
+    }
+    if(pg_nr_pci_devs ==1) PDEBUG("Kernel found 1 device.\n");
+    if(pg_nr_pci_devs > 1) PDEBUG("Kernel found %d devices.\n", pg_nr_devs);
+
+    for(i=0;i<pg_nr_pci_devs;i++){
+      PDEBUG("DEV %d BAR0 = 0x%lx (%ld bytes)\n",
+	     i, pg_devices[i].pci_reg_adr, pg_devices[i].pci_reg_size);
+      PDEBUG("DEV %d BAR1 = 0x%lx (%ld bytes)\n",
+	     i, pg_devices[i].pci_mem_adr, pg_devices[i].pci_mem_size);
+    }
+
+  } // ---------------------------- about kernel pci core
+
+  { // ---------------------------- about DMA buffers
+    int i;
+    for(i=0; i<pg_nr_pci_devs; i++){
+      struct pg_dev *dev = &(pg_devices[i]);
+      struct page *page_ptr;
+      u64 dma_mask = 0xFFFFFFFF;
+      unsigned long dmabuf_size = pg_get_dmabufsize();
+      int ii;
+
+      if(  pci_set_dma_mask(dev->pcidev, dma_mask)  ){
+	PDEBUG("pci_set_dma_mask() bad. %s:%d\n",__FILE__, __LINE__);
+	return (-ENODEV);
+      }
+      _PDEBUG("DMA mask = 0x%llx.\n",dma_mask);
+
+      if(  pci_set_consistent_dma_mask(dev->pcidev, dma_mask)  ){
+	PDEBUG("pci_set_consistent_dma_mask() bad. %s:%d\n",__FILE__, __LINE__);
+	return (-ENODEV);
+      }
+      _PDEBUG("consistent DMA mask = 0x%llx.\n",dma_mask);
+
+      // ----------------- Buffer for DMAR 
+      (dev->buf_dmar) = pci_alloc_consistent(dev->pcidev, dmabuf_size, &(dev->buf_dmar_pa));
+      /* -------------------------------------------------------------------------------------
+	 (dev->buf_dmar) = dma_alloc_coherent  (dev->pcidev, dmabuf_size, &(dev->buf_dmar_pa));
+	 ------------------------------------------------------------------------------------- */
+      if (dev->buf_dmar == NULL){
+	PDEBUG("failed dma_alloc_coherent(). %s:%d\n",__FILE__, __LINE__);
+	for(ii=i-1; ii>= 0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmar, x->buf_dmar_pa);
 	}
-	penc_out = count;
-    }
-    penc_out = 0x1F & penc_out;	/* 5-bit */
-
-    /*
-     * SHIFTER 
-     */
-    {
-	int             seed = 0;
-	if (penc_out >= 10) {
-	    seed = abs_decimal;
-	    table_adr = 0x3FF & (seed >> (penc_out - 10));
-	} else {
-	    seed = abs_decimal << 10;
-	    table_adr = 0x3FF & (seed >> penc_out);
+	for(ii=i-1; ii>=0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmaw, x->buf_dmaw_pa);
 	}
-    }
+	return (-ENOMEM);
+      }
+      page_ptr = virt_to_page((unsigned long)(dev->buf_dmar));
+      for(ii=1; ii<(1 << get_order(dmabuf_size)); ii++){
+	set_page_count(page_ptr + ii, 1);
+      }
 
-    /*
-     * TABLE 
-     */
-    /*
-     * TABLE INPUT WIDTH = 10-bit 
-     */
-    /*
-     * TABLE OUTPUT WIDTH = 8-bit 
-     */
-    {
-	int             adr = 0;
-	double          adr_double = 0.0;
-	double          data_double = 0.0;
-	int             data;
-	adr = 0x3FF & table_adr;
-	adr_double = (((double) adr) + 0.5) / 1024.000000;
-	data_double =
-	    256.000000 * (log(1.0 + adr_double)) / log(2.0) + 0.5;
-	data = (int) data_double;
-	/*
-	 * CHECK OVERFLOW 
-	 */
-	if ((0x1 & (data >> 8)) == 0x1) {
-	    data = 0;
-	    table_overflow = 1;	/* overflow flag */
-	} else {
-	    table_overflow = 0;
+      // ----------------- Buffer for DMAW 
+      (dev->buf_dmaw) = pci_alloc_consistent(dev->pcidev, dmabuf_size, &(dev->buf_dmaw_pa));
+      /* -------------------------------------------------------------------------------------
+	 (dev->buf_dmaw) = dma_alloc_coherent  (dev->pcidev, dmabuf_size, &(dev->buf_dmaw_pa));
+	 ------------------------------------------------------------------------------------- */
+      if (dev->buf_dmaw == NULL){
+	PDEBUG("failed dma_alloc_coherent(). %s:%d\n",__FILE__, __LINE__);
+	for(ii=i; ii>=0; ii--){
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmar, x->buf_dmar_pa);
 	}
-	logdata_mantissa = 0xFF & data;
-    }
-
-    /*
-     * ADDER (GENERATE EXPONENT PART) 
-     */
-    logdata_exponent = 0x1F & (penc_out + table_overflow);
-
-    *logdata =
-	logdata_sign << 16 | logdata_nonzero << 15 | logdata_exponent << 8
-	| logdata_mantissa;
-
-    return;
-}
-// ----------------------------------------------------------- : No. 2
-/*
- * UNSIGNED logarithmic shifter(power 2^[nshift]) 
- */
-/*
- * nbit : 17-bit 
- */
-/*
- * nshift : 1-bit 
- */
-/*
- * --- [NOTE!] --- Input/Output width of this component is different !
- * Input Width : 17-bit. [17-bit Signed Logarithmic Format] Onput Width : 
- * 16-bit. [17-bit Unsigned Logarithmic Format without a sign bit.] 
- */
-
-/*
- * --- [NOTE!] --- nshift must be 2, 1, -1 or -2. 
- */
-
-#include<stdio.h>
-void
-pg_log_shift_log17_1(LONG x, LONG * z)
-{
-    int             x_sign = 0;	/* Sign Flag: 1-bit (for debug) */
-    int             x_nonzero = 0;	/* NonZero Flag: 1-bit */
-    int             x_body = 0;	/* 15-bit */
-    int             zz = 0;	/* 16-bit */
-
-    x_sign = 0x1 & (((int) x) >> 16);
-    x_nonzero = 0x1 & (((int) x) >> 15);
-    x_body = 0x7FFF & ((int) x);
-
-    zz = (x_nonzero << 15) | (0x7FFF & (x_body << 1));
-    zz &= 0xFFFF;
-    *z = (LONG) zz;
-
-    return;
-}
-// ----------------------------------------------------------- : No. 3
-/*
- * logarithmic UNSIGNED adder using interpolated table 
- */
-/*
- * nbit_log : 17-bit 
- */
-/*
- * nbit_man : 8-bit 
- */
-/*
- * --- [NOTE!] --- Input/Output width of this component is 16-bit.  
- */
-
-static long double
-log_tab_plus_func(long double x)
-{
-    long double     f;
-    f = logl(1.0 + powl(2.0, -1.0 * x)) / logl(2.0);
-    return f;
-}
-
-static void
-calc_chebyshev_coefficient(long double xk_min,
-			   long double xk_max,
-			   long double *coef0, long double *coef1)
-{
-    long double     (*_func) (long double);
-    long double     x0, x1, bma, bpa, cc0, cc1;
-    long double     f[2];
-    x0 = -0.5 * sqrtl(2.0);
-    x1 = 0.5 * sqrtl(2.0);
-    bma = 0.5 * (xk_max - xk_min);
-    bpa = 0.5 * (xk_max + xk_min);
-    _func = &log_tab_plus_func;
-    f[0] = (*_func) (x0 * bma + bpa);
-    f[1] = (*_func) (x1 * bma + bpa);
-    cc0 = 0.5 * (f[0] + f[1]);
-    cc1 = 0.5 * sqrtl(2.0) * (f[1] - f[0]);
-    (*coef0) = cc0 - cc1;
-    (*coef1) = (-1.0) * cc1 / bma;
-}
-
-void
-pg_log_unsigned_add_itp_log17_man8_cut6(LONG x, LONG y, LONG * z)
-{
-    int             logimage_x, logimage_y, logimage_z;
-    int             signz = 0;	/* 1-bit */
-    int             x1 = 0;	/* 17-bit */
-    int             y1 = 0;	/* 17-bit */
-    int             xy = 0;	/* 17-bit (x1 - y1) */
-    int             yx = 0;	/* 17-bit (y1 - x1) */
-    int             yx_msb = 0;	/* 1-bit SIGN of yx */
-    int             x2 = 0;	/* 16-bit output of Left-MUX */
-    int             d0 = 0;	/* 16-bit output of Right-MUX */
-    int             d0_low_part = 0;	/* TABLE INPUT */
-    int             d0_high_part = 0;	/* MUX Middle INPUT */
-    int             df = 0;	/* MUX Middle OUTPUT */
-    int             table_data = 0;	/* TABLE OUTPUT */
-    int             logimage_ZperX = 0;	/* Logimage of (Real)Z/X */
-
-    logimage_x = (int) x;
-    logimage_y = (int) y;
-
-    /*
-     * SIGN EVALUATION ---------------------------- nonz(X) | nonz(Y) -> 
-     * sign(Z) --------+------------------- 0 | 0 -> 0 0 | 1 -> sign(Y) 
-     * 1 | 0 -> sign(X) 1 | 1 -> sign(X) ---------------------------- 
-     */
-    {
-	int             nonzx, nonzy, signx, signy;
-	signx = (logimage_x >> 16) & 0x1;
-	signy = (logimage_y >> 16) & 0x1;
-	nonzx = (logimage_x >> 15) & 0x1;
-	nonzy = (logimage_y >> 15) & 0x1;
-	if ((nonzx == 0x0) && (nonzy == 0x0)) {
-	    signz = 0x0;
-	} else if ((nonzx == 0x0) && (nonzy == 0x1)) {
-	    signz = signy;
-	} else if ((nonzx == 0x1) && (nonzy == 0x0)) {
-	    signz = signx;
-	} else {		/* (nonzx==0x1)&&(nonzy==0x1) */
-	    signz = signx;
+	for (ii = i-1; ii >= 0; ii--) {
+	  struct pg_dev *x = &(pg_devices[ii]);
+	  free_dmabuf(get_order(dmabuf_size), x->pcidev, x->buf_dmaw, x->buf_dmaw_pa);
 	}
-    }
+	return (-ENOMEM);
+      }
+      page_ptr = virt_to_page((unsigned long)(dev->buf_dmaw));
+      for (ii = 1; ii < (1 << get_order(dmabuf_size)); ii++) {
+	set_page_count(page_ptr + ii, 1);
+      }
 
-    /*
-     * RESET FUNCTION 
-     */
-    {
-	int             nonzx;
-	int             nonzy;
-	nonzx = 0x1 & (logimage_x >> 15);
-	nonzy = 0x1 & (logimage_y >> 15);
-	if (nonzx == 0x0)
-	    logimage_x &= 0x0;
-	if (nonzy == 0x0)
-	    logimage_y &= 0x0;
-    }
+      PDEBUG("Alloc DMAW buf (va 0x%08lx),(pa 0x%08lx),(size %ld KB)\n",
+	     (unsigned long)dev->buf_dmaw, (unsigned long)dev->buf_dmaw_pa, dmabuf_size/1024);
 
-    x1 = 0xFFFF & logimage_x;	/* The MSB(17th-bit) is zero. */
-    y1 = 0xFFFF & logimage_y;	/* The MSB(17th-bit) is zero. */
+      PDEBUG("Alloc DMAR buf (va 0x%08lx),(pa 0x%08lx),(size %ld KB)\n",
+	     (unsigned long)dev->buf_dmar, (unsigned long)dev->buf_dmar_pa, dmabuf_size/1024);
 
-    /*
-     * SUB (Y-X),(X-Y) 
-     */
-    yx = 0x1FFFF & (y1 - x1);
-    xy = 0x1FFFF & (x1 - y1);
 
-    yx_msb = 0x1 & (yx >> 16);
-
-    /*
-     * MUX Left 
-     */
-    if (yx_msb == 0x1) {
-	x2 = 0xFFFF & logimage_x;
-    } else {
-	x2 = 0xFFFF & logimage_y;
-    }
-
-    /*
-     * MUX Right 
-     */
-    if (yx_msb == 0x1) {
-	d0 = 0xFFFF & xy;
-    } else {
-	d0 = 0xFFFF & yx;
-    }
-
-    /*
-     * =========================== ROM C0 input = 6 bits ROM C1 input = 6 
-     * bits ROM C0 output = 10 bits ROM C1 output = 9 bits BIT
-     * EXTENSION = 2 bits =========================== 
-     */
-    /*
-     * =========================== table input = 12 bits table output = 9 
-     * bits =========================== 
-     */
-    d0_low_part = 0xFFF & d0;	/* 12-bit */
-    d0_high_part = 0xF & (d0 >> 12);
-
-    /*
-     * MUX Middle 
-     */
-    if (d0_high_part == 0x0) {
-	df = 0x1;
-    } else {
-	df = 0x0;
-    }
-
-    /*
-     * TABLE LOG_ADD 
-     */
-    {
-	long long int   adr, dx, rom_c0, rom_c1;
-	long double     xk_min, xk_max, coef0, coef1;
-	long long int   f;
-	adr = (long long int) (d0_low_part >> 6);
-	dx = (long long int) (0x3F & d0_low_part);
-	xk_min = (long double) (adr << 6);
-	xk_max = (long double) (((adr + 0x1LL) << 6) - 0x1LL);
-	xk_min = (xk_min + 0.25) / (long double) (0x1LL << 8);
-	xk_max = (xk_max + 0.25) / (long double) (0x1LL << 8);
-	calc_chebyshev_coefficient(xk_min, xk_max, &coef0, &coef1);
-	rom_c0 = (long long int) (coef0 * powl(2.0, 10.0) + 0.5);
-	rom_c1 = (long long int) (coef1 * powl(2.0, 10.0) + 0.5);
-	f = (rom_c0 - ((rom_c1 * dx) >> 8)) >> 2;
-	if (f < 0)
-	    f = 0x0LL;
-	f &= 0xFFLL;
-	if (d0_low_part == 0)
-	    f = 0x1LL << 8;
-	table_data = (int) (f);	/* TABLE OUTPUT : 9-bit */
-    }
-
-    /*
-     * MUX Last 
-     */
-    if (df == 0x1) {
-	logimage_ZperX = table_data;
-    } else {
-	logimage_ZperX = 0;
-    }
-
-    /*
-     * ADDER :16-bit width 
-     */
-    {
-	int             add_out = 0;
-	add_out = x2 + logimage_ZperX;
-	add_out &= 0xFFFF;
-	/*
-	 * WITH SIGN-BIT (2002/07/26) 
-	 */
-	logimage_z = (signz << 16) | add_out;
-    }
-
-    (*z) = (LONG) logimage_z;
-
-    return;
-}
-// ----------------------------------------------------------- : No. 4
-/*
- * UNSIGNED logarithmic shifter(power 2^[nshift]) 
- */
-/*
- * nbit : 17-bit 
- */
-/*
- * nshift : m1-bit 
- */
-/*
- * --- [NOTE!] --- Input/Output width of this component is different !
- * Input Width : 17-bit. [17-bit Signed Logarithmic Format] Onput Width : 
- * 16-bit. [17-bit Unsigned Logarithmic Format without a sign bit.] 
- */
-
-/*
- * --- [NOTE!] --- nshift must be 2, 1, -1 or -2. 
- */
-
-#include<stdio.h>
-void
-pg_log_shift_log17_m1(LONG x, LONG * z)
-{
-    int             x_sign = 0;	/* Sign Flag: 1-bit (for debug) */
-    int             x_nonzero = 0;	/* NonZero Flag: 1-bit */
-    int             x_body = 0;	/* 15-bit */
-    int             zz = 0;	/* 16-bit */
-
-    x_sign = 0x1 & (((int) x) >> 16);
-    x_nonzero = 0x1 & (((int) x) >> 15);
-    x_body = 0x7FFF & ((int) x);
-
-    zz = (x_nonzero << 15) | (0x7FFF & (x_body >> 1));
-    zz &= 0xFFFF;
-    *z = (LONG) zz;
-
-    return;
-}
-// ----------------------------------------------------------- : No. 5
-/*
- * nbit : 17-bit 
- */
-/*
- * MULDIV : MUL 
- */
-#include<stdio.h>
-void
-pg_log_mul_17(int x, int y, int *z)
-{
-    int             _signbit_x = 0;
-    int             _signbit_y = 0;
-    int             _signbit_z = 0;
-    int             _nonzbit_x = 0;
-    int             _nonzbit_y = 0;
-    int             _nonzbit_z = 0;
-    int             _x = 0;
-    int             _y = 0;
-    int             _z = 0;
-    _signbit_x = 0x1 & (x >> 16);
-    _signbit_y = 0x1 & (y >> 16);
-    _signbit_z = _signbit_x ^ _signbit_y;
-    _nonzbit_x = 0x1 & (x >> 15);
-    _nonzbit_y = 0x1 & (y >> 15);
-    _nonzbit_z = _nonzbit_x & _nonzbit_y;
-    _x = 0x7FFF & x;
-    _y = 0x7FFF & y;
-    _z = _x + _y;
-    _z = 0x7FFF & _z;
-    *z = _signbit_z << 16 | _nonzbit_z << 15 | _z;
-    *z = 0x1FFFF & (*z);
-    return;
-}
-// ----------------------------------------------------------- : No. 6
-/*
- * nbit : 17-bit 
- */
-/*
- * MULDIV : SDIV 
- */
-#include<stdio.h>
-void
-pg_log_sdiv_17(int x, int y, int *z)
-{
-    int             _signbit_x = 0;
-    int             _signbit_y = 0;
-    int             _signbit_z = 0;
-    int             _nonzbit_x = 0;
-    int             _nonzbit_y = 0;
-    int             _nonzbit_z = 0;
-    int             _x = 0;
-    int             _y = 0;
-    int             _z = 0;
-    _signbit_x = 0x1 & (x >> 16);
-    _signbit_y = 0x1 & (y >> 16);
-    _signbit_z = _signbit_x ^ _signbit_y;
-    _nonzbit_x = 0x1 & (x >> 15);
-    _nonzbit_y = 0x1 & (y >> 15);
-    _nonzbit_z = _nonzbit_x & _nonzbit_y;
-    _x = 0x7FFF & x;
-    _y = 0x7FFF & y;
-    _z = _x - _y;
-    if (_y > _x)
-	_z = 0;
-    _z = 0x7FFF & _z;
-    *z = _signbit_z << 16 | _nonzbit_z << 15 | _z;
-    *z = 0x1FFFF & (*z);
-    return;
-}
-// ----------------------------------------------------------- : No. 7
-/*
- * nbit : 17-bit 
- */
-/*
- * MULDIV : SMUL 
- */
-#include<stdio.h>
-void
-pg_log_div_17(int x, int y, int *z)
-{
-    int             _signbit_x = 0;
-    int             _signbit_y = 0;
-    int             _signbit_z = 0;
-    int             _nonzbit_x = 0;
-    int             _nonzbit_y = 0;
-    int             _nonzbit_z = 0;
-    int             _x = 0;
-    int             _y = 0;
-    int             _z = 0;
-    _signbit_x = 0x1 & (x >> 16);
-    _signbit_y = 0x1 & (y >> 16);
-    _signbit_z = _signbit_x ^ _signbit_y;
-    _nonzbit_x = 0x1 & (x >> 15);
-    _nonzbit_y = 0x1 & (y >> 15);
-    _nonzbit_z = _nonzbit_x & _nonzbit_y;
-    _x = 0x7FFF & x;
-    _y = 0x7FFF & y;
-    _z = _x - _y;
-    _z = 0x7FFF & _z;
-    *z = _signbit_z << 16 | _nonzbit_z << 15 | _z;
-    *z = 0x1FFFF & (*z);
-    return;
-}
-// ----------------------------------------------------------- : No. 8
-/*
- * nbit_log : 17-bit 
- */
-/*
- * nbit_man : 8-bit 
- */
-/*
- * nbit_fix : 57-bit 
- */
-#include<stdio.h>
-#include<math.h>
-void
-pg_conv_ltof_log17_man8_fix57(int logdata, long long int *fixdata)
-{
-    int             logdata_sign = 0;
-    int             logdata_nonzero = 0;
-    int             logdata_exponent = 0;
-    int             logdata_mantissa = 0;
-    int             fixdata_sign = 0;
-    unsigned long long int fixdata_absolute = 0;
-    int             table_adr = 0;
-    int             table_data = 0;
-    int             shift_indata = 0;
-    int             shift_control = 0;
-
-    /*
-     * VECTOR PREPARATION 
-     */
-    logdata_sign = 0x1 & (logdata >> 16);
-    logdata_nonzero = 0x1 & (logdata >> 15);
-    logdata_exponent = 0x7F & (logdata >> 8);
-    logdata_mantissa = 0xFF & logdata;
-
-    /*
-     * SIGN BIT 
-     */
-    fixdata_sign = logdata_sign;
-
-    /*
-     * TABLE 
-     */
-    table_adr = logdata_mantissa;
-    {
-	double          x = 0.0;
-	double          y = 0.0;
-	double          depth = 256.000000;
-	x = pow(2.0, ((double) table_adr) / depth);
-	y = (256.000000 * (x - 1.0)) + 0.5;
-	table_data = (int) y;
-	table_data &= 0xFF;
-    }
-
-    /*
-     * MULTIPLEXOR 
-     */
-    {
-	int             muxout = 0;
-	if (logdata_nonzero == 0x1) {
-	    muxout = 0x1 << 8 | table_data;
-	} else {
-	    muxout = 0x0;
+      { // Initialize buffers for DMA-W and DMA-R
+	int i;
+	for(i=0;i<(dmabuf_size>>2);i++){
+	  dev->buf_dmaw[i] = 0x10000002;
+	  dev->buf_dmar[i] = 0x69696969;
 	}
-	shift_indata = muxout;
+	dev->buf_dmaw[(dmabuf_size>>2)-1] = 0xCCCC9999;
+      }
+
+
     }
+  } // ---------------------------- about DMA buffer
 
-    /*
-     * SHIFTER 
-     */
-    shift_control = logdata_exponent;
-    {
-	unsigned long long int shift_out = 0;
-	unsigned long long int seed = 0;
-	if (shift_control < 8 * sizeof(long long int)) {
-	    seed =
-		((unsigned long long int) shift_indata) << shift_control;
-	} else {
-	    seed = 0x0LL;
-	}
-	shift_out = seed >> 8;
-	fixdata_absolute = 0x00FFFFFFFFFFFFFFULL & shift_out;
-    }
+  if(PG_PCITRANS_64BIT){
+    PDEBUG("module loaded with PCI Trans 64-bit.\n");
+  }else{
+    PDEBUG("module loaded with PCI Trans 32-bit.\n");
+  }
+  return (0); // 0 : succeed
 
-    *fixdata = (long long int) fixdata_sign << 56 | fixdata_absolute;
-
-    return;
+  // --- if any fails ---
+ init_fail:
+  pg_cleanup_module();
+  return (result);
 }
-// ----------------------------------------------------------- : No. 9
-/*
- * Fixed-Point Accumulate Registor
- */
-/*
- * nbit_fx(input) : 57-bit 
- */
-/*
- * nbit_sx(register): 64-bit 
- */
-/*
- * --- [NOTE!] --- The format of input data is not the 2's complement one.
- * MSB means a sign flag, and the other part means abusolute(not<0)
- * integer. 
- */
 
-#include<stdio.h>
-#include<math.h>
-void
-pg_fix_accum_f57_s64(long long int fdata, long long int *sdata)
-{
-    long long int   fx = 0;	/* 57-bit */
-    long long int   sx = 0;	/* 64-bit */
-    long long int   fx_sign = 0;	/* 1-bit : sign flag of fdata */
-    long long int   fx_abs = 0;	/* 56-bit : absolute part of fdata */
-    fx = 0x01FFFFFFFFFFFFFFULL & fdata;
-    sx = 0xFFFFFFFFFFFFFFFFULL & (*sdata);
-    fx_sign = 0x1 & (fdata >> 56);
-    fx_abs = 0x00FFFFFFFFFFFFFFULL & fdata;
-    if (fx_sign == 0x0) {
-	sx = sx + fx_abs;
-    } else {
-	sx = sx - fx_abs;
-    }
+MODULE_AUTHOR("Tsuyoshi Hamada");
+MODULE_LICENSE("Dual BSD/GPL");
 
-    *sdata = 0xFFFFFFFFFFFFFFFFULL & sx;
-    return;
-}
+module_init(pg_init_module);
+module_exit(pg_cleanup_module);
