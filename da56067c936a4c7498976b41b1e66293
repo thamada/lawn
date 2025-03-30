@@ -1,103 +1,387 @@
-2025年  3月 14日 金曜日 11:03:51 JST
-# Current time Tue Jan 04 17:06:01 2005
-# ModelSim Stack Trace
-# Program = vish
-# Id = "5.7g"
-# Version = "2003.10"
-# Date = "Oct 13 2003"
-# Platform = win32pe
+2025年  3月 30日 日曜日 11:27:00 JST
 
-Exception c0000005 has occurred at address 0060b1ac. Traceback:
-# 0    0x0060b1ac: 'TclpAlloc + 0x9c'
-# 1    0x0060f6ae: 'Tcl_Alloc + 0xe'
-# 2    0x006370a1: 'Tcl_ListObjReplace + 0x321'
-# 3    0x0063b669: 'Tcl_DuplicateObj + 0xd9'
-# 4    0x0061414d: 'Tcl_LreplaceObjCmd + 0x10d'
-# 5    0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 6    0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 7    0x006427ef: 'TclObjInterpProc + 0x26f'
-# 8    0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 9    0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 10   0x0063d426: 'Tcl_Eval + 0x16'
-# 11   0x10002ad3: 'Itk_ArchetypeInit + 0x1ad3'
-# 12   0x100019a0: 'Itk_ArchetypeInit + 0x9a0'
-# 13   0x0033b67c: 'Itcl_EvalMemberCode + 0x206'
-# 14   0x0033c346: 'Itcl_ExecMethod + 0x18d'
-# 15   0x00344657: 'Itcl_EvalArgs + 0x133'
-# 16   0x0033e4b1: 'Itcl_HandleInstance + 0x1f2'
-# 17   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 18   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 19   0x0063a5ba: 'Tcl_NamespaceObjCmd + 0xb2a'
-# 20   0x00639ba9: 'Tcl_NamespaceObjCmd + 0x119'
-# 21   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 22   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 23   0x0063d426: 'Tcl_Eval + 0x16'
-# 24   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 25   0x00530d70: 'Tk_BindEvent + 0x99c'
-# 26   0x00553635: 'TkBindEventProc + 0x18f'
-# 27   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
-# 28   0x005acff7: 'Tk_DestroyWindow + 0x204'
-# 29   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 30   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 31   0x005acf2a: 'Tk_DestroyWindow + 0x137'
-# 32   0x005ae2f1: 'Tk_GetNumMainWindows + 0x70'
-# 33   0x00622f8d: 'Tcl_Finalize + 0x4d'
-# 34   0x0061060e: 'Tcl_ExitObjCmd + 0x3e'
-# 35   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 36   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 37   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 38   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 39   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 40   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 41   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 42   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 43   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 44   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 45   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 46   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 47   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 48   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 49   0x0060cc62: 'Tcl_EvalObjEx + 0x342'
-# 50   0x0061059c: 'Tcl_EvalObjCmd + 0x6c'
-# 51   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 52   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 53   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 54   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 55   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 56   0x0063d426: 'Tcl_Eval + 0x16'
-# 57   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 58   0x0042d1f7: '<unknown (@0x42d1f7)>'
-# 59   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
-# 60   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 61   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 62   0x0063d426: 'Tcl_Eval + 0x16'
-# 63   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 64   0x0042cfd2: '<unknown (@0x42cfd2)>'
-# 65   0x0060c2bb: 'TclInvokeStringCommand + 0x6b'
-# 66   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 67   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 68   0x00623a73: 'TclExecuteByteCode + 0x743'
-# 69   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 70   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 71   0x006238e4: 'TclExecuteByteCode + 0x5b4'
-# 72   0x0060cb12: 'Tcl_EvalObjEx + 0x1f2'
-# 73   0x006427ef: 'TclObjInterpProc + 0x26f'
-# 74   0x0063ccd6: 'Tcl_EvalObjv + 0x3d6'
-# 75   0x0063d18a: 'Tcl_EvalEx + 0x11a'
-# 76   0x0063d426: 'Tcl_Eval + 0x16'
-# 77   0x0060df0c: 'Tcl_GlobalEval + 0x1c'
-# 78   0x00530d70: 'Tk_BindEvent + 0x99c'
-# 79   0x00553635: 'TkBindEventProc + 0x18f'
-# 80   0x0055d2e2: 'Tk_HandleEvent + 0x5eb'
-# 81   0x0055d6d2: 'TkQueueEventForAllChildren + 0xcf'
-# 82   0x0063af20: 'Tcl_ServiceEvent + 0x60'
-# 83   0x0063b191: 'Tcl_DoOneEvent + 0x111'
-# 84   0x0055d73c: 'Tk_MainLoop + 0x14'
-# 85   0x0057ce48: 'Tk_MainEx + 0x438'
-# 86   0x0042eed4: '<unknown (@0x42eed4)>'
-# 87   0x0042f3e9: '<unknown (@0x42f3e9)>'
-# 88   0x004c0925: '<unknown (@0x4c0925)>'
-# 89   0x77e7893d: '<unknown (@0x77e7893d)>'
-StackWalk failed 487
-# End of Stack Trace
+-- **************************************
+--               INREVIUM                
+-- **************************************
 
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_TARGETCNT MODEL
+--------------------------------------------------------------------------------
+-- PCI64_CORE Target Access Control Module
+--------------------------------------------------------------------------------
+-- File                      : PCI_TARGETCNT.vhd
+-- Entity                    : PCI_TARGETCNT
+-- Architecture              : PCI_TARGETCNT_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         �V�K
+--------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+
+
+entity PCI_TARGETCNT is
+	port (
+	-- Interface to PCI Logicore.
+		FRAMEQ_N		: in	std_logic;							-- Latched FRAME# Signal
+		REQ64Q_N		: in	std_logic;							-- Latched REQ64# Signal
+		TRDYQ_N 		: in	std_logic;							-- Latched TRDY# Signal
+		IRDYQ_N 		: in	std_logic;							-- Latched IRDY# Signal
+		STOPQ_N 		: in	std_logic;							-- Latched STOP# Signal
+		DEVSELQ_N		: in	std_logic;							-- Latched DEVSEL# Signal
+		ACK64Q_N		: in	std_logic;							-- Latched ACK64# Signal
+
+		ADDR			: in	std_logic_vector( 31 downto 0);		-- Latched Target Address Bus
+		ADIO			: inout std_logic_vector( 63 downto 0);		-- Internal Address/Data Bus
+
+		CFG_VLD 		: in	std_logic;							-- Configulation Cycle Valid
+		CFG_HIT 		: in	std_logic;							-- Configuration Cycle Start
+		C_TERM			: out	std_logic;							-- Configuraton Cycle Terminate Signal
+		C_READY 		: out	std_logic;							-- Configuration Data Transfer Ready Signal
+
+		ADDR_VLD		: in	std_logic;							-- Internal Address Valid
+		BASE_HIT		: in	std_logic_vector(  7 downto 0);		-- Base Address Hit
+
+		S_CYCLE64		: in	std_logic;							-- 64 bit Transaction Go On
+		S_TERM			: out	std_logic;							-- Target Transaction Terminate Signal
+		S_READY 		: out	std_logic;							-- Target Transaction Data Transfer Ready Siganl
+		S_ABORT 		: out	std_logic;							-- Target Abort Request Signal
+		S_WRDN			: in	std_logic;							-- Target Transaction Data Direction (0:Write, 1:Read)
+		S_SRC_EN		: in	std_logic;							-- Target Transaction Data Source Enable
+		S_DATA_VLD		: in	std_logic;							-- Target Transaction Data Phase Valid Signal
+		S_CBE			: in	std_logic_vector(  7 downto 0);		-- Target Command & Byte Enable Signal
+		PCI_CMD 		: in	std_logic_vector( 15 downto 0);		-- Latched Bus Command
+
+		IDLE			: in	std_logic;							-- Target Idle State
+		B_BUSY			: in	std_logic;							-- PCI Bus Busy State
+		S_DATA			: in	std_logic;							-- Target Data Transfer State
+		BACKOFF 		: in	std_logic;							-- Target State Machine Transaction End State
+
+		SLOT64			: out	std_logic;							-- 64 bit Extended Signal Eable
+		PERRQ_N 		: in	std_logic;							-- latched PERR# Signal
+		SERRQ_N 		: in	std_logic;							-- Latched SERR# Signal
+		KEEPOUT 		: out	std_logic;							-- ADIO Bus Disable Request Signal
+
+		CSR 			: in	std_logic_vector( 39 downto 0);		-- Command/Status Register State
+		SUB_DATA		: out	std_logic_vector( 31 downto 0);		-- Sub-Identification
+		CFG 			: in	std_logic_vector(255 downto 0);		-- Confiuration Data
+
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
+
+	-- Internal Block Target Access Control Signal
+		TARGET_AD		: out	std_logic_vector(31 downto 0);		-- Target Access Address
+
+		FIFO_RDDT		: in	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: in	std_logic;							-- FIFO Read Data Enable Signel
+
+	-- Base Address 0 Area (Internal Register) Target Access Control Signal
+		BAR0_WRDT		: out	std_logic_vector(31 downto 0);		-- BAR0 Area Target Access Write Data
+		BAR0_WR			: out	std_logic_vector( 3 downto 0);		-- BAR0 Area Target Access Write Signal
+		BAR0_RD			: out	std_logic;							-- BAR0 Area Target Access Read  Signal
+
+	-- Base Address 1 Area (Internal Memoery) Target Access Control Signal
+		BAR1_WRDT		: out	std_logic_vector(63 downto 0);		-- BAR1 Area Target Access Write Data
+		BAR1_WR			: out	std_logic_vector( 7 downto 0);		-- BAR1 Area Target Access Write Signal
+		BAR1_RD			: out	std_logic							-- BAR1 Area Target Access Read  Signal
+		);
+end PCI_TARGETCNT;
+
+
+architecture PCI_TARGETCNT_rtl of PCI_TARGETCNT is
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+
+
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+-- Internal Block R/W Select Signal
+--
+--	BAR0 : Internal Register
+--	BAR1 : Internal Memory Block
+
+	signal	BAR0_WRENB		: std_logic;							-- BAR0 Block Write Select Signal
+	signal	BAR0_RDENB		: std_logic;							-- BAR0 Block Read  Select Signal
+
+	signal	BAR1_WRENB		: std_logic;							-- BAR1 Block Write Select Signal
+	signal	BAR1_RDENB		: std_logic;							-- BAR1 Block Read  Select Signal
+
+-- Internal Block Access Control Signal
+	signal	TARGET_ADRS		: std_logic_vector(31 downto 2);		-- Target Access Address
+
+	signal	PRERD_CNT		: std_logic_vector(3 downto 0);			-- Pre READ Signal Assert Control
+
+	signal	BAR0_PRERD		: std_logic;							-- BAR0 Block Pre-Read Signal
+	signal	BAR1_PRERD		: std_logic;							-- BAR1 Block Pre-Read Signal
+
+	signal	BAR0_READ		: std_logic;							-- Internal BAR0 Block Read Signal
+	signal	BAR1_READ		: std_logic;							-- Internal BAR1 Block Read Signal
+
+	signal	DTRD_FLG		: std_logic;							-- Data Read Flag
+
+
+
+begin
+
+
+
+--***************************************************************
+--*
+--*  Base Address 0 Area Access Control Signal Generate Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) R/W Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_WRENB <= '0';
+			BAR0_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1') then										------ Base Address 0 Area Access ?
+				BAR0_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR0_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR0_WRENB <= '0';											------ Select Signal Clear
+				BAR0_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR0_WRENB,S_DATA_VLD,S_CBE) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WR <= (not S_CBE(3 downto 0));								------ High Word Write Signal Set
+		else
+			BAR0_WR <= (others => '0');										------ BAR0_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR0_WRENB,S_DATA_VLD,ADIO) begin
+		if (BAR0_WRENB='1' and S_DATA_VLD='1') then							------ BAR0 Target Data Write Available ?
+			BAR0_WRDT(31 downto  0) <= ADIO(31 downto 0);					------ Low  Word Write Data Set
+		else
+			BAR0_WRDT <= (others => '0');									------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR0_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(0)='1' and S_WRDN='0') then						------ Base Address 0 Area Read Access ?
+				BAR0_PRERD <= '1';											------ Base Address 0 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR0_PRERD <= '0';											------ Base Address 0 Area Pre-Read End
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR0(Internal Register) Area Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		BAR0_READ <= (BAR0_PRERD or S_SRC_EN) and BAR0_RDENB;			------ Data Read Signal Set
+
+		BAR0_RD   <= BAR0_READ;												------ Data Read Signal Output
+
+
+--***************************************************************
+--*
+--*  Base Address 1 Area Access Control Signal Generate Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) R/W Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_WRENB <= '0';
+			BAR1_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1') then										------ Base Address 1 Area Access ?
+				BAR1_WRENB <= S_WRDN;										------ R/W Status Set
+				BAR1_RDENB <= (not S_WRDN);
+			elsif (S_DATA='0') then											------ Transaction End ?
+				BAR1_WRENB <= '0';											------ Select Signal Clear
+				BAR1_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,S_CBE) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WR <= (not S_CBE);										------ S_CBE Signal Set
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WR <= (not S_CBE(3 downto 0)) & "0000";			------ High Word Write Signal Set
+				else
+					BAR1_WR <=  "0000" & (not S_CBE(3 downto 0));			------ High Word Write Signal Set
+				end if;
+			end if;
+		else
+				BAR1_WR <= (others => '0');									------ BAR1_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (BAR1_WRENB,S_DATA_VLD,S_CYCLE64,TARGET_ADRS,ADIO) begin
+		if (BAR1_WRENB='1' and S_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (S_CYCLE64='1') then											------ 64 bit Access ?
+				BAR1_WRDT <= ADIO;											------ 64 bit Write Data Output
+			else
+				if (TARGET_ADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					BAR1_WRDT(31 downto  0) <= (others => '0');				------ Low  Word Write Data Clear
+					BAR1_WRDT(63 downto 32) <= ADIO(31 downto 0);			------ High Word Write Data Set
+				else
+					BAR1_WRDT(31 downto  0) <= ADIO(31 downto 0);			------ Low  Word Write Data Set
+					BAR1_WRDT(63 downto 32) <= (others => '0');				------ High Word Write Data Clear
+				end if;
+			end if;
+		else
+				BAR1_WRDT <= (others => '0');								------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			BAR1_PRERD <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (BASE_HIT(1)='1' and S_WRDN='0') then						------ Base Address 1 Area Read Access ?
+				BAR1_PRERD <= '1';											------ Base Address 1 Area Pre-Read Start
+			elsif (PRERD_CNT(3)='1') then									------ Pre Read Data Transfer End ?
+				BAR1_PRERD <= '0';											------ Base Address 1 Area Pre-Read End
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) Area Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		BAR1_READ <= (BAR1_PRERD or S_SRC_EN) and BAR1_RDENB;			------ Data Read Signal Set
+
+		BAR1_RD   <= BAR1_READ;												------ Data Read Signal Output
+
+--------------------------------------------------------------------------------
+-- S_READY Signal Output Control Process
+--------------------------------------------------------------------------------
+
+		S_READY <= BAR0_WRENB or BAR1_WRENB or FIFO_RDTEN;					------ Target Write Access Start or Read Data Available
+
+--------------------------------------------------------------------------------
+-- Internal Block Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PRERD_CNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			PRERD_CNT <= PRERD_CNT(2 downto 0) & (BAR0_PRERD or BAR1_PRERD);		------ FRAMEQ_N Signal Sampling
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Target Access Address Output Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			TARGET_ADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (ADDR_VLD='1') then											------- Target Access Start ?
+				TARGET_ADRS <= ADIO(31 downto 2);							------- Start Address Set
+			elsif (S_WRDN='1' and S_DATA_VLD='1') then						------- Target Write Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			elsif (BAR0_READ='1' or BAR1_READ='1') then						------- Target Read Access ?
+				if (S_CYCLE64='1') then										------- 64 bit Access ?
+					TARGET_ADRS <= TARGET_ADRS+2;							------- Access Address Increment +2
+				else
+					TARGET_ADRS <= TARGET_ADRS+1;							------- Access Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+		TARGET_AD <= TARGET_ADRS & "00";									------- Target Access Address Output
+
+--------------------------------------------------------------------------------
+-- ADIO Signal Output Control Process
+--------------------------------------------------------------------------------
+
+	process (S_DATA,FIFO_RDTEN,FIFO_RDDT) begin
+		if (S_DATA='1' and FIFO_RDTEN='1') then								------ PCI Target Read Transaction & Data Valid ?
+			ADIO <= FIFO_RDDT;												------ Read Data Output
+		else
+			ADIO <= (others=>'Z');									--: inout std_logic_vector( 63 downto 0);
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  Unused or Fixed PCI Core Signal Control Block
+--*
+--***************************************************************
+
+
+		C_TERM			<= '0'; --: out   std_logic;
+		C_READY 		<= '1'; --: out   std_logic;
+
+		S_TERM			<= '0'; --: out   std_logic;
+		S_ABORT 		<= '0'; --: out   std_logic;
+
+		SLOT64			<= '1'; --: out   std_logic;
+		KEEPOUT 		<= '0'; --: out   std_logic;
+
+		SUB_DATA		<= (others=>'0'); 								--: out	 std_logic_vector( 31 downto 0);
+
+
+
+
+
+end PCI_TARGETCNT_rtl;
