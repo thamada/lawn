@@ -1,117 +1,94 @@
-2025年  4月  9日 水曜日 09:32:24 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-07-16 23:48:16 hamada>
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-
-class Queue:
-    def __init__(self, queue = None):
-        self.index = 0
-        self.index_max = 50
-        self.image0 = np.zeros((120, 160, 3), np.uint8)
-        if type(queue) is type([]):
-            self.queue = queue
-        elif queue is None:
-            self.queue = []
-        else:
-            print ('Error Message:')
-            print ('    Your input is not type of list!')
-            print ('    Please enter list type!')
-
-    def enqueue(self, e):
-        if self.index < self.index_max :
-            self.queue.append(e)
-            self.index += 1
-            print ("queue index: ", self.index)
-        else:
-            self.dequeue()
-            self.queue.append(e)
-
-        return self.queue
-
-    def dequeue(self):
-        try:
-            qEl = self.queue[0]
-            del self.queue[0]
-            return (qEl, self.queue)
-        except IndexError:
-            print ('Error Message:')
-            print ('    There is no element in the queue!')
-
-    def look_first(self):
-        ret = self.image0
-        if self.index > 1:
-            ret = self.queue[0]
-        return (ret)
-            
-
-class WebCam(object):
-    def __init__(self):
-        self.devid = 2
-        self.tnow  = ''
-        self.fifo = Queue()
-        self.window_title = 'camera: %d' % (self.devid)
-        self.cap = cv2.VideoCapture(self.devid) 
-        self.cap_width  = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.cap_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.cap_fps    = self.cap.get(cv2.CAP_PROP_FPS)
-        print(self.cap_width, "x", self.cap_height, ":", self.cap_fps)
-
-        self.display(True)
-
-    def put_text(self, image, text):
-        font_size = 1.0
-        # font_type = cv2.FONT_HERSHEY_TRIPLEX 
-        # font_type = cv2.FONT_HERSHEY_PLAIN
-        # font_type = cv2.FONT_HERSHEY_DUPLEX
-        font_type = cv2.FONT_HERSHEY_TRIPLEX
-        font_color = (0x0, 0x77, 0x0)
-        px = int(image.shape[1]*0.15 )
-        py = int(image.shape[0]*0.9 )
-
-        cv2.putText(image, text, (px, py), font_type, font_size, font_color)
+2025年  4月 13日 日曜日 09:16:50 JST
+-- LOCAL READ CONTROLLER ( ifpga <- pfpga )
+-- by Tsuyoshi Hamada
+--
+-- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
+-- CALC_DONE      ___/~~~~\____
+-- BUSY               ___/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______________
+-- hit1               ___/~~~~\____
+-- c_nchip               < NC                >< NC -1                           >< negativ value
+-- next_chip                          ___/~~~~\____                      ___/~~~~\____
+--==================================================
+-- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
+-- CALC_DONE      ___/~~~~\____
+-- c_npipe               < NP                >< NP -1                           >< negativ value
+-- next_pipe
 
 
-    def display(self, is_clear=False):
-        wx = 320
-        wy = 240
-        step = 5
-        if is_clear :
-            for i in range (0, self.fifo.index_max, step):
-                image = self.fifo.image0
-                wname = self.window_title + ": %d" %(i)
-                cv2.resizeWindow(wname, wx, wy)
-                cv2.moveWindow(wname, int(i*wx/step), 0)
-                cv2.imshow(wname, image)
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
-        for i in range (0, self.fifo.index, step):
-            image = self.fifo.queue[i].copy()
-            wname = self.window_title + ": %d" %(i)
-            image2 = cv2.resize(image, (wx, wy))
-            cv2.imshow(wname, image2)
+entity local_read_cnt is
+  port (
+    -- from PGPG_REG3
+    NCHIP : in std_logic_vector(1 downto 0);     -- (number of chips) - 1
+    NPIPE : in std_logic_vector(7 downto 0);     -- (number of pipelines) - 1
+    NFI   : in std_logic_vector(7 downto 0);     -- (number of fi registers in a pipe) - 1
+    CALC_DONE : in std_logic;   -- pulse
+    -- to GPREG0
+    BUSY  : out std_logic;
 
-    def save_photo(self):
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
-            tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-            if(tnow != self.tnow):
-                self.put_text(frame, tnow)
-                basedir = './log.%d/'% (self.devid)
-                ofname = mkdir.get_filename_frame(basedir, tnow)
-                cv2.imwrite(ofname, frame)
-                print(ofname, "devid = %d" % self.devid)
-                self.tnow = tnow
-                print("%s: Take photo" % self.tnow )
-                self.fifo.enqueue(frame)
-                self.display()
+    -- to LOCAL_READ_IF
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    -- from LOCAL_READ_IF
+    BUSY_IF : in std_logic;
+ 
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end local_read;
 
-    def clear_cache(self):
-        self.display()
-        if(self.cap.isOpened()):
-            ret, frame = self.cap.read()
+architecture rtl of local_read is
 
-        # self.cap.release()
-        # cv2.destroyAllWindows()
+signal hit0,hit1,hit2 : std_logic :='0';
+signal c_nchip,c_nchipr  : std_logic_vector(2 downto 0) := (others=>'0');
+signal c_npipe,c_npiper  : std_logic_vector(7 downto 0) := (others=>'0');
+signal c_nfi  ,c_nfir    : std_logic_vector(7 downto 0) := (others=>'0');
+signal next_chip, next_pipe : std_logic :='0';
+
+begin
+
+  hit0 <= CALC_DONE;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      hit2 <= hit1;
+      hit1 <= hit0;
+    end if;
+  end process;
+
+  -- BUSY
+  process (RST,CLK,c_nchip) begin
+    if (RST = '1') then
+      BUSY <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((hit0 = '1') AND (hit1 = '0')) then
+        BUSY <= '1';
+      elsif(c_nchip(2) = '1') then
+        BUSY <= '0';
+      end if;
+    end if;
+  end process;
+
+
+  -- NCHIP COUNTER
+  c_nchipr <= c_nchip - "01";
+  process (RST,CLK,next_chip) begin
+    if (RST = '1') then
+      c_nchip <= (others=>'0');
+    elsif (CLK'event and CLK='1') then
+      if((hit0 = '1') AND (hit1 = '0')) then
+        c_nchip <= "0" & NCHIP;              -- SIGNED VALUE
+      elsif (next_chip='1') then
+        c_nchip <= c_nchipr;
+      end if;
+    end if;
+  end process;
+
+  
 
