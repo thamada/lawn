@@ -1,28 +1,27 @@
-2025年  4月 12日 土曜日 11:15:34 JST
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
+2025年  4月 15日 火曜日 09:11:26 JST
+vlib work
+vcom -93 -explicit  ../rtl/local_write.vhd
+vcom -93 -explicit  ../rtl/local_read_cnt.vhd
+vcom -93 -explicit  ../rtl/local_read_if.vhd
+vcom -93 -explicit  ../rtl/local_read.vhd
+vcom -93 -explicit  ../rtl/local_io.vhd
+vcom -93 -explicit  sim_local_io.vhw
+vsim -t 1ps   -lib work sim_local_io
+do sim_local_io.udo
+view wave
+add wave -hex /uut/busy_dmar
+add wave -hex *
 
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xff, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
+add wave -hex /uut/u1/u0/clk
+add wave -hex /uut/u1/u0/CALC_DONE
+add wave -dec /uut/u1/u0/cnt
+add wave -hex /uut/u1/u0/cnt_en
+add wave -hex /uut/u1/u0/is_finish
+add wave -hex /uut/u1/u0/EXEC
+add wave -hex /uut/u1/u0/CHIPSEL
+add wave -hex /uut/u1/u0/START_AD
+add wave -hex /uut/u1/u0/NQWORD
+add wave -hex /uut/u1/u0/MEM_AD_BASE
 
-image = cv2.imread("/tmp/tmp.jpg")
-
-tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
-put_text(image, tnow)
-cv2.imshow('test', image)
-
-
-while(True):
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-print("Done.")
+run -all
