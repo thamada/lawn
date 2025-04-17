@@ -1,27 +1,47 @@
-2025年  4月 15日 火曜日 09:11:26 JST
-vlib work
-vcom -93 -explicit  ../rtl/local_write.vhd
-vcom -93 -explicit  ../rtl/local_read_cnt.vhd
-vcom -93 -explicit  ../rtl/local_read_if.vhd
-vcom -93 -explicit  ../rtl/local_read.vhd
-vcom -93 -explicit  ../rtl/local_io.vhd
-vcom -93 -explicit  sim_local_io.vhw
-vsim -t 1ps   -lib work sim_local_io
-do sim_local_io.udo
-view wave
-add wave -hex /uut/busy_dmar
-add wave -hex *
-
-
-add wave -hex /uut/u1/u0/clk
-add wave -hex /uut/u1/u0/CALC_DONE
-add wave -dec /uut/u1/u0/cnt
-add wave -hex /uut/u1/u0/cnt_en
-add wave -hex /uut/u1/u0/is_finish
-add wave -hex /uut/u1/u0/EXEC
-add wave -hex /uut/u1/u0/CHIPSEL
-add wave -hex /uut/u1/u0/START_AD
-add wave -hex /uut/u1/u0/NQWORD
-add wave -hex /uut/u1/u0/MEM_AD_BASE
-
-run -all
+2025年  4月 17日 木曜日 10:48:01 JST
+./db/images/ID.0005/image_00000657.jpg
+./db/images/ID.0006/image_00000651.jpg
+./db/images/ID.0004/image_00001568.jpg
+./db/images/ID.0004/image_00000563.jpg
+./db/images/ID.0006/image_00000301.jpg
+./db/images/ID.0004/image_00000578.jpg
+./db/images/ID.0004/image_00000975.jpg
+./db/images/ID.0004/image_00000848.jpg
+./db/images/ID.0006/image_00000436.jpg
+./db/images/ID.0005/image_00000884.jpg
+./db/images/ID.0005/image_00000878.jpg
+./db/images/ID.0005/image_00000840.jpg
+./db/images/ID.0004/image_00000108.jpg
+./db/images/ID.0005/image_00001203.jpg
+./db/images/ID.0006/image_00000088.jpg
+./db/images/ID.0004/image_00001495.jpg
+./db/images/ID.0005/image_00000063.jpg
+./db/images/ID.0006/image_00000696.jpg
+./db/images/ID.0005/image_00001257.jpg
+./db/images/ID.0006/image_00000821.jpg
+./db/images/ID.0005/image_00000153.jpg
+./db/images/ID.0004/image_00001053.jpg
+./db/images/ID.0004/image_00001427.jpg
+./db/images/ID.0006/image_00000815.jpg
+./db/images/ID.0005/image_00000904.jpg
+./db/images/ID.0004/image_00000694.jpg
+./db/images/ID.0004/image_00001043.jpg
+./db/images/ID.0004/image_00000761.jpg
+./db/images/ID.0006/image_00000289.jpg
+./db/images/ID.0006/image_00000739.jpg
+./db/images/ID.0005/image_00001072.jpg
+./db/images/ID.0006/image_00000890.jpg
+./db/images/ID.0005/image_00000903.jpg
+./db/images/ID.0004/image_00001045.jpg
+./db/images/ID.0004/image_00000576.jpg
+./db/images/ID.0005/image_00001009.jpg
+./db/images/ID.0004/image_00001569.jpg
+./db/images/ID.0004/image_00000916.jpg
+./db/images/ID.0004/image_00000687.jpg
+./db/images/ID.0005/image_00001261.jpg
+./db/images/ID.0004/image_00000316.jpg
+./db/images/ID.0005/image_00000288.jpg
+./db/images/ID.0004/image_00001514.jpg
+./db/images/ID.0004/image_00000456.jpg
+./db/images/ID.0004/image_00000191.jpg
+./db/images/ID.0004/image_00000533.jpg
