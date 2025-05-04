@@ -1,53 +1,138 @@
-2025Âπ¥  4Êúà 30Êó• Ê∞¥ÊõúÊó• 10:50:21 JST
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- *
- ***************************************************/
+2025Âπ¥  5Êúà  4Êó• Êó•ÊõúÊó• 09:46:19 JST
+--------------------------------------------------------------------------------
+-- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
+--------------------------------------------------------------------------------
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 
-inline unsigned int    ReadBase0 (int devid, unsigned int addr);
-inline unsigned int    ReadBase1 (int devid, unsigned int addr);
-inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
-inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
+-- pragma translate_off
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+-- pragma translate_on
 
-void                   pg4_close (int id);
+entity dcm_ps_f is
+  generic(
+    PS  : integer
+  );
+  port(
+    RST          : in  std_logic;              -- ÉäÉZÉbÉg
+    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
+    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
+    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
+  );
+end dcm_ps_f;
 
-int                    pg4_DMAput (int devid, unsigned int size);
-int                    pg4_DMAget (int devid, unsigned int size);
-void                   pg4_DMAcheck (int devid);
-int                    pg4_DMAretry (int devid);
+--------------------------------------------------
+-- Architecture Body Define
+--------------------------------------------------
+architecture rtl of dcm_ps_f is
 
-unsigned long          pg4_getbaseaddr (int devid, int j);
-unsigned long          pg4_getbaseaddr_size (int devid, int bar);
-unsigned int*          pg4_get_bar0ptr(int devid);
-unsigned int*          pg4_get_bar1ptr(int devid);
-unsigned int*          pg4_get_dmawptr (int devid);
-unsigned int*          pg4_get_dmarptr (int devid);
-unsigned int           pg4_get_dma_size (int devid);
-void                   pg4_get_pfpga_info (int devid, char *info);
+--------------------------------------------------
+-- Components
+--------------------------------------------------
 
-int                    pg4_open (int id);
+component BUFG 
+  port (
+    I          : in  std_logic;
+    O          : out  std_logic
+  ); 
+end component;
+--
+component DCM
+-- pragma translate_off
+  generic ( 
+       DLL_FREQUENCY_MODE : string := "LOW";
+       DUTY_CYCLE_CORRECTION : boolean := TRUE;
+       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
+       PHASE_SHIFT  : integer := 0;
+       STARTUP_WAIT : boolean := FALSE
+      );  
+-- pragma translate_on
+  port (CLKIN   : in  std_logic;
+       CLKFB    : in  std_logic;
+       DSSEN    : in  std_logic;
+       PSINCDEC : in  std_logic;
+       PSEN     : in  std_logic;
+       PSCLK    : in  std_logic;
+       RST      : in  std_logic;
+       CLK0     : out std_logic;
+       CLK90    : out std_logic;
+       CLK180   : out std_logic;
+       CLK270   : out std_logic;
+       CLK2X    : out std_logic;
+       CLK2X180 : out std_logic;
+       CLKDV    : out std_logic;
+       CLKFX    : out std_logic;
+       CLKFX180 : out std_logic;
+       LOCKED   : out std_logic;
+       PSDONE   : out std_logic;
+       STATUS   : out std_logic_vector(7 downto 0)
+      );
+end component;
+--
+-- Attributes
 
-inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
-inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
-unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
+attribute DLL_FREQUENCY_MODE : string; 
+attribute DUTY_CYCLE_CORRECTION : string;
+attribute CLKOUT_PHASE_SHIFT : string;
+attribute PHASE_SHIFT  : integer; 
+attribute STARTUP_WAIT : string; 
 
-void                   pg4_set_pfpga_info (int devid, char *info);
+attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
+attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
+attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
+attribute PHASE_SHIFT  of U_DCM: label is 192;
+attribute STARTUP_WAIT of U_DCM: label is "FALSE";
 
-inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
-inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
+--------------------------------------------------
+-- Signals
+--------------------------------------------------
+signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
+signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
+
+begin
+
+-- *********************************************************************
+-- å≈íËêMçÜ
+-- *********************************************************************
+  logic_0 <= '0';                   -- 0å≈íËêMçÜ
 
 
+U_DCM : DCM 
+-- pragma translate_off
+  generic map(
+    CLKOUT_PHASE_SHIFT  => "FIXED",
+    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
+--  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
+  )
+-- pragma translate_on
+  port map(
+    RST          => RST        ,    -- ÉäÉZÉbÉg
+    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
+    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
+    DSSEN        => logic_0    ,    
+    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
+    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
+    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
+    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
+--    CLK90      => CLK90      ,    --
+--    CLK180     => CLK180     ,    --
+--    CLK270     => CLK270     ,    --
+--    CLK2X      => CLK2X      ,    --
+--    CLK2X180   => CLK2X180   ,    --
+--    CLKDV      => CLKDV      ,    --
+--    CLKFX      => CLKFX      ,    --
+--    CLKFX180   => CLKFX180   ,    --
+--    LOCKED     => LOCKED     ,    --
+--    PSDONE     => PSDONE     ,    --
+--    STATUS     => STATUS     ,    --
+  );
 
-// --- following are removed. ---
-int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void                   pg4_wait (int devid, int n);
+U_BUFG : BUFG
+  port map(
+    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
+    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
+  );
 
-
+end rtl;
