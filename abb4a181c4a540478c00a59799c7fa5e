@@ -1,17 +1,46 @@
-2025年  5月  1日 木曜日 09:36:39 JST
-#!/usr/bin/perl
+2025年  5月  7日 水曜日 10:51:54 JST
+#Time-stamp: <2017-07-20 22:59:16 hamada>
 
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
+VM_NAME="ubuntu16"
 
-srand(12345);
+all: check
 
-print $N ."\n";
+c: check
 
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
-}
+check:
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+check.0:
+	VBoxManage showvminfo ${VM_NAME} --details
+	@echo ''
+	@echo '-----------------------------------------------------------'
+	VBoxManage list vms
+	@echo '-----------------------------------------------------------'
+	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+
+
+run: start
+
+start:
+	VBoxManage startvm  ${VM_NAME} -type vrdp
+
+gui:
+	VBoxManage startvm  ${VM_NAME} -type gui
+
+stop:
+	VBoxManage controlvm  ${VM_NAME} poweroff
+
+stop2:
+	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
+
+backup:
+	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
+
+
+backup.xxx:
+	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
+
+
+compact:
+	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
