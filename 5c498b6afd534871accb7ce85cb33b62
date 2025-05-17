@@ -1,163 +1,134 @@
-2025å¹´  5æœˆ  1æ—¥ æœ¨æ›œæ—¥ 09:23:20 JST
--- Copyright 2004,2005,2006 by Tsuyoshi Hamada
--- 2006/06/22 : add some comments (T.H)
--- 2006/02/08 : Fixed (T.H)
+2025å¹´  5æœˆ 17æ—¥ åœŸæ›œæ—¥ 11:28:44 JST
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include "pg_util.h"
 
--- LOCAL READ ( ifpga <- pfpga )
--- by Tsuyoshi Hamada
--- (¦) l_adro‚Ìƒrƒbƒg•(NBIT_L_ADRO)‚ð•Ï‚¦‚½ê‡‚Íprom‚ðÄ‚«‚È‚¨‚·•K—v‚ª‚ ‚é‚±‚Æ‚É’ˆÓ.(’¼‚·‚Ì‚Íã‚Ìƒ‚ƒWƒ…[ƒ‹)
--- (¦) ‚»‚à‚»‚à‚Ì‘O’ñFLOCAL_READ‚ÍPFPGA0‚©‚ç‚ÌPIPE_STSM†(CBUS0(7))‚ðƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ŠJŽnM†‚Æ‚µ‚Ä‚¢‚Ü‚·B
+#include "pgrapi.h"
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+// #define DEBUG
 
-entity LOCAL_READ is
-  generic ( NBIT_L_ADRO : integer := 3);
-  port (
-    NPIPE : in std_logic_vector(7 downto 0); -- from PGPG_REG3
-    CALC_STS : in std_logic;    -- from PFPGA
-    BUSY : out std_logic :='1'; -- to GPREG0 (default '1'!! => Waiting until pipe calc end)
+#define   MAX(x,y)     (((x) > (y)) ?  (x) : (y))
+#define   MIN(x,y)     (((x) < (y)) ?  (x) : (y))
 
-    -- CBUS/DBUS
-    DMAR_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
+#define NJMAX 16384
 
-    -- DPRAM R/W ports
-    MEM_ADB     : out std_logic_vector(12 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WEHB    : out std_logic;                         -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : out std_logic;                         -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : out std_logic_vector(63 downto 0);     -- DPRAM Port B Write Data
+#define NPIPE_PER_CHIP  1
+#define NCHIP_PER_BOARD 4
 
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end LOCAL_READ;
+#define NFLO 26
+#define NMAN 16
+#define RMODE 6
 
-architecture rtl of LOCAL_READ is
+static int      devid = 0;
+static int      __first = 0;
 
-component LOCAL_READ_CNT
-  generic (CNT_WIDTH     : integer := 16;      -- program counter bit-width
-           FO_BASE       : integer := 24576;   -- = 0x6000
-           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
-           INTF_LAT      : integer := 8);      -- LOCAL_READ_IF latency (clock)
-  port (
-    NPIPE : in std_logic_vector(7 downto 0);   -- number of pipelines per chip
-    CALC_DONE  : in std_logic;                 -- pulse
-    FETCH_DONE : out std_logic;
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+static unsigned long long int fdata[NJMAX][FDIM];
 
-component LOCAL_READ_IF
-  port (
-    EXEC : in std_logic;
-    START_AD : in std_logic_vector(18 downto 0);
-    NQWORD   : in std_logic_vector( 8 downto 0);
-    CHIPSEL  : in std_logic_vector( 3 downto 0);
-    MEM_AD_BASE : in std_logic_vector(12 downto 0);
-    BUSY : out std_logic;  -- to GPREG0
-    DMAR_ENABLE : out std_logic_vector(3 downto 0);
-    DBUS_Port : out std_logic_vector(63 downto 0);
-    DBUS_idata: in std_logic_vector(63 downto 0);
-    DBUS_HiZ  : out std_logic;
-    MEM_ADB     : out std_logic_vector(12 downto 0);
-    MEM_WEHB    : out std_logic;
-    MEM_WELB    : out std_logic;
-    MEM_DTIB    : out std_logic_vector(63 downto 0);
-    RST : in  std_logic;
-    CLK : in  std_logic
-    );
-end component;
+void
+force(double x[][3], double m[], double eps2, double a[][3], int n)
+{
+    double          log2(double);
+    int             i, j;
+    unsigned int    npipe, npipe_per_chip;
+    unsigned int    nchip;
+    unsigned int    jdata[JDIM];
+    if (__first == 0) {
+	b3open(devid);
+	pgr_reset(devid);
+	pgr_set_npipe_per_chip(devid, NPIPE_PER_CHIP);
+	pgr_set_jwidth(devid, 16);	// change manually 4 if grape
+	pgr_set_nchip(NCHIP_PER_BOARD);
+	__first = 1;
+    }
 
-signal calc_done : std_logic :='0';   -- to cnt
-signal csts0,csts1 : std_logic :='0'; -- from pfpga
+    npipe_per_chip = NPIPE_PER_CHIP;
+    nchip = NCHIP_PER_BOARD;
+    npipe = nchip * npipe_per_chip;
 
--- CNT
-signal fetch_done : std_logic :='0';
-signal exec : std_logic;                          -- cnt -> if
-signal start_ad : std_logic_vector(18 downto 0);  -- cnt -> if
-signal nqword   : std_logic_vector( 8 downto 0);  -- cnt -> if
-signal chipsel  : std_logic_vector( 3 downto 0);  -- cnt -> if
-signal mem_base : std_logic_vector(12 downto 0);  -- cnt -> if
--- IF
-signal ignore_busy : std_logic; 
+    for (j = 0; j < n; j++) {
+	unsigned int    xj[4];
+	xj[0] = (unsigned int) (double2pgpgfloat_r(x[j][0], 26, 16, 6));
+	xj[1] = (unsigned int) (double2pgpgfloat_r(x[j][1], 26, 16, 6));
+	xj[2] = (unsigned int) (double2pgpgfloat_r(x[j][2], 26, 16, 6));
+	xj[3] = (unsigned int) (double2pgpgfloat_r(m[j], 26, 16, 6));
+	for (i = 0; i < JDIM; i++)   jdata[i] = 0x0;
+	jdata[0] |= (0x3ffffff & xj[0]) << 0;	// mask(26)
+	jdata[0] |= (0x3f & xj[1]) << 26;	// mask(6)
+	jdata[1] |= (0xfffff & (xj[1] >> 6));	// mask(20)
+	jdata[1] |= (0xfff & xj[2]) << 20;	// mask(12)
+	jdata[2] |= (0x3fff & (xj[2] >> 12));	// mask(14)
+	jdata[2] |= (0x3ffff & xj[3]) << 14;	// mask(18)
+	jdata[3] |= (0xff & (xj[3] >> 18));	// mask(8)
+	pgr_setjpset_one(devid, j, jdata);
+    }
 
-begin
+    for (i = 0; i < n; i += npipe) {
+	int             nn, ii, ichip;
+	nn = MIN(npipe, n - i);
 
-  -- CALC STATUS
-  csts0 <= CALC_STS;
-  process (CLK) begin
-    if (CLK'event and CLK='1') then
-      csts1 <= csts0;
-    end if;
-  end process;
+#ifdef DEBUG
+	dum = e_time();
+#endif
 
-  -- CALC DONE
-  process (RST,CLK,csts0,csts1) begin
-    if(RST='1') then
-      calc_done <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        calc_done <= '1';
-      else
-        calc_done <= '0';
-      end if;
-    end if;
-  end process;
+	for (ii = 0; ii < nn; ii += npipe_per_chip) {
+	    int             nnn, iii;
+	    ichip = ii / npipe_per_chip;
 
-  -- BUSY
-  process (RST,CLK,csts0,csts1,fetch_done) begin
-    if (RST='1') then
-      BUSY <='1';
-    elsif (CLK'event and CLK='1') then
-      if((csts0='1') AND (csts1='0')) then
-        BUSY <= '1';
-      elsif(fetch_done='1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
+	    nnn = MIN(npipe_per_chip, nn - ii);
+	    for (iii = 0; iii < nnn; iii++) {
+		unsigned int    idata[4];
+		idata[0] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][0], 26, 16,
+					      6));
+		idata[1] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][1], 26, 16,
+					      6));
+		idata[2] =
+		    (unsigned
+		     int) (double2pgpgfloat_r(x[i + ii + iii][2], 26, 16,
+					      6));
+		idata[3] =
+		    (unsigned int) (double2pgpgfloat_r(eps2, 26, 16, 6));
+		pgr_setipset_one(devid, ichip, iii, idata, 4);
+	    }
+	}
+#ifdef DEBUG
+	_t[2] += e_time() - dum;
+	dum = e_time();
+#endif
 
-  -- =================================================== SUBMODULE INSTANCES
-  u0: LOCAL_READ_CNT 
-    generic map(NBIT_L_ADRO => NBIT_L_ADRO)
-    port map(NPIPE => NPIPE,
-             CALC_DONE => calc_done,
-             FETCH_DONE => fetch_done,
-             EXEC       => exec,
-             START_AD   => start_ad,
-             NQWORD     => nqword,
-             CHIPSEL    => chipsel,
-             MEM_AD_BASE => mem_base,
-             RST => RST, CLK=>CLK);
+	pgr_start_calc(devid, n);
+#ifdef DEBUG
+	_t[3] += e_time() - dum;
+	dum = e_time();
+#endif
 
+	pgr_getfoset(devid, fdata);
+	for (ii = 0; ii < nn; ii++) {
+	    a[i + ii][0] =
+		((double) ((long long int) fdata[ii][0] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	    a[i + ii][1] =
+		((double) ((long long int) fdata[ii][1] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	    a[i + ii][2] =
+		((double) ((long long int) fdata[ii][2] << 0)) *
+		((-1.0 / pow(2.0, (double) 31))) / pow(2.0, 0.0);
+	}
+#ifdef DEBUG
+	_t[4] += e_time() - dum;
+#endif
 
-  u1: LOCAL_READ_IF
-    port map(EXEC        => exec,     -- from cnt
-             START_AD    => start_ad, -- from cnt
-             NQWORD      => nqword,   -- from cnt
-             CHIPSEL     => chipsel,  -- from cnt
-             MEM_AD_BASE => mem_base, -- from cnt
-             BUSY => ignore_busy,
-             DMAR_ENABLE => DMAR_ENABLE, -- output directly
-             DBUS_Port   => DBUS_Port,   -- output directly
-             DBUS_idata  => DBUS_idata,  -- output directly
-             DBUS_HiZ    => DBUS_HiZ,    -- output directly
-             MEM_ADB  => MEM_ADB,        -- output directly
-             MEM_WEHB => MEM_WEHB,       -- output directly
-             MEM_WELB => MEM_WELB,       -- output directly
-             MEM_DTIB => MEM_DTIB,       -- output directly
-             RST=>RST,CLK=>CLK);
-
-
-end rtl;
+    }
+#ifdef DEBUG
+    _t[0] = e_time() - _t[0];
+    fprintf(stderr, "total %g sec (jp %g, ip %g, c %g, fo %g %%)\n", _t[0],
+	    100.0 * _t[1] / _t[0], 100.0 * _t[2] / _t[0],
+	    100.0 * _t[3] / _t[0], 100.0 * _t[4] / _t[0]);
+#endif
+}
