@@ -1,15 +1,44 @@
-2025年  5月 14日 水曜日 10:59:06 JST
-#!/usr/bin/env python3
-import cv2
-import glob
-from datetime import datetime
-import time 
+2025年  5月 18日 日曜日 09:18:40 JST
+// Time-stamp: " "
+#include <stdio.h> 
+#include <string.h>
+#include <stdlib.h>
 
-while(True):
-    tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
-    print(tnow)
+void read_data(char* fname, int* nbody, double posi[][2])
+{
+  int idx,n;
+  char line[2560];
+  FILE *fp;
+  fp = fopen(fname,"r");
+  idx=0;
 
-    with open(".tc~", "w") as file:
-        file.write(tnow +"\n")
+  { // get N (number of particles)
+    char* p;
+    fgets(line,100,fp);
+    p = (char* )strtok(line,"\n");
+    sscanf(p,"%d",&n);
+    *nbody = n;
+  }
 
-    time.sleep(3)
+  // get all data
+  for(idx=0;idx<n;idx++){
+    char* p;
+    char col[10][400];
+    int i=0;
+    if(fgets(line,300,fp)==NULL){printf("Error at loading logfiles\n");exit(0);}
+    p = (char* )strtok(line,"\t");
+    strcpy(col[i],p);
+    i++;
+    while((p = (char* )strtok(NULL, "\t"))!=NULL){
+      strcpy(col[i],p);
+      i++;
+    }
+    //--- for debug ---
+    //    for(i=0;i<7;i++) printf("[%s]",col[i]);
+    //    printf("\n");
+
+    posi[idx][0]=atof(col[0]);
+    posi[idx][1]=atof(col[1]);
+  }
+  fclose(fp);
+}
