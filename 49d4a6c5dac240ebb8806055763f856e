@@ -1,29 +1,42 @@
-2025å¹´  5æœˆ 20æ—¥ ç«æ›œæ—¥ 09:15:57 JST
-#!/usr/bin/env python3
-#Time-stamp: <>
-import fnmatch
-import functools
-import os
-import re
+2025å¹´  5æœˆ 20æ—¥ ç«æ›œæ—¥ 10:49:16 JST
+/**
+   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
+   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
+   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
+*/
 
-def find(path, pattern):
+#include <stdio.h>
+#include <math.h>
+#include "nbodysim.h"
 
-    if isinstance(pattern, str): 
-        match = functools.partial(fnmatch.fnmatch, pat=pattern)
-    elif isinstance(pattern, re._pattern_type):
-        match = pattern.match
-    elif callable(pattern):
-        match = pattern
-    else:
-        raise TypeError
+void force_on_host(double x[][DIM],
+	   double m[],
+	   double eps2,
+	   double a[][DIM],
+	   int n)
+{
+  int i,j,d;
+  double dx[3];
 
-    for root, dirs, files in os.walk(path):
-        for file_ in files:
-            if match(file_):
-                yield os.path.join(root, file_)
+  /* a[][]‚Ì‰Šú‰» */
+  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+
+  /* ‘ŠŒİì—p‚ÌŒvZ  */
+  for(i=0;i<n-1;i++){
+    for(j=i+1;j<n;j++){
+      double r2,r3;
+      r2 = eps2;
+      for(d=0;d<3;d++){
+	dx[d] = x[j][d] - x[i][d];
+	r2 += dx[d] * dx[d];
+      }
+      r3 = sqrt(r2)*r2;
+      for(d=0;d<3;d++){
+	a[i][d] +=  m[j]*dx[d]/r3;
+	a[j][d] += -m[i]*dx[d]/r3;
+      }
+    }
+  }
 
 
-if __name__ == '__main__':
-    for i in find('../log/', '*.jpg'):
-        print (i)
-
+}
