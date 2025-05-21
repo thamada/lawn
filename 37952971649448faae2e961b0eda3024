@@ -1,74 +1,82 @@
-2025年  5月 20日 火曜日 11:39:43 JST
-// gravity3.pgdl
-// Calculate Potential, Acceleration and Jerk
-// Author: Andreas Ernst, August 18, 2006
+2025年  5月 21日 水曜日 11:28:31 JST
+-----------------------------------------------
+--  pgpg-b3 dual port RAM module (for IMEM)
+--      32 bits
+--   16384 entries
+--  Copyright(c) 2004- by Tsuyoshi Hamada
+--  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
+--  2004/10/29 : for Jmem by Tsuyoshi Hamada
+-----------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
 
-#define NFLO 26
-#define NMAN 16
-#define NFIX 57
-#define NACC 64
-#define NEXAD 31
-#define NEXAD2 1
-#define FSHIFT pow(2.0,(double)NEXAD)
+entity dp32b8192w is
+  port (
+    clka  : in std_logic;
+    wea   : in std_logic;
+    addra : in std_logic_vector(12 downto 0);
+    dina  : in std_logic_vector(31 downto 0);
+    douta : out std_logic_vector(31 downto 0);
 
-/MEM xj[3] <= x[][]  : float(NFLO, NMAN);
-/MEM vj[3] <= v[][]  : float(NFLO, NMAN);
-/MEM mj    <= m[]    : float(NFLO, NMAN);
-/REG xi[3] <= x[][]  : float(NFLO, NMAN);
-/REG vi[3] <= v[][]  : float(NFLO, NMAN);
-/REG rx    => p[]    : fix(NACC);
-/REG sx[3] => a[][]  : fix(NACC);
-/REG tx[3] => jk[][] : fix(NACC);
+    clkb  : in std_logic;
+    web   : in std_logic;
+    addrb : in std_logic_vector(12 downto 0);
+    dinb  : in std_logic_vector(31 downto 0);
+    doutb : out std_logic_vector(31 downto 0));
 
-/SCALE rx    : (1.0/FSHIFT);
-/SCALE sx[3] : (1.0/FSHIFT);
-/SCALE tx[3] : (1.0/FSHIFT);
+end dp32b8192w;
 
-/NVMP 1;
-/NPIPE 1;
+architecture rtl of dp32b8192w is
 
-// Acceleration, 1st part
+component RAMB16_S2_S2
+  generic (
+         INIT_A : bit_vector := X"0";
+         INIT_B : bit_vector := X"0";
+         SRVAL_A : bit_vector := X"0";
+         SRVAL_B : bit_vector := X"0";
+         WRITE_MODE_A : string :="WRITE_FIRST";
+         WRITE_MODE_B : string :="WRITE_FIRST");
+  port ( doa   : out std_logic_vector(1 downto 0);
+         addra : in std_logic_vector(12 downto 0);
+         clka  : in std_logic;
+         dia   : in std_logic_vector(1 downto 0);
+         ena   : in std_logic;
+         ssra  : in std_logic;
+         wea   : in std_logic;
 
-pg_float_sub           (xj,xi,dx,              NFLO,NMAN, 4);     // (1)
-pg_float_mult          (dx,dx,dx2,             NFLO,NMAN, 2);     // (2)
-pg_float_unsigned_add  (dx2[0],dx2[1],x2y2,    NFLO,NMAN, 4);     // (3)
-pg_float_unsigned_add  (dx2[2],x2y2,r2,        NFLO,NMAN, 4);     // (4)
-pg_float_sqrt          (r2,r1,                 NFLO,NMAN, 3);     // (5)
-pg_float_mult          (r2,r1,r3,              NFLO,NMAN, 2);     // (6)
-pg_float_mult          (r3,r2,r5,              NFLO,NMAN, 2);     // (7)
-pg_float_recipro       (r5,r5i,                NFLO,NMAN, 2);     // (8)
-pg_float_mult          (r5i,mj,mr5i,           NFLO,NMAN, 2);     // (9)
-pg_float_mult          (mr5i,r2,mf,            NFLO,NMAN, 2);     // (10)
+         dob   : out std_logic_vector(1 downto 0);
+         addrb : in std_logic_vector(12 downto 0);
+         clkb  : in std_logic;
+         dib   : in std_logic_vector(1 downto 0);
+         enb   : in std_logic;
+         ssrb  : in std_logic;
+         web   : in std_logic);
+end component;
 
-// Potential
+begin
 
-pg_float_mult          (mf,r2,mp,              NFLO,NMAN, 2);      // (11)
-pg_float_expadd        (mp,ps,                 NEXAD,NFLO,NMAN,1); // (12)
-pg_float_fixaccum      (ps,rx,                 NFLO,NMAN, NFIX, NACC, 2);  // (13)
+  forgen1: for i in 0 to 15 generate
+    uraml: RAMB16_S2_S2 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
+	      PORT MAP(-- FIFO SIDE --
+                       clka=>clka,
+                       addra=>addra,
+                       dia=>dina(((2*i)+1) downto 2*i),
+                       doa=>douta(((2*i)+1) downto 2*i),
+                       ena=>'1',
+                       ssra=>'0',
+                       wea=>wea,
+                       -- LOCAL SIDE --
+                       clkb=>clkb,
+                       addrb=>addrb,
+                       dib=>dinb(((2*i)+1) downto 2*i),
+                       dob=>doutb(((2*i)+1) downto 2*i),
+                       enb=>'1',
+                       ssrb=>'0',
+                       web=>web);
+  end generate forgen1;
 
-// Acceleration, 2nd part
 
-pg_float_expadd        (mf,fs,                 NEXAD,NFLO,NMAN,1);// (14)
-pg_float_mult          (fs,dx,fx,              NFLO,NMAN, 2);     // (15)
-pg_float_fixaccum      (fx,sx,                 NFLO,NMAN, NFIX, NACC, 2);  // (16)
+end rtl;
 
-// Jerk, 1st term
-
-pg_float_sub           (vj,vi,dv,              NFLO,NMAN, 4);     // (17)
-pg_float_mult          (fs,dv,jk1,             NFLO,NMAN, 2);     // (18)
-
-// Jerk, 2nd term
-
-pg_float_mult          (dx,dv,xv,              NFLO,NMAN, 2);      // (19)
-pg_float_unsigned_add  (xv[0],xv[1],xv1,       NFLO,NMAN, 4);      // (20)
-pg_float_unsigned_add  (xv[2],xv1,xv2,         NFLO,NMAN, 4);      // (21)
-pg_float_expadd        (xv2,xv2x2,             NEXAD2,NFLO,NMAN,1);// (22)
-pg_float_unsigned_add  (xv2x2,xv2,xv2x3,       NFLO,NMAN, 4);      // (23)
-pg_float_mult          (mr5i,xv2x3,jk2a,       NFLO,NMAN, 2);      // (24)
-pg_float_expadd        (jk2a,jk2s,             NEXAD,NFLO,NMAN,1); // (25)
-pg_float_mult          (jk2s,dx,jk2,           NFLO,NMAN, 2);      // (26)
-
-// Jerk, 1st - 2nd term
-
-pg_float_sub           (jk1,jk2,jk0,           NFLO,NMAN, 4);      // (27)
-pg_float_fixaccum      (jk0,tx,                NFLO,NMAN, NFIX, NACC, 2);  // (28)
