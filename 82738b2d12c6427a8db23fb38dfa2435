@@ -1,65 +1,69 @@
-2025年  5月 19日 月曜日 11:31:38 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
--- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
--- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
--- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
--- START_ADR                    < n                                    >
--- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
--- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
--- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
+2025年  5月 22日 木曜日 11:27:03 JST
+-- Copyright (c) by PGR project
+-- All rights reserved.
+-- Auther Tsuyoshi Hamada
+-- for JDIM=4 (JDATA_WIDTH =< 128)
+-- but DEPTH=16384
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-
-entity dmaw_mem_adr is
+entity jmem is
   port (
-    CLK       : in  std_logic;
-    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
-    START_ADR : in std_logic_vector(18 downto 0);
-    MEM_ADR   : out  std_logic_vector(18 downto 0)
-    );
-end dmaw_mem_adr;
+    rst        : in  std_logic; -- not used
+    we         : in  std_logic;
+    wclk       : in  std_logic;
+    wadr       : in  std_logic_vector(15 downto 0);
+    rclk       : in  std_logic;
+    radr       : in  std_logic_vector(15 downto 0);
+    idata      : in  std_logic_vector(63 downto 0);
+    odata      : out  std_logic_vector(127 downto 0)  -- for G5
+--  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
+--  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+  );
+end jmem;
 
-architecture rtl of dmaw_mem_adr is
+architecture rtl of jmem is
 
-signal mem_adr_inc : std_logic_vector(18 downto 0);
-signal   x,z : std_logic_vector(18 downto 0);
-constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
+component dpram
+	port (
+	wadr: IN std_logic_VECTOR(13 downto 0);
+	radr: IN std_logic_VECTOR(13 downto 0);
+	wclk: IN std_logic;
+	rclk: IN std_logic;
+	din: IN std_logic_VECTOR(63 downto 0);
+	dout: OUT std_logic_VECTOR(63 downto 0);
+	we: IN std_logic);
+end component;
+
+signal we0,we1,we2,we3 : std_logic;
+signal adr0,adr1,nadr0,nadr1 : std_logic;
 
 begin
 
-  z <= x + one;
+adr0  <= wadr(0);
+nadr0 <= NOT wadr(0);
 
-  -----------------
-  -- mem_adr_inc
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE = "10") then
-        mem_adr_inc <= z;
-      else
-        mem_adr_inc <= (others=>'0');
-      end if;
-    end if;
-  end process;
+we0  <= we and nadr0;  -- we & wadr(0)="0"
+we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-  x <= mem_adr_inc;
+u0 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata,
+      dout=> odata(63 downto 0),
+      we  => we0);
 
-  -----------------
-  -- MEM_ADR
-  -----------------
-  process (CLK,STATE) begin
-    if(clk'event and clk = '1') then
-      if(STATE="10") then
-        MEM_ADR <= mem_adr_inc + START_ADR;
-      else
-        MEM_ADR <= (others=>'0');
-      end if;
-    end if;
-  end process;
+u1 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata, 
+      dout=> odata(127 downto 64),
+      we  => we1);
 
 end rtl;
