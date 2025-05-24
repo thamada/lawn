@@ -1,138 +1,172 @@
-2025Âπ¥  5Êúà 18Êó• Êó•ÊõúÊó• 10:01:24 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
+2025Âπ¥  5Êúà 24Êó• ÂúüÊõúÊó• 10:55:39 JST
+-- LOCAL READ CONTROLLER ( ifpga <- pfpga )
+-- (LOCAL_READ_IFÇ…äJénêMçÜÇëSÉ`ÉbÉvâÒêîï™ëóÇÈÉÇÉWÉÖÅ[Éã)
+-- by Tsuyoshi Hamada 2005/01/04
+-- ÉÅÉÇ : 
+--   NQWORDÇ∆Ç¡ÇƒÇ≠ÇÈÇÃÇ…ïKóvÇ»LOCAL_READ_IFÇÃÉNÉçÉbÉN(BUSY) : NQWORD + 8(ÉåÉCÉeÉìÉV:INTF_LAT) ÉNÉçÉbÉN
+-- 
+-- (0) IFÇ… START_AD, NQWORD ÇÉZÉbÉg     : 1ÉNÉçÉbÉN
+-- (1) IFÇ… CHIPSEL, MEM_AD_BASE ÇÉZÉbÉg : 1ÉNÉçÉbÉN
+-- (2) IFÇÃ EXEC Çè„Ç∞ÇÈ                 : 1ÉNÉçÉbÉN
+-- (3) IFÇ… EXEC Çâ∫Ç∞ÇÈ                 : 1ÉNÉçÉbÉN
+-- (4) IFÇ™ì]ëóÇèIóπÇ∑ÇÈÇ‹Ç≈ë“Ç¬         : I_NC ÉNÉçÉbÉN(I_NC= NPIPE*pow(2,NBIT_L_ADRO)
+-- (5) (1)Ç©ÇÁ(4)Ç‹Ç≈Ç4É`ÉbÉvï™åJÇËï‘Ç∑.
+--
+-- (Å¶) LOCAL_READ_IFÇÃì]ëóÇ…ïKóvÇ»ÉNÉçÉbÉNÇÕåàÇ‹Ç¡ÇƒÇ¢ÇÈÇÃÇ≈ì]ëóèIóπÉtÉâÉOÇÕå©Ç»Ç¢.
+-- (Å¶) l_adroÇÃÉrÉbÉgïù(NBIT_L_ADRO)ÇïœÇ¶ÇΩèÍçáÇÕpromÇèƒÇ´Ç»Ç®Ç∑ïKóvÇ™Ç†ÇÈÇ±Ç∆Ç…íçà”.(íºÇ∑ÇÃÇÕè„ÇÃÉÇÉWÉÖÅ[Éã)
+
 library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
-
-entity dcm_ps_f is
-  generic(
-    PS  : integer
+entity LOCAL_READ_CNT is
+  generic (
+           CNT_WIDTH     : integer := 16;      -- program counter bit-width
+           FO_BASE       : integer := 24576;   -- = 0x6000
+           NBIT_L_ADRO   : integer := 3;       -- Bit-Length of l_ado(pgpg_mem.vhd)
+           INTF_LAT      : integer := 8        -- LOCAL_READ_IF latency (clock)
   );
-  port(
-    RST          : in  std_logic;              -- ÉäÉZÉbÉg
-    CLK_IN        : in  std_logic;             -- ÉNÉçÉbÉNì¸óÕ
-    CLK_FB_IN      : in  std_logic;            -- ÉNÉçÉbÉNFBì¸óÕ
-    CLK_OUT        : out  std_logic            -- ÉNÉçÉbÉNèoóÕ
-  );
-end dcm_ps_f;
-
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
-
---------------------------------------------------
--- Components
---------------------------------------------------
-
-component BUFG 
   port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
+    -- from LOCAL_READ
+    NPIPE : in std_logic_vector(7 downto 0);     -- number of pipelines per chip
+    -- from LOCAL_READ_DONE
+    CALC_DONE  : in std_logic;   -- pulse
+    -- to LOCAL_READ_DONE
+    FETCH_DONE : out std_logic;  -- pulse
 
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
+    -- to LOCAL_READ_IF
+    EXEC     : out std_logic;                     -- pulse
+    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
+    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
+    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
+    MEM_AD_BASE : out std_logic_vector(12 downto 0);
+    -- from LOCAL_READ_IF
+--    BUSY_IF : in std_logic;
+ 
+    RST : in  std_logic;
+    CLK : in  std_logic
+    );
+end LOCAL_READ_CNT;
 
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+architecture rtl of LOCAL_READ_CNT is
 
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0å≈íËêMçÜ
-signal  CLK0_OUT      : std_logic;       -- DCMèoóÕÉNÉçÉbÉN
+signal hit0,hit1 : std_logic :='0';
+signal cnt,cntr : std_logic_vector(CNT_WIDTH-1 downto 0) :=(others=>'0');
+signal cnt_en : std_logic :='0';
+signal is_finish,is_finishr : std_logic :='0';
 
+----
+signal c_start_ad   : std_logic_vector(18 downto 0) :=(others=>'0');
+signal c_nqword     : std_logic_vector(18 downto 0) :=(others=>'0');
+signal c_chipsel    : std_logic_vector(18 downto 0) :=(others=>'0');
+signal c_mem_offset : std_logic_vector(18 downto 0) :=(others=>'0');
 begin
 
--- *********************************************************************
--- å≈íËêMçÜ
--- *********************************************************************
-  logic_0 <= '0';                   -- 0å≈íËêMçÜ
+  FETCH_DONE <= is_finish; -- transfer done pulse
 
+  hit0 <= CALC_DONE;
+  process (CLK) begin
+    if (CLK'event and CLK='1') then
+      is_finishr <= is_finish;
+      hit1 <= hit0;
+    end if;
+  end process;
 
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ÉäÉZÉbÉg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFTì¸óÕÉNÉçÉbÉN
-    CLKFB        => CLK_FB_IN  ,    -- FBì¸óÕ
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- à ëäÉVÉtÉgÇÃëùï™/å∏ï™
-    PSEN         => logic_0    ,    -- à ëäÉVÉtÉgÉCÉlÅ[ÉuÉã
-    PSCLK        => logic_0    ,    -- à ëäÉVÉtÉgÉNÉçÉbÉN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTèoóÕÉNÉçÉbÉN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
+  -- PROGRAM COUNTER
+  cntr <= cnt + conv_std_logic_vector(1, CNT_WIDTH);
+  process (RST,CLK,hit0,hit1,cnt_en) begin
+    if (RST = '1') then
+      cnt <= (others=>'0');
+    elsif (CLK'event and CLK='1') then
+      if((hit0 = '1') AND (hit1 = '0')) then
+        cnt <= (others=>'0');
+      elsif(cnt_en = '1') then
+        cnt <= cntr;
+      end if;
+    end if;
+  end process;
 
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMèoóÕÉNÉçÉbÉN
-    O  => CLK_OUT                   -- DCMèoóÕÉNÉçÉbÉN(BUFGå„)
-  );
+  -- COUNTER ENABLE (counting up signal)
+  process (RST,CLK,hit0,hit1,is_finish,is_finishr) begin
+    if (RST = '1') then
+      cnt_en <= '0';
+    elsif (CLK'event and CLK='1') then
+      if((hit0 = '1') AND (hit1 = '0')) then
+        cnt_en <= '1';
+      elsif((is_finish = '1') AND (is_finishr = '0')) then
+        cnt_en <= '0';
+      end if;
+    end if;
+  end process;
+
+  ------------------------------------------------------------- PROGRAM
+  process (RST,CLK,cnt)
+      variable I_NPIPE : integer;
+      variable I_NFI   : integer;
+      variable I_NC    : integer;
+      variable I_MAB   : integer;
+      variable I_NQW   : integer;
+  begin
+    if (RST='1') then
+      is_finish <= '0';
+    elsif (CLK'event and CLK='1') then
+
+      --= = = = = = = = = = = = = = = = = = = = INTEGER VARLUES
+      I_NPIPE := conv_integer(NPIPE);
+      I_NFI   := (2**NBIT_L_ADRO);
+--      I_NFI   := (2**2);  -- ÉgÉbÉvÇ©ÇÁÇÃÉWÉFÉlÉäÉbÉNÇÃì`îdÇ™Ç§Ç‹Ç≠Ç¢Ç´Ç‹ÇπÇÒÇÃÇ≈íçà”
+      I_NC    := I_NPIPE*I_NFI + INTF_LAT;
+      I_MAB   := I_NPIPE*I_NFI;
+      I_NQW   := I_NPIPE*I_NFI - 1;
+      --= = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+      if(    cnt = conv_std_logic_vector(0, CNT_WIDTH) ) then
+        is_finish <= '0';
+        NQWORD   <= conv_std_logic_vector(I_NQW, 9);
+        START_AD <= conv_std_logic_vector(FO_BASE, 19);
+      -- ================================================================================ CHIP 0
+      elsif( cnt = conv_std_logic_vector(1, CNT_WIDTH) ) then
+        MEM_AD_BASE <= conv_std_logic_vector(0, 13);
+        CHIPSEL  <= "0001";
+      elsif( cnt = conv_std_logic_vector(2, CNT_WIDTH) ) then
+        EXEC <= '1';
+      elsif( cnt = conv_std_logic_vector(3, CNT_WIDTH) ) then
+        EXEC <= '0';
+      -- ================================================================================ CHIP 1
+      elsif( cnt = conv_std_logic_vector(3 + 1*I_NC, CNT_WIDTH) ) then
+        MEM_AD_BASE <= conv_std_logic_vector(1*I_MAB  , 13);
+        CHIPSEL  <= "0010";
+      elsif( cnt = conv_std_logic_vector(4 + 1*I_NC, CNT_WIDTH) ) then
+        EXEC <= '1';
+      elsif( cnt = conv_std_logic_vector(5 + 1*I_NC, CNT_WIDTH) ) then
+        EXEC <= '0';
+      -- ================================================================================ CHIP 2
+      elsif( cnt = conv_std_logic_vector(5 + 2*I_NC, CNT_WIDTH) ) then
+        MEM_AD_BASE <= conv_std_logic_vector(2*I_MAB, 13);
+        CHIPSEL  <= "0100";
+      elsif( cnt = conv_std_logic_vector(6 + 2*I_NC, CNT_WIDTH) ) then
+        EXEC <= '1';
+      elsif( cnt = conv_std_logic_vector(7 + 2*I_NC, CNT_WIDTH) ) then
+        EXEC <= '0';
+      -- ================================================================================ CHIP 3
+      elsif( cnt = conv_std_logic_vector(7 + 3*I_NC, CNT_WIDTH) ) then
+        MEM_AD_BASE <= conv_std_logic_vector(3*I_MAB, 13);
+        CHIPSEL  <= "1000";
+      elsif( cnt = conv_std_logic_vector(8 + 3*I_NC, CNT_WIDTH) ) then
+        EXEC <= '1';
+      elsif( cnt = conv_std_logic_vector(9 + 3*I_NC, CNT_WIDTH) ) then
+        EXEC <= '0';
+      -- ================================================================================ FINISH
+      elsif( cnt = conv_std_logic_vector(9 + 4*I_NC, CNT_WIDTH) ) then
+        is_finish <= '1';
+      elsif( cnt = conv_std_logic_vector(10 + 4*I_NC, CNT_WIDTH) ) then
+        is_finish <= '0';
+      else
+      end if;
+
+    end if;
+  end process;
 
 end rtl;
+
