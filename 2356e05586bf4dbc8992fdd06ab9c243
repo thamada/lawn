@@ -1,50 +1,42 @@
-2025年  5月 21日 水曜日 11:08:40 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[DMAR_ENABLE] _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en0                _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en1                     _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en2                          _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---en3                               _____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______________
---DBUS_HiZ            ~~~~~~~~~~~~~~\_________________________________________________/~~~~
+2025年  6月  2日 月曜日 10:39:40 JST
+#!/usr/bin/env python3
+import os
+from datetime import datetime
+import time
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-
-entity dmar_dbus_hiz is
-  port (
-    RST       : in std_logic;
-    CLK       : in std_logic;
-    ENABLE    : in std_logic;
-    DBUS_HiZ  : out std_logic :='1');
-end dmar_dbus_hiz;
-
-architecture rtl of dmar_dbus_hiz is
-signal en0,en1,en2,en3 : std_logic :='0';
-begin
-
-  process(CLK) begin
-    if(CLK'event and CLK = '1') then
-      en3 <= en2;
-      en2 <= en1;
-      en1 <= en0;
-      en0 <= ENABLE;
-    end if;
-  end process;
+# YYYYMMDD_HH_MM_SS
+def get_filename_frame(basedir, str_datetime):
+    cell = list(str_datetime)
+    str_YYYYMMDD = ''.join(cell[0:8])
+    str_HH = ''.join(cell[9:11])
+    str_MM = ''.join(cell[12:14])
+    str_SS = ''.join(cell[15:17])
+    dirname = basedir + str_YYYYMMDD + "/" + str_HH
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + "/" + str_datetime+".jpg"
+    ret = ret.replace(' ','')
+    return ret
 
 
-  process(RST,CLK,en2,en3) begin
-    if(RST='1') then
-      DBUS_HiZ <= '1';
-    elsif(CLK'event and CLK = '1') then
-     if( (en1='1') AND (en2='0') ) then
-       DBUS_HiZ <= '0';
-     elsif( (en2='0') AND (en3='1') ) then
-       DBUS_HiZ <= '1';
-     end if;
-    end if;
-  end process;
+def get_filename_frame_simple(basedir, fname):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+    ret = dirname + fname
+    ret = ret.replace(' ','')
+    return ret
 
-end rtl;
+def create_dir(basedir):
+    dirname = basedir
+    if os.path.exists(dirname) != True:
+        os.makedirs(dirname)
+
+    
+
+if __name__ == '__main__':
+    while(True):
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+        fname = get_filename_frame('../work/', tnow)
+        print (fname)
+        time.sleep(0.5)
