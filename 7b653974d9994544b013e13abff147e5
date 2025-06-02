@@ -1,5 +1,13 @@
-2025年  6月  1日 日曜日 11:31:30 JST
-INFO:DesignRules:547 - Blockcheck: To achieve optimal frequency synthesis
-   performance with the CLKFX and CLKFX180 outputs of the DCM comp dcm0_dcm0,
-   consult the Virtex-II Interactive Data Sheet.
-DRC detected 0 errors and 0 warnings.
+2025年  6月  2日 月曜日 09:16:57 JST
+#!/usr/bin/env python3
+# ./mov.py <fps> <start_number>
+import sys
+
+
+if __name__ == '__main__':
+	 args = sys.argv
+	 assert len(args) == 3
+	 fps          = int(args[1])
+	 start_number = int(args[2])
+	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
+	 print (cmd)
