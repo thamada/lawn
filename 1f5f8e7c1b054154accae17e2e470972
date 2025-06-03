@@ -1,150 +1,129 @@
-2025年  5月 24日 土曜日 11:18:57 JST
---###############################
---# by T.Hamada for B3 Board    #
---###############################
+2025年  6月  3日 火曜日 10:30:37 JST
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import aieye_find
+import time
+import sys
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+class_num = 1 # annotate number for class: 001: hamada
+drawing = False
+posi0 = [-1,-1]
+posi1 = [-1,-1]
+image_size = [-1, -1] # [height, width]
 
-entity DPRAM is
-  port (
-    RST         : in  std_logic;                        -- PCI Bus Reset
-    CLK         : in  std_logic;                        -- PCI bus Clock
-    CLKB        : in   std_logic;                       -- Port B Clock
-    -- PCI R/W ports
-    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
-    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
-    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
-    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
-    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
-    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
-    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
-    -- USER Application R/W ports
-    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
-    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
-    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
-    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
-    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
-    );
-end DPRAM;
+def mouse_event(event,x,y,flags,param):
+    global posi0, posi1, drawing
+
+    if x < 0: x = 0 
+    if y < 0: y = 0 
+    if x >= image_size[1]: x = image_size[1] - 1
+    if y >= image_size[0]: y = image_size[0] - 1
 
 
-architecture DPRAM_rtl of DPRAM is
-
---------------------------------------------------
--- Components
---------------------------------------------------
---component dp32b512w
---  port (
---    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
---    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
---    clka       : in  std_logic;                        -- Port A Clock
---    clkb       : in  std_logic;                        -- Port A Clock
---    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
---    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
---    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
---    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
---    wea        : in  std_logic;                        -- Port A Write Enable
---    web        : in  std_logic                         -- Port A Write Enable
---    );
---end component;
-
-component dp32b8192w
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
-
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0)
-  );
-end component;
-
-  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
-  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
-begin
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ('Push')
+        drawing = True
+        posi0[0] = x
+        posi0[1] = y
 
 
---***************************************************************
---* instantiate sub-blocks
---***************************************************************
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing == True:
+            print ("Drawing... (%d, %d)" % (x, y))
+        else:
+            pass
+    elif event == cv2.EVENT_LBUTTONUP:
+        print ('Up')
+        drawing = False
+        cv2.rectangle(image, (posi0[0],posi0[1]), (x,y), (0,255,0), 1)
+        posi1[0] = x
+        posi1[1] = y
 
--- Low Word (32 bit)
+def save_data(image_dbg, image_orig, fnum):
+    global class_num, posi0, posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%04d" % fnum
 
-  dp0 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port B Clock
-    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
-    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
-    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
-    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
-    wea        => MEM_WELA,                       -- Port A Write Enable
-    web        => MEM_WELB                        -- Port A Write Enable
-  );
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
--- High Word (32 bit)
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
-  dp1 : dp32b8192w port map (
-    addra      => MEM_ADA(13 downto  1),          -- Port A Address
-    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
-    clka       => CLK,                            -- Port A Clock
-    clkb       => CLKB,                           -- Port A Clock
-    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
-    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
-    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
-    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
-    wea        => MEM_WEHA,                       -- Port A Write Enable
-    web        => MEM_WEHB                        -- Port A Write Enable
-  );
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
+
+if '__main__' == __name__:
+    basedir = '../log/'
+    if (len(sys.argv) > 1 ):
+        basedir = sys.argv[1]
+    
+    iflist = [] 
+    for fname in aieye_find.find(basedir, '*.jpg'):
+        iflist.append(fname)
+
+    iflist.sort()
+    ni = len(iflist)
+    i = 0
+
+    #    for i, fname in enumerate(iflist):
+    while( i < ni) :
+        fname = iflist[i]
+        print (fname, "%d/%d (%1.3f)"%(i, ni, i/ni))
+
+        image_orig = cv2.imread(fname, cv2.IMREAD_COLOR)
+        image = image_orig.copy()
+        image_size[0], image_size[1] = image.shape[:2]
+        is_next = False
+        while (not is_next):
+            cv2.imshow("THBox-annon.py", image)
+            cv2.namedWindow("THBox-annon.py", cv2.WINDOW_NORMAL)
+            cv2.setMouseCallback("THBox-annon.py", mouse_event)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord(' '):
+                save_data(image, image_orig, i)
+                is_next = True
+            if key  == 83:  # ->
+                is_next = True
+            if key  == 81:  # <-
+                i = i - 2
+                is_next = True
+            if key == ord('r'): # Reset
+                i = i - 1
+                is_next = True
+            if key  == ord('q'): 
+                i = ni
+                break
+        i = i+1
+
+    cv2.destroyAllWindows()
 
 
---***************************************************************
---*
---*  PORT A Control Block
---*
---***************************************************************
 
---------------------------------------------------------------------------------
--- Port A Read Data Select Flag Control Process
---------------------------------------------------------------------------------
 
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_RDTFLG <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
-    end if;
-  end process;
 
---------------------------------------------------------------------------------
--- Port A Read Data Output Control Process
---------------------------------------------------------------------------------
-
-  process (MEM_RDTFLG,MEM_RDDT) begin
-    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
-      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
-    else
-      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
-    end if;
-  end process;
-
---------------------------------------------------------------------------------
--- Port A Read Data Enable Signal Control Process
---------------------------------------------------------------------------------
-
-  process (RST,CLK) begin
-    if (RST='1') then
-      MEM_DTOEN <= '0';
-    elsif (CLK'event and CLK='1') then
-      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
-    end if;
-  end process;
-
-end DPRAM_rtl;
+    
