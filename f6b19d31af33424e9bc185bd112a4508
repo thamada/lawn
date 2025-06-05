@@ -1,49 +1,141 @@
-2025年  6月  1日 日曜日 09:44:32 JST
-JDF G
-// Created by Project Navigator ver 1.0
-PROJECT proj
-DESIGN proj
-DEVFAM virtex2p
-DEVFAMTIME 0
-DEVICE xc2vp70
-DEVICETIME 0
-DEVPKG ff1517
-DEVPKGTIME 0
-DEVSPEED -5
-DEVSPEEDTIME 0
-DEVTOPLEVELMODULETYPE HDL
-TOPLEVELMODULETYPETIME 0
-DEVSYNTHESISTOOL XST (VHDL/Verilog)
-SYNTHESISTOOLTIME 0
-DEVSIMULATOR Modelsim
-SIMULATORTIME 0
-DEVGENERATEDSIMULATIONMODEL VHDL
-GENERATEDSIMULATIONMODELTIME 0
-SOURCE ..\dmaw_mem_data.vhd
-SOURCE ..\dmaw_mem_we.vhd
-SOURCE ..\dmar_mem_adr.vhd
-SOURCE ..\dmaw_mem_adr.vhd
-SOURCE ..\dmar_start_adr.vhd
-SOURCE ..\dmaw_start_adr.vhd
-SOURCE ..\dmar_dbus_hiz.vhd
-SOURCE ..\dmar.vhd
-SOURCE ..\clk_muldiv_by_xcore.vhd
-SOURCE ..\dmaw.vhd
-SOURCE ..\user.vhd
-SOURCE ..\dmar_state.vhd
-SOURCE ..\dmar_mem_re.vhd
-SOURCE ..\clk_muldiv.vhd
-SOURCE ..\dmaw_state.vhd
-SOURCE ..\top.vhd
-SOURCE ..\pgpg_mem\dpram.vhd
-SOURCE ..\pgpg_mem\pg_module.vhd
-SOURCE ..\pgpg_mem\calc.vhd
-SOURCE ..\pgpg_mem\jmem.vhd
-SOURCE ..\pgpg_mem\pgpg_mem.vhd
-SOURCE ..\pgpg_mem\adr_dec.vhd
-SOURCE ..\pgpg_mem\pg_pipe.vhd
-SOURCE ..\pgpg_mem\setn.vhd
-SOURCE ..\pgpg_mem\pipe_sts.vhd
-DEPASSOC top ..\top.ucf
-[STRATEGY-LIST]
-Normal=True
+2025年  6月  5日 木曜日 10:11:01 JST
+[net]
+# Testing
+batch=1
+subdivisions=1
+#-- # Training
+#-- batch=64
+#-- subdivisions=8
+
+width=416
+height=416
+channels=3
+momentum=0.9
+decay=0.0005
+angle=0
+saturation = 1.5
+exposure = 1.5
+hue=.1
+
+learning_rate=0.001
+max_batches = 40200
+#max_batches = 50
+policy=steps
+steps=-1,100,20000,30000
+scales=.1,10,.1,.1
+
+[convolutional]
+batch_normalize=1
+filters=16
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=64
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=128
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=256
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=2
+
+[convolutional]
+batch_normalize=1
+filters=512
+size=3
+stride=1
+pad=1
+activation=leaky
+
+[maxpool]
+size=2
+stride=1
+
+[convolutional]
+batch_normalize=1
+filters=1024
+size=3
+stride=1
+pad=1
+activation=leaky
+
+###########
+
+[convolutional]
+batch_normalize=1
+size=3
+stride=1
+pad=1
+filters=1024
+activation=leaky
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=75
+activation=linear
+
+[region]
+anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
+bias_match=1
+classes=10
+coords=4
+num=5
+softmax=1
+jitter=.2
+rescore=1
+
+object_scale=5
+noobject_scale=1
+class_scale=1
+coord_scale=1
+
+absolute=1
+thresh = .6
+random=1
