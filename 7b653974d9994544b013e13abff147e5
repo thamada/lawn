@@ -1,6 +1,10 @@
-2025年  6月  4日 水曜日 11:54:21 JST
-3
-0
-1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0
-1 -0.9700436 0.24308753 -0 0.466203685 0.43236573 0
-1 0 0 0 -0.93240737 -0.86473146 -0
+2025年  6月  6日 金曜日 10:27:23 JST
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
