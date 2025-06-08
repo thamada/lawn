@@ -1,10 +1,16 @@
-2025年  6月  6日 金曜日 10:27:23 JST
-# ProjNav -> New Source -> TBW
-c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
-# ProjNav -> New Source -> TBW
-C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
-# Bencher Waveform : PDCL (jhdparse)
-# ModelSim : Simulate Behavioral VHDL Model
-sim.fdo
-# ModelSim : Simulate Behavioral VHDL Model
-vsim.wlf
+2025年  6月  8日 日曜日 09:34:24 JST
+#!/usr/bin/env python3
+
+import glob
+import sys
+import random
+
+fname = sys.argv[1]
+random.seed()
+
+with open(fname, "r") as fd:
+    lines = fd.readlines()
+    random.shuffle(lines)
+    for l in lines:
+        l = l.replace("\n",'')
+        print (l)
