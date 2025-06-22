@@ -1,34 +1,27 @@
-2025年  6月 11日 水曜日 10:51:15 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---state_dmaw          0  >< 1 >< 2                                    >< 3 >< 0 
---mem_we                        ____/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\______
+2025年  6月 22日 日曜日 11:27:51 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-10 01:52:29 hamada>
+import cv2
+import urllib.request
+import numpy as np
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
+stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-entity dmaw_mem_we is
-  port (
-    CLK       : in std_logic;
-    STATE     : in std_logic_vector(1 downto 0);
-    MEM_WE    : out std_logic );
-end dmaw_mem_we;
+bytes = b''
+while True:
+    raw = stream.read(1024)
+    bytes += raw
+    #print (bytes)
+    a = bytes.find(b'\xff\xd8')
+    b = bytes.find(b'\xff\xd9')
+    if a!=-1 and b!=-1:
+        jpg = bytes[a:b+2]
+        bytes= bytes[b+2:]
+        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
+        cv2.imshow('droidcam',image)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
 
-architecture rtl of dmaw_mem_we is
+cv2.destroyAllWindows()
 
-begin
-
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="10") then
-        MEM_WE <= '1';
-      else
-        MEM_WE <= '0';
-      end if;
-    end if;
-  end process;
-
-end rtl;
