@@ -1,30 +1,19 @@
-2025年  6月 26日 木曜日 09:23:46 JST
-#!/usr/bin/perl
+2025年  7月  9日 水曜日 11:13:35 JST
+//============================================================================
+struct flops_member {
+  double Gflops;
+  double start_time;
+  double force_time;
+  int nbody;
+  int times;
+  int nstep;
+  int nskip;
+};
+
+void flops_initialize(struct flops_member *fm, int n, int nskip);
+void flops_check(struct flops_member *fm);
+
+void flops_ftime_init(struct flops_member *fm);
+void flops_ftime_save(struct flops_member *fm);
 
 
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $kbuf_dir = "/sys/class/fpga/fpga". sprintf("%d",$nboard);
-my $cmd ="cat ". $kbuf_dir ."/kbuffers";
-my $exe = `$cmd`;
-print $exe;
-
-my $nbuf = `$cmd | wc -l`;
-chomp($nbuf);
-$nbuf--;
-
-print $nbuf ." buffers exists\n";
-
-for(my $i=0;$i<$nbuf;$i++){
-    $cmd = "echo $i > ". $kbuf_dir. "/kmem_free";
-    print $cmd ."\n";
-    $exe = `$cmd`;
-    print $exe;
-}
-
-1;
