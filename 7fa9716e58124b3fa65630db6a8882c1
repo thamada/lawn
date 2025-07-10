@@ -1,233 +1,50 @@
-2025年  7月  9日 水曜日 09:14:55 JST
-/*
- * pfpga_conf_a.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>     // usleep
-#include "pg4.h"
-
-static char pfpga_info[256];
-#define CNF_CMD_ADR 0x80
-#define CNF_DAT_ADR 0x84
-
-static unsigned int *data;
-
-void get_header(char* bitfile, char* header)
-{
-  int index=0, x;
-  char buf[128];
-  
-  index += 2 + (((0xff&bitfile[index])<<8) | (0xff&bitfile[index+1]));
-  index += 2 + (((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]));
-
-  // --- NCD file name ---
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-  // --- device ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- data ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- time ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  memcpy(buf, &bitfile[index+2], x);
-  sprintf(header, "%s, %s", header, buf);
-
-  // --- key ---
-  index += (x+3);
-  x = ((0xff&bitfile[index])<<8)|(0xff&bitfile[index+1]);
-  //  memcpy(buf, &bitfile[index+2], x);
-  //  sprintf(header, "%s, %s", header, buf);
-
-
-}
-
-
-
-int fread_config_data(char* fname, unsigned int *size)
-{
-  // -- Read Config File to 'config_bit_data'---
-  FILE* fin;
-  int ndata;
-  int i;
-
-  struct stat buf;
-  int fsize;
-
-  // read file status
-  if (stat(fname, &buf) == -1) {
-    fprintf(stderr, "fread_config_data: can't open bit file!!! %s\n", fname);
-    exit(-1);
-  }
-
-  fsize = buf.st_size;
-  if (data != NULL) {
-    free(data);
-  }
-  data = (unsigned int*)malloc(fsize);
-  if (data == NULL) {
-    fprintf(stderr, "fread_config_data: memory allocation error!\n");
-    exit(-1);
-  }
-  
-  fin = fopen(fname, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "fread_config_data: cannot open %s!\n", fname);
-    exit(-1);
-  }
-  fread(data,fsize,1,fin);
-  fclose(fin);
-  fprintf(stderr, "fread_config_data: read %i bytes.\n", fsize);
-
-  get_header((char*)data, pfpga_info);
-
-  
-  ndata = fsize/sizeof(unsigned int);
-
-  // CHANGE ENDIAN (LittleEndian -> BigEndian)
-  for(i = 0;i < ndata; i++){
-    unsigned int byte[8];
-    byte[0] = 0xFF&(data[i]>>24);
-    byte[1] = 0xFF&(data[i]>>16);
-    byte[2] = 0xFF&(data[i]>>8);
-    byte[3] = 0xFF&(data[i]);
-    data[i]=0x0;
-    data[i]= (byte[3]<<24)|(byte[2]<<16)|(byte[1]<<8)|byte[0];
-  }
-
-  *size = (unsigned int)ndata;
-
-  return fsize;
-}
-
-void config_onechip(int devid, unsigned int nfp, unsigned int ncfgdata)
-{
-  unsigned int i, d;
-  unsigned int *p;
-
-  if (data == NULL) return;
-  if (nfp > 0x8) {
-    fprintf(stderr, "nfp err\n");
-    exit(-1);
-  } 
-
-  // ---------------------------------------- SETUP CONFIGURATION
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(  ((0xF^nfp)<<4)   |nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  d = (unsigned int)(0xf0|nfp);
-  WriteBase0(devid, CNF_CMD_ADR, d);
-  usleep(15000);
-
-  // ---------------------------------------- SEND CONFIGURATION DATA
-  p = data;
-  for(i = 0; i < ncfgdata; i++){
-    WriteBase0(devid, CNF_DAT_ADR, *(p++));
-    d = (unsigned int)(0x1f0|nfp);
-    WriteBase0(devid, CNF_CMD_ADR,      d);
-    WriteBase0(devid, CNF_CMD_ADR, 0xff&d);
-  }
-
-  // ---------------------------------------- STOP CFG_CCLK
-  d = (unsigned int)(0xf0);
-  WriteBase0(devid, CNF_CMD_ADR,d);
-}
-
-void config_pfpga_a(int devid, char* fname, int chipid)
-{
-  unsigned int i, nfp, ncfgdata;
-
-  data = NULL;
-  fread_config_data(fname, &ncfgdata);
-
-  {
-    i = chipid;
-    nfp = 0xf&(0x1<<i);
-    fprintf(stderr, "configuring chip%i ...\n", i);
-    config_onechip(devid, nfp, ncfgdata);
-  }
-
-  free(data);
-}
-
-int main(int argc, char* argv[])
-{
-  int devid, chipid;
-
-  if (argc < 2) {
-    fprintf(stderr, "%s <bitfile> <chipid> <devid>\n", argv[0]);
-    exit(-1);
-  }
-
-  if (argv[2] == NULL) {
-    chipid = 0;
-  } else {
-    chipid = atoi(argv[2]);
-    if (chipid > 3) {
-      fprintf(stderr, "%s : invalid argument <chipid> %s:%d\n", argv[0], __FILE__, __LINE__);
-      exit(-1);
-    }
-  }
-
-  if (argv[3] == NULL) {
-    devid = 0;
-  } else {
-    devid = atoi(argv[3]);
-    if (devid > 3) {
-      fprintf(stderr, "%s : invalid argument <devid>%s:%d\n", argv[0], __FILE__, __LINE__);
-      exit(-1);
-    }
-  }
-
-  fprintf(stderr, "%s configures a PFPGA%i on progrape%i ...\n", argv[0], chipid, devid);
-
-  pg4_open(devid);
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Previous config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  {
-    sprintf(pfpga_info, "%s on <PFPGA%d>", argv[1], chipid);
-    config_pfpga_a(devid, argv[1], chipid);
-    pg4_set_pfpga_info(devid, pfpga_info);
-  }
-
-  {
-    pg4_get_pfpga_info(devid, pfpga_info);
-    printf("----------------------\n");
-    printf("Current config info: \n");
-    printf("%s\n",pfpga_info);
-    printf("----------------------\n");
-  }
-
-  pg4_close(devid);
-
-  return 0;
+2025年  7月 10日 木曜日 10:00:00 JST
+/EQNINJ
+/IPSET xi_0,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_1,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET xi_2,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/IPSET ieps2,eps2,log,17,8,((pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0)))
+/JPSET xj_0,0,0,31,x[][0],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_1,0,32,63,x[][1],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET xj_2,0,64,95,x[][2],fix,32,(pow(2.0,(double)32)/(2.0))
+/JPSET mj,0,96,112,m[],log,17,8,(pow(2.0,95.38)/(1.0e-2))
+/FOSET sx_0,a[][0],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_1,a[][1],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/FOSET sx_2,a[][2],fix,64,(-(pow(2.0,(double)32)/(2.0))*(pow(2.0,(double)32)/(2.0))*pow(2.0,-1.0*(double)-31)/(pow(2.0,95.38)/(1.0e-2)))
+/NPIPE 1
+/NVMP 1
+void force(double x[][3], double m[], double eps2, double a[][3], int n){
+  pg_fix_addsub(SUB,xi_0,xj_0,xij_0,32,3)
+  pg_fix_addsub(SUB,xi_1,xj_1,xij_1,32,3)
+  pg_fix_addsub(SUB,xi_2,xj_2,xij_2,32,3)
+  pg_conv_ftol(xij_0,dx_0,32,17,8,4)
+  pg_conv_ftol(xij_1,dx_1,32,17,8,4)
+  pg_conv_ftol(xij_2,dx_2,32,17,8,4)
+  pg_log_shift(1,dx_0,x2_0,17)
+  pg_log_shift(1,dx_1,x2_1,17)
+  pg_log_shift(1,dx_2,x2_2,17)
+  pg_log_unsigned_add_itp(x2_0,x2_1,x2y2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2_2,ieps2r,z2e2,17,8,9,6)
+  pg_log_unsigned_add_itp(x2y2,z2e2,r2,17,8,9,6)
+  pg_log_shift(-1,r2,r1,17)
+  pg_log_muldiv(MUL,r2,r1,r3,17,2)
+  pg_log_muldiv(SDIV,mjr,r3,mf,17,2)
+  pg_log_muldiv(MUL,mf,dx_0r,fx_0,17,2)
+  pg_log_muldiv(MUL,mf,dx_1r,fx_1,17,2)
+  pg_log_muldiv(MUL,mf,dx_2r,fx_2,17,2)
+  pg_log_expadd(fx_0,fxs_0,-31,17,8,1)
+  pg_log_expadd(fx_1,fxs_1,-31,17,8,1)
+  pg_log_expadd(fx_2,fxs_2,-31,17,8,1)
+  pg_conv_ltof(fxs_0,ffx_0,17,8,57,5)
+  pg_conv_ltof(fxs_1,ffx_1,17,8,57,5)
+  pg_conv_ltof(fxs_2,ffx_2,17,8,57,5)
+  pg_fix_smaccum(ffx_0,sx_0,57,64,4,37)
+  pg_fix_smaccum(ffx_1,sx_1,57,64,4,37)
+  pg_fix_smaccum(ffx_2,sx_2,57,64,4,37)
+  pg_pdelay(ieps2,ieps2r,17,7)
+  pg_pdelay(mj,mjr,17,27)
+  pg_pdelay(dx_0,dx_0r,17,22)
+  pg_pdelay(dx_1,dx_1r,17,22)
+  pg_pdelay(dx_2,dx_2r,17,22)
+  pg_rundelay(41)
 }
