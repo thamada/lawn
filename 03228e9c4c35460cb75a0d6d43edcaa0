@@ -1,111 +1,150 @@
-2025年  7月 10日 木曜日 11:26:19 JST
--- 2004/05/13 16:30
--- for matsubayashi simulation
+2025年  7月 13日 日曜日 09:31:06 JST
+--###############################
+--# by T.Hamada for B3 Board    #
+--###############################
 
-#define NPOS 32
-#define NLOG 17
-#define NMAN 8
-#define NCUT 6
-#define NFOR 57
-#define NACC 64
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-#define DELAY_SUB 1  /* A */
-#define DELAY_FL  1  /* B */
-#define DELAY_X2Y2 1    /* C */
-#define DELAY_R2   1    /* D */
-#define DELAY_R3   1    /* E */
-#define DELAY_MR3  1    /* F */
-#define DELAY_F    1    /* G */
-#define DELAY_OF   1    /* H */
-#define DELAY_LF   1    /* I */
-#define DELAY_AC   1    /* J */
+entity DPRAM is
+  port (
+    RST         : in  std_logic;                        -- PCI Bus Reset
+    CLK         : in  std_logic;                        -- PCI bus Clock
+    CLKB        : in   std_logic;                       -- Port B Clock
+    -- PCI R/W ports
+    MEM_ADA     : in  std_logic_vector(13 downto 0);    -- DPRAM Port A R/W Address
+    MEM_WEHA    : in  std_logic;                        -- DPRAM Port A Write Enable (High Word)
+    MEM_WELA    : in  std_logic;                        -- DPRAM Port A Write Enable (Low  Word)
+    MEM_REA     : in  std_logic;                        -- DPRAM Port A Read Enable
+    MEM_DTIA    : in  std_logic_vector(63 downto 0);    -- DPRAM Port A Write Data
+    MEM_DTOA    : out std_logic_vector(63 downto 0);    -- DPRAM Port A Read Data
+    MEM_DTOEN   : out std_logic;                        -- DPRAM Port A Read Data Enable
+    -- USER Application R/W ports
+    MEM_ADB     : in  std_logic_vector(12 downto 0);    -- DPRAM Port B R/W Address
+    MEM_WEHB    : in  std_logic;                        -- DPRAM Port B Write Enable (High Word)
+    MEM_WELB    : in  std_logic;                        -- DPRAM Port B Write Enable (Low  Word)
+    MEM_DTIB    : in  std_logic_vector(63 downto 0);    -- DPRAM Port B Write Data
+    MEM_DTOB    : out  std_logic_vector(63 downto 0)    -- DPRAM Port B Read Data
+    );
+end DPRAM;
 
-#define DELAY_EPS  2    /* A+B */
-#define DELAY_DX   4    /* C+D+E+F */
-#define DELAY_M    5    /* A+B+C+D+E */
-#define DELAY_CLE  9    /* A+B+C+D+E+F+G+H+I */
-#define DELAY_TOT  10   /* DELAY_CLE + DELAY_AC */
+
+architecture DPRAM_rtl of DPRAM is
+
+--------------------------------------------------
+-- Components
+--------------------------------------------------
+--component dp32b512w
+--  port (
+--    addra      : in  std_logic_vector( 8 downto 0);    -- Port A Address
+--    addrb      : in  std_logic_vector( 8 downto 0);    -- Port B Address
+--    clka       : in  std_logic;                        -- Port A Clock
+--    clkb       : in  std_logic;                        -- Port A Clock
+--    dina       : in  std_logic_vector(31 downto 0);    -- Port A Write Data
+--    dinb       : in  std_logic_vector(31 downto 0);    -- Port B Write Data
+--    douta      : out  std_logic_vector(31 downto 0);   -- Port A Read Data
+--    doutb      : out  std_logic_vector(31 downto 0);   -- Port B Read  Data
+--    wea        : in  std_logic;                        -- Port A Write Enable
+--    web        : in  std_logic                         -- Port A Write Enable
+--    );
+--end component;
+
+component dp32b8192w
+  port (
+    clka  : in std_logic;
+    wea   : in std_logic;
+    addra : in std_logic_vector(12 downto 0);
+    dina  : in std_logic_vector(31 downto 0);
+    douta : out std_logic_vector(31 downto 0);
+
+    clkb  : in std_logic;
+    web   : in std_logic;
+    addrb : in std_logic_vector(12 downto 0);
+    dinb  : in std_logic_vector(31 downto 0);
+    doutb : out std_logic_vector(31 downto 0)
+  );
+end component;
+
+  signal MEM_RDTFLG  : std_logic;                       -- Port A Read Data Select Flag
+  signal MEM_RDDT    : std_logic_vector( 63 downto 0);  -- Port A Memory Read Data
+begin
 
 
+--***************************************************************
+--* instantiate sub-blocks
+--***************************************************************
+
+-- Low Word (32 bit)
+
+  dp0 : dp32b8192w port map (
+    addra      => MEM_ADA(13 downto  1),          -- Port A Address
+    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
+    clka       => CLK,                            -- Port A Clock
+    clkb       => CLKB,                           -- Port B Clock
+    dina       => MEM_DTIA(31 downto  0),         -- Port A Write Data
+    dinb       => MEM_DTIB(31 downto  0),         -- Port B Write Data
+    douta      => MEM_RDDT(31 downto  0),         -- Port A Read Data
+    doutb      => MEM_DTOB(31 downto  0),         -- Port B Read  Data
+    wea        => MEM_WELA,                       -- Port A Write Enable
+    web        => MEM_WELB                        -- Port A Write Enable
+  );
+
+-- High Word (32 bit)
+
+  dp1 : dp32b8192w port map (
+    addra      => MEM_ADA(13 downto  1),          -- Port A Address
+    addrb      => MEM_ADB(12 downto  0),          -- Port B Address
+    clka       => CLK,                            -- Port A Clock
+    clkb       => CLKB,                           -- Port A Clock
+    dina       => MEM_DTIA(63 downto 32),         -- Port A Write Data
+    dinb       => MEM_DTIB(63 downto 32),         -- Port B Write Data
+    douta      => MEM_RDDT(63 downto 32),         -- Port A Read Data
+    doutb      => MEM_DTOB(63 downto 32),         -- Port B Read  Data
+    wea        => MEM_WEHA,                       -- Port A Write Enable
+    web        => MEM_WEHB                        -- Port A Write Enable
+  );
 
 
-#define xsize (100.0)
-#define mmin (1.220703125e-04)
-#define xoffset (xsize/2.0)
-#define xscale (pow(2.0,(double)NPOS)/xsize)
-#define mscale (pow(2.0,95.38)/mmin)
-#define escale (xscale*xscale)
-#define foffset (pow(2.0,23.0))
-#define fscale (-xscale*xscale*foffset/mscale)
---mmin 0xdf61
+--***************************************************************
+--*
+--*  PORT A Control Block
+--*
+--***************************************************************
 
-/NPIPE 1
-/NVMP 1
+--------------------------------------------------------------------------------
+-- Port A Read Data Select Flag Control Process
+--------------------------------------------------------------------------------
 
-/JPSET xj,0,0,31,x[][0],ufix,NPOS,xscale,xoffset
-/JPSET yj,0,32,63,x[][1],ufix,NPOS,xscale,xoffset
-/JPSET zj,0,64,95,x[][2],ufix,NPOS,xscale,xoffset
-/JPSET mj,0,96,112,m[],log,NLOG,NMAN,mscale
-/IPSET xi,x[][0],ufix,NPOS,xscale,xoffset
-/IPSET yi,x[][1],ufix,NPOS,xscale,xoffset
-/IPSET zi,x[][2],ufix,NPOS,xscale,xoffset
-/IPSET ieps2,eps2,log,NLOG,NMAN,escale
-/FOSET sx,a[][0],fix,NACC,fscale
-/FOSET sy,a[][1],fix,NACC,fscale
-/FOSET sz,a[][2],fix,NACC,fscale
-/VALSET fx_ofst,0x9700,0,16
-/VALSET fy_ofst,0x9700,0,16
-/VALSET fz_ofst,0x9700,0,16
-/DATASET fx_ofst,01001011100000000,0,16
-/DATASET fy_ofst,01001011100000000,0,16
-/DATASET fz_ofst,01001011100000000,0,16
+  process (RST,CLK) begin
+    if (RST='1') then
+      MEM_RDTFLG <= '0';
+    elsif (CLK'event and CLK='1') then
+      MEM_RDTFLG <= MEM_ADA(0);                  ------ Port A Read Address LSB Set
+    end if;
+  end process;
 
-void force_gravity_on_emulator(x,m,eps2,a,n)
-	double x[][3];
-	double m[];
-	double eps2;
-	double a[][3];
-	int n;
-{
-  pg_rundelay(10);
-  pg_fix_addsub(SUB,xi,xj,xij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,yi,yj,yij,NPOS,DELAY_SUB);
-  pg_fix_addsub(SUB,zi,zj,zij,NPOS,DELAY_SUB);
-  pg_conv_ftol(xij,dx,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(yij,dy,NPOS,NLOG,NMAN,DELAY_FL);
-  pg_conv_ftol(zij,dz,NPOS,NLOG,NMAN,DELAY_FL);
+--------------------------------------------------------------------------------
+-- Port A Read Data Output Control Process
+--------------------------------------------------------------------------------
 
-  pg_pdelay(dx,dxr,NLOG,DELAY_DX);
-  pg_pdelay(dy,dyr,NLOG,DELAY_DX);
-  pg_pdelay(dz,dzr,NLOG,DELAY_DX);
+  process (MEM_RDTFLG,MEM_RDDT) begin
+    if (MEM_RDTFLG='1') then                     ------ 32 bit Odd Address Access ?
+      MEM_DTOA <= MEM_RDDT(63 downto 32) & MEM_RDDT(63 downto 32);  ------ 32 bit High Data Set to Low Word
+    else
+      MEM_DTOA <= MEM_RDDT;                      ------ Set to 64 bit Data
+    end if;
+  end process;
 
-  pg_log_shift(1,dx,x2,NLOG);
-  pg_log_shift(1,dy,y2,NLOG);
-  pg_log_shift(1,dz,z2,NLOG);
+--------------------------------------------------------------------------------
+-- Port A Read Data Enable Signal Control Process
+--------------------------------------------------------------------------------
 
-  pg_pdelay(ieps2,ieps2r,NLOG,DELAY_EPS);
-  pg_log_unsigned_add_itp(    x2,y2,x2y2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(z2,ieps2r,z2e2,NLOG,NMAN,DELAY_X2Y2,NCUT);
-  pg_log_unsigned_add_itp(  x2y2,z2e2,r2,NLOG,NMAN,DELAY_R2,NCUT);
+  process (RST,CLK) begin
+    if (RST='1') then
+      MEM_DTOEN <= '0';
+    elsif (CLK'event and CLK='1') then
+      MEM_DTOEN <= MEM_REA;                      ------ Read Enable Signal Shift
+    end if;
+  end process;
 
-  pg_log_shift(-1,r2,r1,NLOG);
-  pg_log_muldiv(MUL,r2,r1,r3,NLOG,DELAY_R3);
-
-  pg_pdelay(mj,mjr,17,DELAY_M);
-  pg_log_muldiv(DIV,mjr,r3,mf,NLOG,DELAY_MR3);
-
-  pg_log_muldiv(MUL,mf,dxr,fx,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dyr,fy,NLOG,DELAY_F);
-  pg_log_muldiv(MUL,mf,dzr,fz,NLOG,DELAY_F);
-
-  pg_log_muldiv(SDIV,fx,fx_ofst,fxo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fy,fy_ofst,fyo,NLOG,DELAY_OF);
-  pg_log_muldiv(SDIV,fz,fz_ofst,fzo,NLOG,DELAY_OF);
-
-  pg_conv_ltof(fxo,ffx,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fyo,ffy,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_conv_ltof(fzo,ffz,NLOG,NMAN,NFOR,DELAY_LF);
-  pg_fix_accum(ffx,sx,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffy,sy,NFOR,NACC,DELAY_AC,DELAY_CLE);
-  pg_fix_accum(ffz,sz,NFOR,NACC,DELAY_AC,DELAY_CLE);
-}
+end DPRAM_rtl;
