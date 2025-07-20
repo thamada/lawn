@@ -1,28 +1,5 @@
-2025年  7月 19日 土曜日 11:16:47 JST
-// Copyright(c) 2004- by PGPG
-// The original source : contrib/src_h/vi/pg_util.h
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#ifndef LONG
-#define LONG unsigned long long int
-#endif
-LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
-double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
-LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
-LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
-double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
-LONG extractbit_long(LONG in, int hi, int lo);
-void l2bit(LONG a);
-void putbits(LONG a);
-void putbits32(LONG a);
-void putbitsn(LONG a,int n);
-double gen_rand_abs(void);
-double gen_rand(void);
-double gen_rand_tamanizero(void);
-
-
-#include <sys/time.h>
-#include <sys/resource.h>
-double e_time(void);
+2025年  7月 20日 日曜日 11:44:17 JST
+-- ProjNav VHDL simulation template: sim_local_read.udo
+-- You may edit this file after the line that starts with
+-- '-- START' to customize your simulation
+-- START user-defined simulation commands
