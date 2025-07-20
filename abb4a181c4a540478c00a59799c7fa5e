@@ -1,91 +1,129 @@
-2025年  7月 10日 木曜日 11:40:15 JST
-//-----------------------------------------------------------------------------
-// Output Pair-Wise Error
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2025年  7月 20日 日曜日 10:00:17 JST
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+import aieye_find
+import time
+import sys
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+class_num = 1 # annotate number for class: 001: hamada
+drawing = False
+posi0 = [-1,-1]
+posi1 = [-1,-1]
+image_size = [-1, -1] # [height, width]
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+def mouse_event(event,x,y,flags,param):
+    global posi0, posi1, drawing
 
-#define NMAX 1024
+    if x < 0: x = 0 
+    if y < 0: y = 0 
+    if x >= image_size[1]: x = image_size[1] - 1
+    if y >= image_size[0]: y = image_size[0] - 1
 
-double rsv[65536][3];
 
-int main(int argc, char *argv[]) {
-  int index;
-  int n = 2;
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print ('Push')
+        drawing = True
+        posi0[0] = x
+        posi0[1] = y
 
-  double m[NMAX];
-  double r[NMAX][3];
-  double v[NMAX][3];
 
-  double p[NMAX];
-  double a[NMAX][3];
-  double jk[NMAX][3];
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing == True:
+            print ("Drawing... (%d, %d)" % (x, y))
+        else:
+            pass
+    elif event == cv2.EVENT_LBUTTONUP:
+        print ('Up')
+        drawing = False
+        cv2.rectangle(image, (posi0[0],posi0[1]), (x,y), (0,255,0), 1)
+        posi1[0] = x
+        posi1[1] = y
 
-  double _p[NMAX];
-  double _a[NMAX][3];
-  double _jk[NMAX][3];
+def save_data(image_dbg, image_orig, fnum):
+    global class_num, posi0, posi1
+    basedir = '../data4bbox/'
+    fname_body = "image_%04d" % fnum
 
-  m[0] = m[1] = 1.0;
+    # save image_orig (for Images/)
+    fname = fname_body + ".jpg"
+    basedir_images = basedir+"Images/%03d/"%(class_num)
+    ofname_images = mkdir.get_filename_frame_simple(basedir_images , fname)
+    print (ofname_images)
+    cv2.imwrite(ofname_images, image_orig)
 
-  for (int i = 0; i < 3 ; i++) r[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][0] = 0.0;
-  for (int i = 0; i < 3 ; i++) v[i][1] = 0.0;
+    # save image_dbg (for Debug/)
+    fname = fname_body + ".jpg"
+    basedir_dbg = basedir+"Debug/%03d/"%(class_num)
+    ofname_dbg  = mkdir.get_filename_frame_simple(basedir_dbg , fname)
+    print (ofname_dbg)
+    cv2.imwrite(ofname_dbg, image_dbg)
 
-  index=0;
-  srand(0x12345);
+    # save labes
+    fname = fname_body + ".txt"
+    basedir_labels = basedir+"Labels/%03d/"%(class_num)
+    ofname_labels  = mkdir.get_filename_frame_simple(basedir_labels , fname)
+    print (ofname_labels)
+    bbox_posi = []
+    bbox_posi.append(min(posi0[0], posi1[0]))
+    bbox_posi.append(min(posi0[1], posi1[1]))
+    bbox_posi.append(max(posi0[0], posi1[0]))
+    bbox_posi.append(max(posi0[1], posi1[1]))
+    with open(ofname_labels, "w") as file:
+        file.write("1\n")
+        file.write("%d %d %d %d\n" % (tuple(bbox_posi)))
 
-  for (int t = 0; t < 1000 ; t++){
+if '__main__' == __name__:
+    basedir = '../log/'
+    if (len(sys.argv) > 1 ):
+        basedir = sys.argv[1]
     
+    iflist = [] 
+    for fname in aieye_find.find(basedir, '*.jpg'):
+        iflist.append(fname)
 
-    //    for (int i = 0; i < 3 ; i++) r[1][i] = pow(10.0, 2.0*rand()/(RAND_MAX+1.0));
+    iflist.sort()
+    ni = len(iflist)
+    i = 0
+
+    #    for i, fname in enumerate(iflist):
+    while( i < ni) :
+        fname = iflist[i]
+        print (fname, "%d/%d (%1.3f)"%(i, ni, i/ni))
+
+        image_orig = cv2.imread(fname, cv2.IMREAD_COLOR)
+        image = image_orig.copy()
+        image_size[0], image_size[1] = image.shape[:2]
+        is_next = False
+        while (not is_next):
+            cv2.imshow("THBox-annon.py", image)
+            cv2.namedWindow("THBox-annon.py", cv2.WINDOW_NORMAL)
+            cv2.setMouseCallback("THBox-annon.py", mouse_event)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord(' '):
+                save_data(image, image_orig, i)
+                is_next = True
+            if key  == 83:  # ->
+                is_next = True
+            if key  == 81:  # <-
+                i = i - 2
+                is_next = True
+            if key == ord('r'): # Reset
+                i = i - 1
+                is_next = True
+            if key  == ord('q'): 
+                i = ni
+                break
+        i = i+1
+
+    cv2.destroyAllWindows()
 
 
 
-    for (int i = 0; i < 3 ; i++) r[1][i] = 1.0*rand()/(RAND_MAX+1.0);
 
-    for (int i = 0; i < 3 ; i++)  rsv[index][i] = r[1][i];
-    index++;
-
-
-    _force(r, v, m, _p, _a, _jk, n);
-     force(r, v, m,  p,  a,  jk, n);
-
-     double err_p, err_a[3], err_jk[3];
-     double rad;
-     rad = sqrt(r[1][0]*r[1][0]+r[1][1]*r[1][1]+r[1][2]*r[1][2]);
-     err_p = fabs(p[0]-_p[0])/_p[0];
 
     
-     for (int k = 0; k < 3; k++){
-       double host  = _a[0][k];
-       double pipe  =  a[0][k];
-       double err = sqrt((host - pipe)*(host - pipe))/host;
-
-       cout << setw(8);
-       cout.precision(6);
-       cout << rad  << "\t";
-       cout.precision(6);
-       cout << err  << "\t";
-       cout.precision(6);
-       cout << host << "\t";
-       cout.precision(6);
-       cout << pipe << endl;
-
-     }
-
-  }
-  
-
-  debug_position_snap(rsv, 123.456, index, 10);
-
-  return 0;
-}
