@@ -1,138 +1,129 @@
-2025å¹´  8æœˆ 31æ—¥ æ—¥æ›œæ—¥ 09:51:45 JST
---------------------------------------------------------------------------------
--- COPYRIGHT(C) 2006 by @@@@@@@@@@@@ ALL RIGHTS RESERVED
---------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+2025å¹´  9æœˆ  2æ—¥ ç«æ›œæ—¥ 09:20:10 JST
+#!/bin/sh
+#
+# An example hook script to blocks unannotated tags from entering.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# To enable this hook, rename this file to "update".
+#
+# Config
+# ------
+# hooks.allowunannotated
+#   This boolean sets whether unannotated tags will be allowed into the
+#   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
+#
 
--- pragma translate_off
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
--- pragma translate_on
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
 
-entity dcm_ps_f is
-  generic(
-    PS  : integer
-  );
-  port(
-    RST          : in  std_logic;              -- ƒŠƒZƒbƒg
-    CLK_IN        : in  std_logic;             -- ƒNƒƒbƒN“ü—Í
-    CLK_FB_IN      : in  std_logic;            -- ƒNƒƒbƒNFB“ü—Í
-    CLK_OUT        : out  std_logic            -- ƒNƒƒbƒNo—Í
-  );
-end dcm_ps_f;
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
 
---------------------------------------------------
--- Architecture Body Define
---------------------------------------------------
-architecture rtl of dcm_ps_f is
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
+	exit 1
+fi
 
---------------------------------------------------
--- Components
---------------------------------------------------
+# --- Config
+allowunannotated=$(git config --bool hooks.allowunannotated)
+allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --bool hooks.denycreatebranch)
+allowdeletetag=$(git config --bool hooks.allowdeletetag)
+allowmodifytag=$(git config --bool hooks.allowmodifytag)
 
-component BUFG 
-  port (
-    I          : in  std_logic;
-    O          : out  std_logic
-  ); 
-end component;
---
-component DCM
--- pragma translate_off
-  generic ( 
-       DLL_FREQUENCY_MODE : string := "LOW";
-       DUTY_CYCLE_CORRECTION : boolean := TRUE;
-       CLKOUT_PHASE_SHIFT : string := "VARIABLE";
-       PHASE_SHIFT  : integer := 0;
-       STARTUP_WAIT : boolean := FALSE
-      );  
--- pragma translate_on
-  port (CLKIN   : in  std_logic;
-       CLKFB    : in  std_logic;
-       DSSEN    : in  std_logic;
-       PSINCDEC : in  std_logic;
-       PSEN     : in  std_logic;
-       PSCLK    : in  std_logic;
-       RST      : in  std_logic;
-       CLK0     : out std_logic;
-       CLK90    : out std_logic;
-       CLK180   : out std_logic;
-       CLK270   : out std_logic;
-       CLK2X    : out std_logic;
-       CLK2X180 : out std_logic;
-       CLKDV    : out std_logic;
-       CLKFX    : out std_logic;
-       CLKFX180 : out std_logic;
-       LOCKED   : out std_logic;
-       PSDONE   : out std_logic;
-       STATUS   : out std_logic_vector(7 downto 0)
-      );
-end component;
---
--- Attributes
+# check for no description
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+case "$projectdesc" in
+"Unnamed repository"* | "")
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+	;;
+esac
 
-attribute DLL_FREQUENCY_MODE : string; 
-attribute DUTY_CYCLE_CORRECTION : string;
-attribute CLKOUT_PHASE_SHIFT : string;
-attribute PHASE_SHIFT  : integer; 
-attribute STARTUP_WAIT : string; 
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
+	newrev_type=delete
+else
+	newrev_type=$(git cat-file -t $newrev)
+fi
 
-attribute DLL_FREQUENCY_MODE of U_DCM: label is "LOW";
-attribute DUTY_CYCLE_CORRECTION of U_DCM: label is "TRUE";
-attribute CLKOUT_PHASE_SHIFT of U_DCM: label is "FIXED";
-attribute PHASE_SHIFT  of U_DCM: label is 192;
-attribute STARTUP_WAIT of U_DCM: label is "FALSE";
+case "$refname","$newrev_type" in
+	refs/tags/*,commit)
+		# un-annotated tag
+		short_refname=${refname##refs/tags/}
+		if [ "$allowunannotated" != "true" ]; then
+			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
+			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,tag)
+		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,commit)
+		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/remotes/*,commit)
+		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	*)
+		# Anything else (is there anything else?)
+		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
+		exit 1
+		;;
+esac
 
---------------------------------------------------
--- Signals
---------------------------------------------------
-signal  logic_0        : std_logic;      -- 0ŒÅ’èM†
-signal  CLK0_OUT      : std_logic;       -- DCMo—ÍƒNƒƒbƒN
-
-begin
-
--- *********************************************************************
--- ŒÅ’èM†
--- *********************************************************************
-  logic_0 <= '0';                   -- 0ŒÅ’èM†
-
-
-U_DCM : DCM 
--- pragma translate_off
-  generic map(
-    CLKOUT_PHASE_SHIFT  => "FIXED",
-    PHASE_SHIFT         => PS       -- n/256*Tns shift For SIM
---  PHASE_SHIFT         => 192      -- n/256*Tns shift For SIM
-  )
--- pragma translate_on
-  port map(
-    RST          => RST        ,    -- ƒŠƒZƒbƒg
-    CLKIN        => CLK_IN     ,    -- PHASE SHIFT“ü—ÍƒNƒƒbƒN
-    CLKFB        => CLK_FB_IN  ,    -- FB“ü—Í
-    DSSEN        => logic_0    ,    
-    PSINCDEC     => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒg‚Ì‘•ª/Œ¸•ª
-    PSEN         => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒgƒCƒl[ƒuƒ‹
-    PSCLK        => logic_0    ,    -- ˆÊ‘ŠƒVƒtƒgƒNƒƒbƒN
-    CLK0         => CLK0_OUT        -- PHASE SHIFTo—ÍƒNƒƒbƒN
---    CLK90      => CLK90      ,    --
---    CLK180     => CLK180     ,    --
---    CLK270     => CLK270     ,    --
---    CLK2X      => CLK2X      ,    --
---    CLK2X180   => CLK2X180   ,    --
---    CLKDV      => CLKDV      ,    --
---    CLKFX      => CLKFX      ,    --
---    CLKFX180   => CLKFX180   ,    --
---    LOCKED     => LOCKED     ,    --
---    PSDONE     => PSDONE     ,    --
---    STATUS     => STATUS     ,    --
-  );
-
-U_BUFG : BUFG
-  port map(
-    I  => CLK0_OUT,                 -- DCMo—ÍƒNƒƒbƒN
-    O  => CLK_OUT                   -- DCMo—ÍƒNƒƒbƒN(BUFGŒã)
-  );
-
-end rtl;
+# --- Finished
+exit 0
