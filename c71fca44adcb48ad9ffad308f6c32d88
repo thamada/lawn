@@ -1,28 +1,22 @@
-2025年  9月  2日 火曜日 09:54:39 JST
-// Copyright(c) 2004- by PGPG
-// The original source : contrib/src_h/vi/pg_util.h
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#ifndef LONG
-#define LONG unsigned long long int
-#endif
-LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
-double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
-LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
-LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
-double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
-LONG extractbit_long(LONG in, int hi, int lo);
-void l2bit(LONG a);
-void putbits(LONG a);
-void putbits32(LONG a);
-void putbitsn(LONG a,int n);
-double gen_rand_abs(void);
-double gen_rand(void);
-double gen_rand_tamanizero(void);
-
-
-#include <sys/time.h>
-#include <sys/resource.h>
-double e_time(void);
+2025年  9月  4日 木曜日 09:18:57 JST
+# Xilinx CORE Generator 6.2.03i
+# User = Administrator
+Initializing default project...
+Loading plug-ins...
+All runtime messages will be recorded in C:\cygwin\home\Administrator\PG4\pci64\proj\coregen.log
+# busformat=BusFormatAngleBracketNotRipped
+# designflow=VHDL
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+# flowvendor=Foundation_iSE
+# formalverification=None
+# simulationoutputproducts=VHDL
+# xilinxfamily=Virtex2
+# outputoption=DesignFlow
+# overwritefiles=Default
+# simvendor=ModelSim
+# expandedprojectpath=C:\cygwin\home\Administrator\PG4\pci64\proj
+SETPROJECT .
+Set current Project to C:\cygwin\home\Administrator\PG4\pci64\proj
+SET BusFormat = BusFormatAngleBracketNotRipped
+SETXIPCPORTHOST 1271
+XIPCPJSENDCORES virtex2
