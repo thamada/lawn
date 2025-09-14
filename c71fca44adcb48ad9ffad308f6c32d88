@@ -1,94 +1,113 @@
-2025年  9月  4日 木曜日 10:54:29 JST
--- LOCAL READ CONTROLLER ( ifpga <- pfpga )
+2025年  9月 14日 日曜日 10:56:21 JST
+-- LOCAL WRITE ( ifpga -> pfpga )
 -- by Tsuyoshi Hamada
 --
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- BUSY               ___/~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\_______________
--- hit1               ___/~~~~\____
--- c_nchip               < NC                >< NC -1                           >< negativ value
--- next_chip                          ___/~~~~\____                      ___/~~~~\____
---==================================================
--- CLK            __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~
--- CALC_DONE      ___/~~~~\____
--- c_npipe               < NP                >< NP -1                           >< negativ value
--- next_pipe
-
+-- CLK     __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ 
+-- MEM_WE            __/~~~~~~~~~~\_____ 
+-- MEM_AD              < a0 >< a1 >
+-- MEM_DTI             < d0 >< d1 >
+-- DMAW_ENABLE                      __/~~~~~~~~~~\___  
+-- DBUS_Port                     < a0 >< d0 >< d1 >
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 
-entity local_read_cnt is
+entity LOCAL_WRITE is
   port (
-    -- from PGPG_REG3
-    NCHIP : in std_logic_vector(1 downto 0);     -- (number of chips) - 1
-    NPIPE : in std_logic_vector(7 downto 0);     -- (number of pipelines) - 1
-    NFI   : in std_logic_vector(7 downto 0);     -- (number of fi registers in a pipe) - 1
-    CALC_DONE : in std_logic;   -- pulse
-    -- to GPREG0
-    BUSY  : out std_logic;
+    -- pcicnt input
+    MEM_AD  : in std_logic_vector(19 downto 0);
+    MEM_WE  : in std_logic;
+    MEM_DTI : in std_logic_vector(63 downto 0);
 
-    -- to LOCAL_READ_IF
-    EXEC     : out std_logic;                     -- pulse
-    START_AD : out std_logic_vector(18 downto 0); -- 19 bit
-    NQWORD   : out std_logic_vector( 8 downto 0); --  9 bit
-    CHIPSEL  : out std_logic_vector( 3 downto 0); --  4 bit
-    MEM_AD_BASE : out std_logic_vector(12 downto 0);
-    -- from LOCAL_READ_IF
-    BUSY_IF : in std_logic;
- 
+    -- CBUS/DBUS
+    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
+    DBUS_Port : out std_logic_vector(63 downto 0);  -- outside of this module, 1 delay is inserted.
     RST : in  std_logic;
     CLK : in  std_logic
     );
-end local_read;
+end LOCAL_WRITE;
 
-architecture rtl of local_read is
+architecture rtl of LOCAL_WRITE is
 
-signal hit0,hit1,hit2 : std_logic :='0';
-signal c_nchip,c_nchipr  : std_logic_vector(2 downto 0) := (others=>'0');
-signal c_npipe,c_npiper  : std_logic_vector(7 downto 0) := (others=>'0');
-signal c_nfi  ,c_nfir    : std_logic_vector(7 downto 0) := (others=>'0');
-signal next_chip, next_pipe : std_logic :='0';
+  signal we0  : std_logic := '0';
+  signal we1  : std_logic := '0';
+  signal adr          : std_logic_vector(63 downto 0) := (others=>'0');
+  signal data0,data1 : std_logic_vector(63 downto 0) := (others=>'0');
+  signal dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
 
 begin
+  ------------------------------
+  --- we0,1                  ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      we0 <= '0';
+    elsif(CLK'event and CLK='1') then
+      we0 <= MEM_WE;
+    end if;
+  end process;
 
-  hit0 <= CALC_DONE;
   process (CLK) begin
-    if (CLK'event and CLK='1') then
-      hit2 <= hit1;
-      hit1 <= hit0;
+    if(CLK'event and CLK='1') then
+      we1 <= we0;
     end if;
   end process;
-
-  -- BUSY
-  process (RST,CLK,c_nchip) begin
-    if (RST = '1') then
-      BUSY <= '0';
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        BUSY <= '1';
-      elsif(c_nchip(2) = '1') then
-        BUSY <= '0';
-      end if;
-    end if;
-  end process;
-
-
-  -- NCHIP COUNTER
-  c_nchipr <= c_nchip - "01";
-  process (RST,CLK,next_chip) begin
-    if (RST = '1') then
-      c_nchip <= (others=>'0');
-    elsif (CLK'event and CLK='1') then
-      if((hit0 = '1') AND (hit1 = '0')) then
-        c_nchip <= "0" & NCHIP;              -- SIGNED VALUE
-      elsif (next_chip='1') then
-        c_nchip <= c_nchipr;
-      end if;
-    end if;
-  end process;
-
   
+  ------------------------------
+  --- adr                    ---
+  ------------------------------
+  process (RST,CLK,MEM_WE,we0) begin
+    if(RST='1') then
+      adr <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if((MEM_WE = '1') and (we0 = '0')) then
+        adr(18 downto 0) <= MEM_AD(19 downto 1);
+      end if;
+      adr(63 downto 19) <= (others=>'0');
+    end if;
+  end process;
 
+  ------------------------------
+  --- data delay             ---
+  ------------------------------
+  process (RST,CLK) begin
+    if(RST='1') then
+      data1 <= (others=>'0');
+      data0 <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      data1 <= data0;
+      data0 <= MEM_DTI;
+    end if;
+  end process;
+
+  ------------------------------
+  --- DBUS_Port              ---
+  ------------------------------
+  process (RST,CLK,we0,we1) begin
+    if(RST='1') then
+      DBUS_Port <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      if(we0 = '1' and we1 = '0') then
+        DBUS_Port <= adr;
+      else
+        DBUS_Port <= data1;
+      end if;
+    end if;
+  end process;
+
+  --- DMAW_ENABLE
+  process (RST,CLK) begin
+    if(RST='1') then
+      DMAW_ENABLE    <= (others=>'0');
+    elsif(CLK'event and CLK='1') then
+      DMAW_ENABLE(0) <= we1;
+      DMAW_ENABLE(1) <= we1;
+      DMAW_ENABLE(2) <= we1;
+      DMAW_ENABLE(3) <= we1;
+    end if;
+  end process;
+
+
+end rtl;
