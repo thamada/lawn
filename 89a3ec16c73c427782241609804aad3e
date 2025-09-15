@@ -1,34 +1,9 @@
-2025年  9月 14日 日曜日 11:29:31 JST
-#include <stdio.h>
-
-
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
-{
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
-
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
-
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
-
-    fwrite(x, n*24,1,fp);
-
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
-
-    //    fclose(fp);
-    fflush(fp);
-}
-
+2025年  9月 15日 月曜日 10:12:36 JST
+V1 3
+FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd 2004/11/10.11:36:20
+EN work/PFPGA_CONFIG \
+      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
+      PB ieee/STD_LOGIC_1164 PB ieee/STD_LOGIC_ARITH PB ieee/STD_LOGIC_UNSIGNED
+AR work/PFPGA_CONFIG/RTL \
+      FL c:/cygwin/home/administrator/fkit/pci64/tmp2/pfpga_config.vhd \
+      EN work/PFPGA_CONFIG
