@@ -1,16 +1,25 @@
-2025年  9月  4日 木曜日 11:04:29 JST
-#!/bin/sh
-#
-# An example hook script to check the commit log message taken by
-# applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.  The hook is
-# allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "applypatch-msg".
+2025年  9月 16日 火曜日 09:15:11 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-03 00:45:13 hamada>
+import cv2
+import glob
+import aieye_find
+from datetime import datetime
 
-. git-sh-setup
-test -x "$GIT_DIR/hooks/commit-msg" &&
-	exec "$GIT_DIR/hooks/commit-msg" ${1+"$@"}
-:
+iflist = [] 
+for fname in aieye_find.find('../log.0/20170602/18/', 'sss_*.jpg'):
+    iflist.append(fname)
+
+iflist.sort()
+i = 0
+index = 0
+
+for fname in iflist:
+    fname_src = fname # fname.replace('../log/', "/mnt/data/work/bak/log/")
+    fname_dst = fname.replace('sss_', 'CanonG1X_')
+    if( i % 1 == 0):  # every 30 sec 
+#        cmd =  "ln -s " + fname_src + " " + "../conv/%08d.jpg" % (index)
+        cmd =  "mv " + fname_src + " " + fname_dst
+        print (cmd, "; echo '%d/%d: %s'; "%(i, len(iflist), fname_src) )
+        index += 1
+    i += 1
