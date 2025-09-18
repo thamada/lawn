@@ -1,46 +1,27 @@
-2025年  9月 14日 日曜日 09:11:27 JST
-#Time-stamp: <2017-07-20 22:59:16 hamada>
-
-VM_NAME="ubuntu16"
-
-all: check
-
-c: check
-
-check:
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
-
-
-check.0:
-	VBoxManage showvminfo ${VM_NAME} --details
-	@echo ''
-	@echo '-----------------------------------------------------------'
-	VBoxManage list vms
-	@echo '-----------------------------------------------------------'
-	VBoxManage showvminfo  ${VM_NAME} --details |grep 'State: '
+2025年  9月 18日 木曜日 10:01:39 JST
+vlib work
+vcom -93 -explicit  ../rtl/local_write.vhd
+vcom -93 -explicit  ../rtl/local_read_cnt.vhd
+vcom -93 -explicit  ../rtl/local_read_if.vhd
+vcom -93 -explicit  ../rtl/local_read.vhd
+vcom -93 -explicit  ../rtl/local_io.vhd
+vcom -93 -explicit  sim_local_io.vhw
+vsim -t 1ps   -lib work sim_local_io
+do sim_local_io.udo
+view wave
+add wave -hex /uut/busy_dmar
+add wave -hex *
 
 
-run: start
+add wave -hex /uut/u1/u0/clk
+add wave -hex /uut/u1/u0/CALC_DONE
+add wave -dec /uut/u1/u0/cnt
+add wave -hex /uut/u1/u0/cnt_en
+add wave -hex /uut/u1/u0/is_finish
+add wave -hex /uut/u1/u0/EXEC
+add wave -hex /uut/u1/u0/CHIPSEL
+add wave -hex /uut/u1/u0/START_AD
+add wave -hex /uut/u1/u0/NQWORD
+add wave -hex /uut/u1/u0/MEM_AD_BASE
 
-start:
-	VBoxManage startvm  ${VM_NAME} -type vrdp
-
-gui:
-	VBoxManage startvm  ${VM_NAME} -type gui
-
-stop:
-	VBoxManage controlvm  ${VM_NAME} poweroff
-
-stop2:
-	VBoxManage controlvm  ${VM_NAME} acpipowerbutton
-
-backup:
-	cd ../; tar cvfps  ./${VM_NAME}.`date +"%Y%m%d-%H%M%S"`.tar  ./${VM_NAME}
-
-
-backup.xxx:
-	mv  ${VM_NAME}.vdi  ${VM_NAME}.vdi.`date +"%Y%m%d-%H%M%S"`
-
-
-compact:
-	VBoxManage modifyhd /home/hamada/vmware/${VM_NAME}/${VM_NAME}.vdi --compact
+run -all
