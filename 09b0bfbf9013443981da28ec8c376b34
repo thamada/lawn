@@ -1,36 +1,19 @@
-2025年  9月 20日 土曜日 09:51:58 JST
--- Copyright 2004 Tsuyoshi Hamada
---
---
---clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
---[ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
---dmaw_state          0  >< 1 >< 2                                    >< 3 >< 0 
---dmaw_start_adr               < n                                         >< 0
+2025年  9月 20日 土曜日 10:06:03 JST
+#!Time-stamp: <2007-01-22 04:30:32 hamada>
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+Linux device driver for the PROGRAPE-4 board,
 
-entity dmaw_start_adr is
-  port (
-    CLK       : in std_logic;
-    DBUS      : in std_logic_vector(63 downto 0);
-    STATE     : in std_logic_vector(1 downto 0);
-    START_ADR : out std_logic_vector(18 downto 0) );
-end dmaw_start_adr;
+including runtime libraries and HDL source for interface FPGA.
 
-architecture rtl of dmaw_start_adr is
-constant zero : std_logic_vector(18 downto 0) := (others=>'0');
-begin
+- Linux kernel release 2.6.x
 
-  process (CLK,STATE) begin
-    if(CLK'event and CLK = '1') then
-      if(STATE="01") then
-        START_ADR <= DBUS(18 downto 0);
-      elsif((STATE="00") OR (STATE="11")) then
-        START_ADR <= zero;
-      end if;
-    end if;
-  end process;
+- Xilinx XC3S5000-5-FG900 FPGAs
 
-end rtl;
+- Xilinx ISE 8.1i
+-- Release 8.1.03i xst I.27
+-- Release 8.1.03i par I.27
+-- Release 8.1.03i Trace I.27
+-- Release 8.1.03i Bitgen I.27
+
+
+![PROGRAPE-4](http://www.ipa.go.jp/jinzai/esp/2005mito1/mdata/images/clip_image002_006.jpg)
