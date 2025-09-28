@@ -1,42 +1,51 @@
-2025å¹´  9æœˆ 18æ—¥ æœ¨æ›œæ—¥ 10:51:17 JST
-/**
-   # ƒn[ƒhƒEƒFƒA‰»‚·‚é•”•ª 
-   #     1.‰Á‘¬“xa[][]‚Ì‰Šú‰»
-   #     2.‰Á‘¬“xa[][]‚ÌŒvZ
-*/
+2025å¹´  9æœˆ 28æ—¥ æ—¥æ›œæ—¥ 11:34:12 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
 
-#include <stdio.h>
-#include <math.h>
-#include "nbodysim.h"
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
 
-void force_on_host(double x[][DIM],
-	   double m[],
-	   double eps2,
-	   double a[][DIM],
-	   int n)
-{
-  int i,j,d;
-  double dx[3];
+# If you want to allow non-ascii filenames set this variable to true.
+allownonascii=$(git config hooks.allownonascii)
 
-  /* a[][]‚Ì‰Šú‰» */
-  for(i=0;i<n;i++) for(d=0;d<3;d++) a[i][d] = 0.0;
+# Redirect output to stderr.
+exec 1>&2
 
-  /* ‘ŠŒİì—p‚ÌŒvZ  */
-  for(i=0;i<n-1;i++){
-    for(j=i+1;j<n;j++){
-      double r2,r3;
-      r2 = eps2;
-      for(d=0;d<3;d++){
-	dx[d] = x[j][d] - x[i][d];
-	r2 += dx[d] * dx[d];
-      }
-      r3 = sqrt(r2)*r2;
-      for(d=0;d<3;d++){
-	a[i][d] +=  m[j]*dx[d]/r3;
-	a[j][d] += -m[i]*dx[d]/r3;
-      }
-    }
-  }
+# Cross platform projects tend to avoid non-ascii filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	test $(git diff --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+	echo "Error: Attempt to add a non-ascii file name."
+	echo
+	echo "This can cause problems if you want to work"
+	echo "with people on other platforms."
+	echo
+	echo "To be portable it is advisable to rename the file ..."
+	echo
+	echo "If you know what you are doing you can disable this"
+	echo "check using:"
+	echo
+	echo "  git config hooks.allownonascii true"
+	echo
+	exit 1
+fi
 
-
-}
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
