@@ -1,40 +1,28 @@
-2025年 11月  1日 土曜日 11:03:25 JST
- 
--w
--g DebugBitstream:No
--g Binary:no
--g CRC:Enable
--g ConfigRate:4
--g CclkPin:PullUp
--g M0Pin:PullUp
--g M1Pin:PullUp
--g M2Pin:PullUp
--g ProgPin:PullUp
--g DonePin:PullUp
--g PowerdownPin:PullUp
--g TckPin:PullUp
--g TdiPin:PullUp
--g TdoPin:PullUp
--g TmsPin:PullUp
--g UnusedPin:PullDown
--g UserID:0xFFFFFFFF
--g DCMShutDown:Disable
--g DisableBandgap:No
--g DCIUpdateMode:AsRequired
--g StartUpClk:CClk
--g DONE_cycle:4
--g GTS_cycle:5
--g GWE_cycle:6
--g LCK_cycle:NoWait
--g Match_cycle:Auto
--g Security:None
--g DonePipe:No
--g DriveDone:No
--g Encrypt:No
+2025年 11月  2日 日曜日 11:08:12 JST
+// Copyright(c) 2004- by PGPG
+// The original source : contrib/src_h/vi/pg_util.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#ifndef LONG
+#define LONG unsigned long long int
+#endif
+LONG  double2pgpglog(double x, int nbit_log, int nbit_man);
+double pgpglog2double(LONG x,  int nbit_log, int nbit_man);
+LONG  double2pgpgfloat(double a, int nbit_float, int nbit_man);
+LONG  double2pgpgfloat_r(double a, int nbit_float, int nbit_man, int rmode);
+double pgpgfloat2double(LONG x, int nbit_float, int nbit_man);
+LONG extractbit_long(LONG in, int hi, int lo);
+void l2bit(LONG a);
+void putbits(LONG a);
+void putbits32(LONG a);
+void putbitsn(LONG a,int n);
+double gen_rand_abs(void);
+double gen_rand(void);
+double gen_rand_tamanizero(void);
 
 
-
-
-
-
-
+#include <sys/time.h>
+#include <sys/resource.h>
+double e_time(void);
