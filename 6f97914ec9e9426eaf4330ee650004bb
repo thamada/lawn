@@ -1,44 +1,42 @@
-2025年 11月  5日 水曜日 11:43:41 JST
-#!/usr/bin/env python3
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+2025年 11月  9日 日曜日 09:50:45 JST
+// Time-stamp: "2006-12-07 13:35:12 hamada"
+// Copyright (c) 2006 by Tsuyoshi Hamada, All rights reserved.
 
-class Message(object):
-    def __init__(self):
-        self.last = ['00000000', '0', '0', '0', '0', '0', '0', 'N/A']
-        self.is_update = False
+#include <stdio.h>
+#include <stdlib.h>
+#include "pg4.h"
 
-#D95CBBF2 7 41 53 28 48 50 R->
-def read_log_one(msg):
+//#define NMAX (0x1<<10) // 4KB
+//#define NMAX (0x1<<11) // 8KB
+//#define NMAX (0x1<<12) // 16KB
+//#define NMAX (0x1<<13) // 32KB
+#define NMAX (0x1<<14) // 64KB
 
-    fname = '/dev/shm/log.txt'
-    with open(fname, 'r') as fh:
-        lines = fh.readlines()
-        l = lines[-2]
-        l = l.rstrip()
-        cols = l.split(' ')
-        if cols[0] != msg.last[0]:
-            msg.last = cols
-            msg.is_update = True
-        else:
-            msg.is_update = False
+unsigned int* ptr;
+unsigned int* bar1;
+
+int main(int argc,char *argv[])
+{
+  int devid = 0;
+  int n = NMAX;
+  int i;
+
+  if(argc > 1){
+    n = atoi(argv[1]);
+  }
+  printf("n = %d\n",n);
+
+  pg4_open(devid);
+  bar1 = pg4_get_bar1ptr(devid);
+  printf("BAR0: %lx\n",pg4_getbaseaddr(devid,0));
+  printf("BAR1: %lx\n",pg4_getbaseaddr(devid,1));
+
+  for(i = 0; i < n; i++) {
+    unsigned int x;
+    x = pg4_readbase1(devid, i);
+    printf("%x : %x\n",i,x);
+  }
 
 
-fig = plt.figure()
-msg = Message()
-
-def plot(data):
-    global msg, fig
-    read_log_one(msg)
-    if msg.is_update :
-        print (msg.last)
-
-    plt.cla() # clear graph
-    rand = np.random.randn(100)
-    im = plt.plot(rand)
-
-
-ani = animation.FuncAnimation(fig, plot, interval=100)
-plt.show()
-
+  return 0;
+}
