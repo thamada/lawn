@@ -1,12 +1,56 @@
-2025年 11月 25日 火曜日 10:26:10 JST
-10
-2.253285e-01	9.191831e-01
-2.068413e-01	7.247797e-01
-7.321991e-01	9.064824e-01
-3.479571e-01	8.578809e-01
-4.151849e-01	1.941677e-01
-6.856104e-01	5.243755e-01
-1.596357e-01	9.547575e-01
-1.269843e-01	4.339532e-03
-3.826915e-01	2.507929e-01
-6.552879e-01	5.344908e-01
+2025年 12月  3日 水曜日 09:41:46 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-04 15:57:17 hamada>
+import argparse
+import numpy as np
+import cv2
+from datetime import datetime
+import mkdir
+
+class State(object):
+    def __init__(self):
+        self.is_record = False
+
+if (__name__ == '__main__'):
+    state = State()
+
+    parser = argparse.ArgumentParser(description = "description goes here")
+    parser.add_argument("--devid", type=int, help = "set device id", required=False)
+    args = parser.parse_args()
+    devid = 0
+    if args.devid:
+        devid = int(args.devid)
+        print ("set devid = ", devid)
+
+
+    log_base = '../log/'
+    cap = cv2.VideoCapture(devid)
+
+    cap_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap_fps    = cap.get(cv2.CAP_PROP_FPS)
+
+    print(cap_width, "x", cap_height, ":", cap_fps)
+
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        cv2.imshow('camera: %d'%(devid), frame)
+
+        tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S_%f')
+        if(state.is_record):
+            basedir = '../log.%d/'% (devid)
+            ofname = mkdir.get_filename_frame(basedir, tnow)
+            cv2.imwrite(ofname, frame)
+            print(ofname, "devid = %d"%devid)
+            tnow0 = tnow
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord(' '): state.is_record = not (state.is_record)
+
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("Done.")
