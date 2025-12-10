@@ -1,34 +1,47 @@
-2025年 11月 25日 火曜日 09:48:14 JST
+2025年 12月 10日 水曜日 10:58:24 JST
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
+/*
+ * ifpga_get_barinfo.c -- to get infomation of pci bar regsters
+ *
+ * Copyright (C) 2006-2007 Tsuyoshi Hamada
+ *                                All rights reserved.
+ * 
+ * No warranty is attached; 
+ * I cannot take responsibility for errors or fitness for use.
+ *
+ */
 
-void debug_position_snap(double x[][3], double Gflops, int n, int nstep)
+#include "pg4.h"
+
+int main(int argc, char* argv[])
 {
-  //    int i;
-    static int flag=0;
-    static FILE* fp;
+  int devid  = 0;
+  int bar    = 0;
+  int is_size = 0;
+  unsigned long z = 0;
 
-    if(flag==0){
-      fp = fopen("/mnt/ram/xxx.log","w");
-      //      fp = fopen("xxx.log","w");
-      flag = 1;
-    }else{
-      rewind(fp);
-    }
+  if (argc < 3) {
+    fprintf(stderr, "%s <devid> <bar_num> <adr=0/size=1>\n", argv[0]);
+    exit(-1);
+  }
+  
+  if(argc == 3) is_size = 0; else is_size = atoi(argv[3]);
 
-    fprintf(fp,"%d\n",nstep);
-    fprintf(fp,"%e\n",Gflops);
-    fprintf(fp,"%d\n",n);
+  devid = atoi(argv[1]);
+  bar   = atoi(argv[2]);
+  
+  pg4_open(devid);
 
-    fwrite(x, n*24,1,fp);
+  if(is_size)
+    z = 0xffffffff & pg4_getbaseaddr_size(devid, bar);
+  else
+    z = 0xffffffff & pg4_getbaseaddr(devid, bar);
 
-    /*
-    for(i=0;i<n;i++){
-      fprintf(fp,"%1.8e\t%1.8e\t%1.8e\n",x[i][0],x[i][1],x[i][2]);
-    }
-    */
+  printf("0x%08lx\n",z);
+  pg4_close(devid);
 
-    //    fclose(fp);
-    fflush(fp);
+  return 1;
 }
-
