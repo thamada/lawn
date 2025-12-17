@@ -1,141 +1,69 @@
-2025年 11月 15日 土曜日 11:44:20 JST
-[net]
-# Testing
-batch=1
-subdivisions=1
-#-- # Training
-#-- batch=64
-#-- subdivisions=8
+2025年 12月 17日 水曜日 11:47:29 JST
+-- Copyright (c) by PGR project
+-- All rights reserved.
+-- Auther Tsuyoshi Hamada
+-- for JDIM=4 (JDATA_WIDTH =< 128)
+-- but DEPTH=16384
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-width=416
-height=416
-channels=3
-momentum=0.9
-decay=0.0005
-angle=0
-saturation = 1.5
-exposure = 1.5
-hue=.1
+entity jmem is
+  port (
+    rst        : in  std_logic; -- not used
+    we         : in  std_logic;
+    wclk       : in  std_logic;
+    wadr       : in  std_logic_vector(15 downto 0);
+    rclk       : in  std_logic;
+    radr       : in  std_logic_vector(15 downto 0);
+    idata      : in  std_logic_vector(63 downto 0);
+    odata      : out  std_logic_vector(127 downto 0)  -- for G5
+--  odata      : out  std_logic_vector(255 downto 0)  -- for SPH FirstStage
+--  odata      : out  std_logic_vector(511 downto 0)  -- for SPH SecondStage
+  );
+end jmem;
 
-learning_rate=0.001
-max_batches = 40200
-#max_batches = 50
-policy=steps
-steps=-1,100,20000,30000
-scales=.1,10,.1,.1
+architecture rtl of jmem is
 
-[convolutional]
-batch_normalize=1
-filters=16
-size=3
-stride=1
-pad=1
-activation=leaky
+component dpram
+	port (
+	wadr: IN std_logic_VECTOR(13 downto 0);
+	radr: IN std_logic_VECTOR(13 downto 0);
+	wclk: IN std_logic;
+	rclk: IN std_logic;
+	din: IN std_logic_VECTOR(63 downto 0);
+	dout: OUT std_logic_VECTOR(63 downto 0);
+	we: IN std_logic);
+end component;
 
-[maxpool]
-size=2
-stride=2
+signal we0,we1,we2,we3 : std_logic;
+signal adr0,adr1,nadr0,nadr1 : std_logic;
 
-[convolutional]
-batch_normalize=1
-filters=32
-size=3
-stride=1
-pad=1
-activation=leaky
+begin
 
-[maxpool]
-size=2
-stride=2
+adr0  <= wadr(0);
+nadr0 <= NOT wadr(0);
 
-[convolutional]
-batch_normalize=1
-filters=64
-size=3
-stride=1
-pad=1
-activation=leaky
+we0  <= we and nadr0;  -- we & wadr(0)="0"
+we1  <= we and  adr0;  -- we & wadr(0)="1"
 
-[maxpool]
-size=2
-stride=2
+u0 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata,
+      dout=> odata(63 downto 0),
+      we  => we0);
 
-[convolutional]
-batch_normalize=1
-filters=128
-size=3
-stride=1
-pad=1
-activation=leaky
+u1 : dpram port map(
+      wadr=> wadr(14 downto 1),
+      wclk=> wclk,
+      radr=> radr(14 downto 1),
+      rclk=> rclk,
+      din => idata, 
+      dout=> odata(127 downto 64),
+      we  => we1);
 
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=256
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=2
-
-[convolutional]
-batch_normalize=1
-filters=512
-size=3
-stride=1
-pad=1
-activation=leaky
-
-[maxpool]
-size=2
-stride=1
-
-[convolutional]
-batch_normalize=1
-filters=1024
-size=3
-stride=1
-pad=1
-activation=leaky
-
-###########
-
-[convolutional]
-batch_normalize=1
-size=3
-stride=1
-pad=1
-filters=1024
-activation=leaky
-
-[convolutional]
-size=1
-stride=1
-pad=1
-filters=75
-activation=linear
-
-[region]
-anchors = 1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52
-bias_match=1
-classes=10
-coords=4
-num=5
-softmax=1
-jitter=.2
-rescore=1
-
-object_scale=5
-noobject_scale=1
-class_scale=1
-coord_scale=1
-
-absolute=1
-thresh = .6
-random=1
+end rtl;
