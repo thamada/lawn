@@ -1,118 +1,65 @@
-2025年 12月 10日 水曜日 10:23:42 JST
+2025年 12月 19日 金曜日 11:45:22 JST
+-- Copyright 2004 Tsuyoshi Hamada
+--
+--
+-- clk         __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __~~ __
+-- [ DBUS ]           X   >< n ><d0 ><d1 ><d2 ><d3 ><d4 ><d5 ><d6 ><d7 >
+-- STATE               0  >< 1 >< 2                                    >< 3 >< 0 
+-- START_ADR                    < n                                    >
+-- x                              0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- z                              1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 9 >< 1 >
+-- mem_adr_inc                    0 >< 1 >< 2 >< 3 >< 4 >< 5 >< 6 >< 7 >< 8 >< 0 >
+-- MEM_ADR                           < n ><n+1><n+2><n+3><n+4><n+5><n+6><n+7>
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
 
-
-entity PFPGA_DMA is
+entity dmaw_mem_adr is
   port (
-    -- pcicnt input
-    MEM_AD  : in std_logic_vector(16 downto 0);     -- DPRAM Port B R/W Address
-    MEM_WE  : in std_logic;
-    MEM_WE  : in std_logic;
-    MEM_DTI : in std_logic_vector(63 downto 0);
-
-    -- CBUS/DBUS
-    DMAW_ENABLE : out std_logic_vector(3 downto 0); -- for 4 pfpga chip
-    DBUS_Port : out std_logic_vector(63 downto 0);
-
-    RST : in  std_logic;
-    CLK : in  std_logic
+    CLK       : in  std_logic;
+    STATE     : in std_logic_vector(1 downto 0);  -- STATE of DMAW
+    START_ADR : in std_logic_vector(18 downto 0);
+    MEM_ADR   : out  std_logic_vector(18 downto 0)
     );
-end PFPGA_DMA;
+end dmaw_mem_adr;
 
-architecture rtl of PFPGA_DMA is
+architecture rtl of dmaw_mem_adr is
 
------------------------------------------------------------------
--- DMAW
-  signal mem_wea   : std_logic := '0';
-  signal dmaw_we0  : std_logic := '0';
-  signal dmaw_we1  : std_logic := '0';
-  signal dmaw_adr          : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dt0,dmaw_dt1 : std_logic_vector(63 downto 0) := (others=>'0');
-  signal dmaw_dbus_o       : std_logic_vector(63 downto 0) := (others=>'0');
+signal mem_adr_inc : std_logic_vector(18 downto 0);
+signal   x,z : std_logic_vector(18 downto 0);
+constant one : std_logic_vector(18 downto 0) := "0000000000000000001";
 
 begin
 
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
--- DMA WRITE ( ifpga -> pfpga )
--- WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-  ------------------------------
-  --- mem_wea                ---
-  ------------------------------
-  mem_wea <= MEM_WE;
+  z <= x + one;
 
-  ------------------------------
-  --- dmaw_we0,1             ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_we0 <= '0';
-    elsif(CLK'event and CLK='1') then
-      dmaw_we0 <= mem_wea;
-    end if;
-  end process;
-
-  process (CLK) begin
-    if(CLK'event and CLK='1') then
-      dmaw_we1 <= dmaw_we0;
-    end if;
-  end process;
-  
-  ------------------------------
-  --- dmaw_adr               ---
-  ------------------------------
-  process (RST,CLK,mem_wea,dmaw_we0) begin
-    if(RST='1') then
-      dmaw_adr <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if((mem_wea = '1') and (dmaw_we0 = '0')) then
-        dmaw_adr(15 downto 0) <= MEM_AD(16 downto 1);
-      end if;
-      dmaw_adr(63 downto 16) <= (others=>'0');
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dt delay          ---
-  ------------------------------
-  process (RST,CLK) begin
-    if(RST='1') then
-      dmaw_dt1 <= (others=>'0');
-      dmaw_dt0 <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      dmaw_dt1 <= dmaw_dt0;
-      dmaw_dt0 <= MEM_DTI;
-    end if;
-  end process;
-
-  ------------------------------
-  --- dmaw_dbus_o            ---
-  ------------------------------
-  process (RST,CLK,dmaw_we0,dmaw_we1) begin
-    if(RST='1') then
-      dmaw_dbus_o <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      if(dmaw_we0 = '1' and dmaw_we1 = '0') then
-        dmaw_dbus_o <= dmaw_adr;
+  -----------------
+  -- mem_adr_inc
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE = "10") then
+        mem_adr_inc <= z;
       else
-        dmaw_dbus_o <= dmaw_dt1;
+        mem_adr_inc <= (others=>'0');
       end if;
     end if;
   end process;
 
-  --- DMAW_ENABLE
-  process (RST,CLK) begin
-    if(RST='1') then
-      DMAW_ENABLE    <= (others=>'0');
-    elsif(CLK'event and CLK='1') then
-      DMAW_ENABLE(0) <= dmaw_we1;
-      DMAW_ENABLE(1) <= dmaw_we1;
-      DMAW_ENABLE(2) <= dmaw_we1;
-      DMAW_ENABLE(3) <= dmaw_we1;
+  x <= mem_adr_inc;
+
+  -----------------
+  -- MEM_ADR
+  -----------------
+  process (CLK,STATE) begin
+    if(clk'event and clk = '1') then
+      if(STATE="10") then
+        MEM_ADR <= mem_adr_inc + START_ADR;
+      else
+        MEM_ADR <= (others=>'0');
+      end if;
     end if;
   end process;
-
 
 end rtl;
