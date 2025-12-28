@@ -1,32 +1,27 @@
-2025年 12月 20日 土曜日 10:13:18 JST
-/*
- * pfpga_info.c
- *
- * Copyright (C) 2006-2007 Tsuyoshi Hamada
- *                                All rights reserved.
- * 
- * No warranty is attached; 
- * I cannot take responsibility for errors or fitness for use.
- *
- */
+2025年 12月 28日 日曜日 10:29:34 JST
+vlib work
+vcom -93 -explicit  ../rtl/local_write.vhd
+vcom -93 -explicit  ../rtl/local_read_cnt.vhd
+vcom -93 -explicit  ../rtl/local_read_if.vhd
+vcom -93 -explicit  ../rtl/local_read.vhd
+vcom -93 -explicit  ../rtl/local_io.vhd
+vcom -93 -explicit  sim_local_io.vhw
+vsim -t 1ps   -lib work sim_local_io
+do sim_local_io.udo
+view wave
+add wave -hex /uut/busy_dmar
+add wave -hex *
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define MAXBD 8
-#include "pg4.h"
+add wave -hex /uut/u1/u0/clk
+add wave -hex /uut/u1/u0/CALC_DONE
+add wave -dec /uut/u1/u0/cnt
+add wave -hex /uut/u1/u0/cnt_en
+add wave -hex /uut/u1/u0/is_finish
+add wave -hex /uut/u1/u0/EXEC
+add wave -hex /uut/u1/u0/CHIPSEL
+add wave -hex /uut/u1/u0/START_AD
+add wave -hex /uut/u1/u0/NQWORD
+add wave -hex /uut/u1/u0/MEM_AD_BASE
 
-int main(int argc, char* argv[])
-{
-  int devid=0;
-  char info[1024];
-
-  pg4_open(devid);
-  pg4_get_pfpga_info(devid, info);
-  pg4_close(devid);
-
-  printf("%s\n", info);
-
-  return 1;
-}
+run -all
