@@ -1,1684 +1,1624 @@
-2025Âπ¥ 12Êúà 17Êó• Ê∞¥ÊõúÊó• 11:37:32 JST
-# ------------------------------------------------------------------------------
-# 2006/02/10 by Tsuyoshi Hamada
-# with Xilinx PCI-64/66 LogiCore Version 3.0.152
-#      |
-#      +- 2v1000fg456_64_66.ucf (merged in ifpga.ucf)
-#      +- 2v1000fg456_64_66.ncd (used for par.exe)
-#      +- pcim_lc_66_3_d.vhd    (copied as pcim_lc.vhd at ./rtl/)
-#      +- pci_lc_i.ngo          (copied at ./proj/)
-# ------------------------------------------------------------------------------
+2025Âπ¥ 12Êúà 30Êó• ÁÅ´ÊõúÊó• 11:17:39 JST
 
-################################################################################
-#
-# File:   2v1000fg456_64_66.ucf
-# Rev:    3.0.0
-#
-# Use this file only with the device listed below.  Any other
-# combination is invalid.  Do not modify this file except in
-# regions designated for "User" constraints.
-#
-# Copyright (c) 2005 Xilinx, Inc.  All rights reserved.
-#
-################################################################################
-# Define Device, Package, And Speed Grade
-################################################################################
-#
-CONFIG PART = XC2V1000-FG456-5 ;
-#
-################################################################################
-# Avoid Configuration Pins
-################################################################################
-#
-CONFIG PROHIBIT = "Y4"   ; # IO/RW                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "AA3"  ; # IO/CS                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "AB19" ; # IO/DOUT/BSY
-CONFIG PROHIBIT = "V18"  ; # IO/DIN/D0
-CONFIG PROHIBIT = "V17"  ; # IO/D1                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "W18"  ; # IO/D2                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "Y18"  ; # IO/D3                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "Y5"   ; # IO/D4                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "W5"   ; # IO/D5                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "AB4"  ; # IO/D6                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "AA4"  ; # IO/D7                          # çÌèú Å® í«â¡
-CONFIG PROHIBIT = "AA19" ; # IO/INIT
-#
-################################################################################
-# I/O Assignment
-################################################################################
-#
-NET  "PCLK"                                                        LOC = "D11" ;
-NET  "PCI_CORE/RST_I"                                              LOC = "C4"  ;
-NET  "PCI_CORE/INTA_O"                                             LOC = "C5"  ;
-NET  "PCI_CORE/GNT_I"                                              LOC = "B4"  ;
-NET  "PCI_CORE/REQ_O"                                              LOC = "A4"  ;
-#
-NET  "PCI_CORE/AD_IO<31>"                                          LOC = "E6"  ;
-NET  "PCI_CORE/AD_IO<30>"                                          LOC = "E5"  ;
-NET  "PCI_CORE/AD_IO<29>"                                          LOC = "C2"  ;
-NET  "PCI_CORE/AD_IO<28>"                                          LOC = "C1"  ;
-NET  "PCI_CORE/AD_IO<27>"                                          LOC = "D2"  ;
-NET  "PCI_CORE/AD_IO<26>"                                          LOC = "D1"  ;
-NET  "PCI_CORE/AD_IO<25>"                                          LOC = "E4"  ;
-NET  "PCI_CORE/AD_IO<24>"                                          LOC = "E3"  ;
-NET  "PCI_CORE/AD_IO<23>"                                          LOC = "E2"  ;
-NET  "PCI_CORE/AD_IO<22>"                                          LOC = "E1"  ;
-NET  "PCI_CORE/AD_IO<21>"                                          LOC = "F5"  ;
-NET  "PCI_CORE/AD_IO<20>"                                          LOC = "G5"  ;
-NET  "PCI_CORE/AD_IO<19>"                                          LOC = "F4"  ;
-NET  "PCI_CORE/AD_IO<18>"                                          LOC = "F3"  ;
-NET  "PCI_CORE/AD_IO<17>"                                          LOC = "F2"  ;
-NET  "PCI_CORE/AD_IO<16>"                                          LOC = "F1"  ;
-NET  "PCI_CORE/AD_IO<15>"                                          LOC = "G4"  ;
-NET  "PCI_CORE/AD_IO<14>"                                          LOC = "G3"  ;
-NET  "PCI_CORE/AD_IO<13>"                                          LOC = "G2"  ;
-NET  "PCI_CORE/AD_IO<12>"                                          LOC = "G1"  ;
-NET  "PCI_CORE/AD_IO<11>"                                          LOC = "H5"  ;
-NET  "PCI_CORE/AD_IO<10>"                                          LOC = "J6"  ;
-NET  "PCI_CORE/AD_IO<9>"                                           LOC = "H4"  ;
-NET  "PCI_CORE/AD_IO<8>"                                           LOC = "H3"  ;
-NET  "PCI_CORE/AD_IO<7>"                                           LOC = "H2"  ;
-NET  "PCI_CORE/AD_IO<6>"                                           LOC = "H1"  ;
-NET  "PCI_CORE/AD_IO<5>"                                           LOC = "J4"  ;
-NET  "PCI_CORE/AD_IO<4>"                                           LOC = "J3"  ;
-NET  "PCI_CORE/AD_IO<3>"                                           LOC = "J2"  ;
-NET  "PCI_CORE/AD_IO<2>"                                           LOC = "J1"  ;
-NET  "PCI_CORE/AD_IO<1>"                                           LOC = "J5"  ;
-NET  "PCI_CORE/AD_IO<0>"                                           LOC = "K5"  ;
-NET  "PCI_CORE/CBE_IO<3>"                                          LOC = "K6"  ;
-NET  "PCI_CORE/CBE_IO<2>"                                          LOC = "L6"  ;
-NET  "PCI_CORE/CBE_IO<1>"                                          LOC = "K4"  ;
-NET  "PCI_CORE/CBE_IO<0>"                                          LOC = "K3"  ;
-NET  "PCI_CORE/PAR_IO"                                             LOC = "K2"  ;
-#
-NET  "PCI_CORE/IDSEL_I"                                            LOC = "K1"  ;
-NET  "PCI_CORE/FRAME_IO"                                           LOC = "L5"  ;
-NET  "PCI_CORE/IRDY_IO"                                            LOC = "L4"  ;
-NET  "PCI_CORE/TRDY_IO"                                            LOC = "L3"  ;
-NET  "PCI_CORE/DEVSEL_IO"                                          LOC = "L2"  ;
-NET  "PCI_CORE/STOP_IO"                                            LOC = "M1"  ;
-NET  "PCI_CORE/PERR_IO"                                            LOC = "M2"  ;
-NET  "PCI_CORE/SERR_IO"                                            LOC = "M3"  ;
-NET  "PCI_CORE/ACK64_IO"                                           LOC = "M4"  ;
-NET  "PCI_CORE/REQ64_IO"                                           LOC = "M5"  ;
-#
-NET  "PCI_CORE/PAR64_IO"                                           LOC = "M6"  ;
-NET  "PCI_CORE/CBE_IO<7>"                                          LOC = "N1"  ;
-NET  "PCI_CORE/CBE_IO<6>"                                          LOC = "N2"  ;
-NET  "PCI_CORE/CBE_IO<5>"                                          LOC = "N3"  ;
-NET  "PCI_CORE/CBE_IO<4>"                                          LOC = "N4"  ;
-NET  "PCI_CORE/AD_IO<63>"                                          LOC = "N5"  ;
-NET  "PCI_CORE/AD_IO<62>"                                          LOC = "N6"  ;
-NET  "PCI_CORE/AD_IO<61>"                                          LOC = "P1"  ;
-NET  "PCI_CORE/AD_IO<60>"                                          LOC = "P2"  ;
-NET  "PCI_CORE/AD_IO<59>"                                          LOC = "P3"  ;
-NET  "PCI_CORE/AD_IO<58>"                                          LOC = "P4"  ;
-NET  "PCI_CORE/AD_IO<57>"                                          LOC = "P5"  ;
-NET  "PCI_CORE/AD_IO<56>"                                          LOC = "P6"  ;
-NET  "PCI_CORE/AD_IO<55>"                                          LOC = "R1"  ;
-NET  "PCI_CORE/AD_IO<54>"                                          LOC = "R2"  ;
-NET  "PCI_CORE/AD_IO<53>"                                          LOC = "R3"  ;
-NET  "PCI_CORE/AD_IO<52>"                                          LOC = "R4"  ;
-NET  "PCI_CORE/AD_IO<51>"                                          LOC = "T1"  ;
-NET  "PCI_CORE/AD_IO<50>"                                          LOC = "T2"  ;
-NET  "PCI_CORE/AD_IO<49>"                                          LOC = "T3"  ;
-NET  "PCI_CORE/AD_IO<48>"                                          LOC = "T4"  ;
-NET  "PCI_CORE/AD_IO<47>"                                          LOC = "R5"  ;
-NET  "PCI_CORE/AD_IO<46>"                                          LOC = "T5"  ;
-NET  "PCI_CORE/AD_IO<45>"                                          LOC = "U1"  ;
-NET  "PCI_CORE/AD_IO<44>"                                          LOC = "U2"  ;
-NET  "PCI_CORE/AD_IO<43>"                                          LOC = "V1"  ;
-NET  "PCI_CORE/AD_IO<42>"                                          LOC = "V2"  ;
-NET  "PCI_CORE/AD_IO<41>"                                          LOC = "U3"  ;
-NET  "PCI_CORE/AD_IO<40>"                                          LOC = "U4"  ;
-NET  "PCI_CORE/AD_IO<39>"                                          LOC = "W1"  ;
-NET  "PCI_CORE/AD_IO<38>"                                          LOC = "W2"  ;
-NET  "PCI_CORE/AD_IO<37>"                                          LOC = "V3"  ;
-NET  "PCI_CORE/AD_IO<36>"                                          LOC = "V4"  ;
-NET  "PCI_CORE/AD_IO<35>"                                          LOC = "Y1"  ;
-NET  "PCI_CORE/AD_IO<34>"                                          LOC = "Y2"  ;
-NET  "PCI_CORE/AD_IO<33>"                                          LOC = "U5"  ;
-NET  "PCI_CORE/AD_IO<32>"                                          LOC = "V5"  ;
-#
-################################################################################
-# Delay Buffer Settings
-################################################################################
-#
-NET  "PCI_CORE/RST_I"                                          IOBDELAY = BOTH ;
-NET  "PCI_CORE/INTA_O"                                         IOBDELAY = BOTH ;
-NET  "PCI_CORE/GNT_I"                                          IOBDELAY = BOTH ;
-NET  "PCI_CORE/REQ_O"                                          IOBDELAY = BOTH ;
-#
-NET  "PCI_CORE/AD_IO<31>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<30>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<29>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<28>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<27>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<26>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<25>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<24>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<23>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<22>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<21>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<20>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<19>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<18>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<17>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<16>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<15>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<14>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<13>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<12>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<11>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<10>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<9>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<8>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<7>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<6>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<5>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<4>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<3>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<2>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<1>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<0>"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<3>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<2>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<1>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<0>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/PAR_IO"                                         IOBDELAY = BOTH ;
-#
-NET  "PCI_CORE/IDSEL_I"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/FRAME_IO"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/IRDY_IO"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/TRDY_IO"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/DEVSEL_IO"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/STOP_IO"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/PERR_IO"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/SERR_IO"                                        IOBDELAY = BOTH ;
-NET  "PCI_CORE/ACK64_IO"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/REQ64_IO"                                       IOBDELAY = BOTH ;
-#
-NET  "PCI_CORE/PAR64_IO"                                       IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<7>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<6>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<5>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/CBE_IO<4>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<63>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<62>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<61>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<60>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<59>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<58>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<57>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<56>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<55>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<54>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<53>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<52>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<51>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<50>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<49>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<48>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<47>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<46>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<45>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<44>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<43>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<42>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<41>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<40>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<39>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<38>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<37>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<36>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<35>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<34>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<33>"                                      IOBDELAY = BOTH ;
-NET  "PCI_CORE/AD_IO<32>"                                      IOBDELAY = BOTH ;
-#
-################################################################################
-# Force IOB Flip Flop Use For Data Path Output Flip Flops
-################################################################################
-#
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO31/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO30/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO29/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO28/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO27/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO26/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO25/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO24/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO23/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO22/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO21/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO20/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO19/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO18/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO17/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO16/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO15/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO14/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO13/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO12/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO11/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO10/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO9/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO8/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO7/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO6/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO5/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO4/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO3/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO2/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO1/OFD"                             IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO0/OFD"                             IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/PAR64/OFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO3/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO2/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO1/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO0/OFD"                            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO3/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO2/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO1/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO0/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PAR/OFD"                                      IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/PCI-AD/IO31/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO30/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO29/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO28/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO27/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO26/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO25/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO24/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO23/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO22/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO21/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO20/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO19/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO18/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO17/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO16/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO15/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO14/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO13/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO12/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO11/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO10/OFD"                              IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO9/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO8/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO7/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO6/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO5/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO4/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO3/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO2/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO1/OFD"                               IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO0/OFD"                               IOB = TRUE ;
-#
-################################################################################
-# Force IOB Flip Flop Use For Data Path Input Flip Flops
-################################################################################
-#
-INST "PCI_CORE/XPCI_ADQ63"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ62"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ61"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ60"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ59"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ58"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ57"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ56"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ55"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ54"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ53"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ52"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ51"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ50"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ49"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ48"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ47"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ46"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ45"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ44"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ43"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ42"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ41"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ40"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ39"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ38"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ37"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ36"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ35"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ34"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ33"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ32"                                          IOB = TRUE ;
-#
-INST "PCI_CORE/XPCI_CBQ7"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ6"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ5"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ4"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ3"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ2"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ1"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_CBQ0"                                           IOB = TRUE ;
-#
-INST "PCI_CORE/XPCI_ADQ31"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ30"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ29"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ28"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ27"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ26"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ25"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ24"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ23"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ22"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ21"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ20"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ19"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ18"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ17"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ16"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ15"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ14"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ13"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ12"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ11"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ10"                                          IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ9"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ8"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ7"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ6"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ5"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ4"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ3"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ2"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ1"                                           IOB = TRUE ;
-INST "PCI_CORE/XPCI_ADQ0"                                           IOB = TRUE ;
-#
-################################################################################
-# Force IOB Flip Flop Use For Control Signals
-################################################################################
-#
-INST "PCI_CORE/PCI_LC/MASTER/REQ_IOB/IFD"                           IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ_IOB/OFD"                           IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/REQO_OE"                               IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/MASTER/GNT_IOB/IFD"                           IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/GNT_IOB/OFD"                           IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/IDSEL/IFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/IDSEL/OFD"                                    IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/PCI-PAR/OE_SERR_FF"                           IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/PERR_OE"                      IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/SERR/IFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/SERR/OFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PERR/IFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PERR/OFD"                                     IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OE_FRAME"                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OE_REQ64"                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OE_IRDY"                      IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/FRAME/IFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/FRAME/OFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/REQ64/IFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/REQ64/OFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/IRDY/IFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/IRDY/OFD"                                     IOB = TRUE ;
-#
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OE_DEVSEL"          IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OE_ACK64"           IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OE_STOP"            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OE_TRDY"            IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/DEVSEL/IFD"                                   IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/DEVSEL/OFD"                                   IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/ACK64/IFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/ACK64/OFD"                                    IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/STOP/IFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/STOP/OFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/TRDY/IFD"                                     IOB = TRUE ;
-INST "PCI_CORE/PCI_LC/TRDY/OFD"                                     IOB = TRUE ;
-#
-################################################################################
-# Location Constraints For AD TBUFs
-################################################################################
-#
-INST "PCI_CORE/PCI_LC/E/UPPER/T15"                          LOC = "TBUF_X0Y75" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T14"                          LOC = "TBUF_X0Y74" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T13"                          LOC = "TBUF_X0Y73" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T12"                          LOC = "TBUF_X0Y72" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T11"                          LOC = "TBUF_X0Y71" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T10"                          LOC = "TBUF_X0Y70" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T9"                           LOC = "TBUF_X0Y69" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T8"                           LOC = "TBUF_X0Y68" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T7"                           LOC = "TBUF_X0Y67" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T6"                           LOC = "TBUF_X0Y66" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T5"                           LOC = "TBUF_X0Y65" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T4"                           LOC = "TBUF_X0Y64" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T3"                           LOC = "TBUF_X0Y63" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T2"                           LOC = "TBUF_X0Y62" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T1"                           LOC = "TBUF_X0Y61" ;
-INST "PCI_CORE/PCI_LC/E/UPPER/T0"                           LOC = "TBUF_X0Y60" ;
-#
-INST "PCI_CORE/PCI_LC/E/LOWER/T15"                          LOC = "TBUF_X0Y59" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T14"                          LOC = "TBUF_X0Y58" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T13"                          LOC = "TBUF_X0Y57" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T12"                          LOC = "TBUF_X0Y56" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T11"                          LOC = "TBUF_X0Y55" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T10"                          LOC = "TBUF_X0Y54" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T9"                           LOC = "TBUF_X0Y53" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T8"                           LOC = "TBUF_X0Y52" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T7"                           LOC = "TBUF_X0Y51" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T6"                           LOC = "TBUF_X0Y50" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T5"                           LOC = "TBUF_X0Y49" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T4"                           LOC = "TBUF_X0Y48" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T3"                           LOC = "TBUF_X0Y47" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T2"                           LOC = "TBUF_X0Y46" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T1"                           LOC = "TBUF_X0Y45" ;
-INST "PCI_CORE/PCI_LC/E/LOWER/T0"                           LOC = "TBUF_X0Y44" ;
-#
-INST "PCI_CORE/PCI_LC/E64/UPPER/T15"                        LOC = "TBUF_X0Y35" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T14"                        LOC = "TBUF_X0Y34" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T13"                        LOC = "TBUF_X0Y33" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T12"                        LOC = "TBUF_X0Y32" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T11"                        LOC = "TBUF_X0Y31" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T10"                        LOC = "TBUF_X0Y30" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T9"                         LOC = "TBUF_X0Y29" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T8"                         LOC = "TBUF_X0Y28" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T7"                         LOC = "TBUF_X0Y27" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T6"                         LOC = "TBUF_X0Y26" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T5"                         LOC = "TBUF_X0Y25" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T4"                         LOC = "TBUF_X0Y24" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T3"                         LOC = "TBUF_X0Y23" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T2"                         LOC = "TBUF_X0Y22" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T1"                         LOC = "TBUF_X0Y21" ;
-INST "PCI_CORE/PCI_LC/E64/UPPER/T0"                         LOC = "TBUF_X0Y20" ;
-#
-INST "PCI_CORE/PCI_LC/E64/LOWER/T15"                        LOC = "TBUF_X0Y19" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T14"                        LOC = "TBUF_X0Y18" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T13"                        LOC = "TBUF_X0Y17" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T12"                        LOC = "TBUF_X0Y16" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T11"                        LOC = "TBUF_X0Y15" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T10"                        LOC = "TBUF_X0Y14" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T9"                         LOC = "TBUF_X0Y13" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T8"                         LOC = "TBUF_X0Y12" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T7"                         LOC = "TBUF_X0Y11" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T6"                         LOC = "TBUF_X0Y10" ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T5"                         LOC = "TBUF_X0Y9"  ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T4"                         LOC = "TBUF_X0Y8"  ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T3"                         LOC = "TBUF_X0Y7"  ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T2"                         LOC = "TBUF_X0Y6"  ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T1"                         LOC = "TBUF_X0Y5"  ;
-INST "PCI_CORE/PCI_LC/E64/LOWER/T0"                         LOC = "TBUF_X0Y4"  ;
-#
-################################################################################
-# Placement Constraints For Control Signal "NS" Functions
-################################################################################
-#
-# **** NS_REQ **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/REQ/REQ1"                     LOC = "SLICE_X0Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ/REQ3"                     LOC = "SLICE_X0Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ/IREQ_I-"                  LOC = "SLICE_X0Y44" ;
-#
-# **** NS_DEVSEL **** (F, G, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-DSEL/DSEL5"    LOC = "SLICE_X0Y40" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-DSEL/DSEL11"   LOC = "SLICE_X0Y40" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-DSEL/DEVSEL"   LOC = "SLICE_X0Y40" ;
-#
-# **** NS_STOP **** (F, G, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-STOP/STOP12"   LOC = "SLICE_X0Y38" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-STOP/STOP13"   LOC = "SLICE_X0Y38" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-STOP/STOP"     LOC = "SLICE_X0Y38" ;
-#
-# **** NS_IRDY **** (F, G, X)
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/IRDY3"                   LOC = "SLICE_X0Y42" ;
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/IRDY4"                   LOC = "SLICE_X0Y42" ;
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/IIRDY_I-"                LOC = "SLICE_X0Y42" ;
-#
-# **** NS_TRDY **** (G, F, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/TRDY10"   LOC = "SLICE_X0Y41" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/TRDY11"   LOC = "SLICE_X0Y41" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/TRDY"     LOC = "SLICE_X0Y41" ;
-#
-# **** NS_FRAME **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME3"                 LOC = "SLICE_X0Y43" ;
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME4"                 LOC = "SLICE_X0Y43" ;
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/IFRAME_I-"              LOC = "SLICE_X0Y43" ;
-#
-# **** CE_FRAME **** (F)
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME_5"                LOC = "SLICE_X1Y43" ;
-#
-# **** NS_ACK64 **** (F, G, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-AK64/ACK5"     LOC = "SLICE_X0Y36" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-AK64/ACK11"    LOC = "SLICE_X0Y36" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-AK64/ACK64"    LOC = "SLICE_X0Y36" ;
-#
-# **** NS_REQ64 **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ643"                 LOC = "SLICE_X0Y35" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ644"                 LOC = "SLICE_X0Y35" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/IREQ64_I-"              LOC = "SLICE_X0Y35" ;
-#
-# **** CE_REQ64 **** (F)
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ645"                 LOC = "SLICE_X1Y35" ;
-#
-# **** NS_PERR **** (G, F, X)
-INST "PCI_CORE/PCI_LC/PCI-PAR/PERR_1"                      LOC = "SLICE_X1Y39" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/PERR_2"                      LOC = "SLICE_X1Y39" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/LC_PERR"                     LOC = "SLICE_X1Y39" ;
-#
-################################################################################
-# Placement Constraints For Parity / Byte Enable "NS" Functions
-################################################################################
-#
-# **** NS_PAR **** (G, F)
-INST "PCI_CORE/PCI_LC/PCI-PAR/PAR_1"                       LOC = "SLICE_X0Y45" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/PAR_2"                       LOC = "SLICE_X0Y45" ;
-#
-# **** NS_PAR64 **** (G, F)
-INST "PCI_CORE/PCI_LC/PCI-PAR/PAR64_1"                     LOC = "SLICE_X0Y34" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/PAR64_2"                     LOC = "SLICE_X0Y34" ;
-#
-# **** NS_CBE **** (F, G, F, G, F, G, F, G)
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO3/MAPF"                    LOC = "SLICE_X0Y49" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO3/MAPG"                    LOC = "SLICE_X0Y49" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO2/MAPF"                    LOC = "SLICE_X0Y48" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO2/MAPG"                    LOC = "SLICE_X0Y48" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO1/MAPF"                    LOC = "SLICE_X0Y47" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO1/MAPG"                    LOC = "SLICE_X0Y47" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO0/MAPF"                    LOC = "SLICE_X0Y46" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO0/MAPG"                    LOC = "SLICE_X0Y46" ;
-#
-# **** NS_CBE64 **** (F, G, F, G, F, G, F, G)
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO3/MAPF"                  LOC = "SLICE_X0Y33" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO3/MAPG"                  LOC = "SLICE_X0Y33" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO2/MAPF"                  LOC = "SLICE_X0Y32" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO2/MAPG"                  LOC = "SLICE_X0Y32" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO1/MAPF"                  LOC = "SLICE_X0Y31" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO1/MAPG"                  LOC = "SLICE_X0Y31" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO0/MAPF"                  LOC = "SLICE_X0Y30" ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO0/MAPG"                  LOC = "SLICE_X0Y30" ;
-#
-################################################################################
-# Placement Constraints For Control Signal "OE" Functions
-################################################################################
-#
-# **** OE_COMMON **** (G, F)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OTI_1"     LOC = "SLICE_X0Y39" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OTI_3"     LOC = "SLICE_X0Y39" ;
-#
-# **** OE_FRAME **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OEF1"                LOC = "SLICE_X1Y42" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OEF2"                LOC = "SLICE_X1Y42" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OE_FRAME_INT"        LOC = "SLICE_X1Y42" ;
-#
-# **** OE_REQ64 **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OER1"                LOC = "SLICE_X1Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OER2"                LOC = "SLICE_X1Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OE_REQ64_INT"        LOC = "SLICE_X1Y34" ;
-#
-# **** OE_ACK64 **** (G, F)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OAI_1"     LOC = "SLICE_X0Y37" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-XOE/OAI_3"     LOC = "SLICE_X0Y37" ;
-#
-################################################################################
-# Placement Constraints For Common Live Logic
-################################################################################
-#
-# **** APERR_N **** (G, F, X)
-INST "PCI_CORE/PCI_LC/PCI-PAR/APERR_1"                     LOC = "SLICE_X1Y38" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/APERR_2"                     LOC = "SLICE_X1Y38" ;
-INST "PCI_CORE/PCI_LC/PCI-PAR/APERR_N"                     LOC = "SLICE_X1Y38" ;
-#
-# **** DATA_VLD **** (G, X, F, X)
-INST "PCI_CORE/PCI_LC/DATA_VLD/MDV_MAP"                    LOC = "SLICE_X2Y37" ;
-INST "PCI_CORE/PCI_LC/DATA_VLD/MDV_FF"                     LOC = "SLICE_X2Y37" ;
-INST "PCI_CORE/PCI_LC/DATA_VLD/SDV_MAP"                    LOC = "SLICE_X2Y37" ;
-INST "PCI_CORE/PCI_LC/DATA_VLD/SDV_FF"                     LOC = "SLICE_X2Y37" ;
-#
-# **** OUT_SEL **** (F, X, G, X)
-INST "PCI_CORE/PCI_LC/OUT_SEL/OSEL3"                       LOC = "SLICE_X2Y36" ;
-INST "PCI_CORE/PCI_LC/OUT_SEL/OSEL_FF"                     LOC = "SLICE_X2Y36" ;
-INST "PCI_CORE/PCI_LC/OUT_SEL/OSEL4"                       LOC = "SLICE_X2Y36" ;
-INST "PCI_CORE/PCI_LC/OUT_SEL/OSEL64_FF"                   LOC = "SLICE_X2Y36" ;
-#
-# **** EOT **** (G, F, X)
-INST "PCI_CORE/PCI_LC/EOT/EOT0"                            LOC = "SLICE_X1Y36" ;
-INST "PCI_CORE/PCI_LC/EOT/EOT1"                            LOC = "SLICE_X1Y36" ;
-INST "PCI_CORE/PCI_LC/EOT/EOT_FF"                          LOC = "SLICE_X1Y36" ;
-#
-# **** NEWDATA **** (G, F, X)
-INST "PCI_CORE/PCI_LC/OUT_CE/ND1"                          LOC = "SLICE_X1Y40" ;
-INST "PCI_CORE/PCI_LC/OUT_CE/ND2"                          LOC = "SLICE_X1Y40" ;
-INST "PCI_CORE/PCI_LC/OUT_CE/NDFF"                         LOC = "SLICE_X1Y40" ;
-#
-# **** SOFTCE **** (G, F)
-INST "PCI_CORE/PCI_LC/OUT_CE/SOFT1"                        LOC = "SLICE_X1Y41" ;
-INST "PCI_CORE/PCI_LC/OUT_CE/SOFT2"                        LOC = "SLICE_X1Y41" ;
-#
-# **** PAR_CE **** (G, F, X)
-INST "PCI_CORE/PCI_LC/OUT_CE/ZCEB1"                        LOC = "SLICE_X2Y42" ;
-INST "PCI_CORE/PCI_LC/OUT_CE/ZCEB2"                        LOC = "SLICE_X2Y42" ;
-INST "PCI_CORE/PCI_LC/OUT_CE/PAR_CE"                       LOC = "SLICE_X2Y42" ;
-#
-################################################################################
-# Placement Constraints For Target Live Logic
-################################################################################
-#
-# **** PWIN **** (G, F, X, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PWIN1"                      LOC = "SLICE_X2Y43" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PWIN2"                      LOC = "SLICE_X2Y43" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PWIN_FF"                    LOC = "SLICE_X2Y43" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PWIN64_FF"                  LOC = "SLICE_X2Y43" ;
-#
-# **** S_FIRST **** (G, F, X)
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/SF3"      LOC = "SLICE_X1Y44" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/SF4"      LOC = "SLICE_X1Y44" ;
-INST "PCI_CORE/PCI_LC/PCI-CNTL/PCI-OFCN/PCI-TRDY/S1FF"     LOC = "SLICE_X1Y44" ;
-#
-################################################################################
-# Placement Constraints For Initiator Live Logic
-################################################################################
-#
-# **** S_TAR **** (G, X)
-INST "PCI_CORE/PCI_LC/MASTER/S_TAR/S_TAR_MAP"              LOC = "SLICE_X2Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/S_TAR/S_TAR"                  LOC = "SLICE_X2Y39" ;
-#
-# **** FRAME TURN_ON **** (G)
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME2"                 LOC = "SLICE_X1Y43" ;
-#
-# **** REQ64 TURN_ON **** (G)
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ642"                 LOC = "SLICE_X1Y35" ;
-#
-# **** M_FIRST **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/MF1"                     LOC = "SLICE_X1Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/MF2"                     LOC = "SLICE_X1Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/IRDY/M1FF"                    LOC = "SLICE_X1Y45" ;
-#
-# **** FAIL64 **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/XFERFAIL/FAIL1"               LOC = "SLICE_X1Y37" ;
-INST "PCI_CORE/PCI_LC/MASTER/XFERFAIL/FAIL2"               LOC = "SLICE_X1Y37" ;
-INST "PCI_CORE/PCI_LC/MASTER/XFERFAIL/FAIL_FF"             LOC = "SLICE_X1Y37" ;
-#
-# **** I_IDLE **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/I_IDLE/IIDLE4"                LOC = "SLICE_X2Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/I_IDLE/IIDLE5"                LOC = "SLICE_X2Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/I_IDLE/I_IDLE_FF"             LOC = "SLICE_X2Y44" ;
-#
-# **** ADDR_BE **** (G, F, X, G, X)
-INST "PCI_CORE/PCI_LC/MASTER/ADDR/ADDR"                    LOC = "SLICE_X2Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/ADDR/ABE"                     LOC = "SLICE_X3Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/ADDR/ABE_FF"                  LOC = "SLICE_X3Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/ADDR/MAN"                     LOC = "SLICE_X3Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/ADDR/MAN_FF"                  LOC = "SLICE_X3Y45" ;
-#
-# **** DR_BUS **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/DR_BUS/DRB6"                  LOC = "SLICE_X2Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/DR_BUS/DRB9"                  LOC = "SLICE_X2Y45" ;
-INST "PCI_CORE/PCI_LC/MASTER/DR_BUS/DR_BUS_FF"             LOC = "SLICE_X2Y45" ;
-#
-# **** M_DATA **** (G, F, X, X)
-INST "PCI_CORE/PCI_LC/MASTER/M_DATA/MDA1"                  LOC = "SLICE_X3Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/M_DATA/MDA2"                  LOC = "SLICE_X3Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/M_DATA/M_DATA"                LOC = "SLICE_X3Y44" ;
-INST "PCI_CORE/PCI_LC/MASTER/M_DATA/M_DATA1"               LOC = "SLICE_X3Y44" ;
-#
-# **** PRE-SLOT (HAS GNT) **** (F, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT32_1"            LOC = "SLICE_X2Y38" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT32_3"            LOC = "SLICE_X2Y38" ;
-#
-# **** SLOT (PUT NEAR START_AD) **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT32_2"            LOC = "SLICE_X3Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT32_4"            LOC = "SLICE_X3Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT_FF"             LOC = "SLICE_X3Y39" ;
-#
-# **** PRE-SLOT64 (HAS GNT) **** (F, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT64_1"            LOC = "SLICE_X2Y40" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT64_3"            LOC = "SLICE_X2Y40" ;
-#
-# **** SLOT64 (PUT NEAR START_AD) **** (G, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT64_2"            LOC = "SLICE_X3Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT64_4"            LOC = "SLICE_X3Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SLOT64_FF"           LOC = "SLICE_X3Y41" ;
-#
-# **** START_AD **** (G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SAD1"                LOC = "SLICE_X3Y38" ;
-#
-# **** START_AD64 **** (G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/SAD2"                LOC = "SLICE_X3Y40" ;
-#
-################################################################################
-# Placement Constraints For Parity / Byte Enable / Datapath "OE" Functions
-################################################################################
-#
-# **** OE_T64 **** (G, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_1"              LOC = "SLICE_X5Y40" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_2"              LOC = "SLICE_X4Y40" ;
-#
-# **** OE_LT64 **** (F, F)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_3"              LOC = "SLICE_X5Y40" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_4"              LOC = "SLICE_X4Y40" ;
-#
-# **** OE_LB64 **** (G, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_5"              LOC = "SLICE_X5Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_6"              LOC = "SLICE_X4Y41" ;
-#
-# **** OE_B64 **** (F, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_7"              LOC = "SLICE_X5Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA64_8"              LOC = "SLICE_X4Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/H_PAR_OE"            LOC = "SLICE_X4Y41" ;
-#
-# **** OE_CBE64 **** (F, F)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OC64_1"              LOC = "SLICE_X2Y41" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OC64_2"              LOC = "SLICE_X3Y40" ;
-#
-# **** OE_T **** (G, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_1"              LOC = "SLICE_X5Y38" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_2"              LOC = "SLICE_X4Y38" ;
-#
-# **** OE_LT **** (F, F)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_3"              LOC = "SLICE_X5Y38" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_4"              LOC = "SLICE_X4Y38" ;
-#
-# **** OE_LB **** (G, G)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_5"              LOC = "SLICE_X5Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_6"              LOC = "SLICE_X4Y39" ;
-#
-# **** OE_B **** (F, F, X)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_7"              LOC = "SLICE_X5Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OA32_8"              LOC = "SLICE_X4Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/L_PAR_OE"            LOC = "SLICE_X4Y39" ;
-#
-# **** OE_CBE **** (F, F)
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OC32_1"              LOC = "SLICE_X2Y39" ;
-INST "PCI_CORE/PCI_LC/MASTER/OE_FRAME/OC32_2"              LOC = "SLICE_X3Y38" ;
-#
-################################################################################
-# Placement Constraints For Less Important Things
-################################################################################
-#
-# **** DEVICE TIMEOUT A **** (F, G, F, G)
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME6"                 LOC = "SLICE_X2Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME8"                 LOC = "SLICE_X2Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME7"                 LOC = "SLICE_X2Y35" ;
-INST "PCI_CORE/PCI_LC/MASTER/FRAME/FRAME9"                 LOC = "SLICE_X2Y35" ;
-#
-# **** DEVICE TIMEOUT B **** (F, G, F, G)
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ646"                 LOC = "SLICE_X3Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ648"                 LOC = "SLICE_X3Y34" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ647"                 LOC = "SLICE_X3Y35" ;
-INST "PCI_CORE/PCI_LC/MASTER/REQ64/REQ649"                 LOC = "SLICE_X3Y35" ;
-#
-################################################################################
-# Clock Buffer Placement
-################################################################################
-#
-INST "PCI_CORE/XPCI_CKA"                                   LOC = "BUFGMUX7P"   ;
-#
-################################################################################
-# Netflag Attributes
-################################################################################
-#
-NET "PCI_CORE/PCI_LC/FRAME-"                                                 S ;
-NET "PCI_CORE/PCI_LC/REQ64-"                                                 S ;
-NET "PCI_CORE/PCI_LC/IRDY-"                                                  S ;
-NET "PCI_CORE/PCI_LC/DEVSEL-"                                                S ;
-NET "PCI_CORE/PCI_LC/ACK64-"                                                 S ;
-NET "PCI_CORE/PCI_LC/TRDY-"                                                  S ;
-NET "PCI_CORE/PCI_LC/STOP-"                                                  S ;
-NET "PCI_CORE/PCI_LC/PERR-"                                                  S ;
-NET "PCI_CORE/PCI_LC/SERR-"                                                  S ;
-#
-NET "PCI_CORE/PCI_LC/M_SRC_EN"                                               S ;
-NET "PCI_CORE/PCI_LC/S_SRC_EN"                                               S ;
-NET "PCI_CORE/PCI_LC/M_DATA_VLD"                                             S ;
-NET "PCI_CORE/PCI_LC/S_DATA_VLD"                                             S ;
-NET "PCI_CORE/PCI_LC/S_DATA"                                                 S ;
-NET "PCI_CORE/PCI_LC/M_DATA"                                                 S ;
-#
-NET "PCI_CORE/PCI_LC/M_ADDR_N"                                               S ;
-#
-################################################################################
-# I/O Time Names
-################################################################################
-#
-NET  "PCI_CORE/AD_IO<63>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<62>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<61>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<60>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<59>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<58>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<57>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<56>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<55>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<54>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<53>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<52>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<51>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<50>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<49>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<48>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<47>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<46>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<45>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<44>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<43>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<42>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<41>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<40>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<39>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<38>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<37>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<36>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<35>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<34>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<33>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<32>"                                TNM = PADS:PCI_PADS_D ;
-#
-NET  "PCI_CORE/SERR_IO"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/PERR_IO"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/PAR64_IO"                                 TNM = PADS:PCI_PADS_P ;
-NET  "PCI_CORE/CBE_IO<7>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<6>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<5>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<4>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/REQ_O"                                    TNM = PADS:PCI_PADS_G ;
-NET  "PCI_CORE/GNT_I"                                    TNM = PADS:PCI_PADS_G ;
-NET  "PCI_CORE/FRAME_IO"                                 TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/REQ64_IO"                                 TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/IRDY_IO"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/TRDY_IO"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/DEVSEL_IO"                                TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/ACK64_IO"                                 TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/STOP_IO"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/CBE_IO<3>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<2>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<1>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/CBE_IO<0>"                                TNM = PADS:PCI_PADS_B ;
-NET  "PCI_CORE/PAR_IO"                                   TNM = PADS:PCI_PADS_P ;
-NET  "PCI_CORE/IDSEL_I"                                  TNM = PADS:PCI_PADS_C ;
-NET  "PCI_CORE/INTA_O"                                   TNM = PADS:PCI_PADS_X ;
-NET  "PCI_CORE/RST_I"                                    TNM = PADS:PCI_PADS_X ;
-#
-NET  "PCI_CORE/AD_IO<31>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<30>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<29>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<28>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<27>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<26>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<25>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<24>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<23>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<22>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<21>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<20>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<19>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<18>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<17>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<16>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<15>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<14>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<13>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<12>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<11>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<10>"                                TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<9>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<8>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<7>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<6>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<5>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<4>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<3>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<2>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<1>"                                 TNM = PADS:PCI_PADS_D ;
-NET  "PCI_CORE/AD_IO<0>"                                 TNM = PADS:PCI_PADS_D ;
-#
-################################################################################
-# Special I/O Time Names
-################################################################################
-#
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO31/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO30/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO29/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO28/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO27/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO26/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO25/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO24/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO23/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO22/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO21/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO20/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO19/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO18/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO17/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO16/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO15/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO14/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO13/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO12/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO11/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO10/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO9/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO8/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO7/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO6/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO5/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO4/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO3/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO2/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO1/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD64/IO0/OFD"                  TNM = FFS:PCI_FFS_OCE ;
-#
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO3/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO2/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO1/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE64/IO0/OFD"                 TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO3/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO2/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO1/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-CBE/IO0/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-#
-INST "PCI_CORE/PCI_LC/PCI-AD/IO31/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO30/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO29/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO28/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO27/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO26/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO25/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO24/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO23/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO22/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO21/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO20/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO19/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO18/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO17/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO16/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO15/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO14/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO13/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO12/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO11/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO10/OFD"                   TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO9/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO8/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO7/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO6/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO5/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO4/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO3/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO2/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO1/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-INST "PCI_CORE/PCI_LC/PCI-AD/IO0/OFD"                    TNM = FFS:PCI_FFS_OCE ;
-#
-INST "PCI_CORE/XPCI_ADQ63"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ62"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ61"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ60"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ59"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ58"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ57"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ56"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ55"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ54"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ53"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ52"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ51"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ50"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ49"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ48"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ47"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ46"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ45"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ44"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ43"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ42"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ41"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ40"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ39"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ38"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ37"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ36"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ35"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ34"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ33"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ32"                               TNM = FFS:PCI_FFS_ICE ;
-#
-INST "PCI_CORE/XPCI_CBQ7"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ6"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ5"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ4"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ3"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ2"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ1"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_CBQ0"                                TNM = FFS:PCI_FFS_ICE ;
-#
-INST "PCI_CORE/XPCI_ADQ31"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ30"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ29"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ28"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ27"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ26"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ25"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ24"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ23"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ22"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ21"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ20"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ19"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ18"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ17"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ16"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ15"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ14"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ13"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ12"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ11"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ10"                               TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ9"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ8"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ7"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ6"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ5"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ4"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ3"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ2"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ1"                                TNM = FFS:PCI_FFS_ICE ;
-INST "PCI_CORE/XPCI_ADQ0"                                TNM = FFS:PCI_FFS_ICE ;
-#
-################################################################################
-# Time Groups
-################################################################################
-#
-INST "PCI_CORE" TNM = FFS:PCIM_FFS ;
-TIMEGRP "ALL_FFS" = "PCIM_FFS" : "USER_FFS" ;
-TIMEGRP "FAST_FFS" = "PCI_FFS_ICE" : "PCI_FFS_OCE" ;
-TIMEGRP "SLOW_FFS" = "ALL_FFS" : EXCEPT : "FAST_FFS" ;
-#
-################################################################################
-# Time Specs
-################################################################################
-#
-# Important Note:  The timespecs used in this section cover all possible
-# paths.  Depending on the design options, some of the timespecs may
-# not contain any paths.  Such timespecs are ignored by PAR and TRCE.
-#
-#             1) Clock to Output        =       6.000 ns
-#             2) Setup                  =       3.000 ns
-#             3) Grant Setup            =       5.000 ns
-#             4) Datapath Tristate      =      14.000 ns
-#             5) Period                 =      15.000 ns
-#
-# Note:  Timespecs are derived from the PCI Bus Specification.  Use of
-# offset constraints allows the timing tools to automatically include
-# the clock delay estimates.  These constraints are for 66 MHz operation.
-#
-# The following timespecs are for setup.
-#
+-- **************************************
+--               INREVIUM                
+-- **************************************
 
-TIMEGRP "PCI_PADS_D" OFFSET = IN   3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;
-TIMEGRP "PCI_PADS_B" OFFSET = IN   3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;
-TIMEGRP "PCI_PADS_P" OFFSET = IN   3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;
-TIMEGRP "PCI_PADS_C" OFFSET = IN   3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;
-TIMEGRP "PCI_PADS_G" OFFSET = IN   5.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;
-# TIMEGRP "PCI_PADS_D" OFFSET = IN   3.000 VALID  3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;       # 0805DL UCF
-# TIMEGRP "PCI_PADS_B" OFFSET = IN   3.000 VALID  3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;       # 0805DL UCF
-# TIMEGRP "PCI_PADS_P" OFFSET = IN   3.000 VALID  3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;       # 0805DL UCF
-# TIMEGRP "PCI_PADS_C" OFFSET = IN   3.000 VALID  3.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;       # 0805DL UCF
-# TIMEGRP "PCI_PADS_G" OFFSET = IN   5.000 VALID  5.000 BEFORE "PCLK" TIMEGRP "ALL_FFS"  ;       # 0805DL UCF
-
-#
-# The following timespecs are for clock to out where stepping is not used.
-#
-TIMEGRP "PCI_PADS_D" OFFSET = OUT  6.000 AFTER  "PCLK" TIMEGRP "FAST_FFS" ;
-TIMEGRP "PCI_PADS_B" OFFSET = OUT  6.000 AFTER  "PCLK" TIMEGRP "FAST_FFS" ;
-TIMEGRP "PCI_PADS_P" OFFSET = OUT  6.000 AFTER  "PCLK" TIMEGRP "FAST_FFS" ;
-TIMEGRP "PCI_PADS_C" OFFSET = OUT  6.000 AFTER  "PCLK" TIMEGRP "ALL_FFS"  ;
-TIMEGRP "PCI_PADS_G" OFFSET = OUT  6.000 AFTER  "PCLK" TIMEGRP "ALL_FFS"  ;
-#
-# The following timespecs are for clock to out where stepping is used.
-#
-TIMEGRP "PCI_PADS_D" OFFSET = OUT 14.000 AFTER  "PCLK" TIMEGRP "SLOW_FFS" ;
-TIMEGRP "PCI_PADS_B" OFFSET = OUT 14.000 AFTER  "PCLK" TIMEGRP "SLOW_FFS" ;
-TIMEGRP "PCI_PADS_P" OFFSET = OUT 14.000 AFTER  "PCLK" TIMEGRP "SLOW_FFS" ;
-#
-# The following timespec is for the period.
-#
-NET "PCLK" PERIOD = 15.000 ;
-#
-################################################################################
-# User Time Names / User Time Groups
-################################################################################
-#
-# Note:  Change the instance name for the user application to match the
-# instance name in your custom design.  The example design, used here,
-# is called Ping.  This timegroup is used to form other timegroups needed
-# for the interface.  Do not remove it.  Flip flops in this group will be
-# constrained to operate at the nominal PCI Bus clock frequency.  If the
-# user application is partially asynchronous to the PCI Bus clock, this
-# timegroup must minimally contain the flip flops which are synchronous.
-#
-##INST "PING64_INST" TNM = FFS:USER_FFS ;
-TIMEGRP "USER_FFS" = FFS : EXCEPT : "PCIM_FFS" ;
-#
-# You may add further time names and time groups specific to your custom
-# design as long as the do not interfere with the timegroups and time
-# specs used for the interface.
-#
-################################################################################
-# User Time Specs
-################################################################################
-#
-NET "CK66_DCM"	PERIOD = 15.000 ;
-NET "CK66"	PERIOD = 15.000 ;
-
-################################################################################
-# Timing specification
-################################################################################
-NET "CLK"							TNM_NET = "CLK";
-TIMESPEC "TS_100" = FROM "CLK" TO "CLK"	15 ns;
-
-#NET "PCLK"							TNM_NET = "PCLK";
-#TIMESPEC "TS_PCLK" = PERIOD "PCLK" 7.5 ns HIGH 50 %;
+--------------------------------------------------------------------------------
+-- Copyright(C) 2004 - TOKYO ELECTRON DEVICE LIMITED. All rigths reserved.
+--------------------------------------------------------------------------------
+-- PCI_DMACNT MODEL
+--------------------------------------------------------------------------------
+-- Internal Register Control Module
+--------------------------------------------------------------------------------
+-- File                      : pci_dmacnt.vhd
+-- Entity                    : PCI_DMACNT
+-- Architecture              : PCI_DMACNT_rtl
+--------------------------------------------------------------------------------
+-- Project Navigator version : ISE6.2.03i
+-- Design Flow               : XST
+--------------------------------------------------------------------------------
+-- Ver.     Data        Coded by        Contents
+-- 01.00    2004/08/10  TED)DDC         êVãK
+--------------------------------------------------------------------------------
 
 
-################################################################################
-# DCM settings
-################################################################################
-
-INST	"dcm_ps_f0/U_DCM"	DLL_FREQUENCY_MODE = LOW;
-INST	"dcm_ps_f0/U_DCM"	DUTY_CYCLE_CORRECTION = TRUE;
-INST	"dcm_ps_f0/U_DCM"	CLKOUT_PHASE_SHIFT = FIXED;
-INST	"dcm_ps_f0/U_DCM"	PHASE_SHIFT = 0;
-INST	"dcm_ps_f0/U_DCM"	STARTUP_WAIT = TRUE;
-
-################################################################################
-# I/O property
-################################################################################
-#
-
-#
-################################################################################
-# User Constraints (Pinout, Placement, Etc.)
-################################################################################
-#
-
-NET	"PLED_OUT<0>"		LOC = "W17";
-NET	"PLED_OUT<1>"		LOC = "Y17";
-NET	"PLED_OUT<2>"		LOC = "AA17";
-NET	"PLED_OUT<3>"		LOC = "AB17";
-NET	"LLED_OUT<0>"		LOC = "V16";
-NET	"LLED_OUT<1>"		LOC = "V15";
-NET	"LLED_OUT<2>"		LOC = "W16";
-NET	"LLED_OUT<3>"		LOC = "Y16";
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 
-#
-################################################################################
-# PGPG: PFPGA Configuration Constrains
-################################################################################
-#
-NET	"CFG_D<0>"				LOC = "U11";
-NET	"CFG_D<1>"				LOC = "U10";
-NET	"CFG_D<2>"				LOC = "AB10";
-NET	"CFG_D<3>"				LOC = "AA10";
-NET	"CFG_D<4>"				LOC = "Y10";
-NET	"CFG_D<5>"				LOC = "W10";
-NET	"CFG_D<6>"				LOC = "V10";
-NET	"CFG_D<7>"				LOC = "V9";
-NET	"CFG_CCLK"				LOC = "AA9";
-NET	"CFG_PROG_B0"			LOC = "AB8";
-NET	"CFG_PROG_B1"			LOC = "V8";
-NET	"CFG_PROG_B2"			LOC = "AB6";
-NET	"CFG_PROG_B3"			LOC = "V6";
-NET	"CFG_CS_B0"				LOC = "Y8";
-NET	"CFG_CS_B1"				LOC = "AA7";
-NET	"CFG_CS_B2"				LOC = "Y6";
-NET	"CFG_CS_B3"				LOC = "AA5";
-NET	"CFG_RDWR_B"			LOC = "AB9";
-#  NET	"CFG_BUSY0"				LOC = "AA8";
-#  NET	"CFG_BUSY1"				LOC = "AB7";
-#  NET	"CFG_BUSY2"				LOC = "AA6";
-#  NET	"CFG_BUSY3"				LOC = "AB5";
-NET	"CFG_INIT_B0"			LOC = "Y9";
-NET	"CFG_INIT_B1"			LOC = "W8";
-NET	"CFG_INIT_B2"			LOC = "Y7";
-NET	"CFG_INIT_B3"			LOC = "W6";
+entity PCI_DMACNT is
+	port (
+		RST 			: in	std_logic;							-- PCI Bus Reset
+		CLK 			: in	std_logic;							-- PCI bus Clock
 
+		FRAMEQ_N		: in	std_logic;							-- Latched FRAME# Signal
+		REQ64Q_N		: in	std_logic;							-- Latched REQ64# Signal
+		TRDYQ_N 		: in	std_logic;							-- Latched TRDY# Signal
+		IRDYQ_N 		: in	std_logic;							-- Latched IRDY# Signal
+		STOPQ_N 		: in	std_logic;							-- Latched STOP# Signal
+		DEVSELQ_N		: in	std_logic;							-- Latched DEVSEL# Signal
+		ACK64Q_N		: in	std_logic;							-- Latched ACK64# Signal
 
-NET	"CFG_D<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_D<7>"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_CCLK"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_PROG_B0"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_PROG_B1"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_PROG_B2"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_PROG_B3"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_CS_B0"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_CS_B1"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_CS_B2"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_CS_B3"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_RDWR_B"			IOSTANDARD	=	LVCMOS25;
-#  NET	"CFG_BUSY0"				IOSTANDARD	=	LVCMOS25;
-#  NET	"CFG_BUSY1"				IOSTANDARD	=	LVCMOS25;
-#  NET	"CFG_BUSY2"				IOSTANDARD	=	LVCMOS25;
-#  NET	"CFG_BUSY3"				IOSTANDARD	=	LVCMOS25;
-NET	"CFG_INIT_B0"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_INIT_B1"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_INIT_B2"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_INIT_B3"			IOSTANDARD	=	LVCMOS25;
-NET	"CFG_INIT_B0"			PULLUP;
-NET	"CFG_INIT_B1"			PULLUP;
-NET	"CFG_INIT_B2"			PULLUP;
-NET	"CFG_INIT_B3"			PULLUP;
+		ADIO			: inout std_logic_vector( 63 downto 0);		-- Internal Address/Data Bus
 
-#-----------------------------------------------------------
-NET	"PFPGA_RST<0>"				LOC = "Y22";
-NET	"PFPGA_RST<1>"				LOC = "Y21";
-NET	"PFPGA_RST<2>"				LOC = "W20";
-NET	"PFPGA_RST<3>"				LOC = "AA20";
+		REQUEST 		: out	std_logic;							-- REQ# Signal Assert Request
+		REQUEST64		: out	std_logic;							-- REQ64# Signal Assert Request
+		REQUESTHOLD 	: out	std_logic;							-- Extended REQ# Signal Assert Request (Not Use)
+		COMPLETE		: out	std_logic;							-- Initiator Transaction End Signal
 
-NET	"PFPGA_RST<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"PFPGA_RST<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"PFPGA_RST<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"PFPGA_RST<3>"				IOSTANDARD	=	LVCMOS25;
-#-----------------------------------------------------------
-NET	"CK66_IFPGA"				LOC = "T18";
-NET	"CK66"					LOC = "Y11";
-NET	"CK66_PFPGA0"				LOC = "U22";
-NET	"CK66_PFPGA1"				LOC = "U21";
-NET	"CK66_PFPGA2"				LOC = "U20";
-NET	"CK66_PFPGA3"				LOC = "U19";
+		M_WRDN			: out	std_logic;							-- Initiator Transaction Data Direction (0:Write, 1:Read)
+		M_READY 		: out	std_logic;							-- Initiator Transaction Data Transfer Ready Siganl
+		M_SRC_EN		: in	std_logic;							-- Initiator Transaction Data Source Enable
+		M_DATA_VLD		: in	std_logic;							-- Initiator Transaction Data Phase Valid Signal
+		M_CBE			: out	std_logic_vector(  7 downto 0);		-- Initiator Command & Byte Enable Signal
 
-NET	"CK66_IFPGA"				IOSTANDARD	=	LVCMOS25;
-NET	"CK66"					IOSTANDARD	=	LVCMOS25;
-NET	"CK66_PFPGA0"				IOSTANDARD	=	LVCMOS25;
-NET	"CK66_PFPGA1"				IOSTANDARD	=	LVCMOS25;
-NET	"CK66_PFPGA2"				IOSTANDARD	=	LVCMOS25;
-NET	"CK66_PFPGA3"				IOSTANDARD	=	LVCMOS25;
+		TIME_OUT		: in	std_logic;							-- Latency Timer Timeout Signal
+		M_FAIL64		: in	std_logic;							-- 64 bit Transaction Fail Signal
+		CFG_SELF		: out	std_logic;							-- Self Configuration Start Signal
 
-NET	"CK66_PFPGA0"				FAST;
-NET	"CK66_PFPGA1"				FAST;
-NET	"CK66_PFPGA2"				FAST;
-NET	"CK66_PFPGA3"				FAST;
-NET	"CK66_IFPGA"				FAST;
+		M_DATA			: in	std_logic;							-- Data Transfer State
+		DR_BUS			: in	std_logic;							-- Bus Park State
+		I_IDLE			: in	std_logic;							-- Initiator Idle State
+		M_ADDR_N		: in	std_logic;							-- Initiator Address State
 
+		PERRQ_N 		: in	std_logic;							-- latched PERR# Signal
+		SERRQ_N 		: in	std_logic;							-- Latched SERR# Signal
 
-#-----------------------------------------------------------
-#  CBUS
-#-----------------------------------------------------------
-NET	"CBUS0<0>"				LOC = "C12";
-NET	"CBUS0<1>"				LOC = "B12";
-NET	"CBUS0<2>"				LOC = "A13";
-NET	"CBUS0<3>"				LOC = "B13";
-NET	"CBUS0<4>"				LOC = "C13";
-NET	"CBUS0<5>"				LOC = "D13";
-NET	"CBUS0<6>"				LOC = "E13";
-NET	"CBUS0<7>"				LOC = "E14";
-NET	"CBUS1<0>"				LOC = "A14";
-NET	"CBUS1<1>"				LOC = "B14";
-NET	"CBUS1<2>"				LOC = "C14";
-NET	"CBUS1<3>"				LOC = "D14";
-NET	"CBUS1<4>"				LOC = "A15";
-NET	"CBUS1<5>"				LOC = "B15";
-NET	"CBUS1<6>"				LOC = "C15";
-NET	"CBUS1<7>"				LOC = "D15";
-NET	"CBUS2<0>"				LOC = "M17";
-NET	"CBUS2<1>"				LOC = "N17";
-NET	"CBUS2<2>"				LOC = "N22";
-NET	"CBUS2<3>"				LOC = "N21";
-NET	"CBUS2<4>"				LOC = "N20";
-NET	"CBUS2<5>"				LOC = "N19";
-NET	"CBUS2<6>"				LOC = "N18";
-NET	"CBUS2<7>"				LOC = "P18";
-NET	"CBUS3<0>"				LOC = "P22";
-NET	"CBUS3<1>"				LOC = "P21";
-NET	"CBUS3<2>"				LOC = "P20";
-NET	"CBUS3<3>"				LOC = "P19";
-NET	"CBUS3<4>"				LOC = "R22";
-NET	"CBUS3<5>"				LOC = "R21";
-NET	"CBUS3<6>"				LOC = "R20";
-NET	"CBUS3<7>"				LOC = "R19";
+		CSR 			: in	std_logic_vector( 39 downto 0);		-- Command/Status Register State
+		CFG 			: in	std_logic_vector(255 downto 0);		-- Confiuration Data
 
-NET	"CBUS0<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS0<7>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS1<7>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS2<7>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"CBUS3<7>"				IOSTANDARD	=	LVCMOS25;
+	-- DMA Register R/W ports
+		DMAREG_AD		: in	std_logic_vector( 7 downto 0);		-- PCI_DMACNT R/W Address
+		DMAREG_WE		: in	std_logic;							-- PCI_DMACNT Write Enable
+		DMAREG_RE		: in	std_logic;							-- PCI_DMACNT Read Enable
+		DMAREG_DTI		: in	std_logic_vector(31 downto 0);		-- PCI_DMACNT Write Data
+		DMAREG_DTO		: out	std_logic_vector(31 downto 0);		-- PCI_DMACNT Read Data
+		DMAREG_DTOEN	: out	std_logic;							-- PCI_DMACNT Read Data Enable
 
-######## 2004/11/20  #########################################
-### LOCAL DMA (R/W) ENABLE (OUTPUT)
-NET	"CBUS0<0>"				FAST;
-NET	"CBUS0<1>"				FAST;
-NET	"CBUS0<0>"				IOB = TRUE ;
-NET	"CBUS0<1>"				IOB = TRUE ;
+	-- Internal DMA Access Control Signal
+		DMA_ADRS		: out	std_logic_vector(31 downto 0);		-- Internal Memory DMA Access Address
 
-NET	"CBUS1<0>"				FAST;
-NET	"CBUS1<1>"				FAST;
-NET	"CBUS1<0>"				IOB = TRUE ;
-NET	"CBUS1<1>"				IOB = TRUE ;
+		DMA_WRDT		: out	std_logic_vector(63 downto 0);		-- Internal Memory DMA Access Write Data
+		DMA_WRT			: out	std_logic_vector( 7 downto 0);		-- Internal Memory DMA Access Write Signal
+		DMA_READ		: out	std_logic;							-- Internal Memory DMA Access Read  Signal
 
-NET	"CBUS2<0>"				FAST;
-NET	"CBUS2<1>"				FAST;
-NET	"CBUS2<0>"				IOB = TRUE ;
-NET	"CBUS2<1>"				IOB = TRUE ;
+		FIFO_RDDT		: in	std_logic_vector(63 downto 0);		-- FIFO Read Data
+		FIFO_RDTEN		: in	std_logic;							-- FIFO Read Data Enable Signel
 
-NET	"CBUS3<0>"				FAST;
-NET	"CBUS3<1>"				FAST;
-NET	"CBUS3<0>"				IOB = TRUE ;
-NET	"CBUS3<1>"				IOB = TRUE ;
+		DMATRNS_ENB		: out	std_logic;							-- PCI DMA Transfer Enable
 
-### PIPE STATUS LINES(INPUT)
-NET	"CBUS0<7>"				FAST;
-NET	"CBUS0<7>"				IOB = TRUE ;
-## NET	"CBUS1<7>"				FAST;
-## NET	"CBUS1<7>"				IOB = TRUE ;
-## NET	"CBUS2<7>"				FAST;
-## NET	"CBUS2<7>"				IOB = TRUE ;
-## NET	"CBUS3<7>"				FAST;
-## NET	"CBUS3<7>"				IOB = TRUE ;
+		DMAEND_INT		: out	std_logic;					  		-- DMA End Interrupt On Request
 
 
 
-#-----------------------------------------------------------
-#  DBUS
-#-----------------------------------------------------------
-NET	"DBUS<0>"				LOC = "F14";
-NET	"DBUS<1>"				LOC = "E15";
-NET	"DBUS<2>"				LOC = "A16";
-NET	"DBUS<3>"				LOC = "B16";
-NET	"DBUS<4>"				LOC = "C16";
-NET	"DBUS<5>"				LOC = "D16";
-NET	"DBUS<6>"				LOC = "E16";
-NET	"DBUS<7>"				LOC = "E17";
-NET	"DBUS<8>"				LOC = "A17";
-NET	"DBUS<9>"				LOC = "B17";
-NET	"DBUS<10>"				LOC = "C17";
-NET	"DBUS<11>"				LOC = "D17";
-NET	"DBUS<12>"				LOC = "A18";
-NET	"DBUS<13>"				LOC = "B18";
-NET	"DBUS<14>"				LOC = "C18";
-NET	"DBUS<15>"				LOC = "D18";
-NET	"DBUS<16>"				LOC = "A19";
-NET	"DBUS<17>"				LOC = "B19";
-NET	"DBUS<18>"				LOC = "C21";
-NET	"DBUS<19>"				LOC = "C22";
-NET	"DBUS<20>"				LOC = "E18";
-NET	"DBUS<21>"				LOC = "F18";
-NET	"DBUS<22>"				LOC = "D21";
-NET	"DBUS<23>"				LOC = "D22";
-NET	"DBUS<24>"				LOC = "E19";
-NET	"DBUS<25>"				LOC = "E20";
-NET	"DBUS<26>"				LOC = "E21";
-NET	"DBUS<27>"				LOC = "E22";
-NET	"DBUS<28>"				LOC = "F19";
-NET	"DBUS<29>"				LOC = "F20";
-NET	"DBUS<30>"				LOC = "F21";
-NET	"DBUS<31>"				LOC = "F22";
-NET	"DBUS<32>"				LOC = "G18";
-NET	"DBUS<33>"				LOC = "H18";
-NET	"DBUS<34>"				LOC = "G19";
-NET	"DBUS<35>"				LOC = "G20";
-NET	"DBUS<36>"				LOC = "G21";
-NET	"DBUS<37>"				LOC = "G22";
-NET	"DBUS<38>"				LOC = "H19";
-NET	"DBUS<39>"				LOC = "H20";
-NET	"DBUS<40>"				LOC = "H21";
-NET	"DBUS<41>"				LOC = "H22";
-NET	"DBUS<42>"				LOC = "J17";
-NET	"DBUS<43>"				LOC = "J18";
-NET	"DBUS<44>"				LOC = "J19";
-NET	"DBUS<45>"				LOC = "J20";
-NET	"DBUS<46>"				LOC = "J21";
-NET	"DBUS<47>"				LOC = "J22";
-NET	"DBUS<48>"				LOC = "K17";
-NET	"DBUS<49>"				LOC = "K18";
-NET	"DBUS<50>"				LOC = "K19";
-NET	"DBUS<51>"				LOC = "K20";
-NET	"DBUS<52>"				LOC = "K21";
-NET	"DBUS<53>"				LOC = "K22";
-NET	"DBUS<54>"				LOC = "L17";
-NET	"DBUS<55>"				LOC = "L18";
-NET	"DBUS<56>"				LOC = "L19";
-NET	"DBUS<57>"				LOC = "L20";
-NET	"DBUS<58>"				LOC = "L21";
-NET	"DBUS<59>"				LOC = "L22";
-NET	"DBUS<60>"				LOC = "M21";
-NET	"DBUS<61>"				LOC = "M20";
-NET	"DBUS<62>"				LOC = "M19";
-NET	"DBUS<63>"				LOC = "M18";
-
-NET	"DBUS<0>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<1>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<2>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<3>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<4>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<5>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<6>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<7>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<8>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<9>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<10>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<11>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<12>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<13>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<14>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<15>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<16>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<17>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<18>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<19>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<20>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<21>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<22>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<23>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<24>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<25>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<26>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<27>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<28>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<29>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<30>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<31>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<32>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<33>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<34>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<35>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<36>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<37>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<38>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<39>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<40>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<41>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<42>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<43>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<44>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<45>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<46>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<47>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<48>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<49>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<50>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<51>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<52>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<53>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<54>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<55>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<56>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<57>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<58>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<59>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<60>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<61>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<62>"				IOSTANDARD	=	LVCMOS25;
-NET	"DBUS<63>"				IOSTANDARD	=	LVCMOS25;
-
-NET	"DBUS<0>"				FAST;
-NET	"DBUS<1>"				FAST;
-NET	"DBUS<2>"				FAST;
-NET	"DBUS<3>"				FAST;
-NET	"DBUS<4>"				FAST;
-NET	"DBUS<5>"				FAST;
-NET	"DBUS<6>"				FAST;
-NET	"DBUS<7>"				FAST;
-NET	"DBUS<8>"				FAST;
-NET	"DBUS<9>"				FAST;
-NET	"DBUS<10>"				FAST;
-NET	"DBUS<11>"				FAST;
-NET	"DBUS<12>"				FAST;
-NET	"DBUS<13>"				FAST;
-NET	"DBUS<14>"				FAST;
-NET	"DBUS<15>"				FAST;
-NET	"DBUS<16>"				FAST;
-NET	"DBUS<17>"				FAST;
-NET	"DBUS<18>"				FAST;
-NET	"DBUS<19>"				FAST;
-NET	"DBUS<20>"				FAST;
-NET	"DBUS<21>"				FAST;
-NET	"DBUS<22>"				FAST;
-NET	"DBUS<23>"				FAST;
-NET	"DBUS<24>"				FAST;
-NET	"DBUS<25>"				FAST;
-NET	"DBUS<26>"				FAST;
-NET	"DBUS<27>"				FAST;
-NET	"DBUS<28>"				FAST;
-NET	"DBUS<29>"				FAST;
-NET	"DBUS<30>"				FAST;
-NET	"DBUS<31>"				FAST;
-NET	"DBUS<32>"				FAST;
-NET	"DBUS<33>"				FAST;
-NET	"DBUS<34>"				FAST;
-NET	"DBUS<35>"				FAST;
-NET	"DBUS<36>"				FAST;
-NET	"DBUS<37>"				FAST;
-NET	"DBUS<38>"				FAST;
-NET	"DBUS<39>"				FAST;
-NET	"DBUS<40>"				FAST;
-NET	"DBUS<41>"				FAST;
-NET	"DBUS<42>"				FAST;
-NET	"DBUS<43>"				FAST;
-NET	"DBUS<44>"				FAST;
-NET	"DBUS<45>"				FAST;
-NET	"DBUS<46>"				FAST;
-NET	"DBUS<47>"				FAST;
-NET	"DBUS<48>"				FAST;
-NET	"DBUS<49>"				FAST;
-NET	"DBUS<50>"				FAST;
-NET	"DBUS<51>"				FAST;
-NET	"DBUS<52>"				FAST;
-NET	"DBUS<53>"				FAST;
-NET	"DBUS<54>"				FAST;
-NET	"DBUS<55>"				FAST;
-NET	"DBUS<56>"				FAST;
-NET	"DBUS<57>"				FAST;
-NET	"DBUS<58>"				FAST;
-NET	"DBUS<59>"				FAST;
-NET	"DBUS<60>"				FAST;
-NET	"DBUS<61>"				FAST;
-NET	"DBUS<62>"				FAST;
-NET	"DBUS<63>"				FAST;
-
-#### IOB ###
-NET	"DBUS<0>"				IOB = TRUE ;
-NET	"DBUS<1>"				IOB = TRUE ;
-NET	"DBUS<2>"				IOB = TRUE ;
-NET	"DBUS<3>"				IOB = TRUE ;
-NET	"DBUS<4>"				IOB = TRUE ;
-NET	"DBUS<5>"				IOB = TRUE ;
-NET	"DBUS<6>"				IOB = TRUE ;
-NET	"DBUS<7>"				IOB = TRUE ;
-NET	"DBUS<8>"				IOB = TRUE ;
-NET	"DBUS<9>"				IOB = TRUE ;
-NET	"DBUS<10>"				IOB = TRUE ;
-NET	"DBUS<11>"				IOB = TRUE ;
-NET	"DBUS<12>"				IOB = TRUE ;
-NET	"DBUS<13>"				IOB = TRUE ;
-NET	"DBUS<14>"				IOB = TRUE ;
-NET	"DBUS<15>"				IOB = TRUE ;
-NET	"DBUS<16>"				IOB = TRUE ;
-NET	"DBUS<17>"				IOB = TRUE ;
-NET	"DBUS<18>"				IOB = TRUE ;
-NET	"DBUS<19>"				IOB = TRUE ;
-NET	"DBUS<20>"				IOB = TRUE ;
-NET	"DBUS<21>"				IOB = TRUE ;
-NET	"DBUS<22>"				IOB = TRUE ;
-NET	"DBUS<23>"				IOB = TRUE ;
-NET	"DBUS<24>"				IOB = TRUE ;
-NET	"DBUS<25>"				IOB = TRUE ;
-NET	"DBUS<26>"				IOB = TRUE ;
-NET	"DBUS<27>"				IOB = TRUE ;
-NET	"DBUS<28>"				IOB = TRUE ;
-NET	"DBUS<29>"				IOB = TRUE ;
-NET	"DBUS<30>"				IOB = TRUE ;
-NET	"DBUS<31>"				IOB = TRUE ;
-NET	"DBUS<32>"				IOB = TRUE ;
-NET	"DBUS<33>"				IOB = TRUE ;
-NET	"DBUS<34>"				IOB = TRUE ;
-NET	"DBUS<35>"				IOB = TRUE ;
-NET	"DBUS<36>"				IOB = TRUE ;
-NET	"DBUS<37>"				IOB = TRUE ;
-NET	"DBUS<38>"				IOB = TRUE ;
-NET	"DBUS<39>"				IOB = TRUE ;
-NET	"DBUS<40>"				IOB = TRUE ;
-NET	"DBUS<41>"				IOB = TRUE ;
-NET	"DBUS<42>"				IOB = TRUE ;
-NET	"DBUS<43>"				IOB = TRUE ;
-NET	"DBUS<44>"				IOB = TRUE ;
-NET	"DBUS<45>"				IOB = TRUE ;
-NET	"DBUS<46>"				IOB = TRUE ;
-NET	"DBUS<47>"				IOB = TRUE ;
-NET	"DBUS<48>"				IOB = TRUE ;
-NET	"DBUS<49>"				IOB = TRUE ;
-NET	"DBUS<50>"				IOB = TRUE ;
-NET	"DBUS<51>"				IOB = TRUE ;
-NET	"DBUS<52>"				IOB = TRUE ;
-NET	"DBUS<53>"				IOB = TRUE ;
-NET	"DBUS<54>"				IOB = TRUE ;
-NET	"DBUS<55>"				IOB = TRUE ;
-NET	"DBUS<56>"				IOB = TRUE ;
-NET	"DBUS<57>"				IOB = TRUE ;
-NET	"DBUS<58>"				IOB = TRUE ;
-NET	"DBUS<59>"				IOB = TRUE ;
-NET	"DBUS<60>"				IOB = TRUE ;
-NET	"DBUS<61>"				IOB = TRUE ;
-NET	"DBUS<62>"				IOB = TRUE ;
-NET	"DBUS<63>"				IOB = TRUE ;
+--################################
+--##    for Debug
+--################################
 
 
-#
-################################################################################
-# End
-################################################################################
+		DEBUG_OUT		: out	std_logic_vector( 7 downto 0)
+
+
+
+		);
+end PCI_DMACNT;
+
+
+architecture PCI_DMACNT_rtl of PCI_DMACNT is
+
+
+--------------------------------------------------------------------------------
+-- constant
+--------------------------------------------------------------------------------
+
+-- PCI Bus Control
+	constant c_MEMRD		: std_logic_vector(3 downto 0) := "0110";	-- Memory Read
+	constant c_MEMRD_L		: std_logic_vector(3 downto 0) := "1110";	-- Memory Read Line
+	constant c_MEMRD_M		: std_logic_vector(3 downto 0) := "1100";	-- Memory Read Multipul
+	constant c_MEMWRT		: std_logic_vector(3 downto 0) := "0111";	-- Memory Write
+	constant c_MEMWRT_IV	: std_logic_vector(3 downto 0) := "1111";	-- Memory Write Invalidate
+	constant c_IORD			: std_logic_vector(3 downto 0) := "0010";	-- I/O Read
+	constant c_IOWRT		: std_logic_vector(3 downto 0) := "0011";	-- I/O Write
+	constant c_CFGRD		: std_logic_vector(3 downto 0) := "1010";	-- Configuration Read
+	constant c_CFGWRT		: std_logic_vector(3 downto 0) := "1011";	-- Configuration Write
+	constant c_IACK			: std_logic_vector(3 downto 0) := "0000";	-- Interrupt Acknowledge Cycle
+	constant c_SPECIAL		: std_logic_vector(3 downto 0) := "0001";	-- Special Cycle
+	constant c_DUAL_ADRS	: std_logic_vector(3 downto 0) := "1101";	-- Dual Address Cycle
+
+
+--------------------------------------------------
+-- signals
+--------------------------------------------------
+
+-- Register Access Control Signal
+
+	signal REG_SEL		: std_logic_vector(10 downto  0);			-- Register Select Signal
+--	signal REG_SEL		: std_logic_vector( 5 downto  0);			-- Register Select Signal
+
+	signal PCIADRS_SEL	: std_logic;								-- DMA PCI Address Register Select
+	signal LOCALAD_SEL	: std_logic;								-- DMA Local Address Register Select
+	signal DMACUNT_SEL	: std_logic;								-- DMA Counter Register Select
+	signal DMACTRL_SEL	: std_logic;								-- DMA Control Register Select
+	signal DMAINTV_SEL	: std_logic;								-- DMA Interval Register Select
+	signal DMASTAT_SEL	: std_logic;								-- DMA Status Register Select
+
+	signal REGRD_CNT	: std_logic;								-- Register Read Timing Control Signal
+
+-- DMA PCI Address Register
+
+	signal PCIADRS_DT	: std_logic_vector(31 downto  2);			-- DMA PCI Address Register Data
+	signal PCIADRS_RDDT	: std_logic_vector(31 downto  0);			-- DMA PCI Address Register Read Data
+
+-- DMA Local Address Register
+
+	signal LOCALAD_DT	: std_logic_vector(23 downto  2);			-- General Register Data
+	signal LOCALAD_RDDT	: std_logic_vector(31 downto  0);			-- General Register Read Data
+
+-- DMA Counter Register
+
+	signal DMACUNT_DT	: std_logic_vector(23 downto  2);			-- DMA Counter Register Data
+	signal DMACUNT_RDDT	: std_logic_vector(31 downto  0);			-- DMA Counter Register Read Data
+
+-- DMA Control Register
+
+	signal DMASTAT_BIT	: std_logic;								-- DMA Start/Stop Control Bit
+	signal DMA64_BIT	: std_logic;								-- DMA Data Width Bit (0:32 bit. 1:64 bit)
+	signal DMAMODE_BIT	: std_logic_vector( 1 downto  0);			-- DMA Mode Bit
+	signal DMADIR_BIT	: std_logic;								-- DMA Direction Bit (0:MEM->PCI, 1:PCI->MEM)
+
+	signal DMACTRL_RDDT	: std_logic_vector(31 downto  0);			-- DMA Control Register Read Data
+
+-- DMA Interval Register
+
+	signal DMALNGTH_DT	: std_logic_vector(31 downto 16);			-- DMA Length Data
+	signal DMAINTV_DT	: std_logic_vector(15 downto  0);			-- DMA Interval Data
+
+	signal DMAINTV_RDDT	: std_logic_vector(31 downto  0);			-- DMA Interval Register Read Data
+
+-- DMA Status Register
+
+	signal DISCNCT_CUNT	: std_logic_vector(31 downto 16);			-- Disconnect Counter Data
+	signal RETRY_CUNT	: std_logic_vector(15 downto  0);			-- Retry Counter Data
+
+	signal DMASTAT_RDDT	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+-- DMA Transfer Control State Machine Signal
+
+	type DMA_STATE is  (
+			DMA_IDLE,												-- DMA Idle State
+			DMA_START,												-- DMA Transfer State State
+			DMA_REQON,												-- REQ#/REQ64# Signal Assert Request State
+			DMA_PRERD,												-- Memory Pre-Read Start Wait State for PCI WriteTtransaction
+			DMA_DTTRNS,												-- PCI Transaction End Wait State
+			DMA_RETRY,												-- PCI Retry Response Detect State
+			DMA_DISCONNECT,											-- PCI Disconnect Detect State
+			DMA_BRSTEND,											-- PCI One Transaction End State
+			DMA_END,												-- DMA Transaction End State
+			DMA_SDONE												-- PCI Initiator Transaction Error End State
+			);
+
+	signal DMA_current	: DMA_STATE;								-- DMA Transfer Current State
+	signal DMA_next		: DMA_STATE;								-- DMA Transfer Next State
+
+
+-- DMA Transfer Control Signal
+
+	signal PCICMD_DT	: std_logic_vector( 3 downto  0);			-- PCI Command for Initiator Access
+
+	signal DMA_PCIADRS	: std_logic_vector(31 downto  2);			-- DMA PCI Address Counter
+	signal DMA_MEMADRS	: std_logic_vector(23 downto  2);			-- DMA Memory Address Counter
+	signal DMA_PRDADRS	: std_logic_vector(23 downto  2);			-- DMA Memory Pre Read Address Counter
+
+	signal DMA_PRDCNT	: std_logic_vector( 2 downto  0);			-- DMA Memory Pre Read Signal Control Counter
+	signal DMA_PREREAD	: std_logic;								-- DMA Memory Pre Read Signal
+
+	signal DMA_DTCUNT	: std_logic_vector(23 downto  2);			-- DMA Data Counter
+	signal DMA_BSTCUNT	: std_logic_vector(15 downto  0);			-- DMA Transaction Burst Length Counter
+	signal DMA_INTVCUNT	: std_logic_vector(15 downto  0);			-- DMA Transaction Interval Timer Counter
+
+	signal LASTBLK_FLG	: std_logic;								-- DMA Last Transaction Flag
+	signal DMACUNT_END	: std_logic;								-- DMA Counter End Flag
+	signal CUNTCMP_FLG	: std_logic;								-- DMA/Burst Data Counter Compere Flag
+
+	signal INTVEND_FLG	: std_logic;								-- PCI Transaction Interval End Flag
+
+	signal PCI_REQ	 	: std_logic;								-- Internal REQ# Signal
+	signal PCI_REQ64	: std_logic;								-- Internal REQ64# Signal
+
+	signal NEAREND_FLG	: std_logic;								-- PCI Transaction Near End Flag
+
+	signal DMAEND_CNT1	: std_logic;								-- PCI Last 1 Transaction Flag
+	signal DMAEND_CNT2	: std_logic;								-- PCI Last 2 Transaction Flag
+	signal DMAEND_CNT3	: std_logic;								-- PCI Last 3 Transaction Flag
+
+	signal DMA_READY	: std_logic;								-- PCI Transaction Start Control Signal
+
+	signal DMA_RWAITCNT	: std_logic_vector( 2 downto  0);			-- PCI Read Transaction Start Check Control Signal
+	signal DMA_RWAIT	: std_logic;								-- PCI Read Transaction Start Delay Control Signal
+
+	signal DMA_WWAITCNT	: std_logic_vector( 2 downto  0);			-- PCI Write Transaction Start Check Control Signal
+	signal DMA_WWAIT0	: std_logic;								-- PCI Write Transaction Start Delay Control Signal
+	signal DMA_WWAIT1	: std_logic;								-- PCI Write Transaction Start Delay Control Signal
+
+	signal ASERT_CMPLTE	: std_logic;								-- COMPLETE Signal Assert Signal
+	signal HOLD_CMPLTE	: std_logic;								-- COMPLETE Signal Hold Signal
+
+	signal DMA_END1		: std_logic;								-- PCI Last 1 Transaction Signal
+	signal DMA_END2		: std_logic;								-- PCI Last 2 Transaction Signal
+	signal DMA_END3		: std_logic;								-- PCI Last 3 Transaction Signal
+
+	signal M_DATA_CHK	: std_logic;								-- M_DATA Signal Samplig Signal
+	signal M_DATA_FELL	: std_logic;								-- M_DATA Down Edge Detect Signal
+
+	signal PCI_RETRY	: std_logic;								-- PCI Retry Response Flag
+	signal PCI_DISCNCT	: std_logic;								-- PCI Disconnect Response Flag
+	signal PCI_TGABORT	: std_logic;								-- PCI Target Abort Response Flag
+
+	signal PCI_ENDST	: std_logic_vector( 2 downto 0);			-- PCI End Status									-- V00.01-1
+
+	signal DISCNCT_FLAG	: std_logic;								-- PCI Disconnect Check Flag						-- V00.01-2
+
+-- Internal Memory DMA Access Control Signal
+
+	signal DMA_WRENB	: std_logic;								-- Internal Memory DMA Write Access Enable
+	signal DMA_RDENB	: std_logic;								-- Internal Memory DMA Read  Access Enable
+
+
+
+
+
+
+--################################
+--##    for Debug
+--################################
+
+
+	signal DEBUG_OUTDT	: std_logic_vector( 7 downto 0);
+
+	signal DMASTAT_ON	: std_logic;								-- DMA Start/Stop Control Bit
+	signal DMASTAT_CHK	: std_logic;								-- DMA Start/Stop Control Bit
+
+	signal DMASTAT_CNT	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+	signal DMAON_TIME	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+	signal DMAPCI_TIME	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+	signal FRAMEN_CHK	: std_logic_vector( 2 downto  0);			-- Interrupt Mask Register Read Data
+	signal FRAME_CUNT	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+	signal TIMER_CUNT	: std_logic_vector(31 downto  0);			-- Free Run Counter
+
+
+
+
+
+begin
+
+
+--***************************************************************
+--*
+--*  Register Access Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- Register Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			REG_SEL <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			case DMAREG_AD(7 downto 2) is
+				when "001000" => REG_SEL <= "00000000001";					------ DMA PCI Address Register Select
+				when "001001" => REG_SEL <= "00000000010";					------ DMA Local Address Register Select
+				when "001010" => REG_SEL <= "00000000100";					------ DMA Counter Register Select
+				when "001011" => REG_SEL <= "00000001000";					------ DMA Control Register Select
+				when "001100" => REG_SEL <= "00000010000";					------ DMA Interval Register Select
+				when "001101" => REG_SEL <= "00000100000";					------ DMA Status Register Select
+				when "001110" => REG_SEL <= "00001000000";					------ DMA On Couter Control Register Select
+				when "001111" => REG_SEL <= "00010000000";					------ DMA On Counter Register Select
+				when "010000" => REG_SEL <= "00100000000";					------ DMA PCI On Counter Register Select
+				when "010001" => REG_SEL <= "01000000000";					------ DMA PCI Frame Counter Register Select
+				when "010100" => REG_SEL <= "10000000000";					------ Free Run Counter Register Select
+				when others   => REG_SEL <= "00000000000";					------ Register No Select
+			end case;
+		end if;
+	end process;
+
+
+
+--	process (RST,CLK) begin
+--		if (RST='1') then
+--			REG_SEL <= (others=>'0');
+--		elsif (CLK'event and CLK='1') then
+--			case DMAREG_AD(7 downto 2) is
+--				when "001000" => REG_SEL <= "000001";						------ DMA PCI Address Register Select
+--				when "001001" => REG_SEL <= "000010";						------ DMA Local Address Register Select
+--				when "001010" => REG_SEL <= "000100";						------ DMA Counter Register Select
+--				when "001011" => REG_SEL <= "001000";						------ DMA Control Register Select
+--				when "001100" => REG_SEL <= "010000";						------ DMA Interval Register Select
+--				when "001101" => REG_SEL <= "100000";						------ DMA Status Register Select
+--				when others   => REG_SEL <= "000000";						------ Register No Select
+--			end case;
+--		end if;
+--	end process;
+
+		 PCIADRS_SEL <= REG_SEL(0);											------ DMA PCI Address Register Select
+		 LOCALAD_SEL <= REG_SEL(1);											------ DMA Local Address Register Select
+		 DMACUNT_SEL <= REG_SEL(2);											------ DMA Counter Register Select
+		 DMACTRL_SEL <= REG_SEL(3);											------ DMA Control Register Select
+		 DMAINTV_SEL <= REG_SEL(4);											------ DMA Interval Register Select
+		 DMASTAT_SEL <= REG_SEL(5);											------ DMA Status Register Select
+
+--------------------------------------------------------------------------------
+-- Register Read Data Select Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAREG_DTO <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			case REG_SEL is
+				when "00000000001" => DMAREG_DTO <= PCIADRS_RDDT;			------ DMA PCI Address Register Read Data
+				when "00000000010" => DMAREG_DTO <= LOCALAD_RDDT;			------ General Register Read Data
+				when "00000000100" => DMAREG_DTO <= DMACUNT_RDDT;			------ DMA Counter Register Read Data
+				when "00000001000" => DMAREG_DTO <= DMACTRL_RDDT;			------ DMA Control Register Read Data
+				when "00000010000" => DMAREG_DTO <= DMAINTV_RDDT;			------ DMA Interval Register Read Data
+				when "00000100000" => DMAREG_DTO <= DMASTAT_RDDT;			------ Interrupt Mask Register Read Data
+				when "00001000000" => DMAREG_DTO <= DMASTAT_CNT;			------ DMA On Couter Control Register Read Data
+				when "00010000000" => DMAREG_DTO <= DMAON_TIME;				------ DMA On Counter Register Read Data
+				when "00100000000" => DMAREG_DTO <= DMAPCI_TIME;			------ DMA PCI On Counter Register Read Data
+				when "01000000000" => DMAREG_DTO <= FRAME_CUNT;				------ DMA PCI Frame Counter Register Read Data
+				when "10000000000" => DMAREG_DTO <= TIMER_CUNT;				------ Free Run Counter
+				when others        => DMAREG_DTO <= (others=>'0');			------ No Read Data
+			end case;
+		end if;
+	end process;
+
+
+
+--	process (RST,CLK) begin
+--		if (RST='1') then
+--			DMAREG_DTO <= (others=>'0');
+--		elsif (CLK'event and CLK='1') then
+--			case REG_SEL is
+--				when "000001" => DMAREG_DTO <= PCIADRS_RDDT;				------ DMA PCI Address Register Read Data
+--				when "000010" => DMAREG_DTO <= LOCALAD_RDDT;				------ General Register Read Data
+--				when "000100" => DMAREG_DTO <= DMACUNT_RDDT;				------ DMA Counter Register Read Data
+--				when "001000" => DMAREG_DTO <= DMACTRL_RDDT;				------ DMA Control Register Read Data
+--				when "010000" => DMAREG_DTO <= DMAINTV_RDDT;				------ DMA Interval Register Read Data
+--				when "100000" => DMAREG_DTO <= DMASTAT_RDDT;				------ Interrupt Mask Register Read Data
+--				when others   => DMAREG_DTO <= (others=>'0');				------ No Read Data
+--			end case;
+--		end if;
+--	end process;
+
+--------------------------------------------------------------------------------
+-- Register Read Data Signal Timing Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			REGRD_CNT <= '0';
+		elsif (CLK'event and CLK='1') then
+			REGRD_CNT <= DMAREG_RE;											------ Register Read Signal Shift
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Register Read Data Enable Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAREG_DTOEN <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (REGRD_CNT='1' and REG_SEL/="00000000") then					------ Register Read ?
+				DMAREG_DTOEN <= REGRD_CNT;									------ Register Read Data Available Signal Output
+			else
+				DMAREG_DTOEN <= '0';
+			end if;
+		end if;
+	end process;
+
+
+
+--	process (RST,CLK) begin
+--		if (RST='1') then
+--			DMAREG_DTOEN <= '0';
+--		elsif (CLK'event and CLK='1') then
+--			if (REGRD_CNT='1' and REG_SEL/="000000") then					------ Register Read ?
+--				DMAREG_DTOEN <= REGRD_CNT;									------ Register Read Data Available Signal Output
+--			else
+--				DMAREG_DTOEN <= '0';
+--			end if;
+--		end if;
+--	end process;
+
+
+--***************************************************************
+--*
+--*  Register Data Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- DMA PCI Address Register Data Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PCIADRS_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (PCIADRS_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				PCIADRS_DT <= DMAREG_DTI(31 downto 2);						------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+		PCIADRS_RDDT <= PCIADRS_DT & "00";									------ DMA PCI Address Register Read Data Set
+
+--------------------------------------------------------------------------------
+-- DMA Local Address Register Data Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			LOCALAD_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (LOCALAD_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				LOCALAD_DT <= DMAREG_DTI(23 downto 2);						------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+		LOCALAD_RDDT <= "00000000" & LOCALAD_DT & "00";						------ DMA Local Address Register Read Data Set
+
+--------------------------------------------------------------------------------
+-- DMA Counter Register Data Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMACUNT_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMACUNT_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMACUNT_DT <= DMAREG_DTI(23 downto 2);						------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+		DMACUNT_RDDT <= "00000000" & DMACUNT_DT & "00";						------ DMA Counter Register Read Data Set
+
+--------------------------------------------------------------------------------
+--  DMA Control Register Control Process
+--------------------------------------------------------------------------------
+
+--------------------------------------------------
+-- DMA Start/Stop Control Bit
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMASTAT_BIT <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMACTRL_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMASTAT_BIT <= DMAREG_DTI(0);								------ DMA Start/Stop Control Bit Set
+			elsif (DMA_current=DMA_END) then								------ DMA Transfer End ?
+				DMASTAT_BIT <= '0';											------ DMA Start/Stop Control Bit Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- DMA Data Width Control Bit
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA64_BIT <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMACTRL_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMA64_BIT <= DMAREG_DTI(1);									------ DMA Data Width Bit Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- DMA Mode Control Bit
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAMODE_BIT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMACTRL_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMAMODE_BIT <= DMAREG_DTI(3 downto 2);						------ DMA Mode Bit Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- DMA Direction Control Bit
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMADIR_BIT <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMACTRL_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMADIR_BIT <= DMAREG_DTI(4);								------ DMA Direction Bit Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- DMA Control Register Read Data Set
+--------------------------------------------------
+
+		DMACTRL_RDDT(31 downto  5) <= (others=>'0');						------ DMA Control Register Read Data
+		DMACTRL_RDDT( 4 downto  0) <= DMADIR_BIT & DMAMODE_BIT
+									& DMA64_BIT  & DMASTAT_BIT;				------ DMA Control Register Read Data Set
+
+--------------------------------------------------------------------------------
+-- DMA Interval Register Data Control Process
+--------------------------------------------------------------------------------
+
+--------------------------------------------------
+-- DMA Length Data Control
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMALNGTH_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMAINTV_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMALNGTH_DT <= DMAREG_DTI(31 downto 16);					------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- DMA Interval Data Control
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAINTV_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMAINTV_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMAINTV_DT <= DMAREG_DTI(15 downto 0);						------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+		DMAINTV_RDDT <= DMALNGTH_DT & DMAINTV_DT;							------ DMA Interval Register Read Data Set
+
+--------------------------------------------------------------------------------
+--  DMA Status Register Control Process
+--------------------------------------------------------------------------------
+
+--------------------------------------------------
+-- PCI Disconnect Counter Control
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DISCNCT_CUNT <= (others =>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				DISCNCT_CUNT <= (others =>'0');								------ Counter Initialize
+			elsif (DMA_current=DMA_DISCONNECT) then							------ PCI Disconnect Response ?
+				if (DISCNCT_CUNT/="1111111111111111") then					------ Counter Not Over Flow ?
+					DISCNCT_CUNT <= DISCNCT_CUNT+1;							------ Counter Increment
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------
+-- PCI Retry Counter Control
+--------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			RETRY_CUNT <= (others =>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				RETRY_CUNT <= (others =>'0');								------ Counter Initialize
+			elsif (DMA_current=DMA_RETRY) then								------ PCI Retry Response ?
+				if (RETRY_CUNT/="1111111111111111") then					------ Counter Not Over Flow ?
+					RETRY_CUNT <= RETRY_CUNT+1;								------ Counter Increment
+				end if;
+			end if;
+		end if;
+	end process;
+
+		DMASTAT_RDDT <= DISCNCT_CUNT & RETRY_CUNT;							------ DMA Status Register Read Data Set
+
+
+--***************************************************************
+--*
+--*  DMA Access Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- DMA Access State change
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_current <= DMA_IDLE;
+		elsif (CLK'event and CLK='1') then
+			DMA_current <= DMA_next;										------ DMA Access Next State Set
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- DMA Access Next State Calculate Process
+--------------------------------------------------------------------------------
+
+	process (DMA_current,DMASTAT_BIT,DMADIR_BIT,M_ADDR_N,M_DATA_FELL,
+				PCI_RETRY,PCI_DISCNCT,PCI_TGABORT,DMACUNT_END,INTVEND_FLG) begin
+
+		case DMA_current is
+			when DMA_IDLE =>												------ DMA_IDLE State
+				if (DMASTAT_BIT='1') then									------ DMA Start Set ?
+					DMA_next <= DMA_START;									------ Goto DMA_START State
+				else
+					DMA_next <= DMA_IDLE;									------ Stay DMA_IDLE State
+				end if;
+
+			when DMA_START =>												------ DMA_START State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				else
+					DMA_next <= DMA_REQON;									------ Goto DMA_REQON State
+				end if;
+
+			when DMA_REQON =>												------ DMA_REQON State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				elsif (DMADIR_BIT='0') then									------ DMA Write ?
+					DMA_next <= DMA_PRERD;									------ Goto DMA_PRERD State
+				else
+					DMA_next <= DMA_DTTRNS;									------ Goto DMA_DTTRNS State
+				end if;
+
+			when DMA_PRERD =>												------ DMA_PRERD State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				elsif (M_ADDR_N='0') then									------ PCI Transaction Start ?
+					DMA_next <= DMA_DTTRNS;									------ Goto DMA_DTTRNS State
+				else
+					DMA_next <= DMA_PRERD;									------ Stay DMA_PRERD State
+				end if;
+
+			when DMA_DTTRNS =>												------ DMA_DTTRNS State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				elsif (M_DATA_FELL='1') then								------ PCI Transaction End ?
+					if (PCI_RETRY='1' and DISCNCT_FLAG='0') then			------ PCI Retry Response On ?
+						DMA_next <= DMA_RETRY;								------ Goto DMA_RETRY State
+					elsif (PCI_RETRY='1' and DISCNCT_FLAG='1') then			------ PCI Disconnect without Data Response On ?
+						DMA_next <= DMA_DISCONNECT;							------ Goto DMA_DISCONNECT State
+					elsif (PCI_DISCNCT='1') then							------ PCI Disconnect with Data Response On ?
+						DMA_next <= DMA_DISCONNECT;							------ Goto DMA_DISCONNECT State
+					elsif (PCI_TGABORT='1') then							------ PCI Target Abort Response On ?
+						DMA_next <= DMA_SDONE;								------ Goto DMA_SDONE State
+					else													------ Normal Transaction End
+						DMA_next <= DMA_BRSTEND;							------ Goto DMA_BRSTEND State
+					end if;
+				else
+					DMA_next <= DMA_DTTRNS;									------ Stay DMA_DTTRNS State
+				end if;
+
+			when DMA_RETRY =>												------ DMA_RETRY State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				else
+					DMA_next <= DMA_REQON;									------ Goto DMA_REQON State
+				end if;
+
+			when DMA_DISCONNECT =>											------ DMA_DISCONNECT State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				else
+					DMA_next <= DMA_BRSTEND;								------ Goto DMA_BRSTEND State
+				end if;
+
+			when DMA_BRSTEND =>												------ DMA_BRSTEND State
+				if (DMASTAT_BIT='0') then									------ DMA Disabel ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				elsif (DMACUNT_END='1') then								------ DMA Transfer End ?
+					DMA_next <= DMA_END;									------ Goto DMA_END State
+				elsif (INTVEND_FLG='1') then								------ Transaction Interval Time End ?
+					DMA_next <= DMA_START;									------ Goto DMA_START State
+				else
+					DMA_next <= DMA_BRSTEND;								------ Stay DMA_BRSTEND State
+				end if;
+
+			when DMA_END =>													------ DMA_END State
+					DMA_next <= DMA_IDLE;									------ Goto GMCLR_IDLE State
+
+			when DMA_SDONE =>												------ DMA_SDONE State
+					DMA_next <= DMA_SDONE;									------ Goto DMA_SDONE State (Loop)
+
+			when others =>
+					DMA_next <= DMA_IDLE;									------ Goto GMCLR_IDLE State
+
+		end case;
+	end process;
+
+
+--------------------------------------------------------------------------------
+--  DMA Transfer PCI Address Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_PCIADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				DMA_PCIADRS <= PCIADRS_DT;									------ PCI Address Register Data Set
+			elsif (M_DATA_VLD='1') then										------ PCI Data Transfer ?
+				if (DMA64_BIT='1' and M_FAIL64='0') then					------ 64 bit Data Transfer ?
+					DMA_PCIADRS <= DMA_PCIADRS+2;							------ PCI Address Increment +2
+				else
+					DMA_PCIADRS <= DMA_PCIADRS+1;							------ PCI Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer Memory Address Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_MEMADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				DMA_MEMADRS <= LOCALAD_DT;									------ Memory Address Register Data Set
+			elsif (M_DATA_VLD='1') then										------ PCI Data Transfer ?
+				if (DMA64_BIT='1' and M_FAIL64='0') then					------ 64 bit Data Transfer ?
+					DMA_MEMADRS <= DMA_MEMADRS+2;							------ Memory Address Increment +2
+				else
+					DMA_MEMADRS <= DMA_MEMADRS+1;							------ Memory Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer Data Pre-Read Memory Address Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_PRDADRS <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				DMA_PRDADRS <= LOCALAD_DT;									------ Memory Address Register Data Set
+			elsif (DMA_current=DMA_START) then								------ PCI Transaction Start ?
+				DMA_PRDADRS <= DMA_MEMADRS;									------ Memory Address Register Data Set
+			elsif (M_SRC_EN='1' or DMA_PREREAD='1') then					------ PCI Data Transfer or Memory Pre-Read ?
+				if (DMA64_BIT='1' and M_FAIL64='0') then					------ 64 bit Data Transfer ?
+					DMA_PRDADRS <= DMA_PRDADRS+2;							------ Memory Address Increment +2
+				else
+					DMA_PRDADRS <= DMA_PRDADRS+1;							------ Memory Address Increment +1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer Data Pre-Read Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_PRDCNT <= "100";
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_PRERD and M_ADDR_N='0') then				------ PCI Write Transaction Start ?
+				DMA_PRDCNT <= "000";										------ Pre Read Counter Start
+			elsif (DMA_PRDCNT(2)='0') then									------ Before Counter Count up ?
+				DMA_PRDCNT <= DMA_PRDCNT+1;									------ Counter Increment
+			end if;
+		end if;
+	end process;
+
+		DMA_PREREAD <= (not DMA_PRDCNT(2)) or DMA_PRDCNT(1) or DMA_PRDCNT(0);	-- Memory Pre-Read Signal Set
+
+--------------------------------------------------------------------------------
+--  DMA Transfer Data Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_DTCUNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_IDLE and DMASTAT_BIT='1') then				------ DMA Transfer Start ?
+				DMA_DTCUNT <= DMACUNT_DT;									------ DMA Transfer Data Counter Register Data Set
+			elsif (M_DATA_VLD='1') then										------ PCI Data Transaction Valid ?
+				if (DMA64_BIT='1' and M_FAIL64='0') then					------ 64 bit Data Transfer ?
+					DMA_DTCUNT <= DMA_DTCUNT-2;								------ Counter Decrement -2
+				else
+					DMA_DTCUNT <= DMA_DTCUNT-1;								------ Counter Decrement -1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer Last Data Block Flag Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			LASTBLK_FLG <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMA_DTCUNT(23 downto 18)="000000") then						------ Counter High Block = 0 ?
+				LASTBLK_FLG <= '1';											------ Last Data Block Flag Set
+			else
+				LASTBLK_FLG <= '0';											------ Last Data Block Flag Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer End Flag Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMACUNT_END <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (LASTBLK_FLG='1'
+					and DMA_DTCUNT(17 downto 2)="0000000000000000") then	------ Counter High Block = 0 & Counter = 0 ?
+				DMACUNT_END <= '1';											------ Last Data Block Flag Set
+			else
+				DMACUNT_END <= '0';											------ Last Data Block Flag Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Data Counter/Burst Data Counter Compere Flag Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			CUNTCMP_FLG <= '0';
+		elsif (CLK'event and CLK='1') then
+			if ((DMA64_BIT='1' and (DMALNGTH_DT > DMA_DTCUNT(18 downto 3)))
+				or (DMA64_BIT='0' and (DMALNGTH_DT > DMA_DTCUNT(17 downto 2)))
+							or DMALNGTH_DT="0000000000000000") then			------ DMA Length > DMA Counter Low Block ?
+				CUNTCMP_FLG <= '1';											------ Counter Compere Flag Set
+			else
+				CUNTCMP_FLG <= '0';											------ Counter Compere Flag Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer PCI Transaction Data Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_BSTCUNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_REQON) then									------ PCI Transfer Start ?
+				if (LASTBLK_FLG='1' and CUNTCMP_FLG='1') then				------ Last Block Tranfer ?
+					if (DMA64_BIT='1') then									------ 64 bit Transfer ?
+						DMA_BSTCUNT <= DMA_DTCUNT(18 downto 3);				------ 64 bit Data Transfer Count Set
+					else
+						DMA_BSTCUNT <= DMA_DTCUNT(17 downto 2);				------ 32 bit Data Transfer Count Set
+					end if;
+				else
+						DMA_BSTCUNT <= DMALNGTH_DT;							------ DMA Length Register Data Set
+				end if;
+			elsif (DMA_current=DMA_PRERD and M_ADDR_N='0') then				------ PCI Write Transaction Start ?
+				if (DMA_BSTCUNT/="0000000000000000") then					------ Counter Not Zero ?
+					DMA_BSTCUNT <= DMA_BSTCUNT-1;							------ Counter Decrement -1
+				end if;
+			elsif (M_DATA_VLD='1') then										------ PCI Data Transaction Valid ?
+				if (DMA_BSTCUNT/="0000000000000000") then					------ Counter Not Zero ?
+					DMA_BSTCUNT <= DMA_BSTCUNT-1;							------ Counter Decrement -1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer PCI Transaction Interval Counter Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_INTVCUNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_REQON) then									------ PCI Transfer Start ?
+				DMA_INTVCUNT <= DMAINTV_DT(15 downto 0);					------ PCI Interval Counter Register Data Set
+			elsif (DMA_current=DMA_BRSTEND) then							------ PCI Transaction End ?
+				if (DMA_INTVCUNT/="0000000000000000") then					------ Counter Not Zero ?
+					DMA_INTVCUNT <= DMA_INTVCUNT-1;							------ Counter Decrement -1
+				end if;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer PCI Transaction Interval End Flag Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			INTVEND_FLG <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMA_INTVCUNT="0000000000000000") then						------ Counter = 0 ?
+				INTVEND_FLG <= '1';											------ Interval End Flag Set
+			else
+				INTVEND_FLG <= '0';											------ Interval End Flag Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA Transfer End Interrupt Signal Output Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAEND_INT <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMACUNT_END='1' and DMA_current=DMA_END) then				------ All Data DMA Transfer End ?
+				DMAEND_INT <= '1';									  		------ DMA End Interrupt On Assert
+			else
+				DMAEND_INT <= '0';									  		------ DMA End Interrupt On Negate
+			end if;
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  PCI Core Interface Control Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+--  PCI Bus Request Start Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PCI_REQ   <= '0';
+			PCI_REQ64 <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMA_current=DMA_REQON) then									------ PCI Transaction Start ?
+				if (DMA64_BIT='1') then										------ 64 bit Transfer ?
+					PCI_REQ   <= '0';										------ PCI 32 bit Transfer Start Clear
+					PCI_REQ64 <= '1';										------ PCI 64 bit Transfer Start Set
+				else
+					PCI_REQ   <= '1';										------ PCI 32 bit Transfer Start Set
+					PCI_REQ64 <= '0';										------ PCI 64 bit Transfer Start Clear
+				end if;
+			else
+				PCI_REQ   <= '0';
+				PCI_REQ64 <= '0';
+			end if;
+		end if;
+	end process;
+
+		REQUEST   <= PCI_REQ;
+		REQUEST64 <= PCI_REQ64;
+
+--------------------------------------------------------------------------------
+--  PCI Command for Initiator Aceess Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PCICMD_DT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMADIR_BIT='1') then										------ Initiator Data Read ?
+				case DMAMODE_BIT is
+					when "01"   => PCICMD_DT <= c_MEMRD;					------ Memory Read
+					when "10"   => PCICMD_DT <= c_MEMRD_L;					------ Memory Read Line
+					when "11"   => PCICMD_DT <= c_MEMRD_M;					------ Memory Read Multipul
+					when others =>
+				end case;
+			else															------ Initiator Data Write ?
+				case DMAMODE_BIT is
+					when "01"   => PCICMD_DT <= c_MEMWRT;					------ Memory Write
+					when "11"   => PCICMD_DT <= c_MEMWRT_IV;				------ Memory Write Invalidate
+					when others =>
+				end case;
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA PCI Address/Data Control Process
+--------------------------------------------------------------------------------
+
+	process (M_ADDR_N,M_DATA,DMADIR_BIT,DMA_PCIADRS,
+							DMA64_BIT,M_FAIL64,FIFO_RDDT) begin
+		if (M_ADDR_N='0') then												------ PCI Address State ?
+			ADIO(63 downto 32) <= (others=>'1');							------ PCI Access High Address Disable
+			ADIO(31 downto  0) <= DMA_PCIADRS & "00";						------ PCI Access Low Address Set
+		elsif (M_DATA='1' and DMADIR_BIT='0') then							------ PCI Data State & Data Write ?
+			if (DMA64_BIT='1' and M_FAIL64='0') then						------ 64 bit Data Transfer ?
+				ADIO <= FIFO_RDDT;											------ PCI 64 bit Write Data Set
+			else
+				ADIO(63 downto 32) <= (others=>'1');						------ PCI Access High Word Data Disable
+				ADIO(31 downto  0) <= FIFO_RDDT(31 downto 0);				------ PCI Access Low Write Data Set
+			end if;
+		else
+			ADIO  <= (others=>'Z');
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  DMA PCI CBE Signa Control Process
+--------------------------------------------------------------------------------
+
+	process (M_ADDR_N,M_DATA,PCICMD_DT) begin
+		if (M_ADDR_N='0') then												------ PCI Address State ?
+			M_CBE <= "1111" & PCICMD_DT;									------ PCI Command Set
+		elsif (M_DATA='1') then												------ PCI Data State ?
+			M_CBE <= (others=>'0');											------ PCI Byte Enable Set
+		else
+			M_CBE <= (others=>'1');
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI DMA Transfer Direction Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			M_WRDN <= '0';
+		elsif (CLK'event and CLK='1') then
+			M_WRDN <= (not DMADIR_BIT);										------ DMA Direction Bit Set
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Core M_READY Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_READY <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_BIT='1' and DMADIR_BIT='1') then					------ PCI Read Transaction ?
+				DMA_READY <= '1';											------ DMA_READY Signal Set
+			else
+				DMA_READY <= '0';											------ DMA_READY Signal Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Core M_READY Signal Output Control Process
+--------------------------------------------------------------------------------
+
+		M_READY <= (DMA_READY or FIFO_RDTEN) and DMASTAT_BIT;				------ M_READY Signal Output
+
+--------------------------------------------------------------------------------
+--  PCI Read Transaction Start Check Wait Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_RWAITCNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (M_ADDR_N='0') then											------ PCI Transaction Start ?
+				DMA_RWAITCNT <= (others=>'0');
+			elsif (DMADIR_BIT='1') then										------ PCI Read Transaction ?
+				DMA_RWAITCNT <= DMA_RWAITCNT(1 downto 0) & '1';				------ DMA_RWAITCNT Signal Shift
+			end if;
+		end if;
+	end process;
+
+		DMA_RWAIT <= DMA_RWAITCNT(1);
+
+--------------------------------------------------------------------------------
+--  PCI Write Transaction Start Check Wait Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_WWAITCNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (M_ADDR_N='0') then											------ PCI Transaction Start ?
+				DMA_WWAITCNT <= (others=>'0');
+			elsif (DMADIR_BIT='0') then										------ PCI Write Transaction ?
+				DMA_WWAITCNT <= DMA_WWAITCNT(1 downto 0) & FIFO_RDTEN;		------ FIFO_RDTEN Signal Shift
+			end if;
+		end if;
+	end process;
+
+		DMA_WWAIT0 <= DMA_WWAITCNT(0);
+		DMA_WWAIT1 <= DMA_WWAITCNT(1);
+
+--------------------------------------------------------------------------------
+--  PCI Bus Data Transaction End Check Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			M_DATA_CHK <= '0';
+		elsif (CLK'event and CLK='1') then
+			M_DATA_CHK <= M_DATA;											------ MDATA Signal Sampling
+		end if;
+	end process;
+
+		M_DATA_FELL <= (not M_DATA) and M_DATA_CHK;							------ PCI Data Transaction End Signal
+
+--------------------------------------------------------------------------------
+--  PCI Transaction Near End Flag Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			NEAREND_FLG <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMA_BSTCUNT(15 downto 3)="0000000000000") then				------ Counter High Block = 0 ?
+				NEAREND_FLG <= '1';											------ Transaction Near End Set
+			else
+				NEAREND_FLG <= '0';											------ Transaction Near End Clear
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Bus Data Transaction Last 1 Word Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (DMASTAT_BIT,NEAREND_FLG,DMA_BSTCUNT) begin
+		if (DMASTAT_BIT='1' and NEAREND_FLG='1'
+								and DMA_BSTCUNT(2 downto 0)="001") then		------ PCI Last 1 Transaction ?
+				DMAEND_CNT1 <= '1';											------ Last 1 Word Signal Set
+		else
+				DMAEND_CNT1 <= '0';											------ Last 1 Word Signal Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Bus Data Transaction Last 2 Word Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (DMASTAT_BIT,NEAREND_FLG,DMA_BSTCUNT) begin
+		if (DMASTAT_BIT='1' and NEAREND_FLG='1'
+								and DMA_BSTCUNT(2 downto 0)="010") then		------ PCI Last 2 Transaction ?
+				DMAEND_CNT2 <= '1';											------ Last 2 Word Signal Set
+		else
+				DMAEND_CNT2 <= '0';											------ Last 2 Word Signal Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Bus Data Transaction Last 3 Word Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (DMASTAT_BIT,NEAREND_FLG,DMA_BSTCUNT) begin
+		if (DMASTAT_BIT='1' and NEAREND_FLG='1'
+								and DMA_BSTCUNT(2 downto 0)="011") then		------ PCI Last 3 Transaction ?
+				DMAEND_CNT3 <= '1';											------ Last 3 Word Signal Set
+		else
+				DMAEND_CNT3 <= '0';											------ Last 3 Word Signal Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Bus Data Transaction End Signal Control Process
+--------------------------------------------------------------------------------
+
+		DMA_END1 <= DMAEND_CNT1 and (PCI_REQ or PCI_REQ64 or DMA_WWAIT0);		-- DMA Last 1 Transaction Signal
+		DMA_END2 <= DMAEND_CNT2 and M_DATA and (DMA_RWAIT or DMA_WWAIT1);		-- DMA Last 2 Transaction Signal
+		DMA_END3 <= DMAEND_CNT3	and M_DATA_VLD and (DMADIR_BIT or CFG(117));	-- DMA Last 3 Transaction Signal
+
+--------------------------------------------------------------------------------
+--  PCI Core COMPLETE Signal Control Process
+--------------------------------------------------------------------------------
+
+		ASERT_CMPLTE <= DMA_END1 or DMA_END2 or DMA_END3;					------ COMPLETE Signal Assert Signal
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			HOLD_CMPLTE <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (M_DATA_FELL='1') then										------ PCI Data Phase End ?
+				HOLD_CMPLTE <= '0';											------ COMPLETE Signal Hold Clear
+			elsif (ASERT_CMPLTE='1') then									------ COMPLETE Signal Assert ?
+				HOLD_CMPLTE <= '1';											------ COMPLETE Signal Hold Set
+			end if;
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+--  PCI Core COMPLETE Signal Output Control Process
+--------------------------------------------------------------------------------
+
+		COMPLETE <= ASERT_CMPLTE or HOLD_CMPLTE or (not DMASTAT_BIT);		------ COMPLETE Signal Output
+
+--------------------------------------------------------------------------------
+--  PCI Transaction End Status Signal Control Process
+--
+--	V00.01: 1. End Status Signal Generatre PCI_ENDST Condition Added
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			PCI_RETRY   <= '0';
+			PCI_DISCNCT <= '0';
+			PCI_TGABORT <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_BIT='1') then										------ DMA Start ?
+				if (M_ADDR_N='0') then										------ PCI Transaction Start ?
+					PCI_RETRY   <= '0';										------ Status Clear
+					PCI_DISCNCT <= '0';
+					PCI_TGABORT <= '0';
+				elsif (M_DATA='1' and PCI_ENDST="000") then					------ PCI Data Phase						-- V00.01-1
+--				elsif (M_DATA='1') then										------ PCI Data Phase
+					PCI_RETRY   <= CSR(36);									------ Status Latch
+					PCI_DISCNCT <= CSR(37);
+					PCI_TGABORT <= CSR(38) or CSR(39);
+				end if;
+			else
+					PCI_RETRY   <= '0';										------ Status Clear
+					PCI_DISCNCT <= '0';
+					PCI_TGABORT <= '0';
+			end if;
+		end if;
+	end process;
+
+		PCI_ENDST <= PCI_RETRY & PCI_DISCNCT & PCI_TGABORT;																-- V00.01-1
+
+
+--------------------------------------------------------------------------------
+--  PCI Disconnect/Retry Transaction Check Flag Control Process
+--
+--	V00.01: 2. This Process Added
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin																								-- V00.01-2
+		if (RST='1') then
+			DISCNCT_FLAG   <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (M_DATA='1') then											------ PCI Data Phase
+				if (TRDYQ_N='0') then										------ Data Transaction Start ?
+					DISCNCT_FLAG <= '1';									------ Flag Set
+				end if;
+			else
+					DISCNCT_FLAG <= '0';									------ Flag Clear
+			end if;
+		end if;
+	end process;
+
+
+--***************************************************************
+--*
+--*  Internal Memory DMA Access Control Signal Generate Block
+--*
+--***************************************************************
+
+--------------------------------------------------------------------------------
+-- BAR1(Internal Memory) R/W Select Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMA_WRENB <= '0';
+			DMA_RDENB <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (M_ADDR_N='0') then											------ Initiator PCI Access Start ?
+				DMA_WRENB <= DMADIR_BIT;									------ R/W Status Set
+				DMA_RDENB <= (not DMADIR_BIT);
+			elsif (M_DATA_FELL='1') then									------ Transaction End ?
+				DMA_WRENB <= '0';											------ Select Signal Clear
+				DMA_RDENB <= '0';
+			end if;
+		end if;
+	end process;
+
+		DMATRNS_ENB <= DMA_WRENB or DMA_RDENB;								------ DMA Access Enable Signal Output
+
+--------------------------------------------------------------------------------
+-- Internal Memory DMA Access Address Output Control Process
+--------------------------------------------------------------------------------
+
+	process (DMA_WRENB,DMA_MEMADRS,DMA_PRDADRS) begin
+		if (DMA_WRENB='1') then												------ Memory Write ?
+			DMA_ADRS <= "00000000" & DMA_MEMADRS & "00";					------ Write Address Output
+		else
+			DMA_ADRS <= "00000000" & DMA_PRDADRS & "00";					------ Read  Address Output
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Internal Memory DMA Write Signal Control Process
+--------------------------------------------------------------------------------
+
+	process (DMA_WRENB,M_DATA_VLD,DMA64_BIT,M_FAIL64,DMA_MEMADRS) begin
+		if (DMA_WRENB='1' and M_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (DMA64_BIT='1' and M_FAIL64='0') then						------ 64 bit Data Transfer ?
+				DMA_WRT <= "11111111";										------ 64 bit Write Signal Set
+			else
+				if (DMA_MEMADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					DMA_WRT <= "11110000";									------ High Word Write Signal Set
+				else
+					DMA_WRT <= "00001111";									------ Low  Word Write Signal Set
+				end if;
+			end if;
+		else
+				DMA_WRT <= (others => '0');									------ DMA_WR Signal Negate
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Internal Memory DMA Write Data Control Process
+--------------------------------------------------------------------------------
+
+	process (DMA_WRENB,M_DATA_VLD,DMA64_BIT,M_FAIL64,DMA_MEMADRS,ADIO) begin
+		if (DMA_WRENB='1' and M_DATA_VLD='1') then							------ BAR1 Target Data Write Available ?
+			if (DMA64_BIT='1' and M_FAIL64='0') then						------ 64 bit Data Transfer ?
+				DMA_WRDT <= ADIO;											------ 64 bit Write Data Output
+			else
+				if (DMA_MEMADRS(2)='1') then								------ 32 bit Odd Address Write ?
+					DMA_WRDT(31 downto  0) <= (others => '0');				------ Low  Word Write Data Clear
+					DMA_WRDT(63 downto 32) <= ADIO(31 downto 0);			------ High Word Write Data Set
+				else
+					DMA_WRDT(31 downto  0) <= ADIO(31 downto 0);			------ Low  Word Write Data Set
+					DMA_WRDT(63 downto 32) <= (others => '0');				------ High Word Write Data Clear
+				end if;
+			end if;
+		else
+				DMA_WRDT <= (others => '0');								------ Write Data Clear
+		end if;
+	end process;
+
+--------------------------------------------------------------------------------
+-- Internal Memory DMA Read Signal Control Process
+--------------------------------------------------------------------------------
+
+		DMA_READ <= (DMA_PREREAD or M_SRC_EN) and DMA_RDENB;				------ Data Read Signal Set
+
+
+
+--***************************************************************
+--*
+--*  Unused PCI Core Signal Control Block
+--*
+--***************************************************************
+
+		REQUESTHOLD 	<= '0'; --: out   std_logic;
+
+		CFG_SELF		<= '0'; --: out   std_logic;
+
+
+
+
+--***************************************************************
+--*
+--*  Debug Signal Output Control Block
+--*
+--***************************************************************
+
+
+--	process (DMA_current) begin
+--		case DMA_current is
+--			when DMA_IDLE		 => DEBUG_OUTDT(7 downto 4) <= "0001";
+--			when DMA_START		 => DEBUG_OUTDT(7 downto 4) <= "0010";
+--			when DMA_REQON		 => DEBUG_OUTDT(7 downto 4) <= "0011";
+--			when DMA_PRERD		 => DEBUG_OUTDT(7 downto 4) <= "0100";
+--			when DMA_DTTRNS		 => DEBUG_OUTDT(7 downto 4) <= "0101";
+--			when DMA_RETRY		 => DEBUG_OUTDT(7 downto 4) <= "0110";
+--			when DMA_DISCONNECT	 => DEBUG_OUTDT(7 downto 4) <= "0111";
+--			when DMA_BRSTEND	 => DEBUG_OUTDT(7 downto 4) <= "1000";
+--			when DMA_END		 => DEBUG_OUTDT(7 downto 4) <= "1001";
+--			when DMA_SDONE		 => DEBUG_OUTDT(7 downto 4) <= "1010";
+--			when others          => DEBUG_OUTDT(7 downto 4) <= "0000";
+--		end case;
+--	end process;
+
+
+		DEBUG_OUT(0) <= '0';
+		DEBUG_OUT(1) <= '0';
+		DEBUG_OUT(2) <= '0';
+		DEBUG_OUT(3) <= '0';
+		DEBUG_OUT(4) <= PCI_RETRY;
+		DEBUG_OUT(5) <= PCI_DISCNCT;
+		DEBUG_OUT(6) <= PCI_TGABORT;
+		DEBUG_OUT(7) <= CLK;
+
+
+--					PCI_RETRY   <= '0';										------ Status Clear
+--					PCI_DISCNCT <= '0';
+--					PCI_TGABORT <= '0';
+
+
+
+--	process (RST,CLK) begin
+--		if (RST='1') then
+--			DEBUG_OUT(0) <= '0';
+--		elsif (CLK'event and CLK='1') then
+--			if (PCI_REQ='1' or PCI_REQ64='1') then
+--				DEBUG_OUT(0) <= DR_BUS;
+--			end if;
+--		end if;
+--	end process;
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DEBUG_OUTDT(7) <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_CHK='1') then						------ Register Write Enable ?
+				DEBUG_OUTDT(7) <= '0';
+			elsif (M_FAIL64='1') then
+				DEBUG_OUTDT(7) <= '1';
+			end if;
+		end if;
+	end process;
+
+
+
+--***************************************************************
+
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMASTAT_ON <= '0';
+		elsif (CLK'event and CLK='1') then
+			if (DMACTRL_SEL='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMASTAT_ON <= DMAREG_DTI(0);								------ DMA Start/Stop Control Bit Set
+			else
+				DMASTAT_ON <= '0';											------ DMA Start/Stop Control Bit Clear
+			end if;
+		end if;
+	end process;
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMASTAT_CHK <= '0';
+		elsif (CLK'event and CLK='1') then
+			DMASTAT_CHK <= DMASTAT_ON;								------ DMA Start/Stop Control Bit Set
+		end if;
+	end process;
+
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMASTAT_CNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (REG_SEL(6)='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				DMASTAT_CNT(15 downto  0) <= (others=>'0');						------ Register Write Data Set
+				DMASTAT_CNT(31 downto 16) <= DMAREG_DTI(31 downto 16);						------ Register Write Data Set
+			elsif (DMASTAT_ON='1') then
+				DMASTAT_CNT(15 downto  0) <= DMASTAT_CNT(15 downto  0)+1;						------ Register Write Data Set
+				DMASTAT_CNT(31 downto 16) <= DMASTAT_CNT(31 downto 16);						------ Register Write Data Set
+			end if;
+		end if;
+	end process;
+
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAON_TIME <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_CNT(31 downto 16)=DMASTAT_CNT(15 downto 0)) then						------ Register Write Enable ?
+				if (DMASTAT_CHK='1') then						------ Register Write Enable ?
+					DMAON_TIME <= (others=>'0');
+				elsif (DMASTAT_BIT='1') then
+					DMAON_TIME <= DMAON_TIME+1;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			DMAPCI_TIME <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_CNT(31 downto 16)=DMASTAT_CNT(15 downto 0)) then						------ Register Write Enable ?
+				if (DMASTAT_CHK='1') then											------ Register Write Enable ?
+					DMAPCI_TIME <= (others=>'0');
+				elsif (DMASTAT_BIT='1' and M_DATA_VLD='1') then
+					DMAPCI_TIME <= DMAPCI_TIME+1;
+				end if;
+			end if;
+		end if;
+	end process;
+
+
+
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FRAMEN_CHK <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			FRAMEN_CHK <= FRAMEN_CHK(1 downto 0) & M_DATA;
+		end if;
+	end process;
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			FRAME_CUNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (DMASTAT_CNT(31 downto 16)=DMASTAT_CNT(15 downto 0)) then						------ Register Write Enable ?
+				if (DMASTAT_CHK='1') then											------ Register Write Enable ?
+					FRAME_CUNT <= (others=>'0');
+				elsif (DMASTAT_BIT='1' and FRAMEN_CHK(2 downto 1)="01") then
+					FRAME_CUNT <= FRAME_CUNT+1;
+				end if;
+			end if;
+		end if;
+	end process;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--	signal FRAMEN_CHK	: std_logic_vector( 2 downto  0);			-- Interrupt Mask Register Read Data
+--	signal FRAME_CUNT	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+--	signal DMAPCI_TIME	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+--	signal DMASTAT_ON	: std_logic;								-- DMA Start/Stop Control Bit
+--
+--	signal DMASTAT_CNT	: std_logic_vector( 7 downto  0);			-- Interrupt Mask Register Read Data
+--
+--	signal DMAON_TIME	: std_logic_vector(31 downto  0);			-- Interrupt Mask Register Read Data
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+-- Free Run Counter
+--------------------------------------------------------------------------------
+
+	process (RST,CLK) begin
+		if (RST='1') then
+			TIMER_CUNT <= (others=>'0');
+		elsif (CLK'event and CLK='1') then
+			if (REG_SEL(10)='1' and DMAREG_WE='1') then						------ Register Write Enable ?
+				TIMER_CUNT <= (others=>'0');								------ Register Write Data Set
+			else
+				TIMER_CUNT <= TIMER_CUNT+1;
+			end if;
+		end if;
+	end process;
+
+
+
+
+
+
+
+end PCI_DMACNT_rtl;
