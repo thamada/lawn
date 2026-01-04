@@ -1,17 +1,16 @@
-2025年 12月 16日 火曜日 09:16:24 JST
-#!/usr/bin/perl
+2026年  1月  4日 日曜日 09:08:16 JST
+/** 
+# x��1���ƥå׿ʤ��
+# x(k+1) = x(k) + v(k+1/2)*dt
+*/
 
-my $N = 300;
-my $XSCALE = 1.0;
-my $YSCALE = 1.0;
+#include <stdio.h>
+#include "nbodysim.h"
 
-srand(12345);
-
-print $N ."\n";
-
-for(my $i=0;$i<$N;$i++){
-    my $x = (rand(1.0)*$XSCALE - $XSCALE/2.0);
-    my $y = (rand(1.0)*$YSCALE - $XSCALE/2.0);
-    my $s = sprintf("%e\t%e\n",$x,$y);
-    print $s;
+void leapflog(double dt,double x[][DIM],double v[][DIM],int n)
+{
+    int i,d;
+    for(i=0;i<n;i++)
+        for(d=0;d<3;d++)
+            x[i][d] = x[i][d]+v[i][d]*dt;
 }
