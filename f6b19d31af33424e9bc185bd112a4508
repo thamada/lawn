@@ -1,13 +1,17 @@
-2026年  1月  7日 水曜日 11:38:09 JST
-#!/usr/bin/env python3
-# ./mov.py <fps> <start_number>
-import sys
+2026年  1月 19日 月曜日 11:06:42 JST
+#!/usr/bin/perl
 
 
-if __name__ == '__main__':
-	 args = sys.argv
-	 assert len(args) == 3
-	 fps          = int(args[1])
-	 start_number = int(args[2])
-	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
-	 print (cmd)
+my $is_stop = 0;
+my $nboard = 0;
+
+if($ARGV[0]){
+    $nboard = $ARGV[0];
+}
+
+my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
+
+my $exe = `$cmd`;
+print $exe;
+
+1;
