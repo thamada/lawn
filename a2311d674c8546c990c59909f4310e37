@@ -1,59 +1,71 @@
-2026年  1月 18日 日曜日 10:57:33 JST
-//-----------------------------------------------------------------------------
-// mk_eight.C:  prints initial conditions for the figure eight
-//              of the three-body problem
-//-----------------------------------------------------------------------------
-#include  <iostream>
-using namespace std;
+2026年  1月 19日 月曜日 09:07:44 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:28:33 hamada>
+import numpy as np
+import cv2
 
-typedef double  real;                      // "real" as a general name for the
-                                           // standard floating-point data type
-#define  NDIM     3                        // number of spatial dimensions
+class Message(object):
+    def __init__(self):
+        self.class_num = 80
+        self.last = [0 for i in range(8)]
+        self.log_previous = ''
+        self.is_update = False
+#        self.filename = '/dev/shm/log.txt'
+        self.filename = '/tmp/log.draw_detections.txt'
+        self.class_count = []
 
-int main()
-{
-    const int n = 3;           // number of particles
-    const real t = 0;          // time
-    real r[n][NDIM];           // r[i][k] : position component k for particle i
-    real v[n][NDIM];           // v[i][k] : velocity component k for particle i
-    real m[n];                 // m[i] : mass for particle i
+    def reset(self):
+        self.is_update = False
+        self.class_count = [0 for i in range(self.class_num)]
+        self.get_classId()
+        self.class_count = [0 for i in range(self.class_num)]
 
-    m[0] = 1;
-    m[1] = 1;
-    m[2] = 1;
+    def get_message(self):
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            l = lines[-2]
+            l = l.rstrip()
+            cols = l.split(' ')
+            if cols[0] != self.last[0]:
+                self.last = cols
+                self.is_update = True
+            else:
+                self.is_update = False
+        
 
-    r[0][0] = 0.9700436;
-    r[0][1] = -0.24308753;
-    r[0][2] = 0;
-    v[0][0] = 0.466203685;
-    v[0][1] = 0.43236573;
-    v[0][2] = 0;
+    def check_log_update(self):
+        self.is_update = False
+        with open(self.filename, 'r') as fh:
+            lines = fh.readlines()
+            current = lines[-2]
+            if current != self.log_previous:
+                self.is_update = True
+                self.log_previous = current
+        return (self.is_update)
 
-    r[1][0] = -r[0][0];
-    r[1][1] = -r[0][1];
-    r[1][2] = -r[0][2];
-    v[1][0] = v[0][0];
-    v[1][1] = v[0][1];
-    v[1][2] = v[0][2];
+    def scan_object(self, cl_name):
+        is_detect = False
 
-    r[2][0] = 0;
-    r[2][1] = 0;
-    r[2][2] = 0;
-    v[2][0] = -2 * v[0][0];
-    v[2][1] = -2 * v[0][1];
-    v[2][2] = -2 * v[0][2];
+        if self.check_log_update():
+            with open(self.filename, 'r') as fh:
+                lines = fh.readlines()
+                for i in range(2, 20):
+                    l = lines[-i]
+                    l = l.rstrip()
+                    cols = l.split(' ')
+                    if cols[-1] == cl_name:
+                        is_detect = True
 
-    cout.precision(16);
+        return (is_detect)
 
-    cout << n << endl;                      // first output line:  N
-    cout << t << endl;                      // second output line:  time
-    for (int i = 0; i < n; i++){
-        cout << m[i];                       // each next output line:
-        for (int k = 0; k < NDIM; k++)      //   m r_x r_y r_z v_x v_y v_z
-            cout << ' ' << r[i][k];
-        for (int k = 0; k < NDIM; k++)
-            cout << ' ' << v[i][k];
-        cout << endl;
-    }
-}
-//-----------------------------------------------------------------------------
+    def get_classId(self):
+        self.get_message()
+
+        if True == self.is_update:
+            z = int(self.last[1])
+            self.class_count[z] += 1
+        else:
+            z = -1
+
+        return (z)
+
