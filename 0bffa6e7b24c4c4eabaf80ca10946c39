@@ -1,86 +1,47 @@
-2026年  1月 19日 月曜日 09:31:53 JST
-# CUDA
-###  Modify this part as your environment   ##################
-export CUDA_INSTALL_PATH=/export/opt/cuda.2.3
-export SDK_INSTALL_PATH=/export/opt/cuda.2.3/NVIDIA_GPU_Computing_SDK/C
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib64
-export PATH=$PATH:$CUDA_INSTALL_PATH/bin
-
-# for profiling
-export CUDA_PROFILE=0
-export CUDA_PROFILE_LOG=./cuda_profile.log
-export CUDA_PROFILE_CSV=1
-alias cudaprofon='export CUDA_PROFILE=1'
-alias cudaprofoff='export CUDA_PROFILE=0'
-
-# OpenCL
-#export PATH=$PATH:/export/opt/gcc-4.4.1/bin
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.4.1/lib64:$LD_LIBRARY_PATH
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-
-#export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/OpenCL/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
-
-
-#export NV_COMPUTE_SDK_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK
-export LD_LIBRARY_PATH=/export/opt/gcc-4.3.4/lib64:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/cuda/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64:$LD_LIBRARY_PATH
-
-# for MPICH
-#export PATH=/export/opt/mpi/local/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/mpi/local/lib
-
-#------------ GbEd --------------------
-#export PATH=/export/opt/openmpi-1.3.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/openmpi-1.3.1/lib
-
-#------------ InfiniBand (OFED 1.4) --------------------
-export PATH=/usr/mpi/gcc/openmpi-1.2.8/bin:$PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.2.8/lib64
-
-#------------ InfiniBand (OFED 1.5.1) --------------------
-#export PATH=/usr/mpi/gcc/openmpi-1.4.1/bin:$PATH
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/mpi/gcc/openmpi-1.4.1/lib64
-
-
-export LANG=C
-export OPENCV_INSTALL_PATH=/export/opt/opencv-1.1.0
-
-# for ICC
-# source /export/opt/icc/11.0/081/bin/ifortvars.sh intel64
-
-# for Mplayer
-export PATH=/export/opt/mplayer/bin:$PATH
-
-#echo 'OMP_NUM_THREADS =' $OMP_NUM_THREADS
-
-#for Cray-XT5
-alias ssc='ssh hawk.cray.com -l p01130'
-
-#for AMD/ATI GPU
-#export CALROOT=/export/opt/amdstream/atical
-#export PATH=$CALROOT/bin/lnx64:$PATH
-#export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/atibrook/sdk/lib:$LD_LIBRARY_PATH
-#export PATH=/export/opt/amdstream/atibrook/sdk/bin:$PATH
-#export LD_LIBRARY_PATH=/export/opt/amdstream/acmlg1.0/gfortran64/lib:$LD_LIBRARY_PATH
-#alias aon='export DISPLAY=:0.0'
-export ATISTREAMSDKROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export ATISTREAMSDKSAMPLESROOT=/export/opt/amdstream.opencl/ati-stream-sdk-v2.01-lnx64
-export LD_LIBRARY_PATH=$ATISTREAMSDKROOT/lib/x86_64:$LD_LIBRARY_PATH
-#xmodmap ~/.Xmodmap 2> /dev/null
-#nodeid=`uname -n`
-#echo "node $nodeid"
-
-
-
-export OMP_NUM_THREADS=1
-#export OMP_NUM_THREADS=2
-#export OMP_NUM_THREADS=4
-#export OMP_NUM_THREADS=8
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/export/opt/DevIL/lib
-
-export FFTW_INSTALL_PATH=/export/opt/fftw2-mpi
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FFTW_INSTALL_PATH/lib
-
+2026年  1月 19日 月曜日 10:47:11 JST
+./db/images/ID.0005/image_00000657.jpg
+./db/images/ID.0006/image_00000651.jpg
+./db/images/ID.0004/image_00001568.jpg
+./db/images/ID.0004/image_00000563.jpg
+./db/images/ID.0006/image_00000301.jpg
+./db/images/ID.0004/image_00000578.jpg
+./db/images/ID.0004/image_00000975.jpg
+./db/images/ID.0004/image_00000848.jpg
+./db/images/ID.0006/image_00000436.jpg
+./db/images/ID.0005/image_00000884.jpg
+./db/images/ID.0005/image_00000878.jpg
+./db/images/ID.0005/image_00000840.jpg
+./db/images/ID.0004/image_00000108.jpg
+./db/images/ID.0005/image_00001203.jpg
+./db/images/ID.0006/image_00000088.jpg
+./db/images/ID.0004/image_00001495.jpg
+./db/images/ID.0005/image_00000063.jpg
+./db/images/ID.0006/image_00000696.jpg
+./db/images/ID.0005/image_00001257.jpg
+./db/images/ID.0006/image_00000821.jpg
+./db/images/ID.0005/image_00000153.jpg
+./db/images/ID.0004/image_00001053.jpg
+./db/images/ID.0004/image_00001427.jpg
+./db/images/ID.0006/image_00000815.jpg
+./db/images/ID.0005/image_00000904.jpg
+./db/images/ID.0004/image_00000694.jpg
+./db/images/ID.0004/image_00001043.jpg
+./db/images/ID.0004/image_00000761.jpg
+./db/images/ID.0006/image_00000289.jpg
+./db/images/ID.0006/image_00000739.jpg
+./db/images/ID.0005/image_00001072.jpg
+./db/images/ID.0006/image_00000890.jpg
+./db/images/ID.0005/image_00000903.jpg
+./db/images/ID.0004/image_00001045.jpg
+./db/images/ID.0004/image_00000576.jpg
+./db/images/ID.0005/image_00001009.jpg
+./db/images/ID.0004/image_00001569.jpg
+./db/images/ID.0004/image_00000916.jpg
+./db/images/ID.0004/image_00000687.jpg
+./db/images/ID.0005/image_00001261.jpg
+./db/images/ID.0004/image_00000316.jpg
+./db/images/ID.0005/image_00000288.jpg
+./db/images/ID.0004/image_00001514.jpg
+./db/images/ID.0004/image_00000456.jpg
+./db/images/ID.0004/image_00000191.jpg
+./db/images/ID.0004/image_00000533.jpg
