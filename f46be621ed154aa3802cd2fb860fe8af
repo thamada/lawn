@@ -1,57 +1,23 @@
-2026å¹´  1æœˆ 21æ—¥ æ°´æ›œæ—¥ 10:01:41 JST
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;                                        
-use ieee.std_logic_unsigned.all;                                    
+2026å¹´  1æœˆ 21æ—¥ æ°´æ›œæ—¥ 10:45:14 JST
+#include <stdio.h>
+#include "nbodysim.h"
 
-entity pipe_sts is
-  port (
-    rst        : in  std_logic;
-    clk        : in  std_logic;
-    run        : in  std_logic;
-    runret     : in  std_logic;
-    status     : out std_logic_vector(31 downto 0)
-  );
-end pipe_sts;
+void debug_func_force(double x[][DIM],double m[], double eps2,double a[][DIM],int n)
+{
+    int i,j;
 
-architecture rtl of pipe_sts is
-signal sts_reg  : std_logic_vector(7 downto 0) :=X"77";
-signal rund,sts : std_logic;
-signal cntr : std_logic_vector(7 downto 0);
-signal irun : std_logic := '0';
+    printf("-------------------------------\n");
+    printf("The debuging routine is called.\n");
+    printf("-------------------------------\n");
+    printf("n = %d\n",n);
+    printf("eps2 = %e\n",eps2);
 
-begin
+    for(i=0;i<n;i++){
+        printf("---\n");
+        printf("particle %d\n",i);
+        printf("m[%d] = %e\n",i,m[i]);
+        for(j=0;j<3;j++) printf("x[%d][%d] = %e\n",i,j,x[i][j]);
+        for(j=0;j<3;j++) printf("a[%d][%d] = %e\n",i,j,a[i][j]);
+    }
+}
 
--- clk    ____~~~~____~~~~____~~~~____~~~~__
--- runret _____~~~~~~~~_____________________
--- rund   _____________~~~~~~~~_____________
--- status                      <finish     >
-
--- status
-status(31 downto 8) <= (others=>'0');
-process(clk,rst) begin
-  if(rst='1') then
-    status(7 downto 0) <= (others=>'1');
-  elsif(clk'event and clk='1') then
-    if((runret='0') AND (rund='1')) then  -- ŒvZI—¹
-      status(7 downto 0) <= (others=>'1');
-    elsif((run='1') AND (irun='0')) then -- ŒvZŠJn
-      status(7 downto 0) <= (others=>'0');
-    end if;
-  end if;
-end process;
-
-process(clk) begin
-  if(clk'event and clk='1') then
-    rund  <= runret;
-  end if;
-end process;
-
-process(clk) begin
-  if(clk'event and clk='1') then
-    irun  <= run;
-  end if;
-end process;
-
-
-end rtl;
