@@ -1,28 +1,13 @@
-2026年  2月 11日 水曜日 11:02:55 JST
+2026年  2月 11日 水曜日 11:11:21 JST
 #!/usr/bin/env python3
-import numpy as np
-import cv2
-from datetime import datetime
+# ./mov.py <fps> <start_number>
+import sys
 
 
-def put_text(image, text):
-    font_size = 1.0
-    font_type = cv2.FONT_HERSHEY_PLAIN
-    font_color = (0xff, 0xf, 0xff)
-    cv2.putText(image, text, (460, 15), font_type, font_size, font_color)
-    
-
-image = cv2.imread("/tmp/tmp.jpg")
-
-tnow = datetime.now().strftime('%Y%m%d_%H_%M_%S') # ('%Y%m%d_%H_%M_%S_%f')
-put_text(image, tnow)
-cv2.imshow('test', image)
-
-
-while(True):
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cv2.destroyAllWindows()
-
-print("Done.")
+if __name__ == '__main__':
+	 args = sys.argv
+	 assert len(args) == 3
+	 fps          = int(args[1])
+	 start_number = int(args[2])
+	 cmd = "ffmpeg -r %d -start_number %d -i ../conv/%%08d.jpg -vcodec libx264 -pix_fmt yuv420p -r %d tmp.mp4"% (fps, start_number, fps)
+	 print (cmd)
