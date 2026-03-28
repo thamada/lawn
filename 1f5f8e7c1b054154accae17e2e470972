@@ -1,17 +1,2 @@
-2026年  3月 25日 水曜日 11:37:54 JST
-#!/usr/bin/perl
-
-
-my $is_stop = 0;
-my $nboard = 0;
-
-if($ARGV[0]){
-    $nboard = $ARGV[0];
-}
-
-my $cmd ="cat /sys/class/fpga/fpga". sprintf("%d",$nboard). "/kbuffers";
-
-my $exe = `$cmd`;
-print $exe;
-
-1;
+2026年  3月 28日 土曜日 10:46:49 JST
+No errors or warnings
