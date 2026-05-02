@@ -1,68 +1,121 @@
-2026年  4月 19日 日曜日 09:32:27 JST
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "flops.h"
-//#include "pg_util.h" // double e_time(void)
+2026年  5月  2日 土曜日 11:32:50 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-07-05 14:59:29 hamada>
+import Message
+import WebCam
+import numpy as np
+import cv2
+from datetime import datetime
 
-extern double e_time(void);
+def create_cv_image(cols=640, rows=480):
+    image = np.zeros((rows, cols, 3), np.uint8)
+    return (image)
 
-void flops_initialize(struct flops_member* fm, int n, int nskip)
-{
-  (*fm).nbody = n;
-  (*fm).nskip = nskip;
-  (*fm).times = 0;
-  (*fm).nstep = 0;
-  (*fm).force_time = 0.0;
-  (*fm).start_time = e_time();
-}
 
-void flops_check(struct flops_member* fm)
-{
-  int n = (*fm).nbody;
-  int nskip = (*fm).nskip;
-  int nstep = (*fm).nstep;
-  int times = (*fm).times;
-  double t_start = (*fm).start_time;
-  double tmisc,tall;
-  double nope,Gflops;
-  double t_end;
-  nstep++;
+def draw_rect(msg, image, x):
+    img_h, img_w = image.shape[:2]
 
-  if((times % nskip) != (nskip-1)){
-    times++;
-  } else {
-    double tforce = (*fm).force_time;
-    t_end = e_time();
-    tall = t_end - t_start;
-    tmisc = tall - tforce;
-    nope  = (38.0*n*n + 8.0*n  )*(double)times; // Gravity
-    //       GRAVITY,  LEAPFLOG
-    (*fm).Gflops = Gflops = nope * 1.0e-9 / tall;
-    fprintf(stderr,"[%d steps]\t",nstep);
-    fprintf(stderr,"LapTime %2.2f sec\t",tall);
-    fprintf(stderr,"\t \t == %g Gflops ==\n",Gflops);
+    y0 = (img_h>>1)-40
+    y1 = (img_h>>1)-30
 
-    fprintf(stderr,"\t + Force (calc + communi. ) (%g sec) \t %02.3f %%\n", tforce,  100.0*tforce/tall);
-    fprintf(stderr,"\t + Misc  (time integ, etc.) (%g sec) \t %02.3f %%\n", tmisc,   100.0*tmisc/tall);
+    if False:
+        x0 = 10
+        x1 = x + 20
+        image[y0:y1, x0:x1] = [0, 0xFF, 0xFF]
 
-    times = 0;
-    t_start = e_time();
-  }
-  (*fm).times = times;
-  (*fm).nstep = nstep;
-  (*fm).start_time = t_start;
-}
+    # --- Yolo/Person ---
+    x0 = 10
+    x1 = x0 + msg.class_count[0] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Goo ---
+    x0 = 10
+    x1 = x0 + msg.class_count[4] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0xFF, 0xFF, 0]
+
+    # --- Choki ---
+    x0 = 10
+    x1 = x0 + msg.class_count[5] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0xFF, 0]
+
+    # --- Pa ---
+    x0 = 10
+    x1 = x0 + msg.class_count[6] * 2
+    y0 = y1 + 5
+    y1 = y0 + 10
+    image[y0:y1, x0:x1] = [0, 0, 0xFF]
 
 
 
-void flops_ftime_init(struct flops_member *fm){
-  (*fm).force_time = e_time();
-}
+def draw_text_time(msg, image):
+    font = cv2.FONT_HERSHEY_PLAIN 
+    font_size = 3.0
+    color = (0x0f, 0xff, 0x1f)
+    text = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    cv2.putText(image, text, (30, 65), font, font_size, color)
+    cv2.putText(image, text, (31, 65), font, font_size, color)
 
-void flops_ftime_save(struct flops_member *fm){
-  double dum = (*fm).force_time;
-  (*fm).force_time = e_time() - dum;
-}
+
+def draw_text(msg, image, text):
+    font = cv2.FONT_HERSHEY_TRIPLEX # cv2.FONT_HERSHEY_PLAIN 
+    font_size = 2.5
+    color = (int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)),
+             int (np.random.normal(0xEF, 0xFF)))
+
+    px = int(image.shape[1]*0.1 + np.random.normal(25, 5))
+    py = int(image.shape[0]/2. + np.random.normal(25, 3))
+    cv2.putText(image, text, (px, py), font, font_size, color)
 
 
+if __name__ == '__main__':
+    webcam = WebCam.WebCam()
+    msg = Message.Message()
+    msg.reset()
+    image0 = create_cv_image(640, 300)
+    image  = image0.copy()
+
+    window_title = "AI sensor by T. Hamada 2017/07/04"
+    x = 0
+    #    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+
+    i_found = 0
+    while(True):
+        is_detect = msg.scan_object("person")
+        draw_text_time(msg, image)
+
+        if is_detect != True:
+            webcam.clear_cache()
+        else:
+            webcam.save_photo()
+            for i in range(8):
+                draw_text(msg, image, "I found you")
+
+            i_found += 1
+            if(i_found > 5):
+                tnow = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                with open("./log.person.txt", 'a') as fh:
+                    fh.write(tnow + " - detects 'Person'\n")
+                i_found = 0
+
+
+
+
+        x = 0
+        if x < 0 : x = 0
+        if x > image.shape[1]-10 : x = image.shape[1]-10
+        draw_rect(msg, image, x)
+        cv2.imshow(window_title, image)
+        image = image0.copy()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
+        if key == ord('p'): print (msg.class_count)
+
+    cv2.destroyAllWindows()
