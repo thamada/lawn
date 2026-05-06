@@ -1,16 +1,10 @@
-2026年  4月 25日 土曜日 10:03:54 JST
-/** 
-# v��1/2���ƥå׿ʤ��
-# v(k+1/2) = v(k) + a(k)*dt/2
-*/
-
-#include <stdio.h>
-#include "nbodysim.h"
-
-void leapflog_half(double dt, double v[][DIM], double a[][DIM], int n)
-{
-    int i,d;
-    for(i=0;i<n;i++)
-      for(d=0;d<3;d++)
-	v[i][d] = v[i][d] + (a[i][d]*dt)/2.0;
-}
+2026年  5月  6日 水曜日 09:15:42 JST
+# ProjNav -> New Source -> TBW
+c:\cygwin\home\administrator\fkit\pci64\tmp2\__projnav\hb_cmds
+# ProjNav -> New Source -> TBW
+C:\cygwin\home\Administrator\Fkit\pci64\tmp2\__projnav\hb_cmds
+# Bencher Waveform : PDCL (jhdparse)
+# ModelSim : Simulate Behavioral VHDL Model
+sim.fdo
+# ModelSim : Simulate Behavioral VHDL Model
+vsim.wlf
