@@ -1,82 +1,51 @@
-2026年  6月  8日 月曜日 09:08:14 JST
------------------------------------------------
---  pgpg-b3 dual port RAM module (for IMEM)
---      32 bits
---   16384 entries
---  Copyright(c) 2004- by Tsuyoshi Hamada
---  2004/12/02 : 64KB version up for imem by Tsuyoshi Hamada 
---  2004/10/29 : for Jmem by Tsuyoshi Hamada
------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-library UNISIM;
-use UNISIM.VCOMPONENTS.ALL;
-
-entity dp32b8192w is
-  port (
-    clka  : in std_logic;
-    wea   : in std_logic;
-    addra : in std_logic_vector(12 downto 0);
-    dina  : in std_logic_vector(31 downto 0);
-    douta : out std_logic_vector(31 downto 0);
-
-    clkb  : in std_logic;
-    web   : in std_logic;
-    addrb : in std_logic_vector(12 downto 0);
-    dinb  : in std_logic_vector(31 downto 0);
-    doutb : out std_logic_vector(31 downto 0));
-
-end dp32b8192w;
-
-architecture rtl of dp32b8192w is
-
-component RAMB16_S2_S2
-  generic (
-         INIT_A : bit_vector := X"0";
-         INIT_B : bit_vector := X"0";
-         SRVAL_A : bit_vector := X"0";
-         SRVAL_B : bit_vector := X"0";
-         WRITE_MODE_A : string :="WRITE_FIRST";
-         WRITE_MODE_B : string :="WRITE_FIRST");
-  port ( doa   : out std_logic_vector(1 downto 0);
-         addra : in std_logic_vector(12 downto 0);
-         clka  : in std_logic;
-         dia   : in std_logic_vector(1 downto 0);
-         ena   : in std_logic;
-         ssra  : in std_logic;
-         wea   : in std_logic;
-
-         dob   : out std_logic_vector(1 downto 0);
-         addrb : in std_logic_vector(12 downto 0);
-         clkb  : in std_logic;
-         dib   : in std_logic_vector(1 downto 0);
-         enb   : in std_logic;
-         ssrb  : in std_logic;
-         web   : in std_logic);
-end component;
-
-begin
-
-  forgen1: for i in 0 to 15 generate
-    uraml: RAMB16_S2_S2 -- GENERIC MAP(WRITE_MODE=>"WRITE_FIRST");
-	      PORT MAP(-- FIFO SIDE --
-                       clka=>clka,
-                       addra=>addra,
-                       dia=>dina(((2*i)+1) downto 2*i),
-                       doa=>douta(((2*i)+1) downto 2*i),
-                       ena=>'1',
-                       ssra=>'0',
-                       wea=>wea,
-                       -- LOCAL SIDE --
-                       clkb=>clkb,
-                       addrb=>addrb,
-                       dib=>dinb(((2*i)+1) downto 2*i),
-                       dob=>doutb(((2*i)+1) downto 2*i),
-                       enb=>'1',
-                       ssrb=>'0',
-                       web=>web);
-  end generate forgen1;
-
-
-end rtl;
-
+2026年  6月 13日 土曜日 11:15:17 JST
+2017/07/16 23:46:54 - detects 'Person'
+2017/07/16 23:46:55 - detects 'Person'
+2017/07/16 23:46:57 - detects 'Person'
+2017/07/16 23:46:58 - detects 'Person'
+2017/07/16 23:47:00 - detects 'Person'
+2017/07/16 23:47:01 - detects 'Person'
+2017/07/16 23:47:03 - detects 'Person'
+2017/07/16 23:47:05 - detects 'Person'
+2017/07/16 23:47:06 - detects 'Person'
+2017/07/16 23:47:08 - detects 'Person'
+2017/07/16 23:47:10 - detects 'Person'
+2017/07/16 23:47:11 - detects 'Person'
+2017/07/16 23:47:13 - detects 'Person'
+2017/07/16 23:47:14 - detects 'Person'
+2017/07/16 23:48:37 - detects 'Person'
+2017/07/16 23:48:38 - detects 'Person'
+2017/07/16 23:48:40 - detects 'Person'
+2017/07/16 23:48:42 - detects 'Person'
+2017/07/16 23:48:43 - detects 'Person'
+2017/07/16 23:48:44 - detects 'Person'
+2017/07/16 23:48:46 - detects 'Person'
+2017/07/16 23:48:48 - detects 'Person'
+2017/07/16 23:48:49 - detects 'Person'
+2017/07/16 23:48:51 - detects 'Person'
+2017/07/16 23:48:53 - detects 'Person'
+2017/07/16 23:48:54 - detects 'Person'
+2017/07/16 23:48:56 - detects 'Person'
+2017/07/16 23:48:58 - detects 'Person'
+2017/07/16 23:48:59 - detects 'Person'
+2017/07/16 23:49:01 - detects 'Person'
+2017/07/16 23:49:02 - detects 'Person'
+2017/07/16 23:49:04 - detects 'Person'
+2017/07/16 23:49:06 - detects 'Person'
+2017/07/16 23:49:07 - detects 'Person'
+2017/07/16 23:49:09 - detects 'Person'
+2017/07/16 23:49:10 - detects 'Person'
+2017/07/16 23:49:12 - detects 'Person'
+2017/07/16 23:49:13 - detects 'Person'
+2017/07/16 23:49:15 - detects 'Person'
+2017/07/16 23:49:16 - detects 'Person'
+2017/07/16 23:49:18 - detects 'Person'
+2017/07/16 23:49:19 - detects 'Person'
+2017/07/16 23:49:21 - detects 'Person'
+2017/07/16 23:49:22 - detects 'Person'
+2017/07/16 23:49:24 - detects 'Person'
+2017/07/16 23:49:26 - detects 'Person'
+2017/07/16 23:49:27 - detects 'Person'
+2017/07/16 23:49:29 - detects 'Person'
+2017/07/16 23:49:30 - detects 'Person'
+2017/07/16 23:49:32 - detects 'Person'
