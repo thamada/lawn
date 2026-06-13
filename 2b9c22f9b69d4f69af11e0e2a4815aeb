@@ -1,75 +1,27 @@
-2026年  6月 11日 木曜日 09:17:32 JST
-#!/usr/bin/perl
-#
-# mtrr : MTRR register resetting script for PROGRAPE-4
-#
-# Copyright (C) 2006-2007 Tsuyoshi Hamada. All rights reserved.
-# 
-# No warranty is attached; 
-#
+2026年  6月 13日 土曜日 09:56:17 JST
+#!/usr/bin/env python3
+#Time-stamp: <2017-06-10 01:52:29 hamada>
+import cv2
+import urllib.request
+import numpy as np
 
-my $devid   = 0;
-my $bar;
-my $cmd;
-my $exe;
+#stream=urllib.request.urlopen('http://133.45.9.162:3389/mjpegfeed?640x480')        # for DroidCam
+stream=urllib.request.urlopen('http://192.168.101.160:3389/video?dummy=param.mjpg') # for IP Webcam
 
-if(@ARGV){
-    sprintf($devid, "%d", $ARGV[0]);
-}
+bytes = b''
+while True:
+    raw = stream.read(1024)
+    bytes += raw
+    #print (bytes)
+    a = bytes.find(b'\xff\xd8')
+    b = bytes.find(b'\xff\xd9')
+    if a!=-1 and b!=-1:
+        jpg = bytes[a:b+2]
+        bytes= bytes[b+2:]
+        image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8),cv2.IMREAD_COLOR)
+        cv2.imshow('droidcam',image)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'): break
 
-$bar = 1;
+cv2.destroyAllWindows()
 
-my $adr=0, $size;
-
-$cmd = "ifpga_get_barinfo $devid $bar";
-$exe = `$cmd`;
-chomp($exe);
-$adr = $exe;
-
-$cmd = "ifpga_get_barinfo $devid $bar 1";
-$exe = `$cmd`;
-chomp($exe);
-$size = $exe;
-
-print "BAR1 start at $adr, size $size bytes\n";
-
-if( ($adr eq '') || ($adr eq '0x0') || ($adr eq "0xffffffff")){
-    print "discontinued\n";
-    exit(-1);
-}
-
-
-open(RD,"/proc/mtrr");
-my $hit_line = '';
-while(<RD>){
-    my $s = $_;
-    chomp($s);
-    if($s =~ /$adr/){
-	$hit_line = $s;
-    }
-}
-close(RD);
-
-if($hit_line ne ''){
-    print "Hit: ". $hit_line ."\n";
-}else{
-    $cmd = "cat /proc/mtrr";
-    print `$cmd` ."\n";
-    print "Can't find the mtrr register for bar1($adr)\n";
-    print "discontinued\n";
-    exit(-1);
-}
-
-my ($reg_nr, ) = split(/\:/,$hit_line);
-$reg_nr =~ s/reg//;
-$reg_nr = sprintf("%d",$reg_nr);
-
-$cmd = "echo \"disable=$reg_nr\" >| /proc/mtrr";
-print  $cmd. "\n";
-print  `$cmd`. "\n";
-
-$cmd = "cat /proc/mtrr";
-print `$cmd`;
-
-
-1;
