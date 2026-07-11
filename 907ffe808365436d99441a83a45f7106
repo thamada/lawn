@@ -1,96 +1,324 @@
-2026年  7月  5日 日曜日 10:26:14 JST
-//-----------------------------------------------------------------------------
-// hermite.C
-// Code: Standard 4th order Hermite integrator with constant time step
-// Ref.: J. Makino, S. J. Aarseth, PASJ 44, 141 (1992)
-// Author: Andreas Ernst Jan, 2006
-// Modify: Tsuyoshi Hamada, Nov, 2006
-//-----------------------------------------------------------------------------
-#include  <iostream>
-#include  <cmath>
-#include  <cstdlib>
-#include  <iomanip> // cout << setw() << setprecision() 
-using namespace std;
+2026年  7月 11日 土曜日 10:31:55 JST
+-- C:\CYGWIN\HOME\ADMINISTRATOR\FKIT\PCI64\TMP2
+-- VHDL Annotation Test Bench created by
+-- HDL Bencher 6.1i
+-- Wed Nov 10 11:38:24 2004
 
-extern "C" void  force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
-extern "C" void _force(double x[][3], double v[][3], double m[], double p[], double a[][3], double j[][3], int n);
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.STD_LOGIC_TEXTIO.ALL;
+USE STD.TEXTIO.ALL;
 
-extern "C" void debug_position_snap(double x[][3], double Gflops, int n, int nstep);
+ENTITY sim IS
+END sim;
 
+ARCHITECTURE testbench_arch OF sim IS
+-- If you get a compiler error on the following line,
+-- from the menu do Options->Configuration select VHDL 87
+FILE RESULTS: TEXT OPEN WRITE_MODE IS "c:\cygwin\home\administrator\fkit\pci64\tmp2\sim.ano";
+	COMPONENT pfpga_config
+		PORT (
+			clk : In  std_logic;
+			rst_n : In  std_logic;
+			cmd_reg : In  std_logic_vector (8 DOWNTO 0);
+			data_reg : In  std_logic_vector (31 DOWNTO 0);
+			CFG_D : Out  std_logic_vector (7 DOWNTO 0);
+			CFG_CCLK : Out  std_logic;
+			CFG_PROG_B0 : Out  std_logic;
+			CFG_PROG_B1 : Out  std_logic;
+			CFG_PROG_B2 : Out  std_logic;
+			CFG_PROG_B3 : Out  std_logic;
+			CFG_CS_B0 : Out  std_logic;
+			CFG_CS_B1 : Out  std_logic;
+			CFG_CS_B2 : Out  std_logic;
+			CFG_CS_B3 : Out  std_logic;
+			CFG_RDWR_B : Out  std_logic
+		);
+	END COMPONENT;
 
-// Calculate energy
+	SIGNAL clk : std_logic;
+	SIGNAL rst_n : std_logic;
+	SIGNAL cmd_reg : std_logic_vector (8 DOWNTO 0);
+	SIGNAL data_reg : std_logic_vector (31 DOWNTO 0);
+	SIGNAL CFG_D : std_logic_vector (7 DOWNTO 0);
+	SIGNAL CFG_CCLK : std_logic;
+	SIGNAL CFG_PROG_B0 : std_logic;
+	SIGNAL CFG_PROG_B1 : std_logic;
+	SIGNAL CFG_PROG_B2 : std_logic;
+	SIGNAL CFG_PROG_B3 : std_logic;
+	SIGNAL CFG_CS_B0 : std_logic;
+	SIGNAL CFG_CS_B1 : std_logic;
+	SIGNAL CFG_CS_B2 : std_logic;
+	SIGNAL CFG_CS_B3 : std_logic;
+	SIGNAL CFG_RDWR_B : std_logic;
 
-double energy(double m[], double r[][3], double v[][3], double p[], int n) {
-  double ekin = 0, epot = 0;
-  for (int i = 0; i < n; i++) {
-    epot -= 0.5 * m[i] * p[i];
-    for (int k = 0; k < 3; k++) ekin += 0.5 * m[i] * v[i][k] * v[i][k];
-  }
-  return ekin + epot;
-}
+BEGIN
+	UUT : pfpga_config
+	PORT MAP (
+		clk => clk,
+		rst_n => rst_n,
+		cmd_reg => cmd_reg,
+		data_reg => data_reg,
+		CFG_D => CFG_D,
+		CFG_CCLK => CFG_CCLK,
+		CFG_PROG_B0 => CFG_PROG_B0,
+		CFG_PROG_B1 => CFG_PROG_B1,
+		CFG_PROG_B2 => CFG_PROG_B2,
+		CFG_PROG_B3 => CFG_PROG_B3,
+		CFG_CS_B0 => CFG_CS_B0,
+		CFG_CS_B1 => CFG_CS_B1,
+		CFG_CS_B2 => CFG_CS_B2,
+		CFG_CS_B3 => CFG_CS_B3,
+		CFG_RDWR_B => CFG_RDWR_B
+	);
 
-int main(int argc, char *argv[]) {
+	PROCESS -- clock process for clk,
+		VARIABLE TX_TIME : INTEGER :=0;
 
-// Read initial conditions from stdin, declaration of variables
+		PROCEDURE ANNOTATE_CFG_D(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_D,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_D);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  if (argc < 3 ) {
-    cout << "Usage: hermite <dt> <t_end> <dt_opt>" << endl;
-    return 0;
-  }
+		PROCEDURE ANNOTATE_CFG_CCLK(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CCLK,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CCLK);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double dt = atof(argv[1]); // time step
-  double dt2 = dt*dt;
-  double dt3 = dt2*dt;
-  double dt4 = dt2*dt2;
-  double dt5 = dt4*dt;
-  double t_end = atof(argv[2]);
-  double dt_opt = atof(argv[3]);
-  double t_opt = 0.0;
+		PROCEDURE ANNOTATE_CFG_PROG_B0(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B0,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B0);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  int n;
-  cin >> n;
+		PROCEDURE ANNOTATE_CFG_PROG_B1(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B1,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B1);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double t;
-  cin >> t;
+		PROCEDURE ANNOTATE_CFG_PROG_B2(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B2,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B2);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double * m = new double[n];
-  double (* r)[3] = new double[n][3];
-  double (* v)[3] = new double[n][3];
+		PROCEDURE ANNOTATE_CFG_PROG_B3(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_PROG_B3,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_PROG_B3);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double * p = new double[n];
-  double (* a)[3] = new double[n][3];
-  double (* jk)[3] = new double[n][3];
+		PROCEDURE ANNOTATE_CFG_CS_B0(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B0,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B0);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  double * _p = new double[n];
-  double (* _a)[3] = new double[n][3];
-  double (* _jk)[3] = new double[n][3];
+		PROCEDURE ANNOTATE_CFG_CS_B1(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B1,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B1);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_CFG_CS_B2(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B2,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B2);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  for (int i = 0; i < n ; i++){
-    cin >> m[i];
-    for (int k = 0; k < 3; k++) cin >> r[i][k];
-    for (int k = 0; k < 3; k++) cin >> v[i][k];
-  }
-  
-  _force(r, v, m, _p, _a, _jk, n);
-   force(r, v, m,  p,  a,  jk, n);
+		PROCEDURE ANNOTATE_CFG_CS_B3(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_CS_B3,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_CS_B3);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
+		PROCEDURE ANNOTATE_CFG_RDWR_B(
+			TX_TIME : INTEGER
+		) IS
+			VARIABLE TX_STR : String(1 to 4096);
+			VARIABLE TX_LOC : LINE;
+		BEGIN
+			STD.TEXTIO.write(TX_LOC,string'("Annotate["));
+			STD.TEXTIO.write(TX_LOC, TX_TIME);
+			STD.TEXTIO.write(TX_LOC,string'(",CFG_RDWR_B,"));
+			IEEE.STD_LOGIC_TEXTIO.write(TX_LOC, CFG_RDWR_B);
+			STD.TEXTIO.write(TX_LOC, string'("]"));
+			TX_STR(TX_LOC.all'range) := TX_LOC.all;
+			STD.TEXTIO.writeline(results, TX_LOC);
+			STD.TEXTIO.Deallocate(TX_LOC);
+		END;
 
-  for (int i = 0; i < n ; i++){
-    double err_p, err_a[3], err_jk[3];
-    double rad;
-    rad = sqrt(r[i][0]*r[i][0]+r[i][1]*r[i][1]+r[i][2]*r[i][2]);
+	BEGIN
+		CLOCK_LOOP : LOOP
+		clk <= transport '0';
+		WAIT FOR 5 us;
+		TX_TIME := TX_TIME + 5;
+		clk <= transport '1';
+		WAIT FOR 5 us;
+		TX_TIME := TX_TIME + 5;
+		ANNOTATE_CFG_D(TX_TIME);
+		ANNOTATE_CFG_CCLK(TX_TIME);
+		ANNOTATE_CFG_PROG_B0(TX_TIME);
+		ANNOTATE_CFG_PROG_B1(TX_TIME);
+		ANNOTATE_CFG_PROG_B2(TX_TIME);
+		ANNOTATE_CFG_PROG_B3(TX_TIME);
+		ANNOTATE_CFG_CS_B0(TX_TIME);
+		ANNOTATE_CFG_CS_B1(TX_TIME);
+		ANNOTATE_CFG_CS_B2(TX_TIME);
+		ANNOTATE_CFG_CS_B3(TX_TIME);
+		ANNOTATE_CFG_RDWR_B(TX_TIME);
+		WAIT FOR 45 us;
+		TX_TIME := TX_TIME + 45;
+		clk <= transport '0';
+		WAIT FOR 45 us;
+		TX_TIME := TX_TIME + 45;
+		END LOOP CLOCK_LOOP;
+	END PROCESS;
 
-    err_p = fabs(p[i]-_p[i])/_p[i];
+	PROCESS   -- Process for clk
+		VARIABLE TX_OUT : LINE;
 
-    for (int k = 0; k < 3; k++){
-      err_a[k]  = fabs(a[i][k]  - _a[i][k])  / _a[i][k];
-      err_jk[k] = fabs(jk[i][k] - _jk[i][k]) / _jk[i][k];
-    }
-    
-    for (int k = 0; k < 3; k++) cout << rad << "\t" << err_a[k] << endl;
+		BEGIN
+		-- --------------------
+		rst_n <= transport '0';
+		cmd_reg <= transport std_logic_vector'("000000000"); --0
+		data_reg <= transport std_logic_vector'("00000000000000000000000000000000"); --0
+		-- --------------------
+		WAIT FOR 300 us; -- Time=300 us
+		rst_n <= transport '1';
+		-- --------------------
+		WAIT FOR 500 us; -- Time=800 us
+		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		-- --------------------
+		WAIT FOR 400 us; -- Time=1200 us
+		cmd_reg <= transport std_logic_vector'("011100001"); --E1
+		-- --------------------
+		WAIT FOR 400 us; -- Time=1600 us
+		cmd_reg <= transport std_logic_vector'("011110001"); --F1
+		-- --------------------
+		WAIT FOR 800 us; -- Time=2400 us
+		data_reg <= transport std_logic_vector'("10000000100000001000000011111111"); --808080FF
+		-- --------------------
+		WAIT FOR 700 us; -- Time=3100 us
+		cmd_reg <= transport std_logic_vector'("111110001"); --1F1
+		-- --------------------
+		WAIT FOR 3355 us; -- Time=6455 us
+		-- --------------------
 
-  }
-  
-  return 0;
-}
+		STD.TEXTIO.write(TX_OUT, string'("Total[]"));
+		STD.TEXTIO.writeline(results, TX_OUT);
+		ASSERT (FALSE) REPORT
+			"Success! Simulation for annotation completed"
+			SEVERITY FAILURE;
+	END PROCESS;
+END testbench_arch;
+
+CONFIGURATION pfpga_config_cfg OF sim IS
+	FOR testbench_arch
+	END FOR;
+END pfpga_config_cfg;
