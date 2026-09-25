@@ -1,25 +1,27 @@
-2026年  9月 23日 水曜日 11:10:54 JST
-#!/bin/sh
-#
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "commit-msg".
+2026年  9月 25日 金曜日 09:55:01 JST
+vlib work
+vcom -93 -explicit  ../rtl/local_write.vhd
+vcom -93 -explicit  ../rtl/local_read_cnt.vhd
+vcom -93 -explicit  ../rtl/local_read_if.vhd
+vcom -93 -explicit  ../rtl/local_read.vhd
+vcom -93 -explicit  ../rtl/local_io.vhd
+vcom -93 -explicit  sim_local_io.vhw
+vsim -t 1ps   -lib work sim_local_io
+do sim_local_io.udo
+view wave
+add wave -hex /uut/busy_dmar
+add wave -hex *
 
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
-#
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
 
-# This example catches duplicate Signed-off-by lines.
+add wave -hex /uut/u1/u0/clk
+add wave -hex /uut/u1/u0/CALC_DONE
+add wave -dec /uut/u1/u0/cnt
+add wave -hex /uut/u1/u0/cnt_en
+add wave -hex /uut/u1/u0/is_finish
+add wave -hex /uut/u1/u0/EXEC
+add wave -hex /uut/u1/u0/CHIPSEL
+add wave -hex /uut/u1/u0/START_AD
+add wave -hex /uut/u1/u0/NQWORD
+add wave -hex /uut/u1/u0/MEM_AD_BASE
 
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
-	exit 1
-}
+run -all
