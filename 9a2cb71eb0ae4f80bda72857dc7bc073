@@ -1,102 +1,51 @@
-2026年 10月  7日 水曜日 09:50:28 JST
-#!/usr/bin/env python3
-#Time-stamp: <2017-06-03 03:06:20 hamada>
-import argparse
-import numpy as np
-import cv2
-from datetime import datetime
-import mkdir
-import aieye_find
-import time
-import sys
+2026年 10月 26日 月曜日 11:50:35 JST
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
 
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
 
-if (__name__ == '__main__'):
-    basedir = '../log/'
-    if (len(sys.argv) > 1 ):
-        basedir = sys.argv[1]
-    
-    iflist = [] 
-    for fname in aieye_find.find(basedir, '*.jpg'):
-        iflist.append(fname)
+# If you want to allow non-ascii filenames set this variable to true.
+allownonascii=$(git config hooks.allownonascii)
 
-    iflist.sort()
-    ni = len(iflist)
-    i = 0
-    i_fp = 0.0
-    i_delta = 1
-    i_scale = 60.0
-    speed_state = 0
+# Redirect output to stderr.
+exec 1>&2
 
-    #    for i, fname in enumerate(iflist):
-    while( i < ni) :
-        fname = iflist[i]
+# Cross platform projects tend to avoid non-ascii filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	test $(git diff --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+	echo "Error: Attempt to add a non-ascii file name."
+	echo
+	echo "This can cause problems if you want to work"
+	echo "with people on other platforms."
+	echo
+	echo "To be portable it is advisable to rename the file ..."
+	echo
+	echo "If you know what you are doing you can disable this"
+	echo "check using:"
+	echo
+	echo "  git config hooks.allownonascii true"
+	echo
+	exit 1
+fi
 
-        #print (fname, i, ni, i/ni)
-        image = cv2.imread(fname)
-        cv2.imshow("play.py", image)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key != 255:  print (key, "%d/%d"% (i, ni))
-
-        if key  == 114:           i_fp = 0.  # r
-
-        if key  == ord('q'): break
-        if key  == 97:            i_fp -= 1.  # d
-        if key  == 100:           i_fp += 1.  # a
-        if key  == 81:            i_fp -= 5.  # <-
-        if key  == 83:            i_fp += 5.  # ->
-        if key  == 86:            i_fp += 30. # Up
-        if key  == 85:            i_fp -= 30. # Down
-        if key  == 82:            i_fp += 300. # PgDn
-        if key  == 84:            i_fp -= 300. # PgUp
-
-        if key  == ord(' '): 
-            if 0 != speed_state: 
-                i_delta = 0
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 1
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
-
-
-        if key  == 226: # R_SHIFT
-            if 0 == speed_state:
-                i_delta = int(i_scale/10.)
-                speed_state = 1
-            elif 1 == speed_state:
-                i_delta = int(i_scale)
-                speed_state = 2
-            elif 2 == speed_state:
-                i_delta = int(i_scale*10.)
-                speed_state = 3
-            elif 3 == speed_state:
-                i_delta = int(i_scale*100.)
-                speed_state = 4
-            elif 4 == speed_state:
-                i_delta = 1
-                speed_state = 0
-            else:
-                i_delta = 1
-                speed_state = 0
-            print ("i_delta:", i_delta)
-            print ("speed_state:", speed_state)
-
-        if key  == ord('+'): 
-            i_delta *= 2
-            print ("i_delta:", i_delta)
-
-        if key  == ord('-'): 
-            i_delta = int(i_delta / 2)
-            if i_delta < 1: i_delta = 1 
-            print ("i_delta:", i_delta)
-
-        #----------------------------------
-        i_fp += i_delta/i_scale
-        if i_fp < 0.0 :  i_fp = 0.0
-        if i_fp >= float(ni): i_fp = float(ni) -1.0
-        i = int(i_fp)
-
-    cv2.destroyAllWindows()
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
