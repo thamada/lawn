@@ -1,53 +1,12 @@
-2026年 11月 21日 土曜日 11:44:26 JST
-/***************************************************
- * The lowest level library for PROGRAPE-4
- *
- * Copyright(c) by Tsuyoshi Hamada.
- * All rights reserved.
- *
- * PLEASE DO NOT BRANCH !!
- *
- * 20060916.rev1 : Development start
- *
- ***************************************************/
-
-inline unsigned int    ReadBase0 (int devid, unsigned int addr);
-inline unsigned int    ReadBase1 (int devid, unsigned int addr);
-inline void            WriteBase0 (int devid, unsigned int addr, unsigned int val);
-inline void            WriteBase1 (int devid, unsigned int addr, unsigned int val);
-
-void                   pg4_close (int id);
-
-int                    pg4_DMAput (int devid, unsigned int size);
-int                    pg4_DMAget (int devid, unsigned int size);
-void                   pg4_DMAcheck (int devid);
-int                    pg4_DMAretry (int devid);
-
-unsigned long          pg4_getbaseaddr (int devid, int j);
-unsigned long          pg4_getbaseaddr_size (int devid, int bar);
-unsigned int*          pg4_get_bar0ptr(int devid);
-unsigned int*          pg4_get_bar1ptr(int devid);
-unsigned int*          pg4_get_dmawptr (int devid);
-unsigned int*          pg4_get_dmarptr (int devid);
-unsigned int           pg4_get_dma_size (int devid);
-void                   pg4_get_pfpga_info (int devid, char *info);
-
-int                    pg4_open (int id);
-
-inline unsigned int    pg4_readbase0 (int devid, unsigned int index);
-inline unsigned int    pg4_readbase1 (int devid, unsigned int index);
-unsigned long          pg4_read_pciconfig_dword (int devid, int adr);
-
-void                   pg4_set_pfpga_info (int devid, char *info);
-
-inline void            pg4_writebase0 (int devid, unsigned int index, unsigned int val);
-inline void            pg4_writebase1 (int devid, unsigned int index, unsigned int val);
-
-
-
-// --- following are removed. ---
-int                    pg4_DMAput_offset (int devid, unsigned int size, unsigned offset);
-int                    pg4_DMAget_offset (int devid, unsigned int size, unsigned offset);
-void                   pg4_wait (int devid, int n);
-
-
+2026年 11月 22日 日曜日 11:30:19 JST
+10
+2.253285e-01	9.191831e-01
+2.068413e-01	7.247797e-01
+7.321991e-01	9.064824e-01
+3.479571e-01	8.578809e-01
+4.151849e-01	1.941677e-01
+6.856104e-01	5.243755e-01
+1.596357e-01	9.547575e-01
+1.269843e-01	4.339532e-03
+3.826915e-01	2.507929e-01
+6.552879e-01	5.344908e-01
